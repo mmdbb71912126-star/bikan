@@ -1,1 +1,1 @@
-# bikan.com
+bikan
