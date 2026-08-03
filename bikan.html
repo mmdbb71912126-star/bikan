@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>必看网址导航</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --main-bg: #ffffff;
+            --primary: #4a6cf7;
+            --primary-hover: #3651d5;
+            --text: #2c3e50;
+            --text-secondary: #6b7d8e;
+            --text-muted: #95a5a6;
+            --border: #e1e8ed;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --radius: 10px;
+            --radius-sm: 6px;
+            --star-color: #f59e0b;
+            --star-empty: #d1d5db;
+            --vpn-yes-bg: #dcfce7;
+            --vpn-yes-text: #166534;
+            --vpn-no-bg: #f3f4f6;
+            --vpn-no-text: #374151;
+            --tab-active-bg: #eef2ff;
+            --tab-active-border: #4a6cf7;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--main-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            padding: 24px 30px 35px;
+        }
+        .header {
+            text-align: center;
+            padding: 10px 0 20px 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+        .header h1 .icon {
+            margin-right: 8px;
+        }
+        /* 横向滚动标签容器 */
+        .tabs-wrapper {
+            position: relative;
+            border-bottom: 1.5px solid var(--border);
+            margin-bottom: 22px;
+        }
+        .tabs-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 6px 0 16px 0;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            /* 隐藏滚动条但保留功能 */
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db transparent;
+        }
+        .tabs-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        .tabs-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .tabs-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+        .tab-btn {
+            flex-shrink: 0;
+            padding: 10px 22px;
+            border-radius: 30px;
+            border: 2px solid transparent;
+            background: #f3f4f6;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            background: #e8ecf1;
+            transform: translateY(-1px);
+        }
+        .tab-btn.active {
+            background: var(--tab-active-bg);
+            border-color: var(--tab-active-border);
+            color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.08);
+        }
+        .tab-btn .count {
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            background: #e8ecf1;
+            padding: 1px 8px;
+            border-radius: 12px;
+        }
+        .tab-btn.active .count {
+            background: #d4ddfc;
+            color: var(--primary);
+        }
+        /* 分区内容 */
+        .section-content {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+        .section-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            padding: 6px 0 14px 0;
+            border-bottom: 1.5px solid var(--border);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .count-label {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+        .bookmark-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            border: 1.5px solid var(--border);
+            margin-bottom: 10px;
+            transition: 0.15s ease;
+        }
+        .bookmark-item:hover {
+            border-color: #c0c8d4;
+            background: #fafbfc;
+        }
+        .bookmark-item .index {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            background: #f0f2f5;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .bookmark-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .bookmark-item .info .name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+            text-decoration: none;
+            word-break: break-all;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bookmark-item .info .name:hover {
+            color: var(--primary);
+        }
+        .bookmark-item .info .url {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            word-break: break-all;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+        }
+        .bookmark-item .info .desc {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .bookmark-item .meta-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .bookmark-item .stars {
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            color: var(--star-empty);
+        }
+        .bookmark-item .stars .filled {
+            color: var(--star-color);
+        }
+        .vpn-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 14px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .vpn-badge.yes { background: var(--vpn-yes-bg); color: var(--vpn-yes-text); }
+        .vpn-badge.no { background: var(--vpn-no-bg); color: var(--vpn-no-text); }
+        .empty-tip {
+            color: var(--text-muted);
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        .footer-note {
+            margin-top: 28px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            .bookmark-item { flex-wrap: wrap; }
+            .bookmark-item .meta-right { flex-direction: row; align-items: center; width: 100%; justify-content: flex-start; padding-left: 38px; }
+            .tab-btn { padding: 8px 14px; font-size: 0.82rem; }
+            .header h1 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="icon">🌟</span>必看网址导航</h1>
+        </div>
+        <div class="tabs-wrapper">
+            <div class="tabs-scroll" id="tabContainer">
+                <button class="tab-btn active" data-section="id_1785684572865_dpb7144">
+                    📁 游戏下载
+                    <span class="count">4</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785687801144_uqg2t3a">
+                    📁 动漫电影
+                    <span class="count">3</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785688364480_z1nv1fu">
+                    📁 二创同人绘画
+                    <span class="count">1</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785689071648_sx7b77y">
+                    📁 AI聊天
+                    <span class="count">6</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785689827384_agp71dt">
+                    📁 视频网站
+                    <span class="count">8</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785690800200_298pzdw">
+                    📁 AI脱衣
+                    <span class="count">1</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785691050561_31bt2e3">
+                    📁 VPN
+                    <span class="count">4</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785691630633_oa7ta91">
+                    📁 搜索引擎
+                    <span class="count">6</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785692336681_qp5adex">
+                    📁 社交媒体
+                    <span class="count">4</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785692488105_88eo4el">
+                    📁 技术工具
+                    <span class="count">3</span>
+                </button>
+                <button class="tab-btn" data-section="id_1785692999760_pn8u29w">
+                    📁 电子邮箱
+                    <span class="count">4</span>
+                </button>
+            </div>
+        </div>
+        <div id="contentContainer">
+            <div class="section-content active" data-section="id_1785684572865_dpb7144">
+                <div class="section-title">
+                    📁 游戏下载
+                    <span class="count-label">(4 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://game.acgs.one" target="_blank" class="name">绮梦ACG ↗</a>
+                        <span class="url">https://game.acgs.one</span>
+                        <div class="desc">绮梦ACG是galgame游戏资源站，提供海量PC、安卓及多平台游戏下载，分类详尽。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://impervert.com" target="_blank" class="name">ImPervert ↗</a>
+                        <span class="url">https://impervert.com</span>
+                        <div class="desc">ImPervert.com 提供海量免费成人游戏，涵盖3D、动画等多种类型，支持Android和PC端下载，每日更新。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://itch.io/games/tag-adult" target="_blank" class="name">itch(R18分区) ↗</a>
+                        <span class="url">https://itch.io/games/tag-adult</span>
+                        <div class="desc">itch.io是独立游戏的天堂，自由度高、创意爆棚，但质量参差不齐。需注意，它允许创作者发布成人内容。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">4</span>
+                    <div class="info">
+                        <a href="https://store.steampowered.com" target="_blank" class="name">STEAM ↗</a>
+                        <span class="url">https://store.steampowered.com</span>
+                        <div class="desc">全球知名数字游戏发行平台，提供游戏购买、社区及创意工坊。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785687801144_uqg2t3a">
+                <div class="section-title">
+                    📁 动漫电影
+                    <span class="count-label">(3 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://www.ikanbot.com" target="_blank" class="name">爱看机器人 ↗</a>
+                        <span class="url">https://www.ikanbot.com</span>
+                        <div class="desc">爱看机器人是免费影视聚合站，无需注册，提供多线路播放、离线下载和投屏，支持网页与App。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://www.yfsp.me" target="_blank" class="name">爱壹帆（国际版） ↗</a>
+                        <span class="url">https://www.yfsp.me</span>
+                        <div class="desc">面向海外华人的免费影视平台的国际版域名。它本身并不提供内容，而是通过抓取第三方资源来聚合影视剧，但资源有版权风险且含少量广告。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://bad.news/dm" target="_blank" class="name">H动漫或二创（坏消息） ↗</a>
+                        <span class="url">https://bad.news/dm</span>
+                        <div class="desc">该页面为 bad.news 网站下的成人向动画（H动漫）分区，提供相关视频内容。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785688364480_z1nv1fu">
+                <div class="section-title">
+                    📁 二创同人绘画
+                    <span class="count-label">(1 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://pixiv.net" target="_blank" class="name">P站 ↗</a>
+                        <span class="url">https://pixiv.net</span>
+                        <div class="desc">Pixiv是创作者和爱好者分享插画、漫画和小说的社区，以高质量的ACG（动画、漫画、游戏）相关同人和原创作品闻名，含成人内容。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785689071648_sx7b77y">
+                <div class="section-title">
+                    📁 AI聊天
+                    <span class="count-label">(6 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://www.deepseek.com" target="_blank" class="name">DeepSeek ↗</a>
+                        <span class="url">https://www.deepseek.com</span>
+                        <div class="desc">专注于AI助手与模型技术，提供智能问答、文本处理、编程辅助等专业服务。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://www.ydyeden.top" target="_blank" class="name">伊甸园AI ↗</a>
+                        <span class="url">https://www.ydyeden.top</span>
+                        <div class="desc">AI角色聊天网站，成人向角色扮演，前身为白日梦AI，个人感觉还可以。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://character.ai" target="_blank" class="name">CharacterAI ↗</a>
+                        <span class="url">https://character.ai</span>
+                        <div class="desc">AI角色聊天，官方禁止色情，但用户可通过隐晦、暗示性语言绕过滤审，实际存在擦边内容，跟早期星野差不多。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">4</span>
+                    <div class="info">
+                        <a href="https://spicychat.ai" target="_blank" class="name">辣聊AI ↗</a>
+                        <span class="url">https://spicychat.ai</span>
+                        <div class="desc">色情，主打NSFW（不宜工作）AI角色扮演与成人向聊天，明确允许用户探索性幻想，平台核心功能围绕色情互动展开，太强了我去，极致推荐。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">5</span>
+                    <div class="info">
+                        <a href="https://chatgpt.com" target="_blank" class="name">ChatGPT ↗</a>
+                        <span class="url">https://chatgpt.com</span>
+                        <div class="desc">OpenAI开发的AI对话助手，提供文本问答、内容生成、编程辅助等功能。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">6</span>
+                    <div class="info">
+                        <a href="https://grok.com" target="_blank" class="name">Grok ↗</a>
+                        <span class="url">https://grok.com</span>
+                        <div class="desc">xAI开发的多模态AI助手，虽有内容限制，但提供“浪漫”等角色个性及图像生成功能，可成人色情角色扮演，演技不行。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785689827384_agp71dt">
+                <div class="section-title">
+                    📁 视频网站
+                    <span class="count-label">(8 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://bad.news" target="_blank" class="name">坏消息 ↗</a>
+                        <span class="url">https://bad.news</span>
+                        <div class="desc">色情短视频与长视频，有外网成人约会服务，存在潜在风险，看看就行了别乱加推特或其他社交平台好友。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://www.pornhub.com" target="_blank" class="name">PornHub ↗</a>
+                        <span class="url">https://www.pornhub.com</span>
+                        <div class="desc">外网最火成人内容平台，提供大量视频，广告太多了呀，不推荐。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://www.51cg1.com" target="_blank" class="name">51吃瓜网 ↗</a>
+                        <span class="url">https://www.51cg1.com</span>
+                        <div class="desc">与91吃瓜网类似，含色情与暴力，网站以成人内容为主，同时混杂少量血腥猎奇视频，浏览需谨慎，广告有一点多，但是还行。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">4</span>
+                    <div class="info">
+                        <a href="https://www.91cg1.com" target="_blank" class="name">91吃瓜网 ↗</a>
+                        <span class="url">https://www.91cg1.com</span>
+                        <div class="desc">与51吃瓜网类似，含色情与暴力，网站以成人内容为主，同时混杂少量血腥猎奇视频，浏览需谨慎，广告有一点多，但是还行。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">5</span>
+                    <div class="info">
+                        <a href="https://www.livegore.com" target="_blank" class="name">LiveGore ↗</a>
+                        <span class="url">https://www.livegore.com</span>
+                        <div class="desc">暴力血腥，专门发布真实事故、犯罪现场等限制级视频内容，不含色情，强烈不建议观看，极其不推荐观看，内容极其恶心。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="">★</span><span class="">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">6</span>
+                    <div class="info">
+                        <a href="https://www.youtube.com" target="_blank" class="name">YouTube ↗</a>
+                        <span class="url">https://www.youtube.com</span>
+                        <div class="desc">全球最大视频分享平台，提供海量娱乐、教育、音乐等内容。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">7</span>
+                    <div class="info">
+                        <a href="https://www.instagram.com" target="_blank" class="name">Instagram ↗</a>
+                        <span class="url">https://www.instagram.com</span>
+                        <div class="desc">图片与短视频社交应用，侧重生活分享与视觉内容。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">8</span>
+                    <div class="info">
+                        <a href="https://www.tiktok.com" target="_blank" class="name">TikTok ↗</a>
+                        <span class="url">https://www.tiktok.com</span>
+                        <div class="desc">全球热门短视频平台，以创意短剧、舞蹈、搞笑内容为主</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785690800200_298pzdw">
+                <div class="section-title">
+                    📁 AI脱衣
+                    <span class="count-label">(1 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://dessi.app/undress" target="_blank" class="name">DessiAI一键脱衣 ↗</a>
+                        <span class="url">https://dessi.app/undress</span>
+                        <div class="desc">AI脱衣工具，上传图片即可移除衣物生成裸体，宣称免费且匿名，但存在严重伦理与法律风险。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785691050561_31bt2e3">
+                <div class="section-title">
+                    📁 VPN
+                    <span class="count-label">(4 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://www.123kh260260.com" target="_blank" class="name">PangolinVPN官网 ↗</a>
+                        <span class="url">https://www.123kh260260.com</span>
+                        <div class="desc">VPN服务商，提供全球节点加速，用于流媒体、游戏及隐私保护，注册后获得30-60分钟试用时间，可利用临时邮箱重复注册，使用时间到期后如果不主动断开VPN可以继续使用直到断连，搭配临时邮箱https://tempmail.ing/zh-CN无限注册，无限白嫖。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://www.365ld86682.com" target="_blank" class="name">365VPN官网 ↗</a>
+                        <span class="url">https://www.365ld86682.com</span>
+                        <div class="desc">VPN服务商，强调快速连接与全球节点，打开软件后获得15-17天试用时间 无法重复注册获取试用时间，呃，安卓版好像没有试用时间，电脑用户用完试用时间直接删好吧。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://greenhubtx.com/download.html" target="_blank" class="name">绿墙VPN官网 ↗</a>
+                        <span class="url">https://greenhubtx.com/download.html</span>
+                        <div class="desc">提供加密连接与全球节点，用于访问受限网络，每日获得1小时试用时间，无注册登录功能，勉强够用。（绿墙VPN的GitHub下载网址：https://github.com/ghotst0xdeadbeef/Greenhub-desktop/releases/tag/2.4.0）</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">4</span>
+                    <div class="info">
+                        <a href="https://direct.fnjs.cloud" target="_blank" class="name">飞鸟VPN官网 ↗</a>
+                        <span class="url">https://direct.fnjs.cloud</span>
+                        <div class="desc">提供VPN加速服务的工具站点，支持多平台与多设备连接，安装就送30分钟试用时间，每日8:00-20:00可以免费抽奖一次获取不超过30分钟的免费试用时间，无法用临时邮箱无限注册白嫖，线路只能自动分配不能自己选，太拉了。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785691630633_oa7ta91">
+                <div class="section-title">
+                    📁 搜索引擎
+                    <span class="count-label">(6 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://www.bing.com" target="_blank" class="name">必应 ↗</a>
+                        <span class="url">https://www.bing.com</span>
+                        <div class="desc">微软旗下搜索引擎，提供网页、图片、视频搜索及AI问答功能，仅次于谷歌。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://yandex.com" target="_blank" class="name">Yandex ↗</a>
+                        <span class="url">https://yandex.com</span>
+                        <div class="desc">俄罗斯主流搜索引擎，提供网页、图片搜索及邮箱、云盘等多元服务。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://www.google.com" target="_blank" class="name">谷歌 ↗</a>
+                        <span class="url">https://www.google.com</span>
+                        <div class="desc">全球最大搜索引擎，提供网页、图片、视频等多元信息检索服务。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">4</span>
+                    <div class="info">
+                        <a href="https://duckduckgo.com" target="_blank" class="name">鸭鸭走 ↗</a>
+                        <span class="url">https://duckduckgo.com</span>
+                        <div class="desc">强调隐私保护的搜索引擎，不追踪用户行为，提供网页与图片搜索。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">5</span>
+                    <div class="info">
+                        <a href="https://www.naver.com" target="_blank" class="name">NAVER ↗</a>
+                        <span class="url">https://www.naver.com</span>
+                        <div class="desc">韩国主流门户网站与搜索引擎，提供新闻、知识百科、博客等综合服务。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">6</span>
+                    <div class="info">
+                        <a href="https://info.com" target="_blank" class="name">info.com ↗</a>
+                        <span class="url">https://info.com</span>
+                        <div class="desc">多功能聚合搜索平台，整合Bing、Yahoo等来源，提供网页、新闻、图片等多元信息检索服务。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785692336681_qp5adex">
+                <div class="section-title">
+                    📁 社交媒体
+                    <span class="count-label">(4 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://www.facebook.com" target="_blank" class="name">脸书 ↗</a>
+                        <span class="url">https://www.facebook.com</span>
+                        <div class="desc">全球主流社交平台，用于好友互动、分享动态与兴趣社群。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://x.com" target="_blank" class="name">推特 ↗</a>
+                        <span class="url">https://x.com</span>
+                        <div class="desc">全球实时资讯与社交平台，允许用户发布文字、图片与视频。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://www.reddit.com" target="_blank" class="name">Reddit ↗</a>
+                        <span class="url">https://www.reddit.com</span>
+                        <div class="desc">全球大型论坛社区，涵盖无数兴趣版块，内容多元。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">4</span>
+                    <div class="info">
+                        <a href="https://telegram.org" target="_blank" class="name">纸飞机 ↗</a>
+                        <span class="url">https://telegram.org</span>
+                        <div class="desc">主流即时通讯软件，以加密通信、频道订阅和文件分享见长。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785692488105_88eo4el">
+                <div class="section-title">
+                    📁 技术工具
+                    <span class="count-label">(3 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://www.naviai.cn" target="_blank" class="name">NaviAI ↗</a>
+                        <span class="url">https://www.naviai.cn</span>
+                        <div class="desc">AI工具导航网站，收录1000+精选AI应用与资源，覆盖写作、设计、编程等分类。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://github.com" target="_blank" class="name">GitHub ↗</a>
+                        <span class="url">https://github.com</span>
+                        <div class="desc">全球最大代码托管平台，提供版本控制、协作开发及AI编程辅助</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://play.google.com/store" target="_blank" class="name">谷歌应用商店 ↗</a>
+                        <span class="url">https://play.google.com/store</span>
+                        <div class="desc">安卓官方应用商店，提供海量应用、游戏及数字内容下载</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-content" data-section="id_1785692999760_pn8u29w">
+                <div class="section-title">
+                    📁 电子邮箱
+                    <span class="count-label">(4 个)</span>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">1</span>
+                    <div class="info">
+                        <a href="https://mail.163.com" target="_blank" class="name">163邮箱 ↗</a>
+                        <span class="url">https://mail.163.com</span>
+                        <div class="desc">网易旗下主流中文邮箱服务，提供邮件收发、企业邮箱及办公协同功能。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">2</span>
+                    <div class="info">
+                        <a href="https://tempmail.ing/zh-CN" target="_blank" class="name">tempmail.ing临时邮箱 ↗</a>
+                        <span class="url">https://tempmail.ing/zh-CN</span>
+                        <div class="desc">免费临时邮箱服务，提供匿名、自毁的收件地址，用于注册验证防骚扰，有少量广告。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">3</span>
+                    <div class="info">
+                        <a href="https://mail.qq.com" target="_blank" class="name">QQ邮箱 ↗</a>
+                        <span class="url">https://mail.qq.com</span>
+                        <div class="desc">腾讯旗下主流中文邮箱服务，提供邮件收发、大附件中转及社交账号集成。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge no">无需VPN</span>
+                    </div>
+                </div>
+                <div class="bookmark-item">
+                    <span class="index">4</span>
+                    <div class="info">
+                        <a href="https://mail.google.com" target="_blank" class="name">谷歌邮箱 ↗</a>
+                        <span class="url">https://mail.google.com</span>
+                        <div class="desc">Google旗下主流邮箱服务，提供邮件收发、云存储及办公套件集成。</div>
+                    </div>
+                    <div class="meta-right">
+                        <div class="stars"><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span></div>
+                        <span class="vpn-badge yes">需VPN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-note">
+            📌 共 11 个分类，44 个精品网址
+        </div>
+    </div>
+    <script>
+        (function() {
+            var tabs = document.querySelectorAll(".tab-btn");
+            var contents = document.querySelectorAll(".section-content");
+            var scrollContainer = document.querySelector(".tabs-scroll");
+            tabs.forEach(function(tab) {
+                tab.addEventListener("click", function() {
+                    var sectionId = this.dataset.section;
+                    tabs.forEach(function(t) { t.classList.remove("active"); });
+                    this.classList.add("active");
+                    contents.forEach(function(c) {
+                        c.classList.toggle("active", c.dataset.section === sectionId);
+                    });
+                    // 将点击的标签滚动到可视区域
+                    if (scrollContainer) {
+                        var tabRect = this.getBoundingClientRect();
+                        var containerRect = scrollContainer.getBoundingClientRect();
+                        var scrollLeft = scrollContainer.scrollLeft;
+                        var targetScroll = scrollLeft + (tabRect.left - containerRect.left) - (containerRect.width / 2) + (tabRect.width / 2);
+                        scrollContainer.scrollTo({ left: targetScroll, behavior: "smooth" });
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
