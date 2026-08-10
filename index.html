@@ -163,77 +163,42 @@
         .announcement-bar .edit-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
         .announcement-bar .edit-btn:hover { background: rgba(255,255,255,0.35); }
 
+        /* ===== 顶部导航分区 ===== */
+        .top-nav {
+            display: flex;
+            background: #ffffff;
+            border-bottom: 1px solid #eef2f6;
+            padding: 0 16px;
+            flex-shrink: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            gap: 4px;
+        }
+        .top-nav::-webkit-scrollbar { display: none; }
+        .top-nav .tab {
+            flex-shrink: 0;
+            padding: 12px 18px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            background: none;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+        .top-nav .tab:hover { color: #0f172a; }
+        .top-nav .tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+            font-weight: 600;
+        }
+
         /* ===== 内容容器 ===== */
         .content-container { flex:1; overflow-y:auto; padding:16px 24px 80px 24px; }
         .content-container::-webkit-scrollbar { width:6px; }
         .content-container::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:8px; }
-
-        /* ===== 轮播图 ===== */
-        .carousel {
-            position: relative;
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            background: #e2e8f0;
-            height: 200px;
-        }
-        .carousel .slide {
-            display: none;
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        .carousel .slide.active { display: block; }
-        .carousel .slide img { width:100%; height:100%; object-fit:cover; }
-        .carousel .slide .overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 20px;
-            background: linear-gradient(transparent, rgba(0,0,0,0.6));
-            color: #fff;
-        }
-        .carousel .slide .overlay h3 { font-size:18px; font-weight:600; }
-        .carousel .slide .overlay p { font-size:13px; opacity:0.8; }
-        .carousel .dots {
-            position: absolute;
-            bottom: 10px;
-            right: 16px;
-            display: flex;
-            gap: 6px;
-        }
-        .carousel .dots .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.5);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .carousel .dots .dot.active { background: #fff; transform: scale(1.2); }
-        .carousel .carousel-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.4);
-            color: #fff;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.2s;
-            z-index: 5;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-        }
-        .carousel .carousel-btn:hover { background: rgba(0,0,0,0.6); }
-        .carousel .carousel-btn svg { width:18px; height:18px; stroke:#fff; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .carousel .carousel-btn.prev { left: 10px; }
-        .carousel .carousel-btn.next { right: 10px; }
 
         /* ===== 搜索栏 ===== */
         .search-bar {
@@ -457,6 +422,8 @@
             border-color:#6366f1; background:#fff;
         }
         .modal-box .form-group textarea { resize:vertical; min-height:70px; }
+
+        /* ===== 文件上传 ===== */
         .modal-box .form-group .file-input-wrap {
             display:flex; align-items:center; gap:10px; background:#f8fafc; padding:8px 14px; border-radius:12px; border:2px dashed #d1d5db; cursor:pointer; transition:0.2s;
         }
@@ -464,6 +431,24 @@
         .modal-box .form-group .file-input-wrap input[type="file"] { display:none; }
         .modal-box .form-group .file-input-wrap .file-name { font-size:14px; color:#64748b; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .modal-box .form-group .file-input-wrap svg { width:18px; height:18px; stroke:#94a3b8; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+
+        /* ===== 头像预览 ===== */
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px auto;
+            overflow: hidden;
+            border: 3px solid #eef2f6;
+            font-size: 32px;
+            color: #94a3b8;
+        }
+        .avatar-preview img { width:100%; height:100%; object-fit:cover; }
+
         .modal-box .form-group .url-input-wrap { display:flex; gap:8px; flex-wrap:wrap; }
         .modal-box .form-group .url-input-wrap input { flex:1; min-width:200px; }
         .modal-box .form-group .url-input-wrap button {
@@ -523,9 +508,9 @@
             .content-container { padding:12px; }
             .content-grid { grid-template-columns:1fr; }
             .modal-box { padding:20px; }
-            .carousel { height:140px; }
             .search-bar { flex-direction:column; }
             .search-bar button { width:100%; justify-content:center; }
+            .top-nav .tab { padding:10px 12px; font-size:13px; }
         }
     </style>
 </head>
@@ -596,6 +581,15 @@
                 </button>
             </div>
 
+            <!-- ===== 顶部导航分区（公告下方） ===== -->
+            <div class="top-nav" id="topNav">
+                <button class="tab active" data-tab="推荐" onclick="switchTab('推荐')">推荐</button>
+                <button class="tab" data-tab="论坛" onclick="switchTab('论坛')">论坛</button>
+                <button class="tab" data-tab="资源分享" onclick="switchTab('资源分享')">资源分享</button>
+                <button class="tab" data-tab="网址分享" onclick="switchTab('网址分享')">网址分享</button>
+                <button class="tab" data-tab="VPN分享" onclick="switchTab('VPN分享')">VPN分享</button>
+            </div>
+
             <!-- 内容 -->
             <div class="content-container" id="contentContainer">
                 <!-- 搜索栏（首页显示） -->
@@ -629,9 +623,9 @@
                     <label>分类 *</label>
                     <select id="uploadCategory" required>
                         <option value="论坛">💬 论坛</option>
-                        <option value="资源">📦 资源</option>
-                        <option value="网址">🔗 网址</option>
-                        <option value="VPN">🔒 VPN</option>
+                        <option value="资源分享">📦 资源分享</option>
+                        <option value="网址分享">🔗 网址分享</option>
+                        <option value="VPN分享">🔒 VPN分享</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -752,7 +746,7 @@
         </div>
     </div>
 
-    <!-- 编辑个人资料弹窗 -->
+    <!-- 编辑个人资料弹窗（支持图片上传） -->
     <div id="profileEditModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileEdit()">
         <div class="modal-box" style="max-width:460px;">
             <div class="modal-header">
@@ -761,9 +755,21 @@
                     <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
+            <div class="avatar-preview" id="avatarPreview">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
             <div class="form-group">
-                <label>头像链接</label>
-                <input type="url" id="editAvatar" placeholder="请输入头像图片URL">
+                <label>上传头像</label>
+                <div class="file-input-wrap" onclick="document.getElementById('avatarFileInput').click()">
+                    <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                    <span class="file-name" id="avatarFileName">点击选择图片</span>
+                    <input type="file" id="avatarFileInput" accept="image/*" onchange="previewAvatar(this)">
+                </div>
+                <p style="font-size:12px;color:#94a3b8;margin-top:4px;">支持 JPG、PNG、GIF，建议 200×200 以上</p>
+            </div>
+            <div class="form-group">
+                <label>或输入头像URL</label>
+                <input type="url" id="editAvatar" placeholder="https://example.com/avatar.jpg">
             </div>
             <div class="form-group">
                 <label>昵称</label>
@@ -781,7 +787,7 @@
     </div>
 
     <!-- 版本号 -->
-    <div class="version-tag">v10.0.0</div>
+    <div class="version-tag">v11.0.0</div>
 
     <!-- ========================================================== -->
     <!--  JavaScript                                                -->
@@ -802,6 +808,7 @@
         let currentUser = null;
         let currentUserRole = 'user';
         let currentNav = 'home';
+        let currentTab = '推荐';
         let allContents = [];
         let allNotifications = [];
         let pendingCount = 0;
@@ -809,8 +816,6 @@
         let uploadedFiles = [];
         let uploadedUrls = [];
         let uploadedTags = [];
-        let carouselIndex = 0;
-        let carouselTimer = null;
         let currentSearchQuery = '';
         let isMainAdmin = false;
 
@@ -830,9 +835,10 @@
         const userNickname = document.getElementById('userNickname');
         const searchContainer = document.getElementById('searchContainer');
         const searchInput = document.getElementById('searchInput');
+        const topNav = document.getElementById('topNav');
 
         // ============================================================
-        //  检 查 登 录（修复闪烁：先隐藏，验证通过后再显示）
+        //  检 查 登 录
         // ============================================================
         (async function checkAuth() {
             try {
@@ -842,16 +848,13 @@
                     return;
                 }
                 currentUser = session.user;
-                // ✅ 验证通过，显示主界面
                 app.classList.remove('hidden');
                 await loadUserProfile();
                 await loadUserRole();
                 await loadAnnouncement();
                 await loadNotifications();
-                await loadBanners();
                 await loadContents();
                 updateUI();
-                startCarousel();
             } catch (err) {
                 console.error('认证失败:', err);
                 window.location.href = '/login.html';
@@ -935,86 +938,6 @@
         }
 
         // ============================================================
-        //  加 载 轮 播 图
-        // ============================================================
-        let banners = [];
-
-        async function loadBanners() {
-            const { data, error } = await supabaseClient
-                .from('banners')
-                .select('*')
-                .eq('is_active', true)
-                .order('sort_order', { ascending: true })
-                .limit(5);
-            banners = data || [];
-            return banners;
-        }
-
-        async function renderCarousel() {
-            banners = await loadBanners();
-            const container = document.getElementById('carouselContainer');
-            if (!container) return;
-            if (banners.length === 0) {
-                container.innerHTML = '';
-                return;
-            }
-            let html = '';
-            banners.forEach((b, i) => {
-                html += `
-                    <div class="slide ${i === 0 ? 'active' : ''}">
-                        <img src="${b.image_url}" alt="${b.title || '轮播图'}">
-                        ${b.title ? `<div class="overlay"><h3>${b.title}</h3>${b.link ? `<p>${b.link}</p>` : ''}</div>` : ''}
-                    </div>
-                `;
-            });
-            let dotsHtml = '';
-            banners.forEach((b, i) => {
-                dotsHtml += `<span class="dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></span>`;
-            });
-            html += `
-                <div class="dots">${dotsHtml}</div>
-                ${banners.length > 1 ? `
-                    <button class="carousel-btn prev" onclick="prevSlide()">
-                        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-                    </button>
-                    <button class="carousel-btn next" onclick="nextSlide()">
-                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
-                ` : ''}
-            `;
-            container.innerHTML = html;
-            carouselIndex = 0;
-        }
-
-        function startCarousel() {
-            if (carouselTimer) clearInterval(carouselTimer);
-            if (banners.length > 1) {
-                carouselTimer = setInterval(nextSlide, 4000);
-            }
-        }
-
-        function goToSlide(index) {
-            const slides = document.querySelectorAll('.carousel .slide');
-            const dots = document.querySelectorAll('.carousel .dot');
-            if (!slides.length) return;
-            slides.forEach((s, i) => s.classList.toggle('active', i === index));
-            dots.forEach((d, i) => d.classList.toggle('active', i === index));
-            carouselIndex = index;
-        }
-
-        function nextSlide() {
-            const total = banners.length;
-            if (total === 0) return;
-            goToSlide((carouselIndex + 1) % total);
-        }
-
-        function prevSlide() {
-            const total = banners.length;
-            if (total === 0) return;
-            goToSlide((carouselIndex - 1 + total) % total);
-        }
-
-        // ============================================================
         //  加 载 消 息
         // ============================================================
         async function loadNotifications() {
@@ -1038,7 +961,7 @@
         }
 
         // ============================================================
-        //  加 载 内 容
+        //  加 载 内 容（根据当前导航和分区）
         // ============================================================
         async function loadContents(searchQuery = '') {
             if (!currentUser) return;
@@ -1048,20 +971,28 @@
                 profiles!user_id (id, nickname, avatar_url, role)
             `);
 
+            // ===== 根据导航（侧边栏）决定查询条件 =====
             if (currentNav === 'home') {
+                // 首页：只显示已审核的内容，再按顶部tab分区筛选
                 query = query.eq('status', 'approved');
+                if (currentTab !== '推荐') {
+                    query = query.eq('category', currentTab);
+                }
                 if (searchQuery) {
                     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,file_name.ilike.%${searchQuery}%,url.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
                 }
             } else if (currentNav === 'upload') {
+                // 上传：显示用户自己的所有内容（已审核 + 待审核 + 已拒绝）
                 query = query.eq('user_id', currentUser.id);
             } else if (currentNav === 'review') {
+                // 审核：仅管理员可看，显示所有待审核
                 if (currentUserRole === 'admin') {
                     query = query.eq('status', 'pending');
                 } else {
                     query = query.eq('status', 'approved').limit(0);
                 }
             } else if (currentNav === 'messages') {
+                // 消息：不加载内容
                 query = query.eq('status', 'approved').limit(0);
             } else {
                 query = query.eq('status', 'approved');
@@ -1076,6 +1007,7 @@
             }
             allContents = data || [];
 
+            // 获取点赞状态
             if (currentUser && allContents.length > 0) {
                 const contentIds = allContents.map(c => c.id);
                 const { data: likesData, error: likesError } = await supabaseClient
@@ -1091,6 +1023,7 @@
                 }
             }
 
+            // 统计待审核数量（管理员）
             if (currentUserRole === 'admin') {
                 const { count, error: countErr } = await supabaseClient
                     .from('contents')
@@ -1111,16 +1044,19 @@
         }
 
         // ============================================================
-        //  渲 染 内 容
+        //  渲 染 内 容（先清空再渲染，防止重复）
         // ============================================================
         function renderContents() {
-            const data = allContents;
+            // ✅ 先清空容器
+            contentRender.innerHTML = '';
 
+            // 消息页
             if (currentNav === 'messages') {
                 renderNotifications();
                 return;
             }
 
+            // 上传页面：显示发布按钮 + 内容列表
             if (currentNav === 'upload') {
                 let html = `
                     <div class="upload-header">
@@ -1132,21 +1068,24 @@
                     </div>
                 `;
                 contentRender.innerHTML = html;
-                renderContentList(data);
+                renderContentList(allContents);
                 return;
             }
 
-            renderContentList(data);
+            // 其他页面直接渲染
+            renderContentList(allContents);
         }
 
+        // ============================================================
+        //  渲 染 内 容 列 表
+        // ============================================================
         function renderContentList(data) {
             if (!data || data.length === 0) {
-                let icon = '🌱';
                 let msg = '暂无内容';
-                if (currentNav === 'upload') msg = '你还没有发布任何内容，点击上方按钮发布第一个吧！';
-                else if (currentNav === 'review') { icon = '✅';
-                    msg = '暂无待审核内容'; } else if (currentNav === 'messages') { icon = '📭';
-                    msg = '暂无消息'; }
+                if (currentNav === 'home') msg = '该分区暂无内容，发布第一个吧！';
+                else if (currentNav === 'upload') msg = '你还没有发布任何内容，点击上方按钮发布第一个吧！';
+                else if (currentNav === 'review') msg = '暂无待审核内容';
+                else if (currentNav === 'messages') msg = '暂无消息';
                 contentRender.innerHTML += `
                     <div class="empty-state">
                         <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
@@ -1283,6 +1222,7 @@
             html += '</div>';
             contentRender.innerHTML += html;
 
+            // 搜索栏在首页显示，其他页面隐藏
             if (currentNav === 'home') {
                 searchContainer.classList.remove('hidden');
             } else {
@@ -1303,18 +1243,15 @@
             let html = '<div style="max-width:600px;margin:0 auto;">';
             allNotifications.forEach(n => {
                 let iconHtml = '';
-                if (n.type === 'approved' || n.type === 'comment' || n.type === 'like' || n.type === 'admin_request' ||
-                    n.type === 'admin_response') {
-                    const iconMap = {
-                        'approved': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>',
-                        'rejected': '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-                        'comment': '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
-                        'like': '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>',
-                        'admin_request': '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
-                        'admin_response': '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 3 14 7 18"/><line x1="3" y1="14" x2="18" y2="14"/></svg>'
-                    };
-                    iconHtml = `<span class="noti-icon">${iconMap[n.type] || ''}</span>`;
-                }
+                const iconMap = {
+                    'approved': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>',
+                    'rejected': '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+                    'comment': '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+                    'like': '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>',
+                    'admin_request': '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+                    'admin_response': '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 3 14 7 18"/><line x1="3" y1="14" x2="18" y2="14"/></svg>'
+                };
+                iconHtml = `<span class="noti-icon">${iconMap[n.type] || ''}</span>`;
                 html += `
                     <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
                         ${iconHtml}
@@ -1333,12 +1270,12 @@
         //  工 具 函 数
         // ============================================================
         function getCategoryIcon(cat) {
-            const map = { '论坛': '💬', '资源': '📦', '网址': '🔗', 'VPN': '🔒' };
+            const map = { '论坛': '💬', '资源分享': '📦', '网址分享': '🔗', 'VPN分享': '🔒' };
             return map[cat] || '📎';
         }
 
         function getCategoryClass(cat) {
-            const map = { '论坛': 'forum', '资源': 'res', '网址': 'url', 'VPN': 'vpn' };
+            const map = { '论坛': 'forum', '资源分享': 'res', '网址分享': 'url', 'VPN分享': 'vpn' };
             return map[cat] || '';
         }
 
@@ -1367,10 +1304,18 @@
         }
 
         // ============================================================
-        //  导 航 切 换
+        //  切 换 侧 边 栏 导 航
         // ============================================================
         function switchNav(nav) {
             currentNav = nav;
+            // 如果切换到首页，恢复顶部tab高亮
+            if (nav === 'home') {
+                document.querySelectorAll('#topNav .tab').forEach(el => {
+                    el.classList.toggle('active', el.dataset.tab === currentTab);
+                });
+            } else {
+                document.querySelectorAll('#topNav .tab').forEach(el => el.classList.remove('active'));
+            }
             document.querySelectorAll('#sideNav .nav-item').forEach(el => {
                 el.classList.toggle('active', el.dataset.nav === nav);
             });
@@ -1382,6 +1327,20 @@
                 return;
             }
             loadContents(currentSearchQuery);
+        }
+
+        // ============================================================
+        //  切 换 顶 部 分 区
+        // ============================================================
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('#topNav .tab').forEach(el => {
+                el.classList.toggle('active', el.dataset.tab === tab);
+            });
+            // 如果当前在首页，刷新内容
+            if (currentNav === 'home') {
+                loadContents(currentSearchQuery);
+            }
         }
 
         // ============================================================
@@ -1963,10 +1922,28 @@
         }
 
         // ============================================================
-        //  编 辑 个 人 资 料
+        //  编 辑 个 人 资 料（支持图片上传）
         // ============================================================
+        let avatarFileToUpload = null;
+
+        function previewAvatar(input) {
+            const file = input.files[0];
+            if (!file) return;
+            avatarFileToUpload = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('avatarPreview').innerHTML = `<img src="${e.target.result}" alt="avatar">`;
+                document.getElementById('avatarFileName').textContent = file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
         function openProfileEdit() {
             if (!currentUser) return;
+            avatarFileToUpload = null;
+            document.getElementById('avatarPreview').innerHTML =
+                `<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+            document.getElementById('avatarFileName').textContent = '点击选择图片';
             document.getElementById('editAvatar').value = '';
             document.getElementById('editNickname').value = userNickname.textContent || '';
             document.getElementById('editBio').value = '';
@@ -1976,6 +1953,10 @@
                 .single()
                 .then(({ data }) => {
                     if (data) {
+                        if (data.avatar_url) {
+                            document.getElementById('avatarPreview').innerHTML =
+                                `<img src="${data.avatar_url}" alt="avatar">`;
+                        }
                         document.getElementById('editAvatar').value = data.avatar_url || '';
                         document.getElementById('editNickname').value = data.nickname || '';
                         document.getElementById('editBio').value = data.bio || '';
@@ -1989,14 +1970,33 @@
         }
 
         async function saveProfile() {
-            const avatar_url = document.getElementById('editAvatar').value.trim();
+            const avatar_url_input = document.getElementById('editAvatar').value.trim();
             const nickname = document.getElementById('editNickname').value.trim();
             const bio = document.getElementById('editBio').value.trim();
 
             const updateData = {};
-            if (avatar_url) updateData.avatar_url = avatar_url;
             if (nickname) updateData.nickname = nickname;
             if (bio) updateData.bio = bio;
+
+            // 处理头像：如果有上传文件，先上传到 storage
+            if (avatarFileToUpload) {
+                const filePath = `avatars/${currentUser.id}/${Date.now()}_${avatarFileToUpload.name}`;
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('avatars')
+                    .upload(filePath, avatarFileToUpload);
+                if (!uploadError) {
+                    const { data: urlData } = supabaseClient.storage
+                        .from('avatars')
+                        .getPublicUrl(filePath);
+                    updateData.avatar_url = urlData.publicUrl;
+                } else {
+                    console.warn('头像上传失败:', uploadError);
+                    // 如果上传失败，尝试使用输入的URL
+                    if (avatar_url_input) updateData.avatar_url = avatar_url_input;
+                }
+            } else if (avatar_url_input) {
+                updateData.avatar_url = avatar_url_input;
+            }
 
             if (Object.keys(updateData).length === 0) {
                 alert('没有修改任何内容');
@@ -2021,8 +2021,11 @@
         // ============================================================
         //  初 始 化
         // ============================================================
-        console.log('👁️ 必看网 v10.0.0 (品牌Logo放大3倍)');
+        console.log('👁️ 必看网 v11.0.0 (全功能修复版)');
         console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
+
+        // 初始加载时高亮推荐
+        document.querySelector('#topNav .tab[data-tab="推荐"]')?.classList.add('active');
     </script>
 
 </body>
