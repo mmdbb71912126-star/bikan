@@ -35,112 +35,6 @@
             color: inherit;
         }
 
-        /* ===== 登录页（全屏居中） ===== */
-        #loginPage {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 20px;
-        }
-        #loginPage .login-box {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            padding: 48px 40px;
-            border-radius: 32px;
-            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.3);
-            max-width: 420px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-        }
-        #loginPage .login-box .logo {
-            font-size: 48px;
-            margin-bottom: 4px;
-        }
-        #loginPage .login-box h1 {
-            font-size: 28px;
-            font-weight: 800;
-            color: #0f172a;
-        }
-        #loginPage .login-box h1 span {
-            color: #6366f1;
-        }
-        #loginPage .login-box .sub {
-            color: #94a3b8;
-            font-size: 14px;
-            margin: 4px 0 28px 0;
-        }
-        #loginPage .login-box .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        #loginPage .login-box .input-group input {
-            padding: 14px 18px;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
-            font-size: 16px;
-            background: #fff;
-            transition: all 0.3s;
-        }
-        #loginPage .login-box .input-group input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-        }
-        #loginPage .login-box .btn-primary {
-            padding: 14px;
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        #loginPage .login-box .btn-primary:hover {
-            background: #4f46e5;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-        }
-        #loginPage .login-box .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        #loginPage .login-box .msg {
-            margin-top: 16px;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            min-height: 44px;
-        }
-        #loginPage .login-box .msg.info {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        #loginPage .login-box .msg.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-        #loginPage .login-box .msg.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        #loginPage .login-box .msg.loading {
-            background: #e0f2fe;
-            color: #075985;
-        }
-        #loginPage .login-box .hint {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-top: 20px;
-        }
-
         /* ===== 主界面（PC 全屏布局） ===== */
         #app {
             display: flex;
@@ -726,7 +620,7 @@
             pointer-events: none;
         }
 
-        /* ===== 响应式（小屏降级为手机布局） ===== */
+        /* ===== 响应式（小屏降级） ===== */
         @media (max-width: 768px) {
             .sidebar {
                 width: 60px;
@@ -788,26 +682,9 @@
 <body>
 
     <!-- ========================================================== -->
-    <!--  登 录 页                                                  -->
-    <!-- ========================================================== -->
-    <div id="loginPage">
-        <div class="login-box">
-            <div class="logo">👁️</div>
-            <h1>必看<span>网</span></h1>
-            <p class="sub">分享 · 交流 · 成长</p>
-            <div class="input-group">
-                <input type="email" id="loginEmail" placeholder="请输入邮箱地址" autocomplete="email">
-                <button class="btn-primary" id="loginBtn" onclick="handleLogin()">📨 发送确认邮件</button>
-            </div>
-            <div id="loginMsg" class="msg info">💡 输入邮箱，点击按钮登录</div>
-            <p class="hint">首次使用自动注册 · 检查垃圾箱 📬</p>
-        </div>
-    </div>
-
-    <!-- ========================================================== -->
     <!--  主 界 面                                                   -->
     <!-- ========================================================== -->
-    <div id="app" style="display:none;">
+    <div id="app">
         <!-- 左侧边栏 -->
         <aside class="sidebar" id="sidebar">
             <div class="brand">
@@ -952,7 +829,7 @@
     </div>
 
     <!-- 版本号 -->
-    <div class="version-tag">v4.0.0</div>
+    <div class="version-tag">v5.0.0</div>
 
     <!-- ========================================================== -->
     <!--  JavaScript                                                -->
@@ -963,7 +840,6 @@
         // ============================================================
         const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
-        const SITE_URL = 'http://bikan.dpdns.org';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -980,11 +856,6 @@
         // ============================================================
         //  DOM 引 用
         // ============================================================
-        const loginPage = document.getElementById('loginPage');
-        const loginEmail = document.getElementById('loginEmail');
-        const loginMsg = document.getElementById('loginMsg');
-        const loginBtn = document.getElementById('loginBtn');
-        const app = document.getElementById('app');
         const contentRender = document.getElementById('contentRender');
         const announcementText = document.getElementById('announcementText');
         const editAnnounceBtn = document.getElementById('editAnnounceBtn');
@@ -995,13 +866,33 @@
         const userEmail = document.getElementById('userEmail');
 
         // ============================================================
+        //  检 查 登 录 状 态（未登录跳转到 login.html）
+        // ============================================================
+        (async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+            currentUser = session.user;
+            userAvatar.textContent = getInitials(session.user.email);
+            userEmail.textContent = session.user.email;
+            await loadUserRole();
+            await loadAnnouncement();
+            await loadContents();
+            updateUI();
+        })();
+
+        // 监听登录状态变化（如果退出则跳转到 login.html）
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (!session) {
+                window.location.href = '/login.html';
+            }
+        });
+
+        // ============================================================
         //  工 具 函 数
         // ============================================================
-        function showLoginMsg(msg, type = 'info') {
-            loginMsg.textContent = msg;
-            loginMsg.className = 'msg ' + type;
-        }
-
         function getCategoryIcon(cat) {
             const map = { '论坛': '💬', '资源': '📦', '网址': '🔗', 'VPN': '🔒' };
             return map[cat] || '📎';
@@ -1042,93 +933,14 @@
         }
 
         // ============================================================
-        //  登 录  /  注 销
+        //  退 出 登 录
         // ============================================================
-        async function handleLogin() {
-            const email = loginEmail.value.trim();
-            if (!email) {
-                showLoginMsg('❌ 请输入邮箱地址', 'error');
-                return;
-            }
-            if (!email.includes('@') || !email.includes('.')) {
-                showLoginMsg('❌ 请输入有效邮箱', 'error');
-                return;
-            }
-
-            loginBtn.disabled = true;
-            loginBtn.textContent = '⏳ 发送中...';
-            showLoginMsg('📤 正在发送确认邮件...', 'loading');
-
-            const { error } = await supabase.auth.signInWithOtp({
-                email: email,
-                options: { emailRedirectTo: SITE_URL }
-            });
-
-            loginBtn.disabled = false;
-            loginBtn.textContent = '📨 发送确认邮件';
-
-            if (error) {
-                showLoginMsg('❌ 发送失败：' + error.message, 'error');
-            } else {
-                showLoginMsg('✅ 邮件已发送！请检查邮箱（含垃圾箱）📬', 'success');
-            }
-        }
-
-        loginEmail.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-
-        // 退出登录
         async function handleLogout() {
             await supabase.auth.signOut();
-            // 清除本地存储
             localStorage.clear();
             sessionStorage.clear();
-            // 重新加载页面
-            location.reload();
+            window.location.href = '/login.html';
         }
-
-        // ============================================================
-        //  认 证 状 态 监 听
-        // ============================================================
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session) {
-                currentUser = session.user;
-                loginPage.style.display = 'none';
-                app.style.display = 'flex';
-                await loadUserRole();
-                await loadAnnouncement();
-                await loadContents();
-                updateUI();
-                // 更新用户信息
-                userAvatar.textContent = getInitials(session.user.email);
-                userEmail.textContent = session.user.email;
-            } else {
-                currentUser = null;
-                currentUserRole = 'user';
-                loginPage.style.display = 'flex';
-                app.style.display = 'none';
-            }
-        });
-
-        // 检查已有 session
-        (async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                loginPage.style.display = 'none';
-                app.style.display = 'flex';
-                await loadUserRole();
-                await loadAnnouncement();
-                await loadContents();
-                updateUI();
-                userAvatar.textContent = getInitials(session.user.email);
-                userEmail.textContent = session.user.email;
-            } else {
-                loginPage.style.display = 'flex';
-                app.style.display = 'none';
-            }
-        })();
 
         // ============================================================
         //  加 载 用 户 角 色
@@ -1143,7 +955,6 @@
             if (data) {
                 currentUserRole = data.role;
             } else {
-                // 尝试创建 profile
                 await supabase.from('profiles').upsert({
                     id: currentUser.id,
                     role: currentUser.email === '3948677391@qq.com' ? 'admin' : 'user'
@@ -1206,7 +1017,6 @@
             }
             allContents = data || [];
 
-            // 统计待审核数量
             if (currentUserRole === 'admin') {
                 const { count, error: countErr } = await supabase
                     .from('contents')
@@ -1324,11 +1134,9 @@
         // ============================================================
         function switchNav(nav) {
             currentNav = nav;
-            // 高亮侧边栏
             document.querySelectorAll('#sideNav .nav-item').forEach(el => {
                 el.classList.toggle('active', el.dataset.nav === nav);
             });
-            // 如果是审核，只有管理员能看
             if (nav === 'review' && currentUserRole !== 'admin') {
                 return;
             }
@@ -1646,11 +1454,9 @@
             }
         }
 
-        // ============================================================
-        //  初 始 化
-        // ============================================================
-        console.log('👁️ 必看网 v4.0.0 (PC版) 已启动');
+        console.log('👁️ 必看网 v5.0.0 (PC版) 已启动');
         console.log('📧 管理员: 3948677391@qq.com');
     </script>
+
 </body>
 </html>
