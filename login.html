@@ -22,12 +22,12 @@
             padding: 48px 44px;
             border-radius: 32px;
             box-shadow: 0 30px 60px -20px rgba(0,0,0,0.3);
-            max-width: 420px;
+            max-width: 520px;
             width: 100%;
             border: 1px solid rgba(255,255,255,0.6);
         }
-        .login-box .logo { text-align:center; margin-bottom:8px; }
-        .login-box .logo svg { width:80px; height:54px; }
+        .login-box .logo { text-align:center; margin-bottom:12px; }
+        .login-box .logo svg { width:240px; height:163px; }
         .login-box h1 { text-align:center; font-size:28px; font-weight:800; color:#0f172a; margin-top:4px; }
         .login-box h1 span { color:#6366f1; }
         .login-box .sub { text-align:center; color:#94a3b8; font-size:14px; margin:4px 0 28px 0; }
@@ -147,9 +147,9 @@
         .hidden { display:none !important; }
 
         @media (max-width:480px) {
-            .login-box { padding:32px 24px; }
+            .login-box { padding:32px 24px; max-width:400px; }
             .login-box h1 { font-size:24px; }
-            .login-box .logo svg { width:64px; height:44px; }
+            .login-box .logo svg { width:160px; height:109px; }
         }
     </style>
 </head>
@@ -441,7 +441,7 @@
         registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
         registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
 
-        console.log('必看网 - 登录页 v10.0 (品牌Logo + 全SVG)');
+        console.log('必看网 - 登录页 v10.0 (品牌Logo放大3倍)');
     </script>
 
 </body>
