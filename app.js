@@ -54,32 +54,49 @@ const searchInput = document.getElementById('searchInput');
 const topNav = document.getElementById('topNav');
 
 // ============================================================
-//  检 查 登 录（修复循环跳转）
+//  跳 转 锁（防止死循环）
+// ============================================================
+let _isRedirecting = false;
+
+// ============================================================
+//  检 查 登 录
 // ============================================================
 (async function checkAuth() {
+    if (_isRedirecting) return;
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) {
+            _isRedirecting = true;
             window.location.href = '/login.html';
             return;
         }
 
-        // ✅ 验证 token 是否有效
+        // 验证 token 是否有效
         const { data: userData, error: userError } = await supabaseClient.auth.getUser();
         if (userError || !userData.user) {
             await supabaseClient.auth.signOut();
             localStorage.clear();
             sessionStorage.clear();
+            // 清除 IndexedDB
+            try {
+                const dbs = await indexedDB.databases ? await indexedDB.databases() : [];
+                for (const db of dbs) {
+                    if (db.name && db.name.includes('supabase')) {
+                        indexedDB.deleteDatabase(db.name);
+                    }
+                }
+            } catch (e) {}
+            _isRedirecting = true;
             window.location.href = '/login.html';
             return;
         }
 
-        currentUser = session.user;
+        currentUser = userData.user;
 
         // 检查封禁状态
         const { data: profile } = await supabaseClient
             .from('profiles')
-            .select('is_banned, ban_expires_at, ban_reason')
+            .select('is_banned, ban_expires_at, ban_reason, role')
             .eq('id', currentUser.id)
             .single();
 
@@ -93,6 +110,9 @@ const topNav = document.getElementById('topNav');
                 return;
             }
         }
+
+        currentUserRole = profile?.role || 'user';
+        isMainAdmin = currentUser.email === MAIN_ADMIN_EMAIL;
 
         app.classList.remove('hidden');
         await loadUserProfile();
@@ -118,6 +138,7 @@ const topNav = document.getElementById('topNav');
         updateUI();
     } catch (err) {
         console.error('认证失败:', err);
+        _isRedirecting = true;
         window.location.href = '/login.html';
     }
 })();
@@ -329,9 +350,10 @@ function closeGlobalBanner() {
 }
 
 // ============================================================
-//  加 载 举 报
+//  加 载 举 报（已修复空值检查）
 // ============================================================
 async function loadReports() {
+    // 如果不是管理员，直接返回
     if (currentUserRole !== 'admin') return;
 
     const { data, error } = await supabaseClient
@@ -345,7 +367,7 @@ async function loadReports() {
         return;
     }
 
-    if (data) {
+    if (data && data.length > 0) {
         for (let report of data) {
             try {
                 const { data: userData } = await supabaseClient.auth.admin.getUserById(report.reporter_id);
@@ -365,23 +387,22 @@ async function loadReports() {
             }
         }
         allReports = data;
-        const count = data.length;
+    } else {
+        allReports = [];
+    }
 
-        // ✅ 安全设置：先检查元素是否存在
-        const reportBadge = document.getElementById('reportBadge');
-        if (reportBadge) {
-            reportBadge.textContent = count;
-            if (count > 0) {
-                reportBadge.classList.remove('hidden');
-            } else {
-                reportBadge.classList.add('hidden');
-            }
-        }
+    const count = allReports.length;
 
-        const reportCountBadge = document.getElementById('reportCountBadge');
-        if (reportCountBadge) {
-            reportCountBadge.textContent = count;
-        }
+    // ✅ 安全更新徽章（先检查元素是否存在）
+    const reportBadge = document.getElementById('reportBadge');
+    if (reportBadge) {
+        reportBadge.textContent = count;
+        reportBadge.classList.toggle('hidden', count === 0);
+    }
+
+    const reportCountBadge = document.getElementById('reportCountBadge');
+    if (reportCountBadge) {
+        reportCountBadge.textContent = count;
     }
 }
 
@@ -744,10 +765,9 @@ function renderContentList(data) {
 }
 
 // ============================================================
-//  个 人 中 心（独立页面）
+//  个 人 中 心
 // ============================================================
 function renderProfile() {
-    // 获取当前用户完整资料
     supabaseClient.from('profiles')
         .select('*')
         .eq('id', currentUser.id)
@@ -757,7 +777,6 @@ function renderProfile() {
                 `<img src="${profile.avatar_url}" alt="avatar">` :
                 (userNickname.textContent || 'U').charAt(0).toUpperCase();
 
-            // 计算下次可修改时间
             let restrictionMsg = '';
             if (_lastUpdatedAt) {
                 const lastUpdated = new Date(_lastUpdatedAt);
@@ -809,10 +828,9 @@ function renderProfile() {
 }
 
 // ============================================================
-//  管 理 员 页 面（独立页面）
+//  管 理 员 页 面
 // ============================================================
 function renderAdminPage() {
-    // 加载举报数据
     loadReports();
 
     let html = `
@@ -845,7 +863,6 @@ function renderAdminPage() {
                         </div>
 
                         <div id="adminContent">
-                            <!-- 默认显示用户管理 -->
                             <div id="adminTabContent">
                                 <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
                                 <div style="margin-bottom:12px;">
@@ -890,8 +907,6 @@ function renderAdminPage() {
                 </div>
             `;
     contentRender.innerHTML = html;
-
-    // 默认加载用户管理tab
     switchAdminTab('users');
 }
 
@@ -961,8 +976,7 @@ function switchAdminTab(tab) {
         return;
     }
 
-    // 默认用户管理（已在HTML中）
-    // 重新显示用户管理界面
+    // 默认用户管理
     content.innerHTML = `
                 <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
                 <div style="margin-bottom:12px;">
@@ -1093,7 +1107,6 @@ function openReportDetail(reportId) {
         return;
     }
 
-    // 获取被举报内容的完整信息
     supabaseClient.from('contents')
         .select('*')
         .eq('id', report.content_id)
@@ -1133,7 +1146,7 @@ function openReportDetail(reportId) {
                                 封禁用户
                             </button>
                             <button class="btn-sm" onclick="resolveReport(${report.id}, 'resolved', 'upload_blocked')" style="padding:8px 16px;border-radius:10px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;font-weight:600;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/><polyline points="12 12 12 16 10 14"/><polyline points="12 12 16 14 12 16"/><line x1="4" y1="20" x2="20" y2="4"/></svg>
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/><polyline points="12 12 12 16 10 14"/><polyline points="12 12 16 14 12 16"/><line x1="4" y1="20" x2="20" y2="4"/></svg>
                                 限制上传
                             </button>
                             <button class="btn-sm" onclick="resolveReport(${report.id}, 'dismissed', null)" style="padding:8px 16px;border-radius:10px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">
@@ -1240,7 +1253,6 @@ async function banUser(userId, reason, banType, bannedBy) {
         return false;
     }
 
-    // 发送通知给被禁用户
     const msg = banType === 'permanent' ?
         `🔒 你的账号已被永久封禁，理由：${reason}` :
         `🔒 你的账号已被封禁至 ${new Date(expiresAt).toLocaleString()}，理由：${reason}`;
@@ -1298,12 +1310,11 @@ async function submitAdminAction() {
         return;
     }
 
-    // ✅ 验证目标用户是否存在
     const { data: targetUser, error: userError } = await supabaseClient
         .from('profiles')
         .select('id, role, email')
         .eq('id', targetId)
-        .maybeSingle();  // 使用 maybeSingle 避免 406 错误
+        .maybeSingle();
 
     if (userError || !targetUser) {
         alert('未找到该用户，请检查ID是否正确');
@@ -2104,7 +2115,7 @@ async function submitContent(e) {
     if (isSubmitting) return;
     if (!currentUser) { alert('请先登录'); return; }
 
-    // ✅ 检查是否被封禁
+    // 检查是否被封禁
     const { data: profile } = await supabaseClient
         .from('profiles')
         .select('is_banned, ban_expires_at')
@@ -2375,7 +2386,6 @@ function openProfileEdit() {
     if (!currentUser) return;
     avatarFileToUpload = null;
 
-    // 显示用户 ID
     document.getElementById('userIdDisplay').textContent = currentUser.id;
 
     const restrictionMsg = document.getElementById('editRestrictionMsg');
@@ -2405,7 +2415,6 @@ function openProfileEdit() {
         document.getElementById('saveProfileBtn').style.opacity = '1';
     }
 
-    // 加载当前资料
     document.getElementById('avatarPreview').innerHTML =
         `<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
     document.getElementById('avatarFileName').textContent = '点击选择图片';
@@ -2520,7 +2529,6 @@ async function saveProfile() {
             loadDetail(detailContentId);
         }
         loadUserProfile();
-        // 如果当前在个人中心，刷新个人中心
         if (currentPage === 'profile') {
             renderProfile();
         }
@@ -2545,7 +2553,6 @@ setInterval(async function() {
         if (data?.is_banned) {
             const expires = data.ban_expires_at ? new Date(data.ban_expires_at) : null;
             if (!expires || expires > new Date()) {
-                // 被封禁，强制退出
                 await supabaseClient.auth.signOut();
                 localStorage.clear();
                 sessionStorage.clear();
