@@ -6,7 +6,6 @@
     <title>必看网 - 资源分享社区</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 全局重置 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -35,14 +34,12 @@
             color: inherit;
         }
 
-        /* ===== 主界面（PC 全屏布局） ===== */
         #app {
             display: flex;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* ===== 左侧边栏 ===== */
         .sidebar {
             width: 220px;
             background: #ffffff;
@@ -161,7 +158,6 @@
             background: #fef2f2;
         }
 
-        /* ===== 右侧主内容 ===== */
         .main-area {
             flex: 1;
             display: flex;
@@ -170,7 +166,6 @@
             background: #f8fafc;
         }
 
-        /* ===== 公告栏 ===== */
         .announcement-bar {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: #fff;
@@ -205,7 +200,6 @@
             background: rgba(255, 255, 255, 0.35);
         }
 
-        /* ===== 内容容器 ===== */
         .content-container {
             flex: 1;
             overflow-y: auto;
@@ -219,7 +213,6 @@
             border-radius: 8px;
         }
 
-        /* ===== 卡片列表 ===== */
         .content-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -396,7 +389,6 @@
             margin-bottom: 12px;
         }
 
-        /* ===== 弹窗 ===== */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -565,7 +557,6 @@
             transform: none;
         }
 
-        /* 管理员管理弹窗 */
         .admin-modal .user-item {
             display: flex;
             justify-content: space-between;
@@ -599,12 +590,10 @@
             background: #4f46e5;
         }
 
-        /* ===== 隐藏类 ===== */
         .hidden {
             display: none !important;
         }
 
-        /* ===== 版本标签 ===== */
         .version-tag {
             position: fixed;
             bottom: 16px;
@@ -620,7 +609,6 @@
             pointer-events: none;
         }
 
-        /* ===== 响应式（小屏降级） ===== */
         @media (max-width: 768px) {
             .sidebar {
                 width: 60px;
@@ -681,11 +669,7 @@
 </head>
 <body>
 
-    <!-- ========================================================== -->
-    <!--  主 界 面                                                   -->
-    <!-- ========================================================== -->
     <div id="app">
-        <!-- 左侧边栏 -->
         <aside class="sidebar" id="sidebar">
             <div class="brand">
                 👁️ <span>必看网</span>
@@ -703,13 +687,11 @@
                     <span class="icon">👤</span>
                     <span class="label">个人</span>
                 </button>
-                <!-- 审核（仅管理员） -->
                 <button class="nav-item hidden" data-nav="review" id="navReview" onclick="switchNav('review')">
                     <span class="icon">🔍</span>
                     <span class="label">审核</span>
                     <span class="badge hidden" id="reviewBadge">0</span>
                 </button>
-                <!-- 管理员管理（仅管理员） -->
                 <button class="nav-item hidden" data-nav="admin" id="navAdmin" onclick="openAdminModal()">
                     <span class="icon">👑</span>
                     <span class="label">管理员</span>
@@ -724,24 +706,16 @@
             </div>
         </aside>
 
-        <!-- 右侧主区域 -->
         <div class="main-area">
-            <!-- 公告栏 -->
             <div class="announcement-bar" id="announcementBar">
                 <span class="ann-text" id="announcementText">🎉 欢迎来到必看网！</span>
                 <button class="edit-btn hidden" id="editAnnounceBtn" onclick="openAnnounceEditor()">✎ 编辑公告</button>
             </div>
-
-            <!-- 内容区域 -->
             <div class="content-container" id="contentContainer">
                 <div id="contentRender"></div>
             </div>
         </div>
     </div>
-
-    <!-- ========================================================== -->
-    <!--  弹 窗                                                     -->
-    <!-- ========================================================== -->
 
     <!-- 上传弹窗 -->
     <div id="uploadModal" class="modal-overlay hidden" onclick="if(event.target===this) closeUploadModal()">
@@ -828,12 +802,8 @@
         </div>
     </div>
 
-    <!-- 版本号 -->
-    <div class="version-tag">v5.0.0</div>
+    <div class="version-tag">v6.0.0</div>
 
-    <!-- ========================================================== -->
-    <!--  JavaScript                                                -->
-    <!-- ========================================================== -->
     <script>
         // ============================================================
         //  配 置
@@ -866,7 +836,7 @@
         const userEmail = document.getElementById('userEmail');
 
         // ============================================================
-        //  检 查 登 录 状 态（未登录跳转到 login.html）
+        //  检 查 登 录
         // ============================================================
         (async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession();
@@ -876,14 +846,13 @@
             }
             currentUser = session.user;
             userAvatar.textContent = getInitials(session.user.email);
-            userEmail.textContent = session.user.email;
+            userEmail.textContent = session.user.email || '用户';
             await loadUserRole();
             await loadAnnouncement();
             await loadContents();
             updateUI();
         })();
 
-        // 监听登录状态变化（如果退出则跳转到 login.html）
         supabase.auth.onAuthStateChange((event, session) => {
             if (!session) {
                 window.location.href = '/login.html';
@@ -891,7 +860,7 @@
         });
 
         // ============================================================
-        //  工 具 函 数
+        //  工 具
         // ============================================================
         function getCategoryIcon(cat) {
             const map = { '论坛': '💬', '资源': '📦', '网址': '🔗', 'VPN': '🔒' };
@@ -933,13 +902,18 @@
         }
 
         // ============================================================
-        //  退 出 登 录
+        //  退 出
         // ============================================================
         async function handleLogout() {
-            await supabase.auth.signOut();
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/login.html';
+            try {
+                await supabase.auth.signOut();
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/login.html';
+            } catch (e) {
+                // 如果出错，强制跳转
+                window.location.href = '/login.html';
+            }
         }
 
         // ============================================================
@@ -965,7 +939,7 @@
         }
 
         // ============================================================
-        //  加 载 公 告
+        //  公 告
         // ============================================================
         async function loadAnnouncement() {
             const { data, error } = await supabase
@@ -987,7 +961,7 @@
         }
 
         // ============================================================
-        //  加 载 内 容
+        //  内 容
         // ============================================================
         async function loadContents() {
             if (!currentUser) return;
@@ -1036,21 +1010,14 @@
             renderContents();
         }
 
-        // ============================================================
-        //  渲 染 内 容
-        // ============================================================
         function renderContents() {
             const data = allContents;
             if (!data || data.length === 0) {
                 const icon = currentNav === 'review' ? '✅' : (currentNav === 'profile' ? '📭' : '🌱');
                 const msg = currentNav === 'review' ? '暂无待审核内容' :
                     (currentNav === 'profile' ? '你还没有发布任何内容' : '暂无内容，发布第一个吧！');
-                contentRender.innerHTML = `
-                    <div class="empty-state">
-                        <span class="icon">${icon}</span>
-                        <p>${msg}</p>
-                    </div>
-                `;
+                contentRender.innerHTML =
+                    `<div class="empty-state"><span class="icon">${icon}</span><p>${msg}</p></div>`;
                 return;
             }
 
@@ -1062,19 +1029,12 @@
 
                 let extraHtml = '';
                 if (item.file_url) {
-                    extraHtml = `
-                        <div class="file-info">
-                            📎 <a href="${item.file_url}" target="_blank">${item.file_name || '下载文件'}</a>
-                            ${item.file_size ? ' · ' + formatSize(item.file_size) : ''}
-                        </div>
-                    `;
+                    extraHtml =
+                        `<div class="file-info">📎 <a href="${item.file_url}" target="_blank">${item.file_name || '下载文件'}</a>${item.file_size ? ' · ' + formatSize(item.file_size) : ''}</div>`;
                 }
                 if (item.url) {
-                    extraHtml = `
-                        <div class="file-info">
-                            🔗 <a href="${item.url}" target="_blank" class="url-link">${item.url}</a>
-                        </div>
-                    `;
+                    extraHtml =
+                        `<div class="file-info">🔗 <a href="${item.url}" target="_blank" class="url-link">${item.url}</a></div>`;
                 }
 
                 let statusBadge = '';
@@ -1089,39 +1049,22 @@
 
                 let actionButtons = '';
                 if (showActions && currentNav === 'review' && isAdmin) {
-                    actionButtons = `
-                        <div class="actions">
-                            <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved')">✅ 通过</button>
-                            <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected')">❌ 拒绝</button>
-                            <button class="btn-sm" onclick="viewContentDetail(${item.id})">📄 详情</button>
-                        </div>
-                    `;
+                    actionButtons =
+                        `<div class="actions"><button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved')">✅ 通过</button><button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected')">❌ 拒绝</button><button class="btn-sm" onclick="viewContentDetail(${item.id})">📄 详情</button></div>`;
                 } else if (showActions && currentNav === 'profile' && isOwner) {
-                    actionButtons = `
-                        <div class="actions">
-                            <button class="btn-sm" onclick="deleteContent(${item.id}, '${item.file_url || ''}')">🗑️ 删除</button>
-                        </div>
-                    `;
+                    actionButtons =
+                        `<div class="actions"><button class="btn-sm" onclick="deleteContent(${item.id}, '${item.file_url || ''}')">🗑️ 删除</button></div>`;
                 }
 
                 html += `
                     <div class="content-card">
-                        <div class="meta">
-                            <span class="cat ${getCategoryClass(item.category)}">${getCategoryIcon(item.category)} ${item.category}</span>
-                            <span>${timeAgo(item.created_at)}</span>
-                        </div>
+                        <div class="meta"><span class="cat ${getCategoryClass(item.category)}">${getCategoryIcon(item.category)} ${item.category}</span><span>${timeAgo(item.created_at)}</span></div>
                         <div class="title">${item.title}</div>
                         ${item.description ? `<div class="desc">${item.description}</div>` : ''}
                         ${extraHtml}
                         ${statusBadge}
                         ${actionButtons}
-                        <div class="footer">
-                            <span class="user">
-                                <span class="avatar-sm">${getInitials(item.user_id)}</span>
-                                <span>用户</span>
-                            </span>
-                            <span>👁️ ${item.view_count || 0}</span>
-                        </div>
+                        <div class="footer"><span class="user"><span class="avatar-sm">${getInitials(item.user_id)}</span><span>用户</span></span><span>👁️ ${item.view_count || 0}</span></div>
                     </div>
                 `;
             });
@@ -1130,22 +1073,17 @@
         }
 
         // ============================================================
-        //  导 航 切 换
+        //  导 航
         // ============================================================
         function switchNav(nav) {
             currentNav = nav;
             document.querySelectorAll('#sideNav .nav-item').forEach(el => {
                 el.classList.toggle('active', el.dataset.nav === nav);
             });
-            if (nav === 'review' && currentUserRole !== 'admin') {
-                return;
-            }
+            if (nav === 'review' && currentUserRole !== 'admin') return;
             loadContents();
         }
 
-        // ============================================================
-        //  更 新 UI
-        // ============================================================
         function updateUI() {
             if (currentUserRole === 'admin') {
                 navReview.classList.remove('hidden');
@@ -1162,7 +1100,7 @@
         }
 
         // ============================================================
-        //  上 传 弹 窗
+        //  上 传
         // ============================================================
         function openUploadModal() {
             if (!currentUser) return;
@@ -1177,8 +1115,7 @@
         }
 
         function updateFileName(input) {
-            const name = input.files[0]?.name || '点击选择文件';
-            document.getElementById('uploadFileName').textContent = name;
+            document.getElementById('uploadFileName').textContent = input.files[0]?.name || '点击选择文件';
         }
 
         document.getElementById('uploadCategory').addEventListener('change', function() {
@@ -1200,14 +1137,10 @@
             }
         }
 
-        // ===== 提交内容 =====
         async function submitContent(e) {
             e.preventDefault();
             if (isSubmitting) return;
-            if (!currentUser) {
-                alert('请先登录');
-                return;
-            }
+            if (!currentUser) { alert('请先登录'); return; }
 
             const category = document.getElementById('uploadCategory').value;
             const title = document.getElementById('uploadTitle').value.trim();
@@ -1216,14 +1149,8 @@
             const fileInput = document.getElementById('uploadFileInput');
             const file = fileInput.files[0];
 
-            if (!title) {
-                alert('请输入标题');
-                return;
-            }
-            if (category === '网址' && !url) {
-                alert('网址分类需要填写链接');
-                return;
-            }
+            if (!title) { alert('请输入标题'); return; }
+            if (category === '网址' && !url) { alert('网址分类需要填写链接'); return; }
 
             isSubmitting = true;
             const btn = document.getElementById('submitBtn');
@@ -1277,7 +1204,7 @@
         }
 
         // ============================================================
-        //  审 核 操 作
+        //  审 核
         // ============================================================
         async function reviewContent(contentId, status) {
             if (!confirm(`确定要 ${status === 'approved' ? '通过' : '拒绝'} 这个内容吗？`)) return;
@@ -1285,16 +1212,12 @@
                 .from('contents')
                 .update({ status: status, updated_at: new Date().toISOString() })
                 .eq('id', contentId);
-            if (error) {
-                alert('操作失败：' + error.message);
-            } else {
-                alert('✅ 操作成功');
-                loadContents();
-            }
+            if (error) { alert('操作失败：' + error.message); } else { alert('✅ 操作成功');
+                loadContents(); }
         }
 
         // ============================================================
-        //  删 除 内 容
+        //  删 除
         // ============================================================
         async function deleteContent(contentId, fileUrl) {
             if (!confirm('确定要删除这个内容吗？')) return;
@@ -1313,9 +1236,7 @@
                 if (error) throw new Error(error.message);
                 alert('✅ 删除成功');
                 loadContents();
-            } catch (err) {
-                alert('❌ 删除失败：' + err.message);
-            }
+            } catch (err) { alert('❌ 删除失败：' + err.message); }
         }
 
         // ============================================================
@@ -1332,20 +1253,13 @@
 
         async function saveAnnouncement() {
             const content = document.getElementById('announceInput').value.trim();
-            if (!content) {
-                alert('请输入公告内容');
-                return;
-            }
+            if (!content) { alert('请输入公告内容'); return; }
             const { error } = await supabase
                 .from('announcements')
                 .insert({ content: content, is_active: true });
-            if (error) {
-                alert('保存失败：' + error.message);
-            } else {
-                alert('✅ 公告已更新');
+            if (error) { alert('保存失败：' + error.message); } else { alert('✅ 公告已更新');
                 closeAnnounceModal();
-                loadAnnouncement();
-            }
+                loadAnnouncement(); }
         }
 
         // ============================================================
@@ -1356,17 +1270,17 @@
             if (!item) return;
             const detailHtml = `
                 <div style="margin-bottom:16px;">
-                    <div style="color:#94a3b8; font-size:13px;">分类：${item.category}</div>
-                    <div style="font-size:22px; font-weight:700; margin:8px 0;">${item.title}</div>
-                    ${item.description ? `<div style="color:#475569; line-height:1.6; margin-bottom:8px;">${item.description}</div>` : ''}
-                    ${item.file_url ? `<div style="background:#f1f5f9; padding:8px 12px; border-radius:8px;"><a href="${item.file_url}" target="_blank">📎 下载文件</a></div>` : ''}
-                    ${item.url ? `<div style="background:#f1f5f9; padding:8px 12px; border-radius:8px;"><a href="${item.url}" target="_blank">🔗 ${item.url}</a></div>` : ''}
-                    <div style="font-size:13px; color:#94a3b8; margin-top:8px;">状态：${getStatusText(item.status)} · ${timeAgo(item.created_at)}</div>
+                    <div style="color:#94a3b8;font-size:13px;">分类：${item.category}</div>
+                    <div style="font-size:22px;font-weight:700;margin:8px 0;">${item.title}</div>
+                    ${item.description ? `<div style="color:#475569;line-height:1.6;margin-bottom:8px;">${item.description}</div>` : ''}
+                    ${item.file_url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;"><a href="${item.file_url}" target="_blank">📎 下载文件</a></div>` : ''}
+                    ${item.url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;"><a href="${item.url}" target="_blank">🔗 ${item.url}</a></div>` : ''}
+                    <div style="font-size:13px;color:#94a3b8;margin-top:8px;">状态：${getStatusText(item.status)} · ${timeAgo(item.created_at)}</div>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved'); closeReviewDetail();" style="padding:8px 24px; border-radius:10px; background:#dcfce7; color:#166534; border:1px solid #86efac; font-weight:600;">✅ 通过</button>
-                    <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected'); closeReviewDetail();" style="padding:8px 24px; border-radius:10px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; font-weight:600;">❌ 拒绝</button>
-                    <button class="btn-sm" onclick="closeReviewDetail()" style="padding:8px 24px; border-radius:10px; background:#f1f5f9; border:1px solid #e2e8f0;">关闭</button>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved'); closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;">✅ 通过</button>
+                    <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected'); closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;">❌ 拒绝</button>
+                    <button class="btn-sm" onclick="closeReviewDetail()" style="padding:8px 24px;border-radius:10px;background:#f1f5f9;border:1px solid #e2e8f0;">关闭</button>
                 </div>
             `;
             document.getElementById('reviewDetailContent').innerHTML = detailHtml;
@@ -1408,19 +1322,15 @@
         async function renderAdminList() {
             const container = document.getElementById('adminList');
             if (adminUsers.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8; text-align:center;">暂无管理员</p>';
+                container.innerHTML = '<p style="color:#94a3b8;text-align:center;">暂无管理员</p>';
                 return;
             }
             let html = '';
             for (const admin of adminUsers) {
                 const { data: userData } = await supabase.auth.admin.getUserById(admin.id);
                 const email = userData?.user?.email || admin.id;
-                html += `
-                    <div class="user-item">
-                        <span class="email">${email}</span>
-                        <span class="role admin">👑 管理员</span>
-                    </div>
-                `;
+                html +=
+                    `<div class="user-item"><span class="email">${email}</span><span class="role admin">👑 管理员</span></div>`;
             }
             container.innerHTML = html;
         }
@@ -1428,18 +1338,12 @@
         async function addAdmin() {
             const input = document.getElementById('adminAddInput');
             const email = input.value.trim();
-            if (!email) {
-                alert('请输入邮箱');
-                return;
-            }
+            if (!email) { alert('请输入邮箱'); return; }
             try {
                 const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
                 if (userError) throw new Error(userError.message);
                 const found = userData.users.find(u => u.email === email);
-                if (!found) {
-                    alert('未找到该用户，请确保用户已注册');
-                    return;
-                }
+                if (!found) { alert('未找到该用户，请确保用户已注册'); return; }
                 const { error: updateError } = await supabase
                     .from('profiles')
                     .upsert({ id: found.id, role: 'admin' });
@@ -1449,12 +1353,10 @@
                 loadAdminList();
                 loadUserRole();
                 updateUI();
-            } catch (err) {
-                alert('操作失败：' + err.message);
-            }
+            } catch (err) { alert('操作失败：' + err.message); }
         }
 
-        console.log('👁️ 必看网 v5.0.0 (PC版) 已启动');
+        console.log('👁️ 必看网 v6.0.0 (密码登录版)');
         console.log('📧 管理员: 3948677391@qq.com');
     </script>
 
