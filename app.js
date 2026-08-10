@@ -4,6 +4,7 @@
 const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
 const MAIN_ADMIN_EMAIL = '3948677391@qq.com';
+const SITE_URL = 'http://bikan.dpdns.org';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -32,6 +33,10 @@ let _canEditProfile = true;
 let _lastUpdatedAt = null;
 let currentReportContentId = null;
 let currentAdminTab = 'users';
+let allFriends = [];
+let friendRequests = [];
+let currentChatFriendId = null;
+let chatMessages = [];
 
 // ============================================================
 //  DOM 引 用（安全获取，可能为 null）
@@ -59,7 +64,7 @@ const topNav = document.getElementById('topNav');
 let _isRedirecting = false;
 
 // ============================================================
-//  检 查 登 录（修复版）
+//  检 查 登 录
 // ============================================================
 (async function checkAuth() {
     if (_isRedirecting) return;
@@ -118,13 +123,9 @@ let _isRedirecting = false;
         await loadUserRole();
         await loadAnnouncement();
         await loadNotifications();
-        await loadGlobalAnnouncement();
-
-        // ✅ 延迟调用 loadReports，确保 DOM 已渲染
-        setTimeout(async () => {
-            // 暂时注释掉，解决登录跳转问题
-// await loadReports();
-        }, 200);
+        await loadFriends();
+        await loadFriendRequests();
+        await loadReports();
 
         const params = new URLSearchParams(window.location.search);
         const page = params.get('page') || 'home';
@@ -326,40 +327,344 @@ async function loadAnnouncement() {
 }
 
 // ============================================================
-//  加 载 全 局 公 告
+//  加 载 好 友 列 表
 // ============================================================
-async function loadGlobalAnnouncement() {
+async function loadFriends() {
+    if (!currentUser) return;
     const { data, error } = await supabaseClient
-        .from('global_announcements')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .from('friends')
+        .select('*, friend:friend_id(id, nickname, avatar_url)')
+        .eq('user_id', currentUser.id)
+        .eq('status', 'accepted');
 
-    const banner = document.getElementById('globalBanner');
-    const text = document.getElementById('globalBannerText');
-    if (!banner || !text) return;
-
-    if (data && data.length > 0) {
-        const ann = data[0];
-        if (ann.expires_at && new Date(ann.expires_at) < new Date()) {
-            banner.style.display = 'none';
-            return;
-        }
-        text.textContent = `📢 ${ann.title}: ${ann.content}`;
-        banner.style.display = 'block';
+    if (!error && data) {
+        allFriends = data;
     } else {
-        banner.style.display = 'none';
+        allFriends = [];
     }
 }
 
-function closeGlobalBanner() {
-    const banner = document.getElementById('globalBanner');
-    if (banner) banner.style.display = 'none';
+// ============================================================
+//  加 载 好 友 申 请
+// ============================================================
+async function loadFriendRequests() {
+    if (!currentUser) return;
+    const { data, error } = await supabaseClient
+        .from('friends')
+        .select('*, requester:user_id(id, nickname, avatar_url, email)')
+        .eq('friend_id', currentUser.id)
+        .eq('status', 'pending');
+
+    if (!error && data) {
+        friendRequests = data;
+    } else {
+        friendRequests = [];
+    }
 }
 
 // ============================================================
-//  加 载 举 报（完全安全版）
+//  发 送 好 友 申 请
+// ============================================================
+async function sendFriendRequest(targetUserId) {
+    if (!currentUser) { alert('请先登录'); return; }
+    if (targetUserId === currentUser.id) { alert('不能添加自己为好友'); return; }
+
+    const { error } = await supabaseClient
+        .from('friends')
+        .insert({
+            user_id: currentUser.id,
+            friend_id: targetUserId,
+            status: 'pending'
+        });
+
+    if (error) {
+        alert('发送好友申请失败：' + error.message);
+    } else {
+        alert('✅ 好友申请已发送');
+        await loadFriends();
+        await loadFriendRequests();
+        if (currentPage === 'messages') renderMessages();
+    }
+}
+
+// ============================================================
+//  处 理 好 友 申 请
+// ============================================================
+async function handleFriendRequest(requestId, action) {
+    if (action === 'accept') {
+        const { error } = await supabaseClient
+            .from('friends')
+            .update({ status: 'accepted' })
+            .eq('id', requestId);
+        if (error) { alert('操作失败：' + error.message); return; }
+        // 双向好友记录
+        const { data: req } = await supabaseClient
+            .from('friends')
+            .select('user_id, friend_id')
+            .eq('id', requestId)
+            .single();
+        if (req) {
+            await supabaseClient.from('friends').upsert({
+                user_id: req.friend_id,
+                friend_id: req.user_id,
+                status: 'accepted'
+            });
+        }
+        alert('✅ 已接受好友申请');
+    } else {
+        const { error } = await supabaseClient
+            .from('friends')
+            .delete()
+            .eq('id', requestId);
+        if (error) { alert('操作失败：' + error.message); return; }
+        alert('已拒绝好友申请');
+    }
+    await loadFriends();
+    await loadFriendRequests();
+    if (currentPage === 'messages') renderMessages();
+}
+
+// ============================================================
+//  打 开 私 聊
+// ============================================================
+function openChat(friendId, friendName) {
+    currentChatFriendId = friendId;
+    document.getElementById('friendModalTitle').textContent = `💬 私聊 - ${friendName}`;
+    loadChatMessages(friendId);
+    document.getElementById('friendModal').classList.remove('hidden');
+}
+
+function closeFriendModal() {
+    document.getElementById('friendModal').classList.add('hidden');
+    currentChatFriendId = null;
+}
+
+async function loadChatMessages(friendId) {
+    if (!currentUser || !friendId) return;
+    const { data, error } = await supabaseClient
+        .from('private_messages')
+        .select('*')
+        .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+        .in('sender_id', [currentUser.id, friendId])
+        .in('receiver_id', [currentUser.id, friendId])
+        .order('created_at', { ascending: true });
+
+    if (!error && data) {
+        chatMessages = data;
+        renderChatMessages();
+    }
+}
+
+function renderChatMessages() {
+    const container = document.getElementById('friendModalContent');
+    if (!container) return;
+
+    let html = `
+        <div style="max-height:300px;overflow-y:auto;margin-bottom:12px;padding-right:4px;" id="chatMessageList">
+    `;
+    if (chatMessages.length === 0) {
+        html += `<div style="color:#94a3b8;text-align:center;padding:20px;">暂无消息，打个招呼吧！</div>`;
+    } else {
+        chatMessages.forEach(msg => {
+            const isMine = msg.sender_id === currentUser.id;
+            html += `
+                <div style="display:flex;${isMine ? 'justify-content:flex-end;' : ''}margin-bottom:6px;">
+                    <div style="max-width:75%;padding:8px 14px;border-radius:12px;${isMine ? 'background:#6366f1;color:#fff;' : 'background:#f1f5f9;color:#1e293b;'}">
+                        ${msg.content}
+                        ${msg.file_url ? `<div style="margin-top:4px;"><a href="${msg.file_url}" target="_blank" style="color:${isMine ? '#fff' : '#6366f1'};">📎 查看文件</a></div>` : ''}
+                        <div style="font-size:10px;${isMine ? 'color:rgba(255,255,255,0.7);' : 'color:#94a3b8;'}margin-top:2px;">${timeAgo(msg.created_at)}</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    html += `
+        </div>
+        <div style="display:flex;gap:8px;">
+            <input type="text" id="chatInput" placeholder="输入消息..." style="flex:1;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;">
+            <button onclick="sendChatMessage()" style="padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-weight:600;">发送</button>
+        </div>
+        <div style="margin-top:8px;">
+            <input type="file" id="chatFileInput" style="display:none;" onchange="sendChatFile(event)">
+            <button onclick="document.getElementById('chatFileInput').click()" style="padding:6px 14px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;">📎 分享文件</button>
+        </div>
+    `;
+    container.innerHTML = html;
+
+    // 滚动到底部
+    const list = document.getElementById('chatMessageList');
+    if (list) list.scrollTop = list.scrollHeight;
+
+    // 回车发送
+    document.getElementById('chatInput')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') sendChatMessage();
+    });
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const content = input.value.trim();
+    if (!content || !currentChatFriendId) return;
+
+    const { error } = await supabaseClient
+        .from('private_messages')
+        .insert({
+            sender_id: currentUser.id,
+            receiver_id: currentChatFriendId,
+            content: content
+        });
+
+    if (error) {
+        alert('发送失败：' + error.message);
+        return;
+    }
+
+    input.value = '';
+    // 通知对方
+    const { data: friend } = await supabaseClient
+        .from('profiles')
+        .select('nickname')
+        .eq('id', currentChatFriendId)
+        .single();
+    await supabaseClient.from('notifications').insert({
+        user_id: currentChatFriendId,
+        type: 'comment',
+        content: `💬 ${currentUser.email} 给你发了一条私信：${content}`,
+        link: '/messages'
+    });
+
+    await loadChatMessages(currentChatFriendId);
+}
+
+async function sendChatFile(event) {
+    const file = event.target.files[0];
+    if (!file || !currentChatFriendId) return;
+
+    // 上传文件
+    const filePath = `chat/${currentUser.id}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabaseClient.storage
+        .from('files')
+        .upload(filePath, file);
+    if (uploadError) {
+        alert('文件上传失败：' + uploadError.message);
+        return;
+    }
+    const { data: urlData } = supabaseClient.storage
+        .from('files')
+        .getPublicUrl(filePath);
+
+    const { error } = await supabaseClient
+        .from('private_messages')
+        .insert({
+            sender_id: currentUser.id,
+            receiver_id: currentChatFriendId,
+            content: `分享文件：${file.name}`,
+            file_url: urlData.publicUrl
+        });
+
+    if (error) {
+        alert('发送失败：' + error.message);
+        return;
+    }
+
+    event.target.value = '';
+    await loadChatMessages(currentChatFriendId);
+}
+
+// ============================================================
+//  收 藏 功 能
+// ============================================================
+async function toggleFavorite(contentId) {
+    if (!currentUser) { alert('请先登录'); return; }
+
+    // 检查是否已收藏
+    const { data: exist } = await supabaseClient
+        .from('favorites')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('content_id', contentId)
+        .single();
+
+    if (exist) {
+        await supabaseClient
+            .from('favorites')
+            .delete()
+            .eq('id', exist.id);
+        alert('已取消收藏');
+    } else {
+        await supabaseClient
+            .from('favorites')
+            .insert({
+                user_id: currentUser.id,
+                content_id: contentId
+            });
+        alert('✅ 已收藏');
+    }
+    if (currentPage === 'home' || currentPage === 'upload') {
+        loadContents(currentSearchQuery);
+    }
+    if (currentPage === 'profile') renderProfile();
+}
+
+async function loadFavorites() {
+    if (!currentUser) return;
+    const { data, error } = await supabaseClient
+        .from('favorites')
+        .select('*, content:content_id(*)')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+    if (!error && data) {
+        return data;
+    }
+    return [];
+}
+
+// ============================================================
+//  观 看 历 史
+// ============================================================
+async function addViewHistory(contentId) {
+    if (!currentUser) return;
+    // 检查是否已存在
+    const { data: exist } = await supabaseClient
+        .from('view_history')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('content_id', contentId)
+        .single();
+
+    if (exist) {
+        await supabaseClient
+            .from('view_history')
+            .update({ viewed_at: new Date().toISOString() })
+            .eq('id', exist.id);
+    } else {
+        await supabaseClient
+            .from('view_history')
+            .insert({
+                user_id: currentUser.id,
+                content_id: contentId
+            });
+    }
+}
+
+async function loadViewHistory() {
+    if (!currentUser) return;
+    const { data, error } = await supabaseClient
+        .from('view_history')
+        .select('*, content:content_id(*)')
+        .eq('user_id', currentUser.id)
+        .order('viewed_at', { ascending: false })
+        .limit(50);
+
+    if (!error && data) {
+        return data;
+    }
+    return [];
+}
+
+// ============================================================
+//  加 载 举 报（安全版）
 // ============================================================
 async function loadReports() {
     if (currentUserRole !== 'admin') return;
@@ -401,7 +706,7 @@ async function loadReports() {
 
     const count = allReports.length;
 
-    // ✅ 安全更新：先检查元素是否存在
+    // 安全更新徽章
     const reportBadge = document.getElementById('reportBadge');
     if (reportBadge) {
         reportBadge.textContent = count;
@@ -419,7 +724,7 @@ async function loadReports() {
 }
 
 // ============================================================
-//  加 载 消 息
+//  加 载 消 息（含系统消息、好友申请）
 // ============================================================
 async function loadNotifications() {
     if (!currentUser) return;
@@ -428,7 +733,7 @@ async function loadNotifications() {
         .select('*')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(200);
     if (data) {
         allNotifications = data;
         const unread = data.filter(n => !n.is_read).length;
@@ -444,41 +749,214 @@ async function loadNotifications() {
 }
 
 function renderMessages() {
-    if (!allNotifications || allNotifications.length === 0) {
-        contentRender.innerHTML =
-            `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>暂无消息</p></div>`;
+    // 构建消息分区内容
+    let html = `
+        <div style="max-width:700px;margin:0 auto;">
+            <h2 style="font-size:20px;margin-bottom:16px;">💬 消息</h2>
+    `;
+
+    // ===== 1. 系统消息 =====
+    const systemNotifications = allNotifications.filter(n =>
+        ['global_announcement', 'approved', 'rejected', 'ban', 'unban', 'upload_blocked', 'upload_unblocked'].includes(n
+        .type)
+    );
+    html += `
+        <div style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                <span style="font-weight:600;font-size:15px;">系统消息</span>
+                <span style="font-size:11px;color:#94a3b8;">${systemNotifications.length}</span>
+            </div>
+            ${systemNotifications.length === 0 ? '<div style="color:#94a3b8;font-size:13px;padding:8px 0;">暂无系统消息</div>' : ''}
+            ${systemNotifications.slice(0, 10).map(n => `
+                <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
+                    <span class="noti-icon">
+                        ${n.type === 'global_announcement' ? '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>' :
+                        n.type === 'ban' ? '<svg viewBox="0 0 24 24" stroke="#991b1b"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' :
+                        n.type === 'unban' ? '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>' :
+                        n.type === 'approved' ? '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>' :
+                        n.type === 'rejected' ? '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' :
+                        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'}
+                    </span>
+                    <div class="noti-content">
+                        <div class="noti-text">${n.content}</div>
+                        <div class="noti-time">${timeAgo(n.created_at)}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // ===== 2. 活动消息（点赞、评论） =====
+    const activityNotifications = allNotifications.filter(n =>
+        ['like', 'comment'].includes(n.type)
+    );
+    html += `
+        <div style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                <span style="font-weight:600;font-size:15px;">互动消息</span>
+                <span style="font-size:11px;color:#94a3b8;">${activityNotifications.length}</span>
+            </div>
+            ${activityNotifications.length === 0 ? '<div style="color:#94a3b8;font-size:13px;padding:8px 0;">暂无互动消息</div>' : ''}
+            ${activityNotifications.slice(0, 10).map(n => `
+                <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
+                    <span class="noti-icon">
+                        ${n.type === 'like' ? '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>' :
+                        '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'}
+                    </span>
+                    <div class="noti-content">
+                        <div class="noti-text">${n.content}</div>
+                        <div class="noti-time">${timeAgo(n.created_at)}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // ===== 3. 好友申请 =====
+    html += `
+        <div style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                <span style="font-weight:600;font-size:15px;">好友申请</span>
+                <span style="font-size:11px;color:#94a3b8;">${friendRequests.length}</span>
+            </div>
+            ${friendRequests.length === 0 ? '<div style="color:#94a3b8;font-size:13px;padding:8px 0;">暂无好友申请</div>' : ''}
+            ${friendRequests.map(req => `
+                <div class="friend-item">
+                    <div class="friend-info">
+                        <div class="avatar-sm">${req.requester?.nickname?.charAt(0)?.toUpperCase() || '?'}</div>
+                        <div>
+                            <div class="friend-name">${req.requester?.nickname || '用户'}</div>
+                            <div class="friend-status">请求添加好友</div>
+                        </div>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="btn-sm accept" onclick="handleFriendRequest(${req.id}, 'accept')">接受</button>
+                        <button class="btn-sm reject" onclick="handleFriendRequest(${req.id}, 'reject')">拒绝</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // ===== 4. 好友列表 =====
+    html += `
+        <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                <span style="font-weight:600;font-size:15px;">好友 (${allFriends.length})</span>
+                <button onclick="openAddFriend()" style="padding:2px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;">+ 添加</button>
+            </div>
+            ${allFriends.length === 0 ? '<div style="color:#94a3b8;font-size:13px;padding:8px 0;">暂无好友</div>' : ''}
+            ${allFriends.map(f => `
+                <div class="friend-item" onclick="openChat('${f.friend_id}', '${f.friend?.nickname || '用户'}')">
+                    <div class="friend-info">
+                        <div class="avatar-sm">${f.friend?.nickname?.charAt(0)?.toUpperCase() || '?'}</div>
+                        <div>
+                            <div class="friend-name">${f.friend?.nickname || '用户'}</div>
+                            <div class="friend-status">好友</div>
+                        </div>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="btn-sm" onclick="event.stopPropagation();openChat('${f.friend_id}', '${f.friend?.nickname || '用户'}')">💬 私聊</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // ===== 5. Bug 反馈 =====
+    html += `
+        <div style="margin-top:20px;padding-top:16px;border-top:2px solid #eef2f6;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span style="font-weight:600;font-size:15px;">Bug 反馈</span>
+                <span style="font-size:11px;color:#94a3b8;">1天限1条</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <input type="text" id="bugFeedbackInput" placeholder="描述你遇到的问题..." style="flex:1;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;">
+                <button onclick="submitBugFeedback()" style="padding:10px 18px;background:#ef4444;color:#fff;border:none;border-radius:12px;font-weight:600;">提交</button>
+            </div>
+            <div id="bugFeedbackStatus" style="font-size:12px;color:#94a3b8;margin-top:4px;"></div>
+        </div>
+    `;
+
+    html += `
+            <div class="qq-group-tip">
+                <span class="qq-icon">🐧</span>
+                <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                <span style="color:#64748b;font-size:12px;">如被误封请在群内艾特管理员申诉</span>
+            </div>
+        </div>
+    `;
+
+    contentRender.innerHTML = html;
+
+    // 检查今天是否已提交过反馈
+    checkBugFeedbackToday();
+}
+
+// ============================================================
+//  Bug 反 馈 功 能
+// ============================================================
+async function checkBugFeedbackToday() {
+    const today = new Date().toDateString();
+    const lastSubmit = localStorage.getItem('bugFeedbackDate');
+    const status = document.getElementById('bugFeedbackStatus');
+    if (status) {
+        if (lastSubmit === today) {
+            status.textContent = '✅ 今日已提交反馈，感谢你的反馈！';
+            status.style.color = '#166534';
+            document.getElementById('bugFeedbackInput').disabled = true;
+        } else {
+            status.textContent = '📝 描述问题，管理员会尽快处理';
+            status.style.color = '#94a3b8';
+            document.getElementById('bugFeedbackInput').disabled = false;
+        }
+    }
+}
+
+async function submitBugFeedback() {
+    const input = document.getElementById('bugFeedbackInput');
+    const content = input.value.trim();
+    if (!content) { alert('请输入反馈内容'); return; }
+    if (content.length < 5) { alert('反馈内容至少5个字'); return; }
+
+    const today = new Date().toDateString();
+    const lastSubmit = localStorage.getItem('bugFeedbackDate');
+    if (lastSubmit === today) {
+        alert('今日已提交过反馈，请明天再试');
         return;
     }
 
-    let html = '<div style="max-width:600px;margin:0 auto;">';
-    allNotifications.forEach(n => {
-        const iconMap = {
-            'approved': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>',
-            'rejected': '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-            'comment': '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
-            'like': '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>',
-            'admin_request': '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
-            'admin_response': '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 3 14 7 18"/><line x1="3" y1="14" x2="18" y2="14"/></svg>',
-            'global_announcement': '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>',
-            'ban': '<svg viewBox="0 0 24 24" stroke="#991b1b"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
-            'unban': '<svg viewBox="0 0 24 24" stroke="#166534"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12"/></svg>',
-            'report_created': '<svg viewBox="0 0 24 24" stroke="#ef4444"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
-            'report_resolved': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>',
-            'upload_blocked': '<svg viewBox="0 0 24 24" stroke="#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-            'upload_unblocked': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>'
-        };
-        html += `
-                    <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
-                        <span class="noti-icon">${iconMap[n.type] || ''}</span>
-                        <div class="noti-content">
-                            <div class="noti-text">${n.content}</div>
-                            <div class="noti-time">${timeAgo(n.created_at)}</div>
-                        </div>
-                    </div>
-                `;
-    });
-    html += '</div>';
-    contentRender.innerHTML = html;
+    // 发送给所有管理员
+    const { data: admins } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin');
+
+    if (admins) {
+        for (const admin of admins) {
+            await supabaseClient.from('notifications').insert({
+                user_id: admin.id,
+                type: 'report_created',
+                content: `🐛 ${currentUser.email} 提交了Bug反馈：${content}`,
+                link: '/admin'
+            });
+        }
+    }
+
+    localStorage.setItem('bugFeedbackDate', today);
+    input.value = '';
+    const status = document.getElementById('bugFeedbackStatus');
+    if (status) {
+        status.textContent = '✅ 提交成功，感谢你的反馈！';
+        status.style.color = '#166534';
+        input.disabled = true;
+    }
+    alert('✅ Bug反馈已提交，管理员将尽快处理');
 }
 
 async function markNotificationRead(id) {
@@ -615,7 +1093,7 @@ async function loadContents(searchQuery = '') {
 }
 
 // ============================================================
-//  渲 染 内 容（与之前相同，省略，保持与前面一致）
+//  渲 染 内 容
 // ============================================================
 function renderContents() {
     contentRender.innerHTML = '';
@@ -659,6 +1137,10 @@ function renderContentList(data) {
         const isAdmin = currentUserRole === 'admin';
         const showActions = (currentPage === 'review' && isAdmin) || (currentPage === 'upload' && isOwner);
         const isLiked = item._isLiked || false;
+
+        // 检查是否已收藏
+        let isFavorited = false;
+        // 这里简化处理，实际可以从一个Set中查询
 
         let extraHtml = '';
         if (item.file_url) {
@@ -743,9 +1225,17 @@ function renderContentList(data) {
                     </button>
                 `;
 
+        // 收藏按钮
+        const favBtn = `
+                    <button class="report-btn" onclick="event.stopPropagation();toggleFavorite(${item.id})" style="right:44px;top:10px;z-index:5;" title="收藏">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                `;
+
         html += `
                     <div class="content-card" onclick="${cardClick}">
                         ${reportBtn}
+                        ${favBtn}
                         <div class="meta">
                             <span class="cat ${getCategoryClass(item.category)}">${getCategoryIcon(item.category)} ${item.category}</span>
                             <span>${timeAgo(item.created_at)}</span>
@@ -781,17 +1271,21 @@ function renderContentList(data) {
 }
 
 // ============================================================
-//  个 人 中 心
+//  个 人 中 心（含收藏、观看历史）
 // ============================================================
 function renderProfile() {
     supabaseClient.from('profiles')
         .select('*')
         .eq('id', currentUser.id)
         .single()
-        .then(({ data: profile }) => {
+        .then(async ({ data: profile }) => {
             const avatarHtml = profile?.avatar_url ?
                 `<img src="${profile.avatar_url}" alt="avatar">` :
                 (userNickname.textContent || 'U').charAt(0).toUpperCase();
+
+            // 加载收藏和观看历史
+            const favorites = await loadFavorites();
+            const history = await loadViewHistory();
 
             let restrictionMsg = '';
             if (_lastUpdatedAt) {
@@ -832,6 +1326,42 @@ function renderProfile() {
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- 收藏 -->
+                            <div class="detail-card" style="margin-top:16px;">
+                                <h3 style="font-size:16px;margin-bottom:12px;">⭐ 我的收藏 (${favorites?.length || 0})</h3>
+                                ${favorites && favorites.length > 0 ? `
+                                    <div class="content-grid" style="grid-template-columns:1fr 1fr;">
+                                        ${favorites.slice(0, 6).map(f => `
+                                            <div class="content-card" onclick="navigateTo('detail', ${f.content_id})" style="cursor:pointer;">
+                                                <div class="title" style="font-size:14px;">${f.content?.title || '已删除'}</div>
+                                                <div class="meta" style="margin-top:4px;">
+                                                    <span class="cat ${getCategoryClass(f.content?.category)}">${getCategoryIcon(f.content?.category)} ${f.content?.category}</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `<p style="color:#94a3b8;font-size:14px;">暂无收藏</p>`}
+                            </div>
+
+                            <!-- 观看历史 -->
+                            <div class="detail-card" style="margin-top:16px;">
+                                <h3 style="font-size:16px;margin-bottom:12px;">👁️ 观看历史 (${history?.length || 0})</h3>
+                                ${history && history.length > 0 ? `
+                                    <div class="content-grid" style="grid-template-columns:1fr 1fr;">
+                                        ${history.slice(0, 6).map(h => `
+                                            <div class="content-card" onclick="navigateTo('detail', ${h.content_id})" style="cursor:pointer;">
+                                                <div class="title" style="font-size:14px;">${h.content?.title || '已删除'}</div>
+                                                <div class="meta" style="margin-top:4px;">
+                                                    <span class="cat ${getCategoryClass(h.content?.category)}">${getCategoryIcon(h.content?.category)} ${h.content?.category}</span>
+                                                    <span>${timeAgo(h.viewed_at)}</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `<p style="color:#94a3b8;font-size:14px;">暂无观看历史</p>`}
+                            </div>
+
                             <div class="qq-group-tip" style="margin-top:16px;">
                                 <span class="qq-icon">🐧</span>
                                 <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
@@ -858,7 +1388,6 @@ function renderAdminPage() {
                     <div class="detail-card">
                         <h2 style="font-size:24px;margin-bottom:16px;">👑 管理中心</h2>
 
-                        <!-- Tab 切换 -->
                         <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid #eef2f6;flex-wrap:wrap;">
                             <button onclick="switchAdminTab('users')" id="adminTabUsers" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid #6366f1;font-weight:600;color:#6366f1;background:none;cursor:pointer;font-size:14px;">
                                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1065,7 +1594,7 @@ async function loadBannedUsers() {
 }
 
 // ============================================================
-//  发 布 全 局 公 告
+//  发 布 全 局 公 告（发送到系统消息）
 // ============================================================
 async function publishGlobalAnnouncement() {
     const title = document.getElementById('globalAnnounceTitle').value.trim();
@@ -1092,6 +1621,7 @@ async function publishGlobalAnnouncement() {
         return;
     }
 
+    // 发送通知给所有用户（系统消息）
     const { data: users } = await supabaseClient
         .from('profiles')
         .select('id');
@@ -1102,16 +1632,15 @@ async function publishGlobalAnnouncement() {
                 user_id: user.id,
                 type: 'global_announcement',
                 content: `📢 ${title || '系统公告'}：${content}`,
-                link: '/'
+                link: '/messages'
             });
         }
     }
 
-    alert('✅ 全局公告已发布');
+    alert('✅ 全局公告已发布，所有用户将在系统消息中收到');
     document.getElementById('globalAnnounceTitle').value = '';
     document.getElementById('globalAnnounceContent').value = '';
     document.getElementById('globalAnnounceExpires').value = '';
-    await loadGlobalAnnouncement();
     switchAdminTab('announce');
 }
 
@@ -1584,6 +2113,9 @@ async function loadDetail(contentId) {
     }
 
     detailContentData = content;
+
+    // 记录观看历史
+    await addViewHistory(contentId);
 
     const { data: likeData } = await supabaseClient
         .from('likes')
@@ -2590,7 +3122,7 @@ async function saveProfile() {
 // ============================================================
 //  初 始 化
 // ============================================================
-console.log('👁️ 必看网 v15.0.0 (全功能修复版)');
+console.log('👁️ 必看网 v16.0.0 (完整版 - 好友+收藏+私聊)');
 console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
 console.log('🐧 官方QQ群: 976926251');
 
