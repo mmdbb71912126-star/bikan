@@ -122,7 +122,8 @@ let _isRedirecting = false;
 
         // ✅ 延迟调用 loadReports，确保 DOM 已渲染
         setTimeout(async () => {
-            await loadReports();
+            // 暂时注释掉，解决登录跳转问题
+// await loadReports();
         }, 200);
 
         const params = new URLSearchParams(window.location.search);
