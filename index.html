@@ -37,17 +37,17 @@
             overflow-y: auto;
         }
         .sidebar .brand {
-            padding: 0 20px 20px 20px;
+            padding: 0 0 16px 0;
             border-bottom: 1px solid #eef2f6;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 10px;
-            font-size: 22px;
-            font-weight: 700;
-            color: #0f172a;
+            gap: 6px;
+            padding-bottom: 16px;
         }
-        .sidebar .brand svg { width:28px; height:28px; flex-shrink:0; }
-        .sidebar .brand span { color: #6366f1; }
+        .sidebar .brand svg { width:88px; height:60px; flex-shrink:0; }
+        .sidebar .brand span { font-size:18px; font-weight:700; color:#0f172a; }
+        .sidebar .brand span .highlight { color:#6366f1; }
         .sidebar .nav { flex:1; padding: 12px 12px 0 12px; }
         .sidebar .nav .nav-item {
             display: flex;
@@ -510,9 +510,9 @@
         /* ===== 响应式 ===== */
         @media (max-width:768px) {
             .sidebar { width:60px; padding:8px 0; }
-            .sidebar .brand { padding:0 0 12px 0; justify-content:center; font-size:0; }
-            .sidebar .brand span { display:none; }
-            .sidebar .brand svg { width:24px; height:24px; }
+            .sidebar .brand { padding:0 0 8px 0; gap:2px; }
+            .sidebar .brand svg { width:44px; height:30px; }
+            .sidebar .brand span { font-size:0; }
             .sidebar .nav .nav-item { justify-content:center; padding:10px 0; font-size:0; }
             .sidebar .nav .nav-item svg { width:22px; height:22px; }
             .sidebar .nav .nav-item .label { display:none; }
@@ -531,17 +531,18 @@
 </head>
 <body>
 
-    <!-- ===== 主界面 ===== -->
-    <div id="app">
+    <!-- ===== 主界面（默认隐藏，登录验证后才显示） ===== -->
+    <div id="app" class="hidden">
+
         <!-- 侧边栏 -->
         <aside class="sidebar" id="sidebar">
             <div class="brand">
-                <svg viewBox="0 0 24 24" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                    <path d="M2 12L7 12M12 7L12 12M17 12L22 12M12 17L12 22"/>
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M5 5L7 7M19 5L17 7M5 19L7 17M19 19L17 17"/>
+                <svg viewBox="0 0 1000 680" fill="none">
+                    <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="#6366f1" fill-rule="evenodd"/>
+                    <rect x="484" y="273" width="32" height="100" rx="10" fill="#6366f1"/>
+                    <rect x="488" y="383" width="24" height="24" rx="8" fill="#6366f1"/>
                 </svg>
-                <span>必看网</span>
+                <span>必看<span class="highlight">网</span></span>
             </div>
             <nav class="nav" id="sideNav">
                 <button class="nav-item active" data-nav="home" onclick="switchNav('home')">
@@ -816,6 +817,7 @@
         // ============================================================
         //  DOM 引 用
         // ============================================================
+        const app = document.getElementById('app');
         const contentRender = document.getElementById('contentRender');
         const announcementText = document.getElementById('announcementText');
         const editAnnounceBtn = document.getElementById('editAnnounceBtn');
@@ -830,7 +832,7 @@
         const searchInput = document.getElementById('searchInput');
 
         // ============================================================
-        //  检 查 登 录
+        //  检 查 登 录（修复闪烁：先隐藏，验证通过后再显示）
         // ============================================================
         (async function checkAuth() {
             try {
@@ -840,6 +842,8 @@
                     return;
                 }
                 currentUser = session.user;
+                // ✅ 验证通过，显示主界面
+                app.classList.remove('hidden');
                 await loadUserProfile();
                 await loadUserRole();
                 await loadAnnouncement();
@@ -1050,7 +1054,6 @@
                     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,file_name.ilike.%${searchQuery}%,url.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
                 }
             } else if (currentNav === 'upload') {
-                // 上传分区：显示用户自己的所有内容（已审核 + 待审核）
                 query = query.eq('user_id', currentUser.id);
             } else if (currentNav === 'review') {
                 if (currentUserRole === 'admin') {
@@ -1113,13 +1116,11 @@
         function renderContents() {
             const data = allContents;
 
-            // 消息页
             if (currentNav === 'messages') {
                 renderNotifications();
                 return;
             }
 
-            // 上传分区：显示顶部按钮 + 内容列表
             if (currentNav === 'upload') {
                 let html = `
                     <div class="upload-header">
@@ -1131,12 +1132,10 @@
                     </div>
                 `;
                 contentRender.innerHTML = html;
-                // 渲染内容列表
                 renderContentList(data);
                 return;
             }
 
-            // 其他导航
             renderContentList(data);
         }
 
@@ -2015,7 +2014,6 @@
                 alert('✅ 保存成功');
                 closeProfileEdit();
                 loadUserProfile();
-                // 刷新当前内容以更新显示
                 loadContents(currentSearchQuery);
             }
         }
@@ -2023,7 +2021,7 @@
         // ============================================================
         //  初 始 化
         // ============================================================
-        console.log('👁️ 必看网 v10.0.0 (全SVG图标版)');
+        console.log('👁️ 必看网 v10.0.0 (品牌Logo + 全SVG + 修复闪烁)');
         console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
     </script>
 
