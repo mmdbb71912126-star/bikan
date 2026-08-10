@@ -26,9 +26,9 @@
             width: 100%;
             border: 1px solid rgba(255,255,255,0.6);
         }
-        .login-box .logo { text-align:center; margin-bottom:4px; }
-        .login-box .logo svg { width:52px; height:52px; }
-        .login-box h1 { text-align:center; font-size:28px; font-weight:800; color:#0f172a; }
+        .login-box .logo { text-align:center; margin-bottom:8px; }
+        .login-box .logo svg { width:80px; height:54px; }
+        .login-box h1 { text-align:center; font-size:28px; font-weight:800; color:#0f172a; margin-top:4px; }
         .login-box h1 span { color:#6366f1; }
         .login-box .sub { text-align:center; color:#94a3b8; font-size:14px; margin:4px 0 28px 0; }
 
@@ -149,6 +149,7 @@
         @media (max-width:480px) {
             .login-box { padding:32px 24px; }
             .login-box h1 { font-size:24px; }
+            .login-box .logo svg { width:64px; height:44px; }
         }
     </style>
 </head>
@@ -158,10 +159,10 @@
 
         <!-- ===== 品牌 Logo ===== -->
         <div class="logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12L7 12M12 7L12 12M17 12L22 12M12 17L12 22"/>
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M5 5L7 7M19 5L17 7M5 19L7 17M19 19L17 17"/>
+            <svg viewBox="0 0 1000 680" fill="none">
+                <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="#6366f1" fill-rule="evenodd"/>
+                <rect x="484" y="273" width="32" height="100" rx="10" fill="#6366f1"/>
+                <rect x="488" y="383" width="24" height="24" rx="8" fill="#6366f1"/>
             </svg>
         </div>
         <h1>必看<span>网</span></h1>
@@ -440,7 +441,7 @@
         registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
         registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
 
-        console.log('必看网 - 登录页 v9.0 (全SVG图标版)');
+        console.log('必看网 - 登录页 v10.0 (品牌Logo + 全SVG)');
     </script>
 
 </body>
