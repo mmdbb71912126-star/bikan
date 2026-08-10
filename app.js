@@ -146,7 +146,7 @@ let _isRedirecting = false;
         await loadUserProfile();
         await loadUserRole();
         await loadAnnouncement();
-        await loadGlobalAnnouncement(); // 现在有对应的函数了
+        // ✅ 移除了 loadGlobalAnnouncement 调用
         await loadNotifications();
         await loadFriends();
         await loadFriendRequests();
@@ -354,13 +354,12 @@ async function loadAnnouncement() {
 }
 
 // ============================================================
-//  全 局 公 告（已废弃，仅保留空函数防止报错）
+//  全 局 公 告（已废弃，保留空函数以防万一）
 // ============================================================
-async function loadGlobalAnnouncement() {
-    // 全局公告功能已移至消息分区的系统消息中
-    // 此函数保留空壳，防止旧代码调用时报错
-    return;
-}
+// async function loadGlobalAnnouncement() {
+//     // 已废弃，不再使用
+//     return;
+// }
 
 // ============================================================
 //  加 载 好 友 列 表
