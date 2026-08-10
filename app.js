@@ -353,7 +353,6 @@ function closeGlobalBanner() {
 //  加 载 举 报（已修复空值检查）
 // ============================================================
 async function loadReports() {
-    // 如果不是管理员，直接返回
     if (currentUserRole !== 'admin') return;
 
     const { data, error } = await supabaseClient
@@ -393,7 +392,7 @@ async function loadReports() {
 
     const count = allReports.length;
 
-    // ✅ 安全更新徽章（先检查元素是否存在）
+    // ✅ 所有 DOM 操作都添加空值检查
     const reportBadge = document.getElementById('reportBadge');
     if (reportBadge) {
         reportBadge.textContent = count;
@@ -404,8 +403,13 @@ async function loadReports() {
     if (reportCountBadge) {
         reportCountBadge.textContent = count;
     }
-}
 
+    // 安全起见，检查 reviewBadge 也可能用到
+    const reviewBadge = document.getElementById('reviewBadge');
+    if (reviewBadge) {
+        // 如果需要更新 reviewBadge，在这里操作，否则可省略
+    }
+}
 // ============================================================
 //  加 载 消 息
 // ============================================================
