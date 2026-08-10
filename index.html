@@ -16,7 +16,6 @@
 <body>
 
 <div id="app">
-    <!-- 未登录时显示 -->
     <div id="loginSection">
         <h2>登录 / 注册</h2>
         <input type="email" id="email" placeholder="邮箱">
@@ -26,7 +25,6 @@
         <p id="message" style="color:red;"></p>
     </div>
 
-    <!-- 登录后显示 -->
     <div id="dashboardSection" class="hidden">
         <h2>📁 我的资源</h2>
         <button onclick="signOut()">退出登录</button>
@@ -41,14 +39,11 @@
 </div>
 
 <script>
-    // ========== 🔴 替换成你自己的信息 ==========
     const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
-    // =========================================
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ===== 认证相关 =====
     async function signUp() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -73,7 +68,6 @@
         document.getElementById('dashboardSection').classList.add('hidden');
     }
 
-    // ===== 文件上传 =====
     async function uploadFile() {
         const fileInput = document.getElementById('fileInput');
         const file = fileInput.files[0];
@@ -82,7 +76,6 @@
         const { data: { user: userData } } = await supabase.auth.getUser();
         if (!userData) return alert('请先登录');
 
-        // 上传到 Supabase Storage
         const filePath = `${userData.id}/${Date.now()}_${file.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('files')
@@ -90,12 +83,10 @@
 
         if (uploadError) return alert('上传失败：' + uploadError.message);
 
-        // 获取公开访问链接
         const { data: urlData } = supabase.storage
             .from('files')
             .getPublicUrl(filePath);
 
-        // 记录到数据库
         await supabase.from('files').insert({
             user_id: userData.id,
             file_name: file.name,
@@ -108,7 +99,6 @@
         loadFiles();
     }
 
-    // ===== 加载文件列表 =====
     async function loadFiles() {
         const { data: { user: userData } } = await supabase.auth.getUser();
         if (!userData) return;
@@ -138,7 +128,6 @@
         });
     }
 
-    // ===== 检查登录状态 =====
     supabase.auth.onAuthStateChange((event, session) => {
         if (session) {
             document.getElementById('loginSection').classList.add('hidden');
