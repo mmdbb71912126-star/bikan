@@ -7,33 +7,114 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .login-box { background: rgba(255,255,255,0.88); backdrop-filter: blur(16px); padding: 48px 44px; border-radius: 32px; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.3); max-width: 420px; width: 100%; text-align: center; border: 1px solid rgba(255,255,255,0.6); }
-        .login-box .logo { font-size: 52px; margin-bottom: 4px; }
-        .login-box h1 { font-size: 30px; font-weight: 800; color: #0f172a; }
-        .login-box h1 span { color: #6366f1; }
-        .login-box .sub { color: #94a3b8; font-size: 15px; margin: 4px 0 28px 0; }
-        .login-box .input-group { display: flex; flex-direction: column; gap: 12px; }
-        .login-box .input-group input { padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 16px; background: #fff; transition: all 0.3s; }
-        .login-box .input-group input:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.12); }
-        .login-box .btn-row { display: flex; gap: 10px; }
-        .login-box .btn-row .btn-primary { flex:1; padding:14px; background:#6366f1; color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; transition: all 0.3s; cursor:pointer; }
-        .login-box .btn-row .btn-primary:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
-        .login-box .btn-row .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
-        .login-box .btn-row .btn-secondary { flex:1; padding:14px; background:#8b5cf6; color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; transition: all 0.3s; cursor:pointer; }
-        .login-box .btn-row .btn-secondary:hover { background:#7c3aed; transform:translateY(-2px); box-shadow:0 8px 24px rgba(139,92,246,0.3); }
-        .login-box .msg { margin-top: 16px; padding: 10px 16px; border-radius: 12px; font-size: 14px; min-height: 44px; }
-        .login-box .msg.info { background: #f1f5f9; color: #475569; }
-        .login-box .msg.success { background: #dcfce7; color: #166534; }
-        .login-box .msg.error { background: #fee2e2; color: #991b1b; }
-        .login-box .msg.loading { background: #e0f2fe; color: #075985; }
-        .login-box .hint { font-size: 13px; color: #94a3b8; margin-top: 20px; }
-        .divider { display: flex; align-items: center; gap: 16px; margin: 20px 0 16px 0; color: #94a3b8; font-size: 13px; }
-        .divider::before, .divider::after { flex: 1; height: 1px; background: #e2e8f0; content: ''; }
-        .btn-google { width:100%; padding:12px; background:#fff; border:2px solid #e2e8f0; border-radius:14px; font-size:16px; font-weight:500; color:#1e293b; cursor:pointer; transition: all 0.3s; display:flex; align-items:center; justify-content:center; gap:10px; }
-        .btn-google:hover { border-color:#4285F4; box-shadow:0 4px 12px rgba(66,133,244,0.15); }
-        .btn-google img { width:20px; height:20px; }
-        @media (max-width:480px) { .login-box { padding:32px 24px; } .login-box h1 { font-size:24px; } .btn-row { flex-direction:column; } }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(16px);
+            padding: 48px 44px;
+            border-radius: 32px;
+            box-shadow: 0 30px 60px -20px rgba(0,0,0,0.3);
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .login-box .logo { font-size: 48px; text-align:center; margin-bottom:4px; }
+        .login-box h1 { text-align:center; font-size:28px; font-weight:800; color:#0f172a; }
+        .login-box h1 span { color:#6366f1; }
+        .login-box .sub { text-align:center; color:#94a3b8; font-size:14px; margin:4px 0 28px 0; }
+
+        .login-box .input-group { display:flex; flex-direction:column; gap:12px; }
+        .login-box .input-group input {
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 16px;
+            background: #fff;
+            transition: all 0.3s;
+            width:100%;
+        }
+        .login-box .input-group input:focus { border-color:#6366f1; box-shadow:0 0 0 4px rgba(99,102,241,0.12); }
+
+        .login-box .btn-primary {
+            padding: 14px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width:100%;
+        }
+        .login-box .btn-primary:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
+        .login-box .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+        .login-box .btn-google {
+            width:100%;
+            padding: 12px;
+            background: #fff;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.3s;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:10px;
+        }
+        .login-box .btn-google:hover { border-color:#4285F4; box-shadow:0 4px 12px rgba(66,133,244,0.15); }
+
+        .login-box .msg {
+            margin-top: 16px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            min-height: 44px;
+        }
+        .login-box .msg.info { background:#f1f5f9; color:#475569; }
+        .login-box .msg.success { background:#dcfce7; color:#166534; }
+        .login-box .msg.error { background:#fee2e2; color:#991b1b; }
+        .login-box .msg.loading { background:#e0f2fe; color:#075985; }
+
+        .login-box .divider {
+            display:flex;
+            align-items:center;
+            gap:16px;
+            margin:20px 0 16px 0;
+            color:#94a3b8;
+            font-size:13px;
+        }
+        .login-box .divider::before, .login-box .divider::after { flex:1; height:1px; background:#e2e8f0; content:''; }
+
+        .login-box .register-link {
+            text-align:center;
+            margin-top:16px;
+            font-size:14px;
+            color:#94a3b8;
+        }
+        .login-box .register-link a { color:#6366f1; text-decoration:none; font-weight:500; cursor:pointer; }
+        .login-box .register-link a:hover { text-decoration:underline; }
+
+        .login-box .hint-text { font-size:12px; color:#94a3b8; margin-top:8px; text-align:center; }
+
+        .hidden { display:none !important; }
+
+        @media (max-width:480px) {
+            .login-box { padding:32px 24px; }
+            .login-box h1 { font-size:24px; }
+        }
     </style>
 </head>
 <body>
@@ -44,34 +125,64 @@
         <p class="sub">分享 · 交流 · 成长</p>
 
         <!-- Google 登录 -->
-        <button class="btn-google" onclick="signInWithGoogle()">
-            <span style="font-size:20px;">🔴</span> 用 Google 账号登录
+        <button class="btn-google" onclick="signInWithGoogle()" id="googleBtn">
+            <span style="font-size:20px;">🔴</span> Google 一键登录
         </button>
 
-        <div class="divider">或使用邮箱</div>
+        <div class="divider">或使用密码登录</div>
 
-        <div class="input-group">
-            <input type="email" id="loginEmail" placeholder="请输入邮箱地址" autocomplete="email">
-            <button class="btn-primary" id="sendCodeBtn">📨 发送验证码</button>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="verifyCode" placeholder="6位验证码" maxlength="6" style="flex:2; padding:14px 18px; border:2px solid #e2e8f0; border-radius:14px; font-size:16px;">
-                <button class="btn-secondary" id="verifyBtn" style="flex:1;">🔓 登录</button>
+        <!-- 密码登录 -->
+        <div id="loginForm">
+            <div class="input-group">
+                <input type="email" id="loginEmail" placeholder="邮箱地址" autocomplete="email">
+                <input type="password" id="loginPassword" placeholder="密码（至少6位）" autocomplete="current-password">
+                <button class="btn-primary" id="loginBtn">🔑 登录</button>
             </div>
         </div>
-        <div id="loginMsg" class="msg info">💡 用 Google 一键登录，或输入邮箱收验证码</div>
+
+        <div class="register-link">
+            还没有账号？<a onclick="showRegister()">点我注册</a>
+        </div>
+
+        <!-- 注册（默认隐藏） -->
+        <div id="registerForm" class="hidden" style="margin-top:16px;">
+            <div class="input-group">
+                <input type="email" id="registerEmail" placeholder="请输入邮箱地址">
+                <button class="btn-primary" id="registerBtn" style="background:#8b5cf6;">📨 发送验证邮件</button>
+            </div>
+            <div class="hint-text">
+                💡 如果无法打开验证链接，请复制链接到系统自带浏览器中打开
+            </div>
+            <div style="text-align:center;margin-top:10px;">
+                <a onclick="showLogin()" style="color:#6366f1;cursor:pointer;font-size:13px;">← 返回登录</a>
+            </div>
+        </div>
+
+        <div id="loginMsg" class="msg info">💡 输入邮箱和密码登录，或使用 Google 一键登录</div>
     </div>
 
     <script>
+        // ============================================================
+        //  配 置
+        // ============================================================
         const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
+        const SITE_URL = 'http://bikan.dpdns.org';
+
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // ============================================================
+        //  DOM
+        // ============================================================
         const loginEmail = document.getElementById('loginEmail');
-        const verifyCode = document.getElementById('verifyCode');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerBtn = document.getElementById('registerBtn');
         const loginMsg = document.getElementById('loginMsg');
-        const sendCodeBtn = document.getElementById('sendCodeBtn');
-        const verifyBtn = document.getElementById('verifyBtn');
-        let currentEmail = '';
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const googleBtn = document.getElementById('googleBtn');
 
         function showLoginMsg(msg, type = 'info') {
             loginMsg.textContent = msg;
@@ -79,13 +190,30 @@
         }
 
         function setLoading(loading) {
-            sendCodeBtn.disabled = loading;
-            verifyBtn.disabled = loading;
-            sendCodeBtn.textContent = loading ? '⏳...' : '📨 发送验证码';
-            verifyBtn.textContent = loading ? '⏳...' : '🔓 登录';
+            loginBtn.disabled = loading;
+            registerBtn.disabled = loading;
+            googleBtn.disabled = loading;
+            loginBtn.textContent = loading ? '⏳...' : '🔑 登录';
+            registerBtn.textContent = loading ? '⏳...' : '📨 发送验证邮件';
         }
 
-        // ===== 检查登录状态 =====
+        // ============================================================
+        //  切 换 注 册 / 登 录
+        // ============================================================
+        window.showRegister = function() {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            showLoginMsg('📝 输入邮箱，接收验证邮件完成注册', 'info');
+        };
+        window.showLogin = function() {
+            registerForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            showLoginMsg('💡 输入邮箱和密码登录，或使用 Google 一键登录', 'info');
+        };
+
+        // ============================================================
+        //  检 查 登 录
+        // ============================================================
         (async function checkSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -93,64 +221,42 @@
             }
         })();
 
-        // ===== Google 登录 =====
-        async function signInWithGoogle() {
-            console.log('🔴 Google 登录按钮被点击');
+        // ============================================================
+        //  Google 登录
+        // ============================================================
+        window.signInWithGoogle = async function() {
+            showLoginMsg('⏳ 正在跳转到 Google...', 'loading');
             try {
-                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
-                    options: {
-                        redirectTo: 'http://bikan.dpdns.org'
-                    }
+                    options: { redirectTo: SITE_URL }
                 });
                 if (error) {
-                    showLoginMsg('❌ Google 登录失败：' + error.message, 'error');
-                    console.error('Google 登录错误:', error);
-                } else {
-                    showLoginMsg('⏳ 正在跳转到 Google...', 'loading');
+                    showLoginMsg('❌ ' + error.message, 'error');
                 }
             } catch (err) {
                 showLoginMsg('❌ ' + err.message, 'error');
             }
-        }
+        };
 
-        // ===== 发送验证码 =====
-        async function handleSendCode() {
+        // ============================================================
+        //  密 码 登 录
+        // ============================================================
+        async function handlePasswordLogin() {
             const email = loginEmail.value.trim();
-            if (!email) { showLoginMsg('❌ 请输入邮箱', 'error'); return; }
-            if (!email.includes('@')) { showLoginMsg('❌ 请输入有效邮箱', 'error'); return; }
-            setLoading(true);
-            showLoginMsg('📤 发送中...', 'loading');
-            const { error } = await supabaseClient.auth.signInWithOtp({
-                email: email,
-                options: { shouldCreateUser: true }
-            });
-            setLoading(false);
-            if (error) {
-                if (error.message.includes('rate limit')) {
-                    showLoginMsg('❌ 今天验证码发太多了，用 Google 登录吧！', 'error');
-                } else {
-                    showLoginMsg('❌ ' + error.message, 'error');
-                }
-            } else {
-                currentEmail = email;
-                showLoginMsg('✅ 验证码已发送（检查垃圾箱）📬', 'success');
-            }
-        }
+            const password = loginPassword.value;
 
-        // ===== 验证验证码 =====
-        async function handleVerify() {
-            const code = verifyCode.value.trim();
-            const email = loginEmail.value.trim();
-            if (!email) { showLoginMsg('❌ 请先输入邮箱', 'error'); return; }
-            if (!code || code.length < 6) { showLoginMsg('❌ 请输入6位验证码', 'error'); return; }
+            if (!email || !password) { showLoginMsg('❌ 请填写完整', 'error'); return; }
+            if (password.length < 6) { showLoginMsg('❌ 密码至少6位', 'error'); return; }
+
             setLoading(true);
-            showLoginMsg('⏳ 验证中...', 'loading');
-            const { error } = await supabaseClient.auth.verifyOtp({
+            showLoginMsg('⏳ 登录中...', 'loading');
+
+            const { error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
-                token: code,
-                type: 'email'
+                password: password
             });
+
             setLoading(false);
             if (error) {
                 showLoginMsg('❌ ' + error.message, 'error');
@@ -160,13 +266,44 @@
             }
         }
 
-        // ===== 绑定事件 =====
-        sendCodeBtn.addEventListener('click', handleSendCode);
-        verifyBtn.addEventListener('click', handleVerify);
-        loginEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSendCode(); });
-        verifyCode.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleVerify(); });
+        // ============================================================
+        //  注 册（发送验证邮件）
+        // ============================================================
+        async function handleRegister() {
+            const email = registerEmail.value.trim();
+            if (!email) { showLoginMsg('❌ 请输入邮箱', 'error'); return; }
+            if (!email.includes('@')) { showLoginMsg('❌ 请输入有效邮箱', 'error'); return; }
 
-        console.log('🔐 必看网 - Google + 验证码登录');
+            setLoading(true);
+            showLoginMsg('📤 发送验证邮件中...', 'loading');
+
+            const { error } = await supabaseClient.auth.signInWithOtp({
+                email: email,
+                options: {
+                    shouldCreateUser: true,
+                    emailRedirectTo: SITE_URL
+                }
+            });
+
+            setLoading(false);
+            if (error) {
+                showLoginMsg('❌ ' + error.message, 'error');
+            } else {
+                showLoginMsg('✅ 验证邮件已发送！请检查邮箱（含垃圾箱）📬', 'success');
+            }
+        }
+
+        // ============================================================
+        //  绑 定 事 件
+        // ============================================================
+        loginBtn.addEventListener('click', handlePasswordLogin);
+        registerBtn.addEventListener('click', handleRegister);
+
+        loginEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePasswordLogin(); });
+        loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePasswordLogin(); });
+        registerEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
+
+        console.log('🔐 必看网 - 登录页 v8.0');
     </script>
 
 </body>
