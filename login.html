@@ -175,6 +175,7 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase 客户端已初始化');
 
         // ============================================================
         //  DOM 元 素
@@ -185,9 +186,15 @@
         const loginBtn = document.getElementById('loginBtn');
         const signupBtn = document.getElementById('signupBtn');
 
+        console.log('✅ DOM 元素已获取:', { loginBtn, signupBtn });
+
+        // ============================================================
+        //  工 具 函 数
+        // ============================================================
         function showLoginMsg(msg, type = 'info') {
             loginMsg.textContent = msg;
             loginMsg.className = 'msg ' + type;
+            console.log(`📝 消息: ${type} - ${msg}`);
         }
 
         function setLoading(loading) {
@@ -195,37 +202,35 @@
             signupBtn.disabled = loading;
             loginBtn.textContent = loading ? '⏳...' : '🔑 登录';
             signupBtn.textContent = loading ? '⏳...' : '📝 注册';
+            console.log(`⏳ 加载状态: ${loading}`);
         }
 
         // ============================================================
-        //  检 查 是 否 已 登 录（已登录则跳转首页）
+        //  检 查 登 录 状 态
         // ============================================================
         (async function checkSession() {
             try {
+                console.log('🔍 检查登录状态...');
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
+                    console.log('✅ 用户已登录，跳转到首页');
                     window.location.href = '/';
+                } else {
+                    console.log('❌ 用户未登录，停留在登录页');
                 }
             } catch (e) {
-                console.log('检查登录状态失败:', e);
+                console.error('❌ 检查登录状态失败:', e);
             }
         })();
-
-        // 监听登录状态变化
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                window.location.href = '/';
-            }
-        });
 
         // ============================================================
         //  登 录 函 数
         // ============================================================
         async function handleLogin() {
+            console.log('🔑 登录按钮被点击');
             const input = loginId.value.trim();
             const password = loginPassword.value;
 
-            // 校验
             if (!input || !password) {
                 showLoginMsg('❌ 请填写完整', 'error');
                 return;
@@ -242,9 +247,9 @@
                 let email = input;
                 const isEmail = input.includes('@');
 
-                // 如果不是邮箱，则通过用户名查邮箱
                 if (!isEmail) {
-                    // 查询 profiles 表获取该用户名对应的 user_id
+                    // 用户名登录：查 profiles 表
+                    console.log(`🔍 通过用户名查询: ${input}`);
                     const { data: profileData, error: profileError } = await supabase
                         .from('profiles')
                         .select('id')
@@ -252,22 +257,25 @@
                         .single();
 
                     if (profileError || !profileData) {
+                        console.error('❌ 用户名不存在:', profileError);
                         showLoginMsg('❌ 用户名不存在', 'error');
                         setLoading(false);
                         return;
                     }
 
-                    // 通过 user_id 获取邮箱
+                    console.log(`✅ 找到用户: ${profileData.id}`);
                     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(profileData.id);
                     if (userError || !userData?.user) {
+                        console.error('❌ 获取用户邮箱失败:', userError);
                         showLoginMsg('❌ 用户不存在', 'error');
                         setLoading(false);
                         return;
                     }
                     email = userData.user.email;
+                    console.log(`📧 邮箱: ${email}`);
                 }
 
-                // 执行登录
+                console.log(`🔑 登录中: ${email}`);
                 const { error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
@@ -276,14 +284,17 @@
                 setLoading(false);
 
                 if (error) {
+                    console.error('❌ 登录失败:', error);
                     showLoginMsg('❌ ' + error.message, 'error');
                 } else {
+                    console.log('✅ 登录成功！');
                     showLoginMsg('✅ 登录成功！正在跳转...', 'success');
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 500);
                 }
             } catch (err) {
+                console.error('❌ 登录异常:', err);
                 setLoading(false);
                 showLoginMsg('❌ 登录失败：' + err.message, 'error');
             }
@@ -293,10 +304,10 @@
         //  注 册 函 数
         // ============================================================
         async function handleSignup() {
+            console.log('📝 注册按钮被点击');
             const input = loginId.value.trim();
             const password = loginPassword.value;
 
-            // 校验
             if (!input || !password) {
                 showLoginMsg('❌ 请填写完整', 'error');
                 return;
@@ -306,32 +317,25 @@
                 return;
             }
 
-            // 判断是邮箱还是用户名
             const isEmail = input.includes('@') && input.includes('.');
+            const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
 
             let email = input;
             let username = null;
 
             if (!isEmail) {
-                // 用户名格式校验
-                const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
                 if (!usernameRegex.test(input)) {
                     showLoginMsg('❌ 用户名仅限字母、数字、下划线，3-20位', 'error');
                     return;
                 }
                 username = input;
-                // 生成一个虚拟邮箱用于注册
                 email = username + '@bikan.local';
             } else {
-                // 邮箱格式简单校验
                 if (!input.includes('@') || !input.includes('.')) {
                     showLoginMsg('❌ 请输入有效邮箱', 'error');
                     return;
                 }
-                // 从邮箱提取用户名
                 username = input.split('@')[0];
-                // 用户名格式校验
-                const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
                 if (!usernameRegex.test(username)) {
                     showLoginMsg('❌ 邮箱前缀需符合用户名规则（字母数字下划线，3-20位）', 'error');
                     return;
@@ -342,6 +346,8 @@
             showLoginMsg('⏳ 注册中...', 'loading');
 
             try {
+                console.log(`📝 注册: ${email}, 用户名: ${username}`);
+
                 // 检查用户名是否已被占用
                 const { data: existUser } = await supabase
                     .from('profiles')
@@ -355,7 +361,6 @@
                     return;
                 }
 
-                // 注册用户
                 const { data, error } = await supabase.auth.signUp({
                     email: email,
                     password: password,
@@ -365,6 +370,7 @@
                 });
 
                 if (error) {
+                    console.error('❌ 注册失败:', error);
                     if (error.message.includes('already registered')) {
                         showLoginMsg('❌ 该邮箱已注册，请直接登录', 'error');
                     } else {
@@ -375,7 +381,6 @@
                 }
 
                 if (data.user) {
-                    // 保存用户名到 profiles
                     const role = email === '3948677391@qq.com' ? 'admin' : 'user';
                     await supabase
                         .from('profiles')
@@ -384,14 +389,14 @@
                             username: username,
                             role: role
                         });
-
+                    console.log('✅ 注册成功！');
                     showLoginMsg('✅ 注册成功！请登录', 'success');
-                    // 清空密码框
                     loginPassword.value = '';
                 } else {
                     showLoginMsg('❌ 注册失败，请重试', 'error');
                 }
             } catch (err) {
+                console.error('❌ 注册异常:', err);
                 showLoginMsg('❌ ' + err.message, 'error');
             }
 
@@ -403,17 +408,24 @@
         // ============================================================
         loginBtn.addEventListener('click', handleLogin);
         signupBtn.addEventListener('click', handleSignup);
+        console.log('✅ 事件已绑定到登录和注册按钮');
 
         // 回车键触发登录
         loginId.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleLogin();
+            if (e.key === 'Enter') {
+                console.log('↩️ 回车触发登录');
+                handleLogin();
+            }
         });
         loginPassword.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleLogin();
+            if (e.key === 'Enter') {
+                console.log('↩️ 回车触发登录');
+                handleLogin();
+            }
         });
 
-        console.log('🔐 必看网 - 登录页 v3.0 (密码登录)');
-        console.log('✅ 登录/注册按钮已绑定事件');
+        console.log('🔐 必看网 - 登录页 v4.0 (修复版)');
+        console.log('✅ 所有事件已绑定，等待用户操作');
     </script>
 
 </body>
