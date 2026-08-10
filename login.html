@@ -6,12 +6,374 @@
     <title>登录 - 必看网</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ... 样式保持不变，省略 ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            padding: 48px 44px;
+            border-radius: 32px;
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.3);
+            max-width: 520px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+        .login-box .logo {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .login-box .logo svg {
+            width: 240px;
+            height: 163px;
+        }
+        .login-box h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 4px;
+        }
+        .login-box h1 span {
+            color: #6366f1;
+        }
+        .login-box .sub {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 14px;
+            margin: 4px 0 28px 0;
+        }
+
+        .login-box .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .login-box .input-group input {
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 16px;
+            background: #fff;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        .login-box .input-group input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+
+        .login-box .btn-primary {
+            padding: 14px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .login-box .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        .login-box .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .login-box .btn-primary svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .login-box .btn-secondary {
+            padding: 14px;
+            background: #8b5cf6;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .login-box .btn-secondary:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+        .login-box .btn-secondary svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .login-box .btn-google {
+            width: 100%;
+            padding: 12px;
+            background: #fff;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .login-box .btn-google:hover {
+            border-color: #4285F4;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+        }
+        .login-box .btn-google svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .login-box .msg {
+            margin-top: 16px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            min-height: 44px;
+        }
+        .login-box .msg.info {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .login-box .msg.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .login-box .msg.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .login-box .msg.loading {
+            background: #e0f2fe;
+            color: #075985;
+        }
+        .login-box .msg.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .login-box .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0 16px 0;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        .login-box .divider::before,
+        .login-box .divider::after {
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+            content: '';
+        }
+
+        .login-box .switch-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .login-box .switch-link a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .login-box .switch-link a:hover {
+            text-decoration: underline;
+        }
+        .login-box .switch-link a svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .login-box .hint-text {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .login-box .allowed-domains {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+        }
+        .login-box .allowed-domains .domain-tag {
+            background: #f1f5f9;
+            padding: 1px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width:480px) {
+            .login-box {
+                padding: 32px 24px;
+                max-width: 400px;
+            }
+            .login-box h1 {
+                font-size: 24px;
+            }
+            .login-box .logo svg {
+                width: 160px;
+                height: 109px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- HTML 结构保持不变，同之前 -->
-    <div class="login-box">...</div>
+
+    <div class="login-box">
+
+        <!-- ===== 品牌 Logo ===== -->
+        <div class="logo">
+            <svg viewBox="0 0 1000 680" fill="none">
+                <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="#6366f1" fill-rule="evenodd"/>
+                <rect x="484" y="273" width="32" height="100" rx="10" fill="#6366f1"/>
+                <rect x="488" y="383" width="24" height="24" rx="8" fill="#6366f1"/>
+            </svg>
+        </div>
+        <h1>必看<span>网</span></h1>
+        <p class="sub">分享 · 交流 · 成长</p>
+
+        <!-- ===== Google 登录 ===== -->
+        <button class="btn-google" onclick="signInWithGoogle()" id="googleBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+            </svg>
+            Google 一键登录
+        </button>
+
+        <div class="divider">或使用密码登录</div>
+
+        <!-- ===== 登录表单 ===== -->
+        <div id="loginForm">
+            <div class="input-group">
+                <input type="email" id="loginEmail" placeholder="请输入邮箱地址" autocomplete="email">
+                <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+                <button class="btn-primary" id="loginBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L12 8M12 8L10 6M12 8L14 6"/>
+                        <path d="M5 12L5 18C5 19.1046 5.89543 20 7 20L17 20C18.1046 20 19 19.1046 19 18L19 12"/>
+                        <path d="M15 16L9 16"/>
+                        <path d="M15 13L9 13"/>
+                    </svg>
+                    登录
+                </button>
+            </div>
+        </div>
+
+        <div class="switch-link">
+            还没有账号？<a onclick="showRegister()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 16 12 12 8 16"/>
+                    <line x1="12" y1="12" x2="12" y2="21"/>
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                点我注册
+            </a>
+        </div>
+
+        <!-- ===== 注册表单 ===== -->
+        <div id="registerForm" class="hidden" style="margin-top:16px;">
+            <div class="input-group">
+                <input type="email" id="registerEmail" placeholder="输入你的邮箱" autocomplete="email">
+                <input type="password" id="registerPassword" placeholder="输入你的密码（至少6位）" autocomplete="new-password">
+                <input type="password" id="registerPasswordConfirm" placeholder="确认你的密码" autocomplete="new-password">
+                <button class="btn-secondary" id="registerBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    发送验证邮件
+                </button>
+            </div>
+            <div class="allowed-domains">
+                <span class="domain-tag">@qq.com</span>
+                <span class="domain-tag">@gmail.com</span>
+                <span class="domain-tag">@163.com</span>
+                <span class="domain-tag">@126.com</span>
+                <span class="domain-tag">@outlook.com</span>
+                <span class="domain-tag">@foxmail.com</span>
+                <span class="domain-tag">@hotmail.com</span>
+                <span class="domain-tag">@live.com</span>
+                <span class="domain-tag">@yahoo.com</span>
+                <span class="domain-tag">@proton.me</span>
+            </div>
+            <div class="hint-text">
+                💡 仅支持主流邮箱，防止临时邮箱注册<br>
+                如果无法打开验证链接，请复制到系统浏览器打开
+            </div>
+            <div class="switch-link" style="margin-top:12px;">
+                <a onclick="showLogin()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="8 16 12 12 8 8"/>
+                        <line x1="12" y1="12" x2="12" y2="21"/>
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    已有账号？点我登录
+                </a>
+            </div>
+        </div>
+
+        <!-- ===== 消息提示 ===== -->
+        <div id="loginMsg" class="msg info">输入邮箱和密码登录，或使用 Google 一键登录</div>
+    </div>
 
     <script>
         // ============================================================
@@ -21,17 +383,67 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
         const SITE_URL = 'http://bikan.dpdns.org';
 
-        const ALLOWED_DOMAINS = ['qq.com', 'gmail.com', '163.com', '126.com', 'outlook.com', 'foxmail.com', 'hotmail.com', 'live.com', 'yahoo.com', 'proton.me'];
+        const ALLOWED_DOMAINS = [
+            'qq.com', 'gmail.com', '163.com', '126.com',
+            'outlook.com', 'foxmail.com', 'hotmail.com',
+            'live.com', 'yahoo.com', 'proton.me'
+        ];
+
+        function isEmailAllowed(email) {
+            const domain = email.split('@')[1]?.toLowerCase();
+            return ALLOWED_DOMAINS.includes(domain);
+        }
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ============================================================
-        //  DOM 元素（同之前）
+        //  DOM 元素
         // ============================================================
-        // ...（省略，与之前相同）
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerPasswordConfirm = document.getElementById('registerPasswordConfirm');
+        const registerBtn = document.getElementById('registerBtn');
+        const loginMsg = document.getElementById('loginMsg');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const googleBtn = document.getElementById('googleBtn');
+
+        function showLoginMsg(msg, type = 'info') {
+            loginMsg.textContent = msg;
+            loginMsg.className = 'msg ' + type;
+        }
+
+        function setLoading(loading) {
+            loginBtn.disabled = loading;
+            registerBtn.disabled = loading;
+            googleBtn.disabled = loading;
+            loginBtn.innerHTML = loading ?
+                '⏳...' :
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 8M12 8L10 6M12 8L14 6"/><path d="M5 12L5 18C5 19.1046 5.89543 20 7 20L17 20C18.1046 20 19 19.1046 19 18L19 12"/><path d="M15 16L9 16"/><path d="M15 13L9 13"/></svg> 登录';
+            registerBtn.innerHTML = loading ?
+                '⏳...' :
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 发送验证邮件';
+        }
 
         // ============================================================
-        //  检 查 登 录（加日志，加 token 有效性验证）
+        //  切 换 注 册 / 登 录
+        // ============================================================
+        window.showRegister = function() {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            showLoginMsg('📝 仅支持主流邮箱注册（QQ、Gmail、163等）', 'info');
+        };
+        window.showLogin = function() {
+            registerForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            showLoginMsg('输入邮箱和密码登录，或使用 Google 一键登录', 'info');
+        };
+
+        // ============================================================
+        //  检 查 登 录（含详细日志 + token 有效性验证）
         // ============================================================
         let _isChecking = false;
 
@@ -116,7 +528,8 @@
                         await supabaseClient.auth.signOut();
                         localStorage.clear();
                         sessionStorage.clear();
-                        showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason : '') + (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
+                        showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason :
+                            '') + (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
                         _isChecking = false;
                         return;
                     }
@@ -134,7 +547,173 @@
             _isChecking = false;
         })();
 
-        // ... 其他函数（登录、注册等）保持不变 ...
+        // ============================================================
+        //  Google 登录
+        // ============================================================
+        window.signInWithGoogle = async function() {
+            showLoginMsg('正在跳转到 Google...', 'loading');
+            try {
+                const { error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: SITE_URL }
+                });
+                if (error) {
+                    showLoginMsg('Google 登录失败：' + error.message, 'error');
+                }
+            } catch (err) {
+                showLoginMsg('登录失败：' + err.message, 'error');
+            }
+        };
+
+        // ============================================================
+        //  密 码 登 录
+        // ============================================================
+        async function handlePasswordLogin() {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value;
+
+            if (!email || !password) { showLoginMsg('请填写完整', 'error'); return; }
+            if (password.length < 6) { showLoginMsg('密码至少6位', 'error'); return; }
+
+            setLoading(true);
+            showLoginMsg('登录中...', 'loading');
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            setLoading(false);
+            if (error) {
+                showLoginMsg(error.message, 'error');
+                return;
+            }
+
+            // 登录成功后检查封禁
+            if (data?.user) {
+                try {
+                    const { data: profile } = await supabaseClient
+                        .from('profiles')
+                        .select('is_banned, ban_expires_at, ban_reason')
+                        .eq('id', data.user.id)
+                        .single();
+                    if (profile?.is_banned) {
+                        const expires = profile.ban_expires_at ? new Date(profile.ban_expires_at) : null;
+                        if (!expires || expires > new Date()) {
+                            await supabaseClient.auth.signOut();
+                            showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason :
+                                '') + (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('检查封禁状态失败:', e);
+                }
+                showLoginMsg('登录成功！', 'success');
+                setTimeout(() => { window.location.href = '/'; }, 500);
+            }
+        }
+
+        // ============================================================
+        //  注 册
+        // ============================================================
+        async function handleRegister() {
+            const email = registerEmail.value.trim();
+            const password = registerPassword.value;
+            const confirm = registerPasswordConfirm.value;
+
+            if (!email) { showLoginMsg('请输入邮箱', 'error'); return; }
+            if (!email.includes('@')) { showLoginMsg('请输入有效邮箱', 'error'); return; }
+
+            if (!isEmailAllowed(email)) {
+                showLoginMsg('❌ 仅支持 QQ、Gmail、163、126、Outlook、Foxmail 等主流邮箱，请更换邮箱', 'error');
+                return;
+            }
+
+            if (!password) { showLoginMsg('请设置密码', 'error'); return; }
+            if (password.length < 6) { showLoginMsg('密码至少6位', 'error'); return; }
+            if (!confirm) { showLoginMsg('请确认密码', 'error'); return; }
+            if (password !== confirm) { showLoginMsg('两次密码不一致', 'error'); return; }
+
+            setLoading(true);
+            showLoginMsg('注册中...', 'loading');
+
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: { username: email.split('@')[0] },
+                        emailRedirectTo: SITE_URL
+                    }
+                });
+
+                if (error) {
+                    if (error.message.includes('already registered')) {
+                        showLoginMsg('该邮箱已注册，请直接登录', 'error');
+                    } else {
+                        showLoginMsg(error.message, 'error');
+                    }
+                    setLoading(false);
+                    return;
+                }
+
+                if (data.user) {
+                    const domain = email.split('@')[1];
+                    await supabaseClient.from('profiles').upsert({
+                        id: data.user.id,
+                        username: email.split('@')[0],
+                        role: email === '3948677391@qq.com' ? 'admin' : 'user',
+                        nickname: email.split('@')[0],
+                        email_domain: domain
+                    });
+
+                    const { error: otpError } = await supabaseClient.auth.signInWithOtp({
+                        email: email,
+                        options: {
+                            shouldCreateUser: false,
+                            emailRedirectTo: SITE_URL
+                        }
+                    });
+
+                    if (otpError) { console.warn('OTP 发送失败:', otpError); }
+
+                    showLoginMsg('注册成功！验证邮件已发送，请查收邮箱（含垃圾箱）', 'success');
+                    document.getElementById('loginEmail').value = email;
+                    registerPassword.value = '';
+                    registerPasswordConfirm.value = '';
+                    setTimeout(() => {
+                        showLogin();
+                        showLoginMsg('注册成功！请查看邮箱验证后登录', 'success');
+                    }, 1500);
+                } else {
+                    showLoginMsg('注册失败，请重试', 'error');
+                }
+            } catch (err) {
+                showLoginMsg(err.message, 'error');
+            }
+
+            setLoading(false);
+        }
+
+        // ============================================================
+        //  绑 定 事 件
+        // ============================================================
+        loginBtn.addEventListener('click', handlePasswordLogin);
+        registerBtn.addEventListener('click', handleRegister);
+
+        loginEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePasswordLogin(); });
+        loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handlePasswordLogin(); });
+        registerEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
+        registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
+        registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
+
+        console.log('🔐 必看网 - 登录页 v16.0 (含日志 + token验证)');
+        console.log('📧 主管理员:', '3948677391@qq.com');
+        console.log('🐧 官方QQ群: 976926251');
     </script>
+
 </body>
 </html>
