@@ -5,17 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>必看网 - 资源分享社区</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 强制禁止缓存 -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <style>
         /* ===== 全局重置 ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
             background: #f0f2f5;
@@ -23,28 +15,15 @@
             height: 100vh;
             overflow: hidden;
         }
-        input,
-        button,
-        textarea {
-            font-family: inherit;
-            outline: none;
-        }
-        button {
-            cursor: pointer;
-            border: none;
-            background: none;
-        }
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
+        input, button, textarea, select { font-family: inherit; outline: none; }
+        button { cursor: pointer; border: none; background: none; }
+        a { text-decoration: none; color: inherit; }
+        .hidden { display: none !important; }
 
-        #app {
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+        /* ===== 主布局 ===== */
+        #app { display: flex; height: 100vh; overflow: hidden; }
 
+        /* ===== 侧边栏 ===== */
         .sidebar {
             width: 220px;
             background: #ffffff;
@@ -52,13 +31,13 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            padding: 20px 0 20px 0;
-            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02);
+            padding: 16px 0;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.02);
             z-index: 10;
             overflow-y: auto;
         }
         .sidebar .brand {
-            padding: 0 24px 24px 24px;
+            padding: 0 20px 20px 20px;
             border-bottom: 1px solid #eef2f6;
             display: flex;
             align-items: center;
@@ -67,44 +46,29 @@
             font-weight: 700;
             color: #0f172a;
         }
-        .sidebar .brand span {
-            color: #6366f1;
-        }
-        .sidebar .nav {
-            flex: 1;
-            padding: 16px 12px 0 12px;
-        }
+        .sidebar .brand span { color: #6366f1; }
+        .sidebar .nav { flex:1; padding: 12px 12px 0 12px; }
         .sidebar .nav .nav-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 16px;
+            padding: 10px 16px;
             border-radius: 12px;
             font-size: 15px;
             font-weight: 500;
             color: #64748b;
             transition: all 0.2s;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             cursor: pointer;
             width: 100%;
             text-align: left;
             background: none;
             border: none;
+            position: relative;
         }
-        .sidebar .nav .nav-item:hover {
-            background: #f1f4ff;
-            color: #6366f1;
-        }
-        .sidebar .nav .nav-item.active {
-            background: #eef2ff;
-            color: #6366f1;
-            font-weight: 600;
-        }
-        .sidebar .nav .nav-item .icon {
-            font-size: 20px;
-            width: 28px;
-            text-align: center;
-        }
+        .sidebar .nav .nav-item:hover { background: #f1f4ff; color: #6366f1; }
+        .sidebar .nav .nav-item.active { background: #eef2ff; color: #6366f1; font-weight: 600; }
+        .sidebar .nav .nav-item .icon { font-size: 20px; width: 28px; text-align: center; }
         .sidebar .nav .nav-item .badge {
             background: #ef4444;
             color: #fff;
@@ -116,18 +80,19 @@
         }
         .sidebar .user-section {
             border-top: 1px solid #eef2f6;
-            padding: 16px 20px 0 20px;
+            padding: 16px 16px 0 16px;
             margin-top: auto;
         }
         .sidebar .user-section .user-info {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
         }
         .sidebar .user-section .user-info .avatar {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: #6366f1;
             color: #fff;
@@ -135,19 +100,16 @@
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 18px;
             flex-shrink: 0;
-        }
-        .sidebar .user-section .user-info .email {
-            font-size: 14px;
-            font-weight: 500;
-            color: #0f172a;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
+        .sidebar .user-section .user-info .avatar img { width:100%; height:100%; object-fit:cover; }
+        .sidebar .user-section .user-info .user-detail { flex:1; overflow:hidden; }
+        .sidebar .user-section .user-info .user-detail .name { font-size:14px; font-weight:600; color:#0f172a; }
+        .sidebar .user-section .user-info .user-detail .email { font-size:12px; color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .sidebar .user-section .btn-outline {
-            width: 100%;
+            width:100%;
             padding: 8px;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
@@ -157,571 +119,374 @@
             background: #fff;
             transition: all 0.2s;
         }
-        .sidebar .user-section .btn-outline:hover {
-            border-color: #ef4444;
-            color: #ef4444;
-            background: #fef2f2;
-        }
+        .sidebar .user-section .btn-outline:hover { border-color:#ef4444; color:#ef4444; background:#fef2f2; }
 
-        .main-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #f8fafc;
-        }
+        /* ===== 主内容 ===== */
+        .main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#f8fafc; }
 
+        /* ===== 公告栏 ===== */
         .announcement-bar {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: #fff;
-            padding: 12px 24px;
+            padding: 10px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
-            min-height: 52px;
+            min-height: 44px;
         }
-        .announcement-bar .ann-text {
-            font-size: 15px;
-            font-weight: 500;
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .announcement-bar .ann-text { font-size:14px; font-weight:500; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .announcement-bar .edit-btn {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.2);
             color: #fff;
-            padding: 4px 16px;
+            padding: 2px 14px;
             border-radius: 20px;
-            font-size: 13px;
-            border: none;
+            font-size: 12px;
             cursor: pointer;
             transition: background 0.2s;
             flex-shrink: 0;
-            margin-left: 16px;
+            margin-left: 12px;
         }
-        .announcement-bar .edit-btn:hover {
-            background: rgba(255, 255, 255, 0.35);
-        }
+        .announcement-bar .edit-btn:hover { background: rgba(255,255,255,0.35); }
 
-        .content-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px 32px 32px 32px;
-        }
-        .content-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        .content-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 8px;
-        }
+        /* ===== 内容容器 ===== */
+        .content-container { flex:1; overflow-y:auto; padding:16px 24px 80px 24px; }
+        .content-container::-webkit-scrollbar { width:6px; }
+        .content-container::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:8px; }
 
-        .content-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-        }
-        .content-card {
-            background: #ffffff;
+        /* ===== 轮播图 ===== */
+        .carousel {
+            position: relative;
             border-radius: 16px;
-            padding: 20px 22px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: #e2e8f0;
+            height: 200px;
+        }
+        .carousel .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .carousel .slide.active { display: block; }
+        .carousel .slide img { width:100%; height:100%; object-fit:cover; }
+        .carousel .slide .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+            color: #fff;
+        }
+        .carousel .slide .overlay h3 { font-size:18px; font-weight:600; }
+        .carousel .slide .overlay p { font-size:13px; opacity:0.8; }
+        .carousel .dots {
+            position: absolute;
+            bottom: 10px;
+            right: 16px;
+            display: flex;
+            gap: 6px;
+        }
+        .carousel .dots .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .carousel .dots .dot.active { background: #fff; transform: scale(1.2); }
+        .carousel .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.4);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+            z-index: 5;
+        }
+        .carousel .carousel-btn:hover { background: rgba(0,0,0,0.6); }
+        .carousel .carousel-btn.prev { left: 10px; }
+        .carousel .carousel-btn.next { right: 10px; }
+
+        /* ===== 搜索栏 ===== */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            background: #fff;
+            transition: all 0.3s;
+        }
+        .search-bar input:focus { border-color: #6366f1; box-shadow:0 0 0 4px rgba(99,102,241,0.1); }
+        .search-bar button {
+            padding: 10px 20px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .search-bar button:hover { background: #4f46e5; }
+
+        /* ===== 内容网格 ===== */
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .content-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px 20px;
             border: 1px solid #eef2f6;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
             transition: all 0.2s;
         }
-        .content-card:hover {
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-            border-color: #dce2ec;
-        }
+        .content-card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-color: #dce2ec; }
         .content-card .meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 13px;
+            font-size: 12px;
             color: #94a3b8;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            flex-wrap:wrap;
+            gap:4px;
         }
         .content-card .meta .cat {
-            padding: 2px 12px;
+            padding: 1px 10px;
             border-radius: 20px;
             font-weight: 500;
-            font-size: 12px;
+            font-size: 11px;
         }
-        .content-card .meta .cat.forum {
-            background: #fce7f3;
-            color: #db2777;
-        }
-        .content-card .meta .cat.res {
-            background: #fef3c7;
-            color: #d97706;
-        }
-        .content-card .meta .cat.url {
-            background: #d1fae5;
-            color: #059669;
-        }
-        .content-card .meta .cat.vpn {
-            background: #dbeafe;
-            color: #2563eb;
-        }
-        .content-card .title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #0f172a;
-            margin-bottom: 6px;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .content-card .desc {
-            font-size: 14px;
-            color: #475569;
-            line-height: 1.6;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-        .content-card .file-info {
+        .content-card .meta .cat.forum { background:#fce7f3; color:#db2777; }
+        .content-card .meta .cat.res { background:#fef3c7; color:#d97706; }
+        .content-card .meta .cat.url { background:#d1fae5; color:#059669; }
+        .content-card .meta .cat.vpn { background:#dbeafe; color:#2563eb; }
+        .content-card .meta .tags { display:flex; gap:4px; flex-wrap:wrap; }
+        .content-card .meta .tags .tag {
             background: #f1f5f9;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            color: #64748b;
         }
-        .content-card .file-info a {
-            color: #6366f1;
-            font-weight: 500;
+        .content-card .meta .hot {
+            background: #ef4444;
+            color: #fff;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
         }
-        .content-card .actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            flex-wrap: wrap;
+        .content-card .meta .recommended {
+            background: #f59e0b;
+            color: #fff;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
         }
+        .content-card .title { font-size:17px; font-weight:600; color:#0f172a; margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .content-card .desc { font-size:14px; color:#475569; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
+        .content-card .file-info {
+            background:#f1f5f9; padding:4px 12px; border-radius:8px; font-size:13px; display:inline-flex; align-items:center; gap:6px; margin-top:4px;
+        }
+        .content-card .file-info a { color:#6366f1; font-weight:500; word-break:break-all; }
+        .content-card .actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
         .content-card .actions .btn-sm {
-            padding: 4px 16px;
+            padding: 3px 14px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             border: 1px solid #e2e8f0;
             background: #fff;
             color: #475569;
             transition: all 0.2s;
         }
-        .content-card .actions .btn-sm.approve {
-            background: #dcfce7;
-            color: #166534;
-            border-color: #86efac;
-        }
-        .content-card .actions .btn-sm.approve:hover {
-            background: #bbf7d0;
-        }
-        .content-card .actions .btn-sm.reject {
-            background: #fee2e2;
-            color: #991b1b;
-            border-color: #fca5a5;
-        }
-        .content-card .actions .btn-sm.reject:hover {
-            background: #fecaca;
-        }
-        .content-card .actions .btn-sm:hover {
-            background: #f1f5f9;
-        }
+        .content-card .actions .btn-sm:hover { background:#f1f5f9; }
+        .content-card .actions .btn-sm.approve { background:#dcfce7; color:#166534; border-color:#86efac; }
+        .content-card .actions .btn-sm.approve:hover { background:#bbf7d0; }
+        .content-card .actions .btn-sm.reject { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+        .content-card .actions .btn-sm.reject:hover { background:#fecaca; }
+        .content-card .actions .btn-sm.liked { background:#eef2ff; color:#6366f1; border-color:#6366f1; }
         .content-card .status-badge {
-            font-size: 12px;
-            font-weight: 500;
-            padding: 2px 12px;
-            border-radius: 20px;
-            display: inline-block;
+            font-size:11px; font-weight:500; padding:1px 10px; border-radius:20px; display:inline-block;
         }
-        .content-card .status-badge.pending {
-            background: #fef3c7;
-            color: #d97706;
-        }
-        .content-card .status-badge.approved {
-            background: #dcfce7;
-            color: #166534;
-        }
-        .content-card .status-badge.rejected {
-            background: #fee2e2;
-            color: #991b1b;
-        }
+        .content-card .status-badge.pending { background:#fef3c7; color:#d97706; }
+        .content-card .status-badge.approved { background:#dcfce7; color:#166534; }
+        .content-card .status-badge.rejected { background:#fee2e2; color:#991b1b; }
         .content-card .footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px solid #f1f5f9;
-            font-size: 13px;
-            color: #94a3b8;
+            display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid #f1f5f9; font-size:12px; color:#94a3b8;
         }
-        .content-card .footer .user {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        .content-card .footer .user { display:flex; align-items:center; gap:6px; }
         .content-card .footer .user .avatar-sm {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: #6366f1;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 600;
+            width:24px; height:24px; border-radius:50%; background:#6366f1; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; overflow:hidden;
         }
+        .content-card .footer .user .avatar-sm img { width:100%; height:100%; object-fit:cover; }
+        .content-card .footer .stats { display:flex; gap:12px; }
+        .content-card .footer .stats span { cursor:pointer; display:flex; align-items:center; gap:4px; }
+        .content-card .footer .stats span:hover { color:#6366f1; }
 
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: #94a3b8;
-            grid-column: 1 / -1;
+        .content-card .comment-section { margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9; }
+        .content-card .comment-section .comment-input { display:flex; gap:8px; }
+        .content-card .comment-section .comment-input input { flex:1; padding:6px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; }
+        .content-card .comment-section .comment-input button { padding:6px 14px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:13px; cursor:pointer; }
+        .content-card .comment-section .comment-list { margin-top:8px; }
+        .content-card .comment-section .comment-list .comment-item {
+            display:flex; gap:8px; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:13px;
         }
-        .empty-state .icon {
-            font-size: 64px;
-            display: block;
-            margin-bottom: 12px;
-        }
+        .content-card .comment-section .comment-list .comment-item .avatar-sm { width:24px; height:24px; border-radius:50%; background:#6366f1; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; flex-shrink:0; }
+        .content-card .comment-section .comment-list .comment-item .cmt-content { flex:1; }
+        .content-card .comment-section .comment-list .comment-item .cmt-content .cmt-user { font-weight:600; color:#0f172a; }
+        .content-card .comment-section .comment-list .comment-item .cmt-content .cmt-text { color:#475569; }
+        .content-card .comment-section .comment-list .comment-item .cmt-time { font-size:11px; color:#94a3b8; flex-shrink:0; }
 
+        .empty-state { text-align:center; padding:60px 20px; color:#94a3b8; grid-column:1/-1; }
+        .empty-state .icon { font-size:56px; display:block; margin-bottom:10px; }
+
+        /* ===== 弹窗 ===== */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            z-index: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            animation: fadeIn 0.2s ease;
+            position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn 0.2s ease;
         }
-        .modal-overlay.closing {
-            animation: fadeOut 0.2s ease forwards;
-        }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        @keyframes fadeOut {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-            }
-        }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes fadeOut { from{opacity:1} to{opacity:0} }
         .modal-box {
-            background: #fff;
-            border-radius: 24px;
-            padding: 32px 36px;
-            max-width: 560px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.25s ease;
+            background:#fff; border-radius:24px; padding:28px 32px; max-width:560px; width:100%; max-height:90vh; overflow-y:auto; animation:slideUp 0.25s ease;
         }
-        .modal-box.closing {
-            animation: slideDown 0.25s ease forwards;
+        @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .modal-box .modal-header { display:flex; justify-content:space-between; align-items:center; font-size:20px; font-weight:700; margin-bottom:18px; color:#0f172a; }
+        .modal-box .modal-header .close-btn { width:32px; height:32px; border-radius:50%; background:#f1f5f9; font-size:18px; color:#64748b; transition:0.2s; display:flex; align-items:center; justify-content:center; }
+        .modal-box .modal-header .close-btn:hover { background:#e2e8f0; }
+        .modal-box .form-group { margin-bottom:14px; }
+        .modal-box .form-group label { display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:4px; }
+        .modal-box .form-group input, .modal-box .form-group select, .modal-box .form-group textarea {
+            width:100%; padding:10px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; background:#f8fafc; transition:0.2s;
         }
-        @keyframes slideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        .modal-box .form-group input:focus, .modal-box .form-group select:focus, .modal-box .form-group textarea:focus {
+            border-color:#6366f1; background:#fff;
         }
-        @keyframes slideDown {
-            from {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-        }
-        .modal-box .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: #0f172a;
-        }
-        .modal-box .modal-header .close-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: #f1f5f9;
-            font-size: 20px;
-            color: #64748b;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-box .modal-header .close-btn:hover {
-            background: #e2e8f0;
-        }
-        .modal-box .form-group {
-            margin-bottom: 16px;
-        }
-        .modal-box .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 4px;
-        }
-        .modal-box .form-group input,
-        .modal-box .form-group select,
-        .modal-box .form-group textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 15px;
-            background: #f8fafc;
-            transition: 0.2s;
-        }
-        .modal-box .form-group input:focus,
-        .modal-box .form-group select:focus,
-        .modal-box .form-group textarea:focus {
-            border-color: #6366f1;
-            background: #fff;
-        }
-        .modal-box .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
+        .modal-box .form-group textarea { resize:vertical; min-height:70px; }
         .modal-box .form-group .file-input-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #f8fafc;
-            padding: 10px 14px;
-            border-radius: 12px;
-            border: 2px dashed #d1d5db;
-            cursor: pointer;
-            transition: 0.2s;
+            display:flex; align-items:center; gap:10px; background:#f8fafc; padding:8px 14px; border-radius:12px; border:2px dashed #d1d5db; cursor:pointer; transition:0.2s;
         }
-        .modal-box .form-group .file-input-wrap:hover {
-            border-color: #6366f1;
-            background: #f1f4ff;
-        }
-        .modal-box .form-group .file-input-wrap input[type="file"] {
-            display: none;
-        }
-        .modal-box .form-group .file-input-wrap .file-name {
-            font-size: 14px;
-            color: #64748b;
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .modal-box .form-group .file-input-wrap:hover { border-color:#6366f1; background:#f1f4ff; }
+        .modal-box .form-group .file-input-wrap input[type="file"] { display:none; }
+        .modal-box .form-group .file-input-wrap .file-name { font-size:14px; color:#64748b; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .modal-box .form-group .url-input-wrap { display:flex; gap:8px; flex-wrap:wrap; }
+        .modal-box .form-group .url-input-wrap input { flex:1; min-width:200px; }
+        .modal-box .form-group .url-input-wrap button { padding:8px 14px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:13px; cursor:pointer; }
+        .modal-box .form-group .url-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+        .modal-box .form-group .url-list .url-tag { background:#eef2ff; color:#6366f1; padding:2px 10px; border-radius:12px; font-size:12px; display:flex; align-items:center; gap:6px; }
+        .modal-box .form-group .url-list .url-tag .remove { cursor:pointer; font-weight:700; }
+        .modal-box .form-group .tag-input-wrap { display:flex; gap:8px; flex-wrap:wrap; }
+        .modal-box .form-group .tag-input-wrap input { flex:1; min-width:120px; }
+        .modal-box .form-group .tag-input-wrap button { padding:6px 14px; background:#e2e8f0; color:#475569; border:none; border-radius:10px; font-size:12px; cursor:pointer; }
+        .modal-box .form-group .tag-input-wrap button:hover { background:#cbd5e1; }
+        .modal-box .form-group .tag-list { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+        .modal-box .form-group .tag-list .tag-item { background:#f1f5f9; padding:2px 10px; border-radius:12px; font-size:12px; display:flex; align-items:center; gap:6px; }
+        .modal-box .form-group .tag-list .tag-item .remove { cursor:pointer; font-weight:700; color:#ef4444; }
         .modal-box .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            transition: all 0.3s;
-            margin-top: 8px;
+            width:100%; padding:12px; background:#6366f1; color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; transition:all 0.3s; margin-top:6px;
         }
-        .modal-box .btn-submit:hover {
-            background: #4f46e5;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-        }
-        .modal-box .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .modal-box .btn-submit:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
+        .modal-box .btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
 
-        .admin-modal .user-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            background: #f8fafc;
-            border-radius: 10px;
-            margin-bottom: 6px;
+        /* ===== 通知列表 ===== */
+        .notification-item {
+            display:flex; gap:12px; padding:12px 0; border-bottom:1px solid #f1f5f9;
         }
-        .admin-modal .user-item .email {
-            font-weight: 500;
-        }
-        .admin-modal .user-item .role {
-            font-size: 13px;
-            color: #94a3b8;
-        }
-        .admin-modal .user-item .role.admin {
-            color: #6366f1;
-            font-weight: 600;
-        }
-        .admin-modal .user-item .btn-set-admin {
-            padding: 4px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-        .admin-modal .user-item .btn-set-admin:hover {
-            background: #4f46e5;
-        }
+        .notification-item .noti-icon { font-size:20px; flex-shrink:0; }
+        .notification-item .noti-content { flex:1; }
+        .notification-item .noti-content .noti-text { font-size:14px; color:#1e293b; }
+        .notification-item .noti-content .noti-text .highlight { color:#6366f1; font-weight:500; }
+        .notification-item .noti-content .noti-time { font-size:12px; color:#94a3b8; }
+        .notification-item.unread { background:#f8faff; border-radius:8px; padding:12px; }
 
-        .hidden {
-            display: none !important;
-        }
-
+        /* ===== 版本号 ===== */
         .version-tag {
-            position: fixed;
-            bottom: 16px;
-            right: 24px;
-            font-size: 12px;
-            color: #cbd5e1;
-            background: rgba(255, 255, 255, 0.6);
-            padding: 4px 14px;
-            border-radius: 20px;
-            backdrop-filter: blur(4px);
-            z-index: 50;
-            user-select: none;
-            pointer-events: none;
+            position:fixed; bottom:16px; right:24px; font-size:11px; color:#cbd5e1; background:rgba(255,255,255,0.6); padding:2px 12px; border-radius:20px; backdrop-filter:blur(4px); z-index:50; user-select:none; pointer-events:none;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 60px;
-                padding: 12px 0;
-            }
-            .sidebar .brand {
-                padding: 0 0 16px 0;
-                justify-content: center;
-                font-size: 18px;
-            }
-            .sidebar .brand span {
-                display: none;
-            }
-            .sidebar .nav .nav-item {
-                justify-content: center;
-                padding: 12px 0;
-                font-size: 0;
-            }
-            .sidebar .nav .nav-item .icon {
-                font-size: 24px;
-                width: auto;
-            }
-            .sidebar .nav .nav-item .label {
-                display: none;
-            }
-            .sidebar .nav .nav-item .badge {
-                position: absolute;
-                top: 2px;
-                right: 4px;
-                font-size: 9px;
-                padding: 1px 6px;
-            }
-            .sidebar .user-section .user-info .email {
-                display: none;
-            }
-            .sidebar .user-section .btn-outline {
-                font-size: 0;
-                padding: 8px 0;
-            }
-            .sidebar .user-section .btn-outline::before {
-                content: "🚪";
-                font-size: 18px;
-            }
-            .content-container {
-                padding: 16px;
-            }
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-            .modal-box {
-                padding: 24px 20px;
-            }
-            .announcement-bar .ann-text {
-                font-size: 13px;
-            }
+        /* ===== 响应式 ===== */
+        @media (max-width:768px) {
+            .sidebar { width:60px; padding:8px 0; }
+            .sidebar .brand { padding:0 0 12px 0; justify-content:center; font-size:16px; }
+            .sidebar .brand span { display:none; }
+            .sidebar .nav .nav-item { justify-content:center; padding:10px 0; font-size:0; }
+            .sidebar .nav .nav-item .icon { font-size:22px; width:auto; }
+            .sidebar .nav .nav-item .label { display:none; }
+            .sidebar .nav .nav-item .badge { position:absolute; top:2px; right:2px; font-size:8px; padding:1px 6px; }
+            .sidebar .user-section .user-info .user-detail { display:none; }
+            .sidebar .user-section .btn-outline { font-size:0; padding:6px 0; }
+            .sidebar .user-section .btn-outline::before { content:"🚪"; font-size:16px; }
+            .content-container { padding:12px; }
+            .content-grid { grid-template-columns:1fr; }
+            .modal-box { padding:20px; }
+            .carousel { height:140px; }
+            .search-bar { flex-direction:column; }
+            .search-bar button { width:100%; }
+            .announcement-bar .ann-text { font-size:12px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ========================================================== -->
-    <!--  主 界 面                                                   -->
-    <!-- ========================================================== -->
+    <!-- ===== 主界面 ===== -->
     <div id="app">
-        <!-- 左侧边栏 -->
+        <!-- 侧边栏 -->
         <aside class="sidebar" id="sidebar">
-            <div class="brand">
-                👁️ <span>必看网</span>
-            </div>
+            <div class="brand">👁️ <span>必看网</span></div>
             <nav class="nav" id="sideNav">
-                <button class="nav-item active" data-nav="home" onclick="window.switchNav('home')">
-                    <span class="icon">🏠</span>
-                    <span class="label">首页</span>
-                </button>
-                <button class="nav-item" data-nav="upload" onclick="window.openUploadModal()">
-                    <span class="icon">📤</span>
-                    <span class="label">上传</span>
-                </button>
-                <button class="nav-item" data-nav="profile" onclick="window.switchNav('profile')">
-                    <span class="icon">👤</span>
-                    <span class="label">个人</span>
-                </button>
-                <button class="nav-item hidden" data-nav="review" id="navReview" onclick="window.switchNav('review')">
-                    <span class="icon">🔍</span>
-                    <span class="label">审核</span>
-                    <span class="badge hidden" id="reviewBadge">0</span>
-                </button>
-                <button class="nav-item hidden" data-nav="admin" id="navAdmin" onclick="window.openAdminModal()">
-                    <span class="icon">👑</span>
-                    <span class="label">管理员</span>
-                </button>
+                <button class="nav-item active" data-nav="home" onclick="switchNav('home')"><span class="icon">🏠</span><span class="label">首页</span></button>
+                <button class="nav-item" data-nav="upload" onclick="openUploadModal()"><span class="icon">📤</span><span class="label">上传</span></button>
+                <button class="nav-item" data-nav="profile" onclick="switchNav('profile')"><span class="icon">👤</span><span class="label">个人</span></button>
+                <button class="nav-item" data-nav="messages" onclick="switchNav('messages')"><span class="icon">💬</span><span class="label">消息</span><span class="badge hidden" id="msgBadge">0</span></button>
+                <button class="nav-item hidden" data-nav="review" id="navReview" onclick="switchNav('review')"><span class="icon">🔍</span><span class="label">审核</span><span class="badge hidden" id="reviewBadge">0</span></button>
+                <button class="nav-item hidden" data-nav="admin" id="navAdmin" onclick="openAdminModal()"><span class="icon">👑</span><span class="label">管理员</span></button>
             </nav>
             <div class="user-section">
-                <div class="user-info">
+                <div class="user-info" onclick="switchNav('profile')">
                     <div class="avatar" id="userAvatar">U</div>
-                    <span class="email" id="userEmail">加载中...</span>
+                    <div class="user-detail">
+                        <div class="name" id="userNickname">用户</div>
+                        <div class="email" id="userEmail">加载中...</div>
+                    </div>
                 </div>
-                <button class="btn-outline" onclick="window.handleLogout()">🚪 退出</button>
+                <button class="btn-outline" onclick="handleLogout()">🚪 退出</button>
             </div>
         </aside>
 
-        <!-- 右侧主区域 -->
+        <!-- 主区域 -->
         <div class="main-area">
+            <!-- 公告栏 -->
             <div class="announcement-bar" id="announcementBar">
                 <span class="ann-text" id="announcementText">🎉 欢迎来到必看网！</span>
-                <button class="edit-btn hidden" id="editAnnounceBtn" onclick="window.openAnnounceEditor()">✎ 编辑公告</button>
+                <button class="edit-btn hidden" id="editAnnounceBtn" onclick="openAnnounceEditor()">✎ 编辑</button>
             </div>
+
+            <!-- 内容 -->
             <div class="content-container" id="contentContainer">
+                <!-- 搜索栏（首页显示） -->
+                <div id="searchContainer" class="search-bar">
+                    <input type="text" id="searchInput" placeholder="搜索标签、文件名、网址、描述..." onkeydown="if(event.key==='Enter') doSearch()">
+                    <button onclick="doSearch()">🔍 搜索</button>
+                </div>
                 <div id="contentRender"></div>
             </div>
         </div>
@@ -732,13 +497,10 @@
     <!-- ========================================================== -->
 
     <!-- 上传弹窗 -->
-    <div id="uploadModal" class="modal-overlay hidden" onclick="if(event.target===this) window.closeUploadModal()">
-        <div class="modal-box" id="uploadModalBox">
-            <div class="modal-header">
-                <span>📤 发布内容</span>
-                <button class="close-btn" onclick="window.closeUploadModal()">✕</button>
-            </div>
-            <form id="uploadForm" onsubmit="window.submitContent(event)">
+    <div id="uploadModal" class="modal-overlay hidden" onclick="if(event.target===this) closeUploadModal()">
+        <div class="modal-box">
+            <div class="modal-header"><span>📤 发布内容</span><button class="close-btn" onclick="closeUploadModal()">✕</button></div>
+            <form id="uploadForm" onsubmit="submitContent(event)">
                 <div class="form-group">
                     <label>分类 *</label>
                     <select id="uploadCategory" required>
@@ -756,118 +518,136 @@
                     <label>描述</label>
                     <textarea id="uploadDesc" placeholder="请输入描述内容" rows="3"></textarea>
                 </div>
-                <div class="form-group" id="urlGroup">
-                    <label>网址链接</label>
-                    <input type="url" id="uploadUrl" placeholder="https://example.com">
+                <div class="form-group">
+                    <label>标签</label>
+                    <div class="tag-input-wrap">
+                        <input type="text" id="tagInput" placeholder="输入标签，回车添加" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag();}">
+                        <button type="button" onclick="addTag()">➕ 添加</button>
+                    </div>
+                    <div class="tag-list" id="tagList"></div>
+                    <div style="font-size:12px;color:#94a3b8;margin-top:4px;">💡 常用标签：#需要VPN #游戏 #公益网站 #技术工具 #EXE #APK</div>
                 </div>
-                <div class="form-group" id="fileGroup">
-                    <label>上传文件</label>
+                <div class="form-group">
+                    <label>文件上传</label>
                     <div class="file-input-wrap" onclick="document.getElementById('uploadFileInput').click()">
                         <span>📎</span>
-                        <span class="file-name" id="uploadFileName">点击选择文件</span>
-                        <input type="file" id="uploadFileInput" onchange="window.updateFileName(this)">
+                        <span class="file-name" id="uploadFileName">点击选择文件（可多个）</span>
+                        <input type="file" id="uploadFileInput" multiple onchange="updateFileNames(this)">
                     </div>
                 </div>
+                <div class="form-group" id="urlGroup">
+                    <label>网址链接</label>
+                    <div class="url-input-wrap">
+                        <input type="url" id="uploadUrlInput" placeholder="https://example.com">
+                        <button type="button" onclick="addUrl()">➕ 添加</button>
+                    </div>
+                    <div class="url-list" id="urlList"></div>
+                </div>
                 <button type="submit" class="btn-submit" id="submitBtn">📤 提交审核</button>
-                <p style="font-size:13px; color:#94a3b8; text-align:center; margin-top:10px;">提交后需管理员审核通过方可公开</p>
+                <p style="font-size:12px;color:#94a3b8;text-align:center;margin-top:8px;">提交后需管理员审核通过方可公开</p>
             </form>
         </div>
     </div>
 
-    <!-- 公告编辑弹窗 -->
-    <div id="announceModal" class="modal-overlay hidden" onclick="if(event.target===this) window.closeAnnounceModal()">
+    <!-- 公告编辑 -->
+    <div id="announceModal" class="modal-overlay hidden" onclick="if(event.target===this) closeAnnounceModal()">
         <div class="modal-box" style="max-width:500px;">
-            <div class="modal-header">
-                <span>📢 编辑公告</span>
-                <button class="close-btn" onclick="window.closeAnnounceModal()">✕</button>
+            <div class="modal-header"><span>📢 编辑公告</span><button class="close-btn" onclick="closeAnnounceModal()">✕</button></div>
+            <div class="form-group"><label>公告内容</label><textarea id="announceInput" rows="3" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;resize:vertical;"></textarea></div>
+            <button onclick="saveAnnouncement()" style="width:100%;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:600;">保存公告</button>
+        </div>
+    </div>
+
+    <!-- 管理员管理 -->
+    <div id="adminModal" class="modal-overlay hidden" onclick="if(event.target===this) closeAdminModal()">
+        <div class="modal-box" style="max-width:500px;">
+            <div class="modal-header"><span>👑 管理员管理</span><button class="close-btn" onclick="closeAdminModal()">✕</button></div>
+            <div id="adminContent">
+                <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px;font-weight:600;">操作</label>
+                    <select id="adminActionType" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;margin-top:4px;">
+                        <option value="add">➕ 添加管理员</option>
+                        <option value="remove">➖ 撤销管理员</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>目标用户邮箱</label>
+                    <input type="email" id="adminTargetEmail" placeholder="请输入用户邮箱">
+                </div>
+                <div class="form-group">
+                    <label>理由 *</label>
+                    <textarea id="adminReason" placeholder="请输入操作理由" rows="2" required></textarea>
+                </div>
+                <button onclick="submitAdminRequest()" class="btn-submit">📨 提交申请</button>
+                <hr style="margin:16px 0;border-color:#eef2f6;">
+                <p style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:8px;">📋 我的申请记录</p>
+                <div id="adminRequestList"></div>
             </div>
-            <div class="form-group">
-                <label>公告内容</label>
-                <textarea id="announceInput" rows="3" style="width:100%; padding:12px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; resize:vertical;"></textarea>
-            </div>
-            <button onclick="window.saveAnnouncement()" style="width:100%; padding:14px; background:#6366f1; color:#fff; border:none; border-radius:14px; font-size:17px; font-weight:600;">保存公告</button>
         </div>
     </div>
 
     <!-- 审核详情弹窗 -->
-    <div id="reviewDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) window.closeReviewDetail()">
+    <div id="reviewDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeReviewDetail()">
         <div class="modal-box" style="max-width:500px;">
-            <div class="modal-header">
-                <span>📋 审核详情</span>
-                <button class="close-btn" onclick="window.closeReviewDetail()">✕</button>
-            </div>
+            <div class="modal-header"><span>📋 审核详情</span><button class="close-btn" onclick="closeReviewDetail()">✕</button></div>
             <div id="reviewDetailContent"></div>
         </div>
     </div>
 
-    <!-- 管理员管理弹窗 -->
-    <div id="adminModal" class="modal-overlay admin-modal hidden" onclick="if(event.target===this) window.closeAdminModal()">
-        <div class="modal-box" style="max-width:500px;">
-            <div class="modal-header">
-                <span>👑 管理员管理</span>
-                <button class="close-btn" onclick="window.closeAdminModal()">✕</button>
+    <!-- 编辑个人资料弹窗 -->
+    <div id="profileEditModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileEdit()">
+        <div class="modal-box" style="max-width:460px;">
+            <div class="modal-header"><span>✏️ 编辑个人资料</span><button class="close-btn" onclick="closeProfileEdit()">✕</button></div>
+            <div class="form-group">
+                <label>头像链接</label>
+                <input type="url" id="editAvatar" placeholder="请输入头像图片URL">
             </div>
-            <p style="color:#64748b; margin-bottom:16px;">输入用户邮箱，将其设为管理员</p>
-            <div style="display:flex; gap:8px; margin-bottom:16px;">
-                <input type="email" id="adminAddInput" placeholder="输入邮箱" style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px;">
-                <button onclick="window.addAdmin()" style="padding:10px 24px; background:#6366f1; color:#fff; border:none; border-radius:12px; font-weight:600;">添加</button>
+            <div class="form-group">
+                <label>昵称</label>
+                <input type="text" id="editNickname" placeholder="请输入昵称" maxlength="20">
             </div>
-            <div id="adminList"></div>
+            <div class="form-group">
+                <label>个人签名</label>
+                <textarea id="editBio" placeholder="请输入个人签名" rows="2" maxlength="100"></textarea>
+            </div>
+            <button onclick="saveProfile()" class="btn-submit">💾 保存</button>
         </div>
     </div>
 
-    <div class="version-tag">v7.0.0</div>
+    <!-- 版本号 -->
+    <div class="version-tag">v9.0.0</div>
 
     <!-- ========================================================== -->
     <!--  JavaScript                                                -->
     <!-- ========================================================== -->
     <script>
         // ============================================================
-        //  配 置（只声明一次，使用 supabaseClient 避免冲突）
+        //  配 置
         // ============================================================
         const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
+        const MAIN_ADMIN_EMAIL = '3948677391@qq.com';
 
-        // 重要：使用 supabaseClient，不要用 supabase，避免与 login.html 冲突
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // ============================================================
-        //  立 即 检 查 登 录 状 态（未登录跳转到 login.html）
-        // ============================================================
-        (async function checkAuth() {
-            try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (!session) {
-                    // 未登录，强制跳转到登录页
-                    window.location.href = '/login.html';
-                    return;
-                }
-                // 已登录，继续执行初始化
-                console.log('✅ 用户已登录:', session.user.email);
-                window.currentUser = session.user;
-                // 显示用户信息
-                document.getElementById('userAvatar').textContent = (session.user.email || 'U').charAt(0).toUpperCase();
-                document.getElementById('userEmail').textContent = session.user.email || '用户';
-                // 加载角色和内容
-                await loadUserRole();
-                await loadAnnouncement();
-                await loadContents();
-                updateUI();
-            } catch (err) {
-                console.error('❌ 认证检查失败:', err);
-                // 出错时也跳转到登录页，保证安全
-                window.location.href = '/login.html';
-            }
-        })();
 
         // ============================================================
         //  状 态
         // ============================================================
+        let currentUser = null;
         let currentUserRole = 'user';
         let currentNav = 'home';
         let allContents = [];
+        let allNotifications = [];
         let pendingCount = 0;
         let isSubmitting = false;
+        let uploadedFiles = [];
+        let uploadedUrls = [];
+        let uploadedTags = [];
+        let carouselIndex = 0;
+        let carouselTimer = null;
+        let currentSearchQuery = '';
+        let isMainAdmin = false;
 
         // ============================================================
         //  DOM 引 用
@@ -878,9 +658,464 @@
         const navReview = document.getElementById('navReview');
         const navAdmin = document.getElementById('navAdmin');
         const reviewBadge = document.getElementById('reviewBadge');
+        const msgBadge = document.getElementById('msgBadge');
+        const userAvatar = document.getElementById('userAvatar');
+        const userEmail = document.getElementById('userEmail');
+        const userNickname = document.getElementById('userNickname');
+        const searchContainer = document.getElementById('searchContainer');
+        const searchInput = document.getElementById('searchInput');
 
         // ============================================================
-        //  工 具 函 数（暴露到全局）
+        //  检 查 登 录
+        // ============================================================
+        (async function checkAuth() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                currentUser = session.user;
+                await loadUserProfile();
+                await loadUserRole();
+                await loadAnnouncement();
+                await loadNotifications();
+                await loadBanners();
+                await loadContents();
+                updateUI();
+                startCarousel();
+            } catch (err) {
+                console.error('认证失败:', err);
+                window.location.href = '/login.html';
+            }
+        })();
+
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (!session) {
+                window.location.href = '/login.html';
+            }
+        });
+
+        // ============================================================
+        //  加 载 用 户 资 料
+        // ============================================================
+        async function loadUserProfile() {
+            if (!currentUser) return;
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            if (data) {
+                if (data.avatar_url) {
+                    userAvatar.innerHTML = `<img src="${data.avatar_url}" alt="avatar">`;
+                } else {
+                    userAvatar.textContent = (data.nickname || currentUser.email || 'U').charAt(0).toUpperCase();
+                }
+                userNickname.textContent = data.nickname || currentUser.email.split('@')[0] || '用户';
+                userEmail.textContent = currentUser.email || '';
+                isMainAdmin = currentUser.email === MAIN_ADMIN_EMAIL;
+            } else {
+                userAvatar.textContent = (currentUser.email || 'U').charAt(0).toUpperCase();
+                userNickname.textContent = currentUser.email.split('@')[0] || '用户';
+                userEmail.textContent = currentUser.email || '';
+            }
+        }
+
+        // ============================================================
+        //  加 载 用 户 角 色
+        // ============================================================
+        async function loadUserRole() {
+            if (!currentUser) return;
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('role')
+                .eq('id', currentUser.id)
+                .single();
+            if (data) {
+                currentUserRole = data.role;
+            } else {
+                const role = currentUser.email === MAIN_ADMIN_EMAIL ? 'admin' : 'user';
+                await supabaseClient.from('profiles').upsert({
+                    id: currentUser.id,
+                    role: role,
+                    nickname: currentUser.email.split('@')[0]
+                });
+                currentUserRole = role;
+            }
+            isMainAdmin = currentUser.email === MAIN_ADMIN_EMAIL;
+            updateUI();
+        }
+
+        // ============================================================
+        //  加 载 公 告
+        // ============================================================
+        async function loadAnnouncement() {
+            const { data, error } = await supabaseClient
+                .from('announcements')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(1);
+            if (data && data.length > 0) {
+                announcementText.textContent = data[0].content;
+            } else {
+                announcementText.textContent = '🎉 欢迎来到必看网！';
+            }
+        }
+
+        // ============================================================
+        //  加 载 轮 播 图
+        // ============================================================
+        async function loadBanners() {
+            const { data, error } = await supabaseClient
+                .from('banners')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true })
+                .limit(5);
+            return data || [];
+        }
+
+        let banners = [];
+
+        async function renderCarousel() {
+            banners = await loadBanners();
+            const container = document.getElementById('carouselContainer');
+            if (!container) return;
+            if (banners.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            let html = '';
+            banners.forEach((b, i) => {
+                html += `
+                    <div class="slide ${i === 0 ? 'active' : ''}">
+                        <img src="${b.image_url}" alt="${b.title || '轮播图'}">
+                        ${b.title ? `<div class="overlay"><h3>${b.title}</h3>${b.link ? `<p>${b.link}</p>` : ''}</div>` : ''}
+                    </div>
+                `;
+            });
+            let dotsHtml = '';
+            banners.forEach((b, i) => {
+                dotsHtml += `<span class="dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></span>`;
+            });
+            html += `
+                <div class="dots">${dotsHtml}</div>
+                ${banners.length > 1 ? `<button class="carousel-btn prev" onclick="prevSlide()">‹</button><button class="carousel-btn next" onclick="nextSlide()">›</button>` : ''}
+            `;
+            container.innerHTML = html;
+            carouselIndex = 0;
+        }
+
+        function startCarousel() {
+            if (carouselTimer) clearInterval(carouselTimer);
+            if (banners.length > 1) {
+                carouselTimer = setInterval(nextSlide, 4000);
+            }
+        }
+
+        function goToSlide(index) {
+            const slides = document.querySelectorAll('.carousel .slide');
+            const dots = document.querySelectorAll('.carousel .dot');
+            if (!slides.length) return;
+            slides.forEach((s, i) => s.classList.toggle('active', i === index));
+            dots.forEach((d, i) => d.classList.toggle('active', i === index));
+            carouselIndex = index;
+        }
+
+        function nextSlide() {
+            const total = banners.length;
+            if (total === 0) return;
+            goToSlide((carouselIndex + 1) % total);
+        }
+
+        function prevSlide() {
+            const total = banners.length;
+            if (total === 0) return;
+            goToSlide((carouselIndex - 1 + total) % total);
+        }
+
+        // ============================================================
+        //  加 载 消 息
+        // ============================================================
+        async function loadNotifications() {
+            if (!currentUser) return;
+            const { data, error } = await supabaseClient
+                .from('notifications')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(100);
+            if (data) {
+                allNotifications = data;
+                const unread = data.filter(n => !n.is_read).length;
+                if (unread > 0) {
+                    msgBadge.textContent = unread;
+                    msgBadge.classList.remove('hidden');
+                } else {
+                    msgBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        // ============================================================
+        //  加 载 内 容
+        // ============================================================
+        async function loadContents(searchQuery = '') {
+            if (!currentUser) return;
+
+            let query = supabaseClient.from('contents').select(`
+                *,
+                profiles!user_id (id, nickname, avatar_url, role)
+            `);
+
+            if (currentNav === 'home') {
+                // 首页：显示已审核的内容
+                query = query.eq('status', 'approved');
+                // 如果搜索了，加到搜索条件中
+                if (searchQuery) {
+                    query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,file_name.ilike.%${searchQuery}%,url.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
+                }
+            } else if (currentNav === 'profile') {
+                query = query.eq('user_id', currentUser.id);
+            } else if (currentNav === 'review') {
+                if (currentUserRole === 'admin') {
+                    query = query.eq('status', 'pending');
+                } else {
+                    query = query.eq('status', 'approved').limit(0);
+                }
+            } else if (currentNav === 'messages') {
+                // 消息页不加载内容，直接显示通知
+                query = query.eq('status', 'approved').limit(0);
+            } else {
+                query = query.eq('status', 'approved');
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('加载内容失败:', error);
+                allContents = [];
+                return;
+            }
+            allContents = data || [];
+
+            // 获取每个内容的点赞状态
+            if (currentUser && allContents.length > 0) {
+                const contentIds = allContents.map(c => c.id);
+                const { data: likesData, error: likesError } = await supabaseClient
+                    .from('likes')
+                    .select('content_id')
+                    .eq('user_id', currentUser.id)
+                    .in('content_id', contentIds);
+                if (!likesError && likesData) {
+                    const likedIds = likesData.map(l => l.content_id);
+                    allContents.forEach(c => {
+                        c._isLiked = likedIds.includes(c.id);
+                    });
+                }
+            }
+
+            // 统计待审核数量
+            if (currentUserRole === 'admin') {
+                const { count, error: countErr } = await supabaseClient
+                    .from('contents')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'pending');
+                if (!countErr) {
+                    pendingCount = count || 0;
+                    if (pendingCount > 0) {
+                        reviewBadge.textContent = pendingCount;
+                        reviewBadge.classList.remove('hidden');
+                    } else {
+                        reviewBadge.classList.add('hidden');
+                    }
+                }
+            }
+
+            renderContents();
+        }
+
+        // ============================================================
+        //  渲 染 内 容
+        // ============================================================
+        function renderContents() {
+            const data = allContents;
+
+            // 消息页特殊渲染
+            if (currentNav === 'messages') {
+                renderNotifications();
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                const icon = currentNav === 'review' ? '✅' : (currentNav === 'profile' ? '📭' : '🌱');
+                const msg = currentNav === 'review' ? '暂无待审核内容' :
+                    (currentNav === 'profile' ? '你还没有发布任何内容' : '暂无内容，发布第一个吧！');
+                contentRender.innerHTML =
+                    `<div class="empty-state"><span class="icon">${icon}</span><p>${msg}</p></div>`;
+                return;
+            }
+
+            let html = '<div class="content-grid">';
+            data.forEach(item => {
+                const isOwner = item.user_id === currentUser?.id;
+                const isAdmin = currentUserRole === 'admin';
+                const showActions = (currentNav === 'review' && isAdmin) || (currentNav === 'profile' && isOwner);
+                const isLiked = item._isLiked || false;
+
+                let extraHtml = '';
+                if (item.file_url) {
+                    extraHtml =
+                        `<div class="file-info">📎 <a href="${item.file_url}" target="_blank">${item.file_name || '下载文件'}</a>${item.file_size ? ' · ' + formatSize(item.file_size) : ''}</div>`;
+                }
+                if (item.url) {
+                    extraHtml =
+                        `<div class="file-info">🔗 <a href="${item.url}" target="_blank" class="url-link">${item.url}</a></div>`;
+                }
+
+                let tagsHtml = '';
+                if (item.tags && item.tags.length > 0) {
+                    tagsHtml = `<div class="tags">${item.tags.map(t => `<span class="tag">#${t}</span>`).join('')}</div>`;
+                }
+
+                let statusBadge = '';
+                if (currentNav === 'profile') {
+                    const map = {
+                        'pending': '<span class="status-badge pending">⏳ 待审核</span>',
+                        'approved': '<span class="status-badge approved">✅ 已通过</span>',
+                        'rejected': '<span class="status-badge rejected">❌ 已拒绝</span>'
+                    };
+                    statusBadge = map[item.status] || '';
+                }
+
+                let hotBadge = '';
+                if (item.likes_count >= 1000) {
+                    hotBadge = `<span class="hot">🔥 热门</span>`;
+                }
+                let recommendBadge = '';
+                if (item.is_recommended) {
+                    recommendBadge = `<span class="recommended">⭐ 推荐</span>`;
+                }
+
+                let actionButtons = '';
+                if (showActions && currentNav === 'review' && isAdmin) {
+                    actionButtons = `
+                        <div class="actions">
+                            <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved')">✅ 通过</button>
+                            <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected')">❌ 拒绝</button>
+                            <button class="btn-sm" onclick="toggleRecommend(${item.id}, ${item.is_recommended || false})">${item.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
+                            <button class="btn-sm" onclick="viewContentDetail(${item.id})">📄 详情</button>
+                        </div>
+                    `;
+                } else if (showActions && currentNav === 'profile' && isOwner) {
+                    actionButtons = `
+                        <div class="actions">
+                            <button class="btn-sm" onclick="deleteContent(${item.id}, '${item.file_url || ''}')">🗑️ 删除</button>
+                        </div>
+                    `;
+                }
+
+                // 管理员在首页也能看到管理按钮
+                if (currentNav === 'home' && isAdmin) {
+                    actionButtons += `
+                        <div class="actions" style="margin-top:4px;">
+                            <button class="btn-sm" onclick="toggleRecommend(${item.id}, ${item.is_recommended || false})" style="font-size:11px;">${item.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
+                        </div>
+                    `;
+                }
+
+                const avatarHtml = item.profiles?.avatar_url ?
+                    `<img src="${item.profiles.avatar_url}" alt="avatar">` :
+                    (item.profiles?.nickname || 'U').charAt(0).toUpperCase();
+
+                html += `
+                    <div class="content-card">
+                        <div class="meta">
+                            <span class="cat ${getCategoryClass(item.category)}">${getCategoryIcon(item.category)} ${item.category}</span>
+                            <span>${timeAgo(item.created_at)}</span>
+                            ${hotBadge} ${recommendBadge}
+                        </div>
+                        ${tagsHtml}
+                        <div class="title">${item.title}</div>
+                        ${item.description ? `<div class="desc">${item.description}</div>` : ''}
+                        ${extraHtml}
+                        ${statusBadge}
+                        ${actionButtons}
+                        <div class="footer">
+                            <span class="user">
+                                <span class="avatar-sm">${avatarHtml}</span>
+                                <span>${item.profiles?.nickname || '用户'}</span>
+                            </span>
+                            <span class="stats">
+                                <span onclick="toggleLike(${item.id})">
+                                    ${isLiked ? '❤️' : '🤍'} ${item.likes_count || 0}
+                                </span>
+                                <span onclick="toggleComments(${item.id})">
+                                    💬 ${item.comments_count || 0}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="comment-section hidden" id="comments-${item.id}">
+                            <div class="comment-input">
+                                <input type="text" id="commentInput-${item.id}" placeholder="写评论..." maxlength="200">
+                                <button onclick="postComment(${item.id})">发送</button>
+                            </div>
+                            <div class="comment-list" id="commentList-${item.id}">
+                                <div style="color:#94a3b8;font-size:13px;padding:8px 0;">加载评论中...</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            contentRender.innerHTML = html;
+
+            // 搜索框显示/隐藏
+            if (currentNav === 'home') {
+                searchContainer.classList.remove('hidden');
+            } else {
+                searchContainer.classList.add('hidden');
+            }
+        }
+
+        // ============================================================
+        //  渲 染 消 息
+        // ============================================================
+        function renderNotifications() {
+            if (!allNotifications || allNotifications.length === 0) {
+                contentRender.innerHTML =
+                    `<div class="empty-state"><span class="icon">📭</span><p>暂无消息</p></div>`;
+                return;
+            }
+
+            let html = '<div style="max-width:600px;margin:0 auto;">';
+            allNotifications.forEach(n => {
+                const iconMap = {
+                    'approved': '✅',
+                    'rejected': '❌',
+                    'comment': '💬',
+                    'like': '❤️',
+                    'admin_request': '👑',
+                    'admin_response': '📋'
+                };
+                html += `
+                    <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
+                        <span class="noti-icon">${iconMap[n.type] || '📩'}</span>
+                        <div class="noti-content">
+                            <div class="noti-text">${n.content}</div>
+                            <div class="noti-time">${timeAgo(n.created_at)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            contentRender.innerHTML = html;
+        }
+
+        // ============================================================
+        //  工 具 函 数
         // ============================================================
         function getCategoryIcon(cat) {
             const map = { '论坛': '💬', '资源': '📦', '网址': '🔗', 'VPN': '🔒' };
@@ -916,196 +1151,23 @@
             return map[status] || status;
         }
 
-        function getInitials(email) {
-            if (!email) return '?';
-            return email.charAt(0).toUpperCase();
-        }
-
         // ============================================================
-        //  退 出 登 录（暴露到全局）
+        //  导 航 切 换
         // ============================================================
-        window.handleLogout = async function() {
-            try {
-                await supabaseClient.auth.signOut();
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.href = '/login.html';
-            } catch (e) {
-                window.location.href = '/login.html';
-            }
-        };
-
-        // ============================================================
-        //  加 载 用 户 角 色
-        // ============================================================
-        async function loadUserRole() {
-            if (!window.currentUser) return;
-            const { data, error } = await supabaseClient
-                .from('profiles')
-                .select('role')
-                .eq('id', window.currentUser.id)
-                .single();
-            if (data) {
-                currentUserRole = data.role;
-            } else {
-                // 尝试创建 profile
-                await supabaseClient.from('profiles').upsert({
-                    id: window.currentUser.id,
-                    role: window.currentUser.email === '3948677391@qq.com' ? 'admin' : 'user'
-                });
-                currentUserRole = window.currentUser.email === '3948677391@qq.com' ? 'admin' : 'user';
-            }
-            updateUI();
-        }
-
-        // ============================================================
-        //  加 载 公 告
-        // ============================================================
-        async function loadAnnouncement() {
-            const { data, error } = await supabaseClient
-                .from('announcements')
-                .select('*')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false })
-                .limit(1);
-            if (data && data.length > 0) {
-                announcementText.textContent = data[0].content;
-            } else {
-                announcementText.textContent = '🎉 欢迎来到必看网！';
-            }
-            if (currentUserRole === 'admin') {
-                editAnnounceBtn.classList.remove('hidden');
-            } else {
-                editAnnounceBtn.classList.add('hidden');
-            }
-        }
-
-        // ============================================================
-        //  加 载 内 容
-        // ============================================================
-        async function loadContents() {
-            if (!window.currentUser) return;
-
-            let query = supabaseClient.from('contents').select('*, profiles!user_id(role)');
-
-            if (currentNav === 'home') {
-                query = query.eq('status', 'approved');
-            } else if (currentNav === 'profile') {
-                query = query.eq('user_id', window.currentUser.id);
-            } else if (currentNav === 'review') {
-                if (currentUserRole === 'admin') {
-                    query = query.eq('status', 'pending');
-                } else {
-                    query = query.eq('status', 'approved').limit(0);
-                }
-            } else {
-                query = query.eq('status', 'approved');
-            }
-
-            const { data, error } = await query.order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('加载内容失败:', error);
-                allContents = [];
-                return;
-            }
-            allContents = data || [];
-
-            if (currentUserRole === 'admin') {
-                const { count, error: countErr } = await supabaseClient
-                    .from('contents')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'pending');
-                if (!countErr) {
-                    pendingCount = count || 0;
-                    if (pendingCount > 0) {
-                        reviewBadge.textContent = pendingCount;
-                        reviewBadge.classList.remove('hidden');
-                    } else {
-                        reviewBadge.classList.add('hidden');
-                    }
-                }
-            }
-
-            renderContents();
-        }
-
-        // ============================================================
-        //  渲 染 内 容
-        // ============================================================
-        function renderContents() {
-            const data = allContents;
-            if (!data || data.length === 0) {
-                const icon = currentNav === 'review' ? '✅' : (currentNav === 'profile' ? '📭' : '🌱');
-                const msg = currentNav === 'review' ? '暂无待审核内容' :
-                    (currentNav === 'profile' ? '你还没有发布任何内容' : '暂无内容，发布第一个吧！');
-                contentRender.innerHTML =
-                    `<div class="empty-state"><span class="icon">${icon}</span><p>${msg}</p></div>`;
-                return;
-            }
-
-            let html = '<div class="content-grid">';
-            data.forEach(item => {
-                const isOwner = item.user_id === window.currentUser?.id;
-                const isAdmin = currentUserRole === 'admin';
-                const showActions = (currentNav === 'review' && isAdmin) || (currentNav === 'profile' && isOwner);
-
-                let extraHtml = '';
-                if (item.file_url) {
-                    extraHtml =
-                        `<div class="file-info">📎 <a href="${item.file_url}" target="_blank">${item.file_name || '下载文件'}</a>${item.file_size ? ' · ' + formatSize(item.file_size) : ''}</div>`;
-                }
-                if (item.url) {
-                    extraHtml =
-                        `<div class="file-info">🔗 <a href="${item.url}" target="_blank" class="url-link">${item.url}</a></div>`;
-                }
-
-                let statusBadge = '';
-                if (currentNav === 'profile') {
-                    const map = {
-                        'pending': '<span class="status-badge pending">⏳ 待审核</span>',
-                        'approved': '<span class="status-badge approved">✅ 已通过</span>',
-                        'rejected': '<span class="status-badge rejected">❌ 已拒绝</span>'
-                    };
-                    statusBadge = map[item.status] || '';
-                }
-
-                let actionButtons = '';
-                if (showActions && currentNav === 'review' && isAdmin) {
-                    actionButtons =
-                        `<div class="actions"><button class="btn-sm approve" onclick="window.reviewContent(${item.id}, 'approved')">✅ 通过</button><button class="btn-sm reject" onclick="window.reviewContent(${item.id}, 'rejected')">❌ 拒绝</button><button class="btn-sm" onclick="window.viewContentDetail(${item.id})">📄 详情</button></div>`;
-                } else if (showActions && currentNav === 'profile' && isOwner) {
-                    actionButtons =
-                        `<div class="actions"><button class="btn-sm" onclick="window.deleteContent(${item.id}, '${item.file_url || ''}')">🗑️ 删除</button></div>`;
-                }
-
-                html += `
-                    <div class="content-card">
-                        <div class="meta"><span class="cat ${getCategoryClass(item.category)}">${getCategoryIcon(item.category)} ${item.category}</span><span>${timeAgo(item.created_at)}</span></div>
-                        <div class="title">${item.title}</div>
-                        ${item.description ? `<div class="desc">${item.description}</div>` : ''}
-                        ${extraHtml}
-                        ${statusBadge}
-                        ${actionButtons}
-                        <div class="footer"><span class="user"><span class="avatar-sm">${getInitials(item.user_id)}</span><span>用户</span></span><span>👁️ ${item.view_count || 0}</span></div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            contentRender.innerHTML = html;
-        }
-
-        // ============================================================
-        //  导 航 切 换（暴露到全局）
-        // ============================================================
-        window.switchNav = function(nav) {
+        function switchNav(nav) {
             currentNav = nav;
             document.querySelectorAll('#sideNav .nav-item').forEach(el => {
                 el.classList.toggle('active', el.dataset.nav === nav);
             });
             if (nav === 'review' && currentUserRole !== 'admin') return;
-            loadContents();
-        };
+            if (nav === 'admin' && currentUserRole !== 'admin') return;
+            if (nav === 'messages') {
+                loadNotifications();
+                renderContents();
+                return;
+            }
+            loadContents(currentSearchQuery);
+        }
 
         // ============================================================
         //  更 新 UI
@@ -1121,28 +1183,112 @@
                 editAnnounceBtn.classList.add('hidden');
             }
             if (currentNav === 'review' && currentUserRole !== 'admin') {
-                window.switchNav('home');
+                switchNav('home');
             }
         }
 
         // ============================================================
-        //  上 传 弹 窗（暴露到全局）
+        //  退 出
         // ============================================================
-        window.openUploadModal = function() {
-            if (!window.currentUser) return;
+        async function handleLogout() {
+            try {
+                await supabaseClient.auth.signOut();
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/login.html';
+            } catch (e) {
+                window.location.href = '/login.html';
+            }
+        }
+
+        // ============================================================
+        //  搜 索
+        // ============================================================
+        function doSearch() {
+            const query = searchInput.value.trim();
+            currentSearchQuery = query;
+            loadContents(query);
+        }
+
+        // ============================================================
+        //  上 传 弹 窗
+        // ============================================================
+        let uploadedFileList = [];
+        let uploadedUrlList = [];
+        let uploadedTagList = [];
+
+        function openUploadModal() {
+            if (!currentUser) return;
+            uploadedFileList = [];
+            uploadedUrlList = [];
+            uploadedTagList = [];
             document.getElementById('uploadModal').classList.remove('hidden');
             document.getElementById('uploadForm').reset();
-            document.getElementById('uploadFileName').textContent = '点击选择文件';
+            document.getElementById('uploadFileName').textContent = '点击选择文件（可多个）';
+            document.getElementById('tagList').innerHTML = '';
+            document.getElementById('urlList').innerHTML = '';
+            document.getElementById('urlGroup').style.display = 'block';
             toggleUploadFields('论坛');
-        };
+        }
 
-        window.closeUploadModal = function() {
+        function closeUploadModal() {
             document.getElementById('uploadModal').classList.add('hidden');
-        };
+        }
 
-        window.updateFileName = function(input) {
-            document.getElementById('uploadFileName').textContent = input.files[0]?.name || '点击选择文件';
-        };
+        function updateFileNames(input) {
+            const files = input.files;
+            if (files.length > 0) {
+                uploadedFileList = Array.from(files);
+                document.getElementById('uploadFileName').textContent = files.length + ' 个文件';
+            } else {
+                uploadedFileList = [];
+                document.getElementById('uploadFileName').textContent = '点击选择文件（可多个）';
+            }
+        }
+
+        function addTag() {
+            const input = document.getElementById('tagInput');
+            const tag = input.value.trim();
+            if (!tag) return;
+            if (uploadedTagList.includes(tag)) { input.value = ''; return; }
+            uploadedTagList.push(tag);
+            input.value = '';
+            renderTags();
+        }
+
+        function removeTag(tag) {
+            uploadedTagList = uploadedTagList.filter(t => t !== tag);
+            renderTags();
+        }
+
+        function renderTags() {
+            const container = document.getElementById('tagList');
+            container.innerHTML = uploadedTagList.map(t =>
+                `<span class="tag-item">#${t} <span class="remove" onclick="removeTag('${t}')">✕</span></span>`
+            ).join('');
+        }
+
+        function addUrl() {
+            const input = document.getElementById('uploadUrlInput');
+            const url = input.value.trim();
+            if (!url) return;
+            if (uploadedUrlList.includes(url)) { input.value = ''; return; }
+            uploadedUrlList.push(url);
+            input.value = '';
+            renderUrls();
+        }
+
+        function removeUrl(url) {
+            uploadedUrlList = uploadedUrlList.filter(u => u !== url);
+            renderUrls();
+        }
+
+        function renderUrls() {
+            const container = document.getElementById('urlList');
+            container.innerHTML = uploadedUrlList.map(u =>
+                `<span class="url-tag">🔗 ${u} <span class="remove" onclick="removeUrl('${u}')">✕</span></span>`
+            ).join('');
+        }
 
         document.getElementById('uploadCategory').addEventListener('change', function() {
             toggleUploadFields(this.value);
@@ -1150,36 +1296,26 @@
 
         function toggleUploadFields(category) {
             const urlGroup = document.getElementById('urlGroup');
-            const fileGroup = document.getElementById('fileGroup');
             if (category === '网址') {
                 urlGroup.style.display = 'block';
-                fileGroup.style.display = 'none';
-            } else if (category === '资源') {
-                urlGroup.style.display = 'none';
-                fileGroup.style.display = 'block';
             } else {
-                urlGroup.style.display = 'none';
-                fileGroup.style.display = 'none';
+                urlGroup.style.display = 'block';
             }
         }
 
         // ============================================================
-        //  提 交 内 容（暴露到全局）
+        //  提 交 内 容
         // ============================================================
-        window.submitContent = async function(e) {
+        async function submitContent(e) {
             e.preventDefault();
             if (isSubmitting) return;
-            if (!window.currentUser) { alert('请先登录'); return; }
+            if (!currentUser) { alert('请先登录'); return; }
 
             const category = document.getElementById('uploadCategory').value;
             const title = document.getElementById('uploadTitle').value.trim();
             const description = document.getElementById('uploadDesc').value.trim();
-            const url = document.getElementById('uploadUrl').value.trim();
-            const fileInput = document.getElementById('uploadFileInput');
-            const file = fileInput.files[0];
 
             if (!title) { alert('请输入标题'); return; }
-            if (category === '网址' && !url) { alert('网址分类需要填写链接'); return; }
 
             isSubmitting = true;
             const btn = document.getElementById('submitBtn');
@@ -1187,42 +1323,61 @@
             btn.disabled = true;
 
             try {
-                let fileUrl = null,
-                    fileName = null,
-                    fileSize = null;
-                if (category === '资源' && file) {
-                    const filePath = `${window.currentUser.id}/${Date.now()}_${file.name}`;
+                // 上传所有文件
+                let fileUrls = [];
+                let fileNames = [];
+                let fileSizes = [];
+                for (const file of uploadedFileList) {
+                    const filePath = `${currentUser.id}/${Date.now()}_${file.name}`;
                     const { error: uploadError } = await supabaseClient.storage
                         .from('files')
                         .upload(filePath, file);
-                    if (uploadError) throw new Error('文件上传失败：' + uploadError.message);
+                    if (uploadError) {
+                        console.warn('文件上传失败:', uploadError, file.name);
+                        continue;
+                    }
                     const { data: urlData } = supabaseClient.storage
                         .from('files')
                         .getPublicUrl(filePath);
-                    fileUrl = urlData.publicUrl;
-                    fileName = file.name;
-                    fileSize = file.size;
+                    fileUrls.push(urlData.publicUrl);
+                    fileNames.push(file.name);
+                    fileSizes.push(file.size);
+                }
+
+                // 合并网址
+                const allUrls = [...uploadedUrlList];
+                const allFiles = fileUrls;
+
+                // 创建内容记录
+                const insertData = {
+                    user_id: currentUser.id,
+                    category: category,
+                    title: title,
+                    description: description || null,
+                    tags: uploadedTagList.length > 0 ? uploadedTagList : null,
+                    status: 'pending'
+                };
+
+                // 如果有网址，存第一个作为主要url
+                if (allUrls.length > 0) {
+                    insertData.url = allUrls.join(', ');
+                }
+                // 如果有文件，存第一个作为主要文件
+                if (allFiles.length > 0) {
+                    insertData.file_url = allFiles[0];
+                    insertData.file_name = fileNames[0] || '文件';
+                    insertData.file_size = fileSizes[0] || 0;
                 }
 
                 const { error: insertError } = await supabaseClient
                     .from('contents')
-                    .insert({
-                        user_id: window.currentUser.id,
-                        category: category,
-                        title: title,
-                        description: description || null,
-                        url: category === '网址' ? url : null,
-                        file_url: fileUrl,
-                        file_name: fileName,
-                        file_size: fileSize,
-                        status: 'pending'
-                    });
+                    .insert(insertData);
 
                 if (insertError) throw new Error('发布失败：' + insertError.message);
 
                 alert('✅ 提交成功！等待管理员审核。');
-                window.closeUploadModal();
-                loadContents();
+                closeUploadModal();
+                loadContents(currentSearchQuery);
             } catch (err) {
                 alert('❌ ' + err.message);
             } finally {
@@ -1230,25 +1385,64 @@
                 btn.textContent = '📤 提交审核';
                 btn.disabled = false;
             }
-        };
+        }
 
         // ============================================================
-        //  审 核 操 作（暴露到全局）
+        //  审 核
         // ============================================================
-        window.reviewContent = async function(contentId, status) {
+        async function reviewContent(contentId, status) {
             if (!confirm(`确定要 ${status === 'approved' ? '通过' : '拒绝'} 这个内容吗？`)) return;
             const { error } = await supabaseClient
                 .from('contents')
                 .update({ status: status, updated_at: new Date().toISOString() })
                 .eq('id', contentId);
-            if (error) { alert('操作失败：' + error.message); } else { alert('✅ 操作成功');
-                loadContents(); }
-        };
+            if (error) {
+                alert('操作失败：' + error.message);
+            } else {
+                // 发送通知
+                const { data: content } = await supabaseClient
+                    .from('contents')
+                    .select('user_id, title')
+                    .eq('id', contentId)
+                    .single();
+                if (content) {
+                    const msg = status === 'approved' ?
+                        `✅ 你的内容 "${content.title}" 已通过审核！` :
+                        `❌ 你的内容 "${content.title}" 已被拒绝。`;
+                    await supabaseClient.from('notifications').insert({
+                        user_id: content.user_id,
+                        type: status === 'approved' ? 'approved' : 'rejected',
+                        content: msg,
+                        link: '/'
+                    });
+                }
+                alert('✅ 操作成功');
+                loadContents(currentSearchQuery);
+                loadNotifications();
+            }
+        }
 
         // ============================================================
-        //  删 除 内 容（暴露到全局）
+        //  推 荐 / 取 消 推 荐
         // ============================================================
-        window.deleteContent = async function(contentId, fileUrl) {
+        async function toggleRecommend(contentId, current) {
+            if (!confirm(`确定要 ${current ? '取消推荐' : '推荐'} 这个内容吗？`)) return;
+            const { error } = await supabaseClient
+                .from('contents')
+                .update({ is_recommended: !current })
+                .eq('id', contentId);
+            if (error) {
+                alert('操作失败：' + error.message);
+            } else {
+                alert('✅ 操作成功');
+                loadContents(currentSearchQuery);
+            }
+        }
+
+        // ============================================================
+        //  删 除
+        // ============================================================
+        async function deleteContent(contentId, fileUrl) {
             if (!confirm('确定要删除这个内容吗？')) return;
             try {
                 if (fileUrl) {
@@ -1264,130 +1458,383 @@
                     .eq('id', contentId);
                 if (error) throw new Error(error.message);
                 alert('✅ 删除成功');
-                loadContents();
+                loadContents(currentSearchQuery);
             } catch (err) { alert('❌ 删除失败：' + err.message); }
-        };
+        }
 
         // ============================================================
-        //  公 告 编 辑（暴露到全局）
+        //  点 赞
         // ============================================================
-        window.openAnnounceEditor = function() {
+        async function toggleLike(contentId) {
+            if (!currentUser) return;
+            const item = allContents.find(c => c.id === contentId);
+            if (!item) return;
+
+            if (item._isLiked) {
+                // 取消点赞
+                const { error } = await supabaseClient
+                    .from('likes')
+                    .delete()
+                    .eq('user_id', currentUser.id)
+                    .eq('content_id', contentId);
+                if (error) {
+                    alert('操作失败：' + error.message);
+                    return;
+                }
+                item._isLiked = false;
+                item.likes_count = (item.likes_count || 1) - 1;
+            } else {
+                const { error } = await supabaseClient
+                    .from('likes')
+                    .insert({ user_id: currentUser.id, content_id: contentId });
+                if (error) {
+                    alert('操作失败：' + error.message);
+                    return;
+                }
+                item._isLiked = true;
+                item.likes_count = (item.likes_count || 0) + 1;
+            }
+            renderContents();
+        }
+
+        // ============================================================
+        //  评 论
+        // ============================================================
+        async function postComment(contentId) {
+            const input = document.getElementById(`commentInput-${contentId}`);
+            const content = input.value.trim();
+            if (!content) { alert('请输入评论内容'); return; }
+            if (!currentUser) { alert('请先登录'); return; }
+
+            const { error } = await supabaseClient
+                .from('comments')
+                .insert({
+                    user_id: currentUser.id,
+                    content_id: contentId,
+                    content: content
+                });
+
+            if (error) {
+                alert('评论失败：' + error.message);
+                return;
+            }
+
+            // 发送通知给内容作者
+            const { data: item } = await supabaseClient
+                .from('contents')
+                .select('user_id, title')
+                .eq('id', contentId)
+                .single();
+            if (item && item.user_id !== currentUser.id) {
+                await supabaseClient.from('notifications').insert({
+                    user_id: item.user_id,
+                    type: 'comment',
+                    content: `💬 ${currentUser.email} 评论了你的内容 "${item.title}"：${content}`,
+                    link: '/'
+                });
+            }
+
+            input.value = '';
+            loadContents(currentSearchQuery);
+            loadNotifications();
+        }
+
+        // ============================================================
+        //  切 换 评 论 区
+        // ============================================================
+        async function toggleComments(contentId) {
+            const container = document.getElementById(`comments-${contentId}`);
+            if (!container) return;
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                // 加载评论
+                const { data, error } = await supabaseClient
+                    .from('comments')
+                    .select(`*, profiles!user_id (nickname, avatar_url)`)
+                    .eq('content_id', contentId)
+                    .order('created_at', { ascending: true });
+                const list = document.getElementById(`commentList-${contentId}`);
+                if (data && data.length > 0) {
+                    list.innerHTML = data.map(c => {
+                        const avatar = c.profiles?.avatar_url ?
+                            `<img src="${c.profiles.avatar_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">` :
+                            (c.profiles?.nickname || 'U').charAt(0).toUpperCase();
+                        return `
+                            <div class="comment-item">
+                                <span class="avatar-sm">${avatar}</span>
+                                <div class="cmt-content">
+                                    <span class="cmt-user">${c.profiles?.nickname || '用户'}</span>
+                                    <span class="cmt-text">${c.content}</span>
+                                </div>
+                                <span class="cmt-time">${timeAgo(c.created_at)}</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    list.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:8px 0;">暂无评论</div>';
+                }
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        // ============================================================
+        //  消 息 标 记 已 读
+        // ============================================================
+        async function markNotificationRead(id) {
+            await supabaseClient
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('id', id);
+            await loadNotifications();
+            renderContents();
+        }
+
+        // ============================================================
+        //  公 告 编 辑
+        // ============================================================
+        function openAnnounceEditor() {
             document.getElementById('announceInput').value = announcementText.textContent;
             document.getElementById('announceModal').classList.remove('hidden');
-        };
+        }
 
-        window.closeAnnounceModal = function() {
+        function closeAnnounceModal() {
             document.getElementById('announceModal').classList.add('hidden');
-        };
+        }
 
-        window.saveAnnouncement = async function() {
+        async function saveAnnouncement() {
             const content = document.getElementById('announceInput').value.trim();
             if (!content) { alert('请输入公告内容'); return; }
             const { error } = await supabaseClient
                 .from('announcements')
                 .insert({ content: content, is_active: true });
-            if (error) { alert('保存失败：' + error.message); } else { alert('✅ 公告已更新');
-                window.closeAnnounceModal();
-                loadAnnouncement(); }
-        };
+            if (error) { alert('保存失败：' + error.message); } else {
+                alert('✅ 公告已更新');
+                closeAnnounceModal();
+                loadAnnouncement();
+            }
+        }
 
         // ============================================================
-        //  审 核 详 情（暴露到全局）
+        //  审 核 详 情
         // ============================================================
-        window.viewContentDetail = function(contentId) {
+        function viewContentDetail(contentId) {
             const item = allContents.find(c => c.id === contentId);
             if (!item) return;
             const detailHtml = `
                 <div style="margin-bottom:16px;">
                     <div style="color:#94a3b8;font-size:13px;">分类：${item.category}</div>
-                    <div style="font-size:22px;font-weight:700;margin:8px 0;">${item.title}</div>
+                    <div style="font-size:20px;font-weight:700;margin:8px 0;">${item.title}</div>
                     ${item.description ? `<div style="color:#475569;line-height:1.6;margin-bottom:8px;">${item.description}</div>` : ''}
-                    ${item.file_url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;"><a href="${item.file_url}" target="_blank">📎 下载文件</a></div>` : ''}
-                    ${item.url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;"><a href="${item.url}" target="_blank">🔗 ${item.url}</a></div>` : ''}
-                    <div style="font-size:13px;color:#94a3b8;margin-top:8px;">状态：${getStatusText(item.status)} · ${timeAgo(item.created_at)}</div>
+                    ${item.file_url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;margin-bottom:8px;"><a href="${item.file_url}" target="_blank">📎 下载文件</a></div>` : ''}
+                    ${item.url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;margin-bottom:8px;"><a href="${item.url}" target="_blank">🔗 ${item.url}</a></div>` : ''}
+                    ${item.tags && item.tags.length > 0 ? `<div style="font-size:13px;color:#64748b;">标签：#${item.tags.join(' #')}</div>` : ''}
+                    <div style="font-size:13px;color:#94a3b8;margin-top:8px;">状态：${getStatusText(item.status)} · ${timeAgo(item.created_at)} · ❤️ ${item.likes_count || 0} · 💬 ${item.comments_count || 0}</div>
                 </div>
-                <div style="display:flex;gap:10px;">
-                    <button class="btn-sm approve" onclick="window.reviewContent(${item.id}, 'approved'); window.closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;">✅ 通过</button>
-                    <button class="btn-sm reject" onclick="window.reviewContent(${item.id}, 'rejected'); window.closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;">❌ 拒绝</button>
-                    <button class="btn-sm" onclick="window.closeReviewDetail()" style="padding:8px 24px;border-radius:10px;background:#f1f5f9;border:1px solid #e2e8f0;">关闭</button>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved'); closeReviewDetail();" style="padding:8px 20px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;">✅ 通过</button>
+                    <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected'); closeReviewDetail();" style="padding:8px 20px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;">❌ 拒绝</button>
+                    <button class="btn-sm" onclick="toggleRecommend(${item.id}, ${item.is_recommended || false}); closeReviewDetail();" style="padding:8px 20px;border-radius:10px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;">${item.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
+                    <button class="btn-sm" onclick="closeReviewDetail()" style="padding:8px 20px;border-radius:10px;background:#f1f5f9;border:1px solid #e2e8f0;">关闭</button>
                 </div>
             `;
             document.getElementById('reviewDetailContent').innerHTML = detailHtml;
             document.getElementById('reviewDetailModal').classList.remove('hidden');
-        };
+        }
 
-        window.closeReviewDetail = function() {
+        function closeReviewDetail() {
             document.getElementById('reviewDetailModal').classList.add('hidden');
-        };
+        }
 
         // ============================================================
-        //  管 理 员 管 理（暴露到全局）
+        //  管 理 员 管 理
         // ============================================================
-        window.openAdminModal = function() {
+        async function openAdminModal() {
             if (currentUserRole !== 'admin') return;
             document.getElementById('adminModal').classList.remove('hidden');
-            loadAdminList();
-        };
+            await loadAdminRequests();
+        }
 
-        window.closeAdminModal = function() {
+        function closeAdminModal() {
             document.getElementById('adminModal').classList.add('hidden');
-        };
+        }
 
-        let adminUsers = [];
-
-        async function loadAdminList() {
+        async function loadAdminRequests() {
             const { data, error } = await supabaseClient
-                .from('profiles')
-                .select('id, role')
-                .eq('role', 'admin');
-            if (error) {
-                console.error('加载管理员列表失败:', error);
+                .from('admin_requests')
+                .select('*, requester:requester_id(email), target:target_id(email), processor:processed_by(email)')
+                .eq('requester_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            const container = document.getElementById('adminRequestList');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">暂无申请记录</p>';
                 return;
             }
-            adminUsers = data || [];
-            renderAdminList();
+            container.innerHTML = data.map(r => {
+                const statusMap = {
+                    'pending': '⏳ 待审核',
+                    'approved': '✅ 已通过',
+                    'rejected': '❌ 已拒绝'
+                };
+                const actionMap = { 'add': '添加管理员', 'remove': '撤销管理员' };
+                return `
+                    <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                        <div>${actionMap[r.action_type]}：${r.target?.email || '未知用户'}</div>
+                        <div style="color:#64748b;font-size:12px;">理由：${r.reason}</div>
+                        <div>状态：${statusMap[r.status] || r.status}</div>
+                        <div style="color:#94a3b8;font-size:11px;">${timeAgo(r.created_at)}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        async function renderAdminList() {
-            const container = document.getElementById('adminList');
-            if (adminUsers.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8;text-align:center;">暂无管理员</p>';
-                return;
-            }
-            let html = '';
-            for (const admin of adminUsers) {
-                const { data: userData } = await supabaseClient.auth.admin.getUserById(admin.id);
-                const email = userData?.user?.email || admin.id;
-                html +=
-                    `<div class="user-item"><span class="email">${email}</span><span class="role admin">👑 管理员</span></div>`;
-            }
-            container.innerHTML = html;
-        }
+        async function submitAdminRequest() {
+            if (!currentUser) return;
+            const actionType = document.getElementById('adminActionType').value;
+            const targetEmail = document.getElementById('adminTargetEmail').value.trim();
+            const reason = document.getElementById('adminReason').value.trim();
 
-        window.addAdmin = async function() {
-            const input = document.getElementById('adminAddInput');
-            const email = input.value.trim();
-            if (!email) { alert('请输入邮箱'); return; }
-            try {
-                const { data: userData, error: userError } = await supabaseClient.auth.admin.listUsers();
-                if (userError) throw new Error(userError.message);
-                const found = userData.users.find(u => u.email === email);
-                if (!found) { alert('未找到该用户，请确保用户已注册'); return; }
-                const { error: updateError } = await supabaseClient
+            if (!targetEmail) { alert('请输入目标用户邮箱'); return; }
+            if (!reason) { alert('请输入操作理由'); return; }
+
+            // 查找目标用户
+            const { data: users, error: userError } = await supabaseClient.auth.admin.listUsers();
+            if (userError) { alert('查找用户失败：' + userError.message); return; }
+            const target = users.users.find(u => u.email === targetEmail);
+            if (!target) { alert('未找到该用户，请确保用户已注册'); return; }
+            if (target.email === MAIN_ADMIN_EMAIL) { alert('不能操作主管理员'); return; }
+
+            // 如果是主管理员，直接操作，不需要审核
+            if (isMainAdmin) {
+                const newRole = actionType === 'add' ? 'admin' : 'user';
+                const { error } = await supabaseClient
                     .from('profiles')
-                    .upsert({ id: found.id, role: 'admin' });
-                if (updateError) throw new Error(updateError.message);
-                alert('✅ 已设为管理员');
-                input.value = '';
-                loadAdminList();
+                    .update({ role: newRole })
+                    .eq('id', target.id);
+                if (error) {
+                    alert('操作失败：' + error.message);
+                    return;
+                }
+                // 发送通知
+                const msg = actionType === 'add' ?
+                    `👑 你已被 ${currentUser.email} 设为管理员` :
+                    `📋 你已被 ${currentUser.email} 撤销管理员权限`;
+                await supabaseClient.from('notifications').insert({
+                    user_id: target.id,
+                    type: 'admin_response',
+                    content: msg,
+                    link: '/'
+                });
+                alert('✅ 操作成功');
+                document.getElementById('adminTargetEmail').value = '';
+                document.getElementById('adminReason').value = '';
+                loadAdminRequests();
                 loadUserRole();
                 updateUI();
-            } catch (err) { alert('操作失败：' + err.message); }
-        };
+                return;
+            }
 
-        console.log('👁️ 必看网 v7.0.0 (修复版)');
-        console.log('📧 管理员: 3948677391@qq.com');
-        console.log('✅ 所有功能已初始化');
+            // 非主管理员，提交申请
+            const { error } = await supabaseClient
+                .from('admin_requests')
+                .insert({
+                    requester_id: currentUser.id,
+                    target_id: target.id,
+                    action_type: actionType,
+                    reason: reason,
+                    status: 'pending'
+                });
+
+            if (error) {
+                alert('提交失败：' + error.message);
+                return;
+            }
+
+            // 通知主管理员
+            const { data: mainAdmin } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('email', MAIN_ADMIN_EMAIL)
+                .single();
+            if (mainAdmin) {
+                await supabaseClient.from('notifications').insert({
+                    user_id: mainAdmin.id,
+                    type: 'admin_request',
+                    content: `👑 ${currentUser.email} 申请${actionType === 'add' ? '添加' : '撤销'}管理员：${targetEmail}，理由：${reason}`,
+                    link: '/'
+                });
+            }
+
+            alert('✅ 申请已提交，等待主管理员审核');
+            document.getElementById('adminTargetEmail').value = '';
+            document.getElementById('adminReason').value = '';
+            loadAdminRequests();
+            loadNotifications();
+        }
+
+        // ============================================================
+        //  编 辑 个 人 资 料
+        // ============================================================
+        function openProfileEdit() {
+            if (!currentUser) return;
+            document.getElementById('editAvatar').value = '';
+            document.getElementById('editNickname').value = userNickname.textContent || '';
+            document.getElementById('editBio').value = '';
+            // 加载当前资料
+            supabaseClient.from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single()
+                .then(({ data }) => {
+                    if (data) {
+                        document.getElementById('editAvatar').value = data.avatar_url || '';
+                        document.getElementById('editNickname').value = data.nickname || '';
+                        document.getElementById('editBio').value = data.bio || '';
+                    }
+                });
+            document.getElementById('profileEditModal').classList.remove('hidden');
+        }
+
+        function closeProfileEdit() {
+            document.getElementById('profileEditModal').classList.add('hidden');
+        }
+
+        async function saveProfile() {
+            const avatar_url = document.getElementById('editAvatar').value.trim();
+            const nickname = document.getElementById('editNickname').value.trim();
+            const bio = document.getElementById('editBio').value.trim();
+
+            const updateData = {};
+            if (avatar_url) updateData.avatar_url = avatar_url;
+            if (nickname) updateData.nickname = nickname;
+            if (bio) updateData.bio = bio;
+
+            if (Object.keys(updateData).length === 0) {
+                alert('没有修改任何内容');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('profiles')
+                .update(updateData)
+                .eq('id', currentUser.id);
+
+            if (error) {
+                alert('保存失败：' + error.message);
+            } else {
+                alert('✅ 保存成功');
+                closeProfileEdit();
+                loadUserProfile();
+            }
+        }
+
+        // ============================================================
+        //  初 始 化
+        // ============================================================
+        console.log('👁️ 必看网 v9.0.0 (完整版)');
+        console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
     </script>
 
 </body>
