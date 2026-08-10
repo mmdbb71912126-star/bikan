@@ -392,13 +392,11 @@ async function loadReports() {
 
     const count = allReports.length;
 
-    // ✅ 先获取元素，再操作
-    const reportBadge = document.getElementById('reportBadge');
-    if (reportBadge) {
-        reportBadge.textContent = count;
-        reportBadge.classList.toggle('hidden', count === 0);
-    }
+    // ❌ 移除对 reportBadge 的操作（因为它在侧边栏中可能还没渲染）
+    // const reportBadge = document.getElementById('reportBadge');
+    // if (reportBadge) { ... }
 
+    // ✅ 只更新管理员页面中的 reportCountBadge（它在 switchAdminTab('reports') 时会被创建）
     const reportCountBadge = document.getElementById('reportCountBadge');
     if (reportCountBadge) {
         reportCountBadge.textContent = count;
