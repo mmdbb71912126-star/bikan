@@ -333,6 +333,7 @@ function closeGlobalBanner() {
 // ============================================================
 async function loadReports() {
     if (currentUserRole !== 'admin') return;
+
     const { data, error } = await supabaseClient
         .from('reports')
         .select('*')
@@ -365,13 +366,22 @@ async function loadReports() {
         }
         allReports = data;
         const count = data.length;
-        reportBadge.textContent = count;
-        if (count > 0) {
-            reportBadge.classList.remove('hidden');
-        } else {
-            reportBadge.classList.add('hidden');
+
+        // ✅ 安全设置：先检查元素是否存在
+        const reportBadge = document.getElementById('reportBadge');
+        if (reportBadge) {
+            reportBadge.textContent = count;
+            if (count > 0) {
+                reportBadge.classList.remove('hidden');
+            } else {
+                reportBadge.classList.add('hidden');
+            }
         }
-        document.getElementById('reportCountBadge').textContent = count;
+
+        const reportCountBadge = document.getElementById('reportCountBadge');
+        if (reportCountBadge) {
+            reportCountBadge.textContent = count;
+        }
     }
 }
 
