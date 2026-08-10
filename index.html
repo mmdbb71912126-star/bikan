@@ -222,7 +222,7 @@
             background: #f8fafc;
         }
 
-        /* ===== 公告栏 ===== */
+        /* ===== 公告栏（普通公告，非全局） ===== */
         .announcement-bar {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: #fff;
@@ -1606,35 +1606,87 @@
             padding: 12px;
         }
 
-        /* ===== 全局公告横幅 ===== */
-        .global-announcement-banner {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            color: #92400e;
-            padding: 8px 20px;
-            text-align: center;
-            font-size: 13px;
-            border-bottom: 2px solid #f59e0b;
-            display: none;
-            flex-shrink: 0;
+        /* ===== 好友列表（消息分区内） ===== */
+        .friend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #eef2f6;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .global-announcement-banner .banner-content {
+        .friend-item:hover {
+            border-color: #dce2ec;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .friend-item .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .friend-item .friend-info .avatar-sm {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
+            font-size: 14px;
+            font-weight: 600;
+            overflow: hidden;
         }
-        .global-announcement-banner .banner-content .close-banner {
-            background: none;
-            border: none;
-            color: #92400e;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 0 4px;
-            opacity: 0.6;
+        .friend-item .friend-info .avatar-sm img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        .global-announcement-banner .banner-content .close-banner:hover {
-            opacity: 1;
+        .friend-item .friend-info .friend-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #0f172a;
+        }
+        .friend-item .friend-info .friend-status {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .friend-item .friend-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .friend-item .friend-actions .btn-sm {
+            padding: 2px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .friend-item .friend-actions .btn-sm:hover {
+            background: #f1f5f9;
+        }
+        .friend-item .friend-actions .btn-sm.accept {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+        .friend-item .friend-actions .btn-sm.accept:hover {
+            background: #bbf7d0;
+        }
+        .friend-item .friend-actions .btn-sm.reject {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fca5a5;
+        }
+        .friend-item .friend-actions .btn-sm.reject:hover {
+            background: #fecaca;
         }
 
         /* ===== QQ群提示 ===== */
@@ -1774,16 +1826,6 @@
 </head>
 <body>
 
-    <!-- ===== 全局公告横幅 ===== -->
-    <div id="globalBanner" class="global-announcement-banner" style="display:none;">
-        <div class="banner-content">
-            <span id="globalBannerText">📢 全局公告内容</span>
-            <button class="close-banner" onclick="closeGlobalBanner()">
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-    </div>
-
     <!-- ===== 主界面 ===== -->
     <div id="app" class="hidden">
 
@@ -1845,7 +1887,8 @@
 
         <!-- 主区域 -->
         <div class="main-area">
-            <!-- 公告栏 -->
+
+            <!-- 公告栏（普通公告，非全局） -->
             <div class="announcement-bar" id="announcementBar">
                 <span class="ann-text" id="announcementText">🎉 欢迎来到必看网！</span>
                 <button class="edit-btn hidden" id="editAnnounceBtn" onclick="openAnnounceEditor()">
@@ -2009,8 +2052,82 @@
         </div>
     </div>
 
+    <!-- ===== 编辑个人资料弹窗 ===== -->
+    <div id="profileEditModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileEdit()">
+        <div class="modal-box" style="max-width:460px;">
+            <div class="modal-header">
+                <span>
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:6px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    编辑个人资料
+                </span>
+                <button class="close-btn" onclick="closeProfileEdit()">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="user-id-display" style="margin-bottom:12px;">
+                <label>
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    用户ID
+                </label>
+                <div class="id-value" id="userIdDisplay">加载中...</div>
+            </div>
+            <div id="editRestrictionMsg" class="restriction-msg hidden">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                距离下次修改还有 <span class="countdown" id="restrictionDays">0</span> 天
+            </div>
+            <div class="avatar-preview" id="avatarPreview">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="form-group">
+                <label>上传头像</label>
+                <div class="file-input-wrap" onclick="document.getElementById('avatarFileInput').click()">
+                    <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                    <span class="file-name" id="avatarFileName">点击选择图片</span>
+                    <input type="file" id="avatarFileInput" accept="image/*" onchange="previewAvatar(this)">
+                </div>
+                <p style="font-size:12px;color:#94a3b8;margin-top:4px;">支持 JPG、PNG、GIF，建议 200×200 以上</p>
+            </div>
+            <div class="form-group">
+                <label>或输入头像URL</label>
+                <input type="url" id="editAvatar" placeholder="https://example.com/avatar.jpg">
+            </div>
+            <div class="form-group">
+                <label>昵称</label>
+                <input type="text" id="editNickname" placeholder="请输入昵称" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label>个人签名</label>
+                <textarea id="editBio" placeholder="请输入个人签名" rows="2" maxlength="100"></textarea>
+            </div>
+            <button onclick="saveProfile()" class="btn-submit" id="saveProfileBtn">
+                <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                保存
+            </button>
+            <div class="qq-group-tip" style="margin-top:12px;">
+                <span class="qq-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C8.5 2 5.5 4.5 4.5 7.5c-0.5 1.5-0.5 3.5 0 5 0.5 1.5 1.5 3 3 4-1.5 1-3 2.5-4 4.5 1 0 2.5-0.5 4-1.5 1 0.5 2 1 3.5 1s2.5-0.5 3.5-1c1.5 1 3 1.5 4 1.5-1-2-2.5-3.5-4-4.5 1.5-1 2.5-2.5 3-4 0.5-1.5 0.5-3.5 0-5C18.5 4.5 15.5 2 12 2z"/></svg>
+                </span>
+                <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                <span style="color:#64748b;font-size:12px;">如被误封请在群内艾特管理员申诉</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 好友申请/私聊弹窗 ===== -->
+    <div id="friendModal" class="modal-overlay hidden" onclick="if(event.target===this) closeFriendModal()">
+        <div class="modal-box" style="max-width:480px;">
+            <div class="modal-header">
+                <span id="friendModalTitle">💬 私聊</span>
+                <button class="close-btn" onclick="closeFriendModal()">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div id="friendModalContent"></div>
+        </div>
+    </div>
+
     <!-- 版本号 -->
-    <div class="version-tag">v15.0.0</div>
+    <div class="version-tag">v16.0.0</div>
 
     <!-- ===== 引入 JavaScript 文件 ===== -->
     <script src="app.js"></script>
