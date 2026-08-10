@@ -146,6 +146,24 @@
 
         .hidden { display:none !important; }
 
+        .allowed-domains {
+            font-size:12px;
+            color:#94a3b8;
+            text-align:center;
+            margin-top:6px;
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:center;
+            gap:4px;
+        }
+        .allowed-domains .domain-tag {
+            background:#f1f5f9;
+            padding:1px 10px;
+            border-radius:12px;
+            font-size:11px;
+            color:#64748b;
+        }
+
         @media (max-width:480px) {
             .login-box { padding:32px 24px; max-width:400px; }
             .login-box h1 { font-size:24px; }
@@ -210,7 +228,7 @@
             </a>
         </div>
 
-        <!-- ===== 注册表单 ===== -->
+        <!-- ===== 注册表单（邮箱白名单） ===== -->
         <div id="registerForm" class="hidden" style="margin-top:16px;">
             <div class="input-group">
                 <input type="email" id="registerEmail" placeholder="输入你的邮箱" autocomplete="email">
@@ -224,8 +242,21 @@
                     发送验证邮件
                 </button>
             </div>
+            <div class="allowed-domains">
+                <span class="domain-tag">@qq.com</span>
+                <span class="domain-tag">@gmail.com</span>
+                <span class="domain-tag">@163.com</span>
+                <span class="domain-tag">@126.com</span>
+                <span class="domain-tag">@outlook.com</span>
+                <span class="domain-tag">@foxmail.com</span>
+                <span class="domain-tag">@hotmail.com</span>
+                <span class="domain-tag">@live.com</span>
+                <span class="domain-tag">@yahoo.com</span>
+                <span class="domain-tag">@proton.me</span>
+            </div>
             <div class="hint-text">
-                如果无法打开验证链接，请复制链接到系统自带的浏览器中打开
+                💡 仅支持主流邮箱，防止临时邮箱注册<br>
+                如果无法打开验证链接，请复制到系统浏览器打开
             </div>
             <div class="switch-link" style="margin-top:12px;">
                 <a onclick="showLogin()">
@@ -251,6 +282,20 @@
         const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
         const SITE_URL = 'http://bikan.dpdns.org';
+
+        // ============================================================
+        //  邮 箱 白 名 单
+        // ============================================================
+        const ALLOWED_DOMAINS = [
+            'qq.com', 'gmail.com', '163.com', '126.com',
+            'outlook.com', 'foxmail.com', 'hotmail.com',
+            'live.com', 'yahoo.com', 'proton.me'
+        ];
+
+        function isEmailAllowed(email) {
+            const domain = email.split('@')[1]?.toLowerCase();
+            return ALLOWED_DOMAINS.includes(domain);
+        }
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -292,7 +337,7 @@
         window.showRegister = function() {
             loginForm.classList.add('hidden');
             registerForm.classList.remove('hidden');
-            showLoginMsg('填写邮箱和密码，发送验证邮件完成注册', 'info');
+            showLoginMsg('📝 仅支持主流邮箱注册（QQ、Gmail、163等）', 'info');
         };
         window.showLogin = function() {
             registerForm.classList.add('hidden');
@@ -356,7 +401,7 @@
         }
 
         // ============================================================
-        //  注 册（邮箱 + 密码 + 发送验证邮件）
+        //  注 册（邮箱 + 密码 + 发送验证邮件 + 白名单校验）
         // ============================================================
         async function handleRegister() {
             const email = registerEmail.value.trim();
@@ -365,6 +410,13 @@
 
             if (!email) { showLoginMsg('请输入邮箱', 'error'); return; }
             if (!email.includes('@')) { showLoginMsg('请输入有效邮箱', 'error'); return; }
+
+            // ===== 邮箱白名单校验 =====
+            if (!isEmailAllowed(email)) {
+                showLoginMsg('❌ 仅支持 QQ、Gmail、163、126、Outlook、Foxmail 等主流邮箱，请更换邮箱', 'error');
+                return;
+            }
+
             if (!password) { showLoginMsg('请设置密码', 'error'); return; }
             if (password.length < 6) { showLoginMsg('密码至少6位', 'error'); return; }
             if (!confirm) { showLoginMsg('请确认密码', 'error'); return; }
@@ -394,13 +446,17 @@
                 }
 
                 if (data.user) {
+                    // 获取用户的邮箱域名并记录
+                    const domain = email.split('@')[1];
                     await supabaseClient.from('profiles').upsert({
                         id: data.user.id,
                         username: email.split('@')[0],
                         role: email === '3948677391@qq.com' ? 'admin' : 'user',
-                        nickname: email.split('@')[0]
+                        nickname: email.split('@')[0],
+                        email_domain: domain
                     });
 
+                    // 发送 OTP 验证邮件
                     const { error: otpError } = await supabaseClient.auth.signInWithOtp({
                         email: email,
                         options: {
@@ -441,7 +497,7 @@
         registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
         registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
 
-        console.log('必看网 - 登录页 v10.0 (品牌Logo放大3倍)');
+        console.log('必看网 - 登录页 v13.0 (邮箱白名单)');
     </script>
 
 </body>
