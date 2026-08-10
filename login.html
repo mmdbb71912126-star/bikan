@@ -328,7 +328,7 @@
             </a>
         </div>
 
-        <!-- ===== 注册表单 ===== -->
+        <!-- ===== 注册表单（邮箱白名单） ===== -->
         <div id="registerForm" class="hidden" style="margin-top:16px;">
             <div class="input-group">
                 <input type="email" id="registerEmail" placeholder="输入你的邮箱" autocomplete="email">
@@ -446,38 +446,53 @@
         };
 
         // ============================================================
-        //  检 查 登 录
+        //  检 查 登 录（含封禁检查）
         // ============================================================
+        let _isChecking = false;
+
         (async function checkSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                // 检查是否被封禁
-                try {
+            if (_isChecking) return;
+            _isChecking = true;
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    // 验证 token 有效性
+                    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+                    if (userError || !userData.user) {
+                        await supabaseClient.auth.signOut();
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        _isChecking = false;
+                        return;
+                    }
+                    // 检查封禁状态
                     const { data: profile } = await supabaseClient
                         .from('profiles')
                         .select('is_banned, ban_expires_at, ban_reason')
-                        .eq('id', session.user.id)
+                        .eq('id', userData.user.id)
                         .single();
-
                     if (profile?.is_banned) {
                         const expires = profile.ban_expires_at ? new Date(profile.ban_expires_at) : null;
                         if (!expires || expires > new Date()) {
-                            // 被封禁，退出登录并提示
                             await supabaseClient.auth.signOut();
-                            showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason : '') +
-                                (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
-                            // 清除本地存储
                             localStorage.clear();
                             sessionStorage.clear();
+                            showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason :
+                                '') + (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
+                            _isChecking = false;
                             return;
                         }
                     }
-                } catch (e) {
-                    console.warn('检查封禁状态失败:', e);
+                    // 正常跳转
+                    window.location.href = '/';
                 }
-                // 正常跳转
-                window.location.href = '/';
+            } catch (e) {
+                console.error('检查登录状态失败:', e);
+                await supabaseClient.auth.signOut();
+                localStorage.clear();
+                sessionStorage.clear();
             }
+            _isChecking = false;
         })();
 
         // ============================================================
@@ -522,7 +537,7 @@
                 return;
             }
 
-            // 登录成功后检查封禁状态
+            // 登录成功后检查封禁
             if (data?.user) {
                 try {
                     const { data: profile } = await supabaseClient
@@ -530,14 +545,12 @@
                         .select('is_banned, ban_expires_at, ban_reason')
                         .eq('id', data.user.id)
                         .single();
-
                     if (profile?.is_banned) {
                         const expires = profile.ban_expires_at ? new Date(profile.ban_expires_at) : null;
                         if (!expires || expires > new Date()) {
-                            // 被封禁，强制退出
                             await supabaseClient.auth.signOut();
-                            showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason : '') +
-                                (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
+                            showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason :
+                                '') + (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
                             localStorage.clear();
                             sessionStorage.clear();
                             return;
@@ -645,7 +658,7 @@
         registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
         registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
 
-        console.log('🔐 必看网 - 登录页 v15.0 (邮箱白名单 + 封禁检查 + 全SVG)');
+        console.log('🔐 必看网 - 登录页 v15.0 (邮箱白名单 + 封禁检查)');
         console.log('📧 主管理员:', '3948677391@qq.com');
         console.log('🐧 官方QQ群: 976926251');
     </script>
