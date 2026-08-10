@@ -6,7 +6,11 @@
     <title>登录 - 必看网</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
             background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
@@ -17,22 +21,46 @@
             padding: 20px;
         }
         .login-box {
-            background: rgba(255,255,255,0.88);
+            background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(16px);
             padding: 48px 44px;
             border-radius: 32px;
-            box-shadow: 0 30px 60px -20px rgba(0,0,0,0.3);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.3);
             max-width: 520px;
             width: 100%;
-            border: 1px solid rgba(255,255,255,0.6);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
         }
-        .login-box .logo { text-align:center; margin-bottom:12px; }
-        .login-box .logo svg { width:240px; height:163px; }
-        .login-box h1 { text-align:center; font-size:28px; font-weight:800; color:#0f172a; margin-top:4px; }
-        .login-box h1 span { color:#6366f1; }
-        .login-box .sub { text-align:center; color:#94a3b8; font-size:14px; margin:4px 0 28px 0; }
+        .login-box .logo {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .login-box .logo svg {
+            width: 240px;
+            height: 163px;
+        }
+        .login-box h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 4px;
+        }
+        .login-box h1 span {
+            color: #6366f1;
+        }
+        .login-box .sub {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 14px;
+            margin: 4px 0 28px 0;
+        }
 
-        .login-box .input-group { display:flex; flex-direction:column; gap:12px; }
+        .login-box .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
         .login-box .input-group input {
             padding: 14px 18px;
             border: 2px solid #e2e8f0;
@@ -40,9 +68,12 @@
             font-size: 16px;
             background: #fff;
             transition: all 0.3s;
-            width:100%;
+            width: 100%;
         }
-        .login-box .input-group input:focus { border-color:#6366f1; box-shadow:0 0 0 4px rgba(99,102,241,0.12); }
+        .login-box .input-group input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
 
         .login-box .btn-primary {
             padding: 14px;
@@ -54,15 +85,27 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            width:100%;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
         }
-        .login-box .btn-primary:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
-        .login-box .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
-        .login-box .btn-primary svg { width:18px; height:18px; flex-shrink:0; }
+        .login-box .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        .login-box .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .login-box .btn-primary svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
 
         .login-box .btn-secondary {
             padding: 14px;
@@ -74,17 +117,25 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            width:100%;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
         }
-        .login-box .btn-secondary:hover { background:#7c3aed; transform:translateY(-2px); box-shadow:0 8px 24px rgba(139,92,246,0.3); }
-        .login-box .btn-secondary svg { width:18px; height:18px; flex-shrink:0; }
+        .login-box .btn-secondary:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+        .login-box .btn-secondary svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
 
         .login-box .btn-google {
-            width:100%;
+            width: 100%;
             padding: 12px;
             background: #fff;
             border: 2px solid #e2e8f0;
@@ -94,13 +145,20 @@
             color: #1e293b;
             cursor: pointer;
             transition: all 0.3s;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        .login-box .btn-google:hover { border-color:#4285F4; box-shadow:0 4px 12px rgba(66,133,244,0.15); }
-        .login-box .btn-google svg { width:20px; height:20px; flex-shrink:0; }
+        .login-box .btn-google:hover {
+            border-color: #4285F4;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+        }
+        .login-box .btn-google svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
 
         .login-box .msg {
             margin-top: 16px;
@@ -109,65 +167,107 @@
             font-size: 14px;
             min-height: 44px;
         }
-        .login-box .msg.info { background:#f1f5f9; color:#475569; }
-        .login-box .msg.success { background:#dcfce7; color:#166534; }
-        .login-box .msg.error { background:#fee2e2; color:#991b1b; }
-        .login-box .msg.loading { background:#e0f2fe; color:#075985; }
+        .login-box .msg.info {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .login-box .msg.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .login-box .msg.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .login-box .msg.loading {
+            background: #e0f2fe;
+            color: #075985;
+        }
+        .login-box .msg.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
 
         .login-box .divider {
-            display:flex;
-            align-items:center;
-            gap:16px;
-            margin:20px 0 16px 0;
-            color:#94a3b8;
-            font-size:13px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0 16px 0;
+            color: #94a3b8;
+            font-size: 13px;
         }
-        .login-box .divider::before, .login-box .divider::after { flex:1; height:1px; background:#e2e8f0; content:''; }
+        .login-box .divider::before,
+        .login-box .divider::after {
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+            content: '';
+        }
 
         .login-box .switch-link {
-            text-align:center;
-            margin-top:16px;
-            font-size:14px;
-            color:#94a3b8;
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #94a3b8;
         }
         .login-box .switch-link a {
-            color:#6366f1;
-            text-decoration:none;
-            font-weight:500;
-            cursor:pointer;
-            display:inline-flex;
-            align-items:center;
-            gap:4px;
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        .login-box .switch-link a:hover { text-decoration:underline; }
-        .login-box .switch-link a svg { width:14px; height:14px; }
-
-        .login-box .hint-text { font-size:12px; color:#94a3b8; margin-top:8px; text-align:center; }
-
-        .hidden { display:none !important; }
-
-        .allowed-domains {
-            font-size:12px;
-            color:#94a3b8;
-            text-align:center;
-            margin-top:6px;
-            display:flex;
-            flex-wrap:wrap;
-            justify-content:center;
-            gap:4px;
+        .login-box .switch-link a:hover {
+            text-decoration: underline;
         }
-        .allowed-domains .domain-tag {
-            background:#f1f5f9;
-            padding:1px 10px;
-            border-radius:12px;
-            font-size:11px;
-            color:#64748b;
+        .login-box .switch-link a svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .login-box .hint-text {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .login-box .allowed-domains {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+        }
+        .login-box .allowed-domains .domain-tag {
+            background: #f1f5f9;
+            padding: 1px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         @media (max-width:480px) {
-            .login-box { padding:32px 24px; max-width:400px; }
-            .login-box h1 { font-size:24px; }
-            .login-box .logo svg { width:160px; height:109px; }
+            .login-box {
+                padding: 32px 24px;
+                max-width: 400px;
+            }
+            .login-box h1 {
+                font-size: 24px;
+            }
+            .login-box .logo svg {
+                width: 160px;
+                height: 109px;
+            }
         }
     </style>
 </head>
@@ -228,7 +328,7 @@
             </a>
         </div>
 
-        <!-- ===== 注册表单（邮箱白名单） ===== -->
+        <!-- ===== 注册表单 ===== -->
         <div id="registerForm" class="hidden" style="margin-top:16px;">
             <div class="input-group">
                 <input type="email" id="registerEmail" placeholder="输入你的邮箱" autocomplete="email">
@@ -323,12 +423,12 @@
             loginBtn.disabled = loading;
             registerBtn.disabled = loading;
             googleBtn.disabled = loading;
-            loginBtn.innerHTML = loading
-                ? '⏳...'
-                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 8M12 8L10 6M12 8L14 6"/><path d="M5 12L5 18C5 19.1046 5.89543 20 7 20L17 20C18.1046 20 19 19.1046 19 18L19 12"/><path d="M15 16L9 16"/><path d="M15 13L9 13"/></svg> 登录';
-            registerBtn.innerHTML = loading
-                ? '⏳...'
-                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 发送验证邮件';
+            loginBtn.innerHTML = loading ?
+                '⏳...' :
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L12 8M12 8L10 6M12 8L14 6"/><path d="M5 12L5 18C5 19.1046 5.89543 20 7 20L17 20C18.1046 20 19 19.1046 19 18L19 12"/><path d="M15 16L9 16"/><path d="M15 13L9 13"/></svg> 登录';
+            registerBtn.innerHTML = loading ?
+                '⏳...' :
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> 发送验证邮件';
         }
 
         // ============================================================
@@ -351,6 +451,31 @@
         (async function checkSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
+                // 检查是否被封禁
+                try {
+                    const { data: profile } = await supabaseClient
+                        .from('profiles')
+                        .select('is_banned, ban_expires_at, ban_reason')
+                        .eq('id', session.user.id)
+                        .single();
+
+                    if (profile?.is_banned) {
+                        const expires = profile.ban_expires_at ? new Date(profile.ban_expires_at) : null;
+                        if (!expires || expires > new Date()) {
+                            // 被封禁，退出登录并提示
+                            await supabaseClient.auth.signOut();
+                            showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason : '') +
+                                (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
+                            // 清除本地存储
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('检查封禁状态失败:', e);
+                }
+                // 正常跳转
                 window.location.href = '/';
             }
         })();
@@ -386,7 +511,7 @@
             setLoading(true);
             showLoginMsg('登录中...', 'loading');
 
-            const { error } = await supabaseClient.auth.signInWithPassword({
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: password
             });
@@ -394,14 +519,40 @@
             setLoading(false);
             if (error) {
                 showLoginMsg(error.message, 'error');
-            } else {
+                return;
+            }
+
+            // 登录成功后检查封禁状态
+            if (data?.user) {
+                try {
+                    const { data: profile } = await supabaseClient
+                        .from('profiles')
+                        .select('is_banned, ban_expires_at, ban_reason')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    if (profile?.is_banned) {
+                        const expires = profile.ban_expires_at ? new Date(profile.ban_expires_at) : null;
+                        if (!expires || expires > new Date()) {
+                            // 被封禁，强制退出
+                            await supabaseClient.auth.signOut();
+                            showLoginMsg('🚫 你的账号已被封禁' + (profile.ban_reason ? '，理由：' + profile.ban_reason : '') +
+                                (expires ? '，封禁至：' + expires.toLocaleString() : '（永久封禁）'), 'error');
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('检查封禁状态失败:', e);
+                }
                 showLoginMsg('登录成功！', 'success');
                 setTimeout(() => { window.location.href = '/'; }, 500);
             }
         }
 
         // ============================================================
-        //  注 册（邮箱 + 密码 + 发送验证邮件 + 白名单校验）
+        //  注 册
         // ============================================================
         async function handleRegister() {
             const email = registerEmail.value.trim();
@@ -411,7 +562,6 @@
             if (!email) { showLoginMsg('请输入邮箱', 'error'); return; }
             if (!email.includes('@')) { showLoginMsg('请输入有效邮箱', 'error'); return; }
 
-            // ===== 邮箱白名单校验 =====
             if (!isEmailAllowed(email)) {
                 showLoginMsg('❌ 仅支持 QQ、Gmail、163、126、Outlook、Foxmail 等主流邮箱，请更换邮箱', 'error');
                 return;
@@ -446,7 +596,6 @@
                 }
 
                 if (data.user) {
-                    // 获取用户的邮箱域名并记录
                     const domain = email.split('@')[1];
                     await supabaseClient.from('profiles').upsert({
                         id: data.user.id,
@@ -456,7 +605,6 @@
                         email_domain: domain
                     });
 
-                    // 发送 OTP 验证邮件
                     const { error: otpError } = await supabaseClient.auth.signInWithOtp({
                         email: email,
                         options: {
@@ -497,7 +645,9 @@
         registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
         registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
 
-        console.log('必看网 - 登录页 v13.0 (邮箱白名单)');
+        console.log('🔐 必看网 - 登录页 v15.0 (邮箱白名单 + 封禁检查 + 全SVG)');
+        console.log('📧 主管理员:', '3948677391@qq.com');
+        console.log('🐧 官方QQ群: 976926251');
     </script>
 
 </body>
