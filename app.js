@@ -34,7 +34,7 @@ let currentReportContentId = null;
 let currentAdminTab = 'users';
 
 // ============================================================
-//  DOM 引 用
+//  DOM 引 用（安全获取，可能为 null）
 // ============================================================
 const app = document.getElementById('app');
 const contentRender = document.getElementById('contentRender');
@@ -59,7 +59,7 @@ const topNav = document.getElementById('topNav');
 let _isRedirecting = false;
 
 // ============================================================
-//  检 查 登 录
+//  检 查 登 录（修复版）
 // ============================================================
 (async function checkAuth() {
     if (_isRedirecting) return;
@@ -77,7 +77,6 @@ let _isRedirecting = false;
             await supabaseClient.auth.signOut();
             localStorage.clear();
             sessionStorage.clear();
-            // 清除 IndexedDB
             try {
                 const dbs = await indexedDB.databases ? await indexedDB.databases() : [];
                 for (const db of dbs) {
@@ -120,7 +119,11 @@ let _isRedirecting = false;
         await loadAnnouncement();
         await loadNotifications();
         await loadGlobalAnnouncement();
-        await loadReports();
+
+        // ✅ 延迟调用 loadReports，确保 DOM 已渲染
+        setTimeout(async () => {
+            await loadReports();
+        }, 200);
 
         const params = new URLSearchParams(window.location.search);
         const page = params.get('page') || 'home';
@@ -258,21 +261,23 @@ async function loadUserProfile() {
         .eq('id', currentUser.id)
         .single();
     if (data) {
-        if (data.avatar_url) {
+        if (data.avatar_url && userAvatar) {
             userAvatar.innerHTML = `<img src="${data.avatar_url}" alt="avatar">`;
-        } else {
+        } else if (userAvatar) {
             userAvatar.innerHTML =
                 `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
         }
-        userNickname.textContent = data.nickname || currentUser.email.split('@')[0] || '用户';
-        userEmail.textContent = currentUser.email || '';
+        if (userNickname) userNickname.textContent = data.nickname || currentUser.email.split('@')[0] || '用户';
+        if (userEmail) userEmail.textContent = currentUser.email || '';
         isMainAdmin = currentUser.email === MAIN_ADMIN_EMAIL;
         _lastUpdatedAt = data.last_updated_at || null;
     } else {
-        userAvatar.innerHTML =
-            `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-        userNickname.textContent = currentUser.email.split('@')[0] || '用户';
-        userEmail.textContent = currentUser.email || '';
+        if (userAvatar) {
+            userAvatar.innerHTML =
+                `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        }
+        if (userNickname) userNickname.textContent = currentUser.email.split('@')[0] || '用户';
+        if (userEmail) userEmail.textContent = currentUser.email || '';
         _lastUpdatedAt = null;
     }
 }
@@ -312,9 +317,9 @@ async function loadAnnouncement() {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1);
-    if (data && data.length > 0) {
+    if (data && data.length > 0 && announcementText) {
         announcementText.textContent = data[0].content;
-    } else {
+    } else if (announcementText) {
         announcementText.textContent = '🎉 欢迎来到必看网！';
     }
 }
@@ -330,9 +335,11 @@ async function loadGlobalAnnouncement() {
         .order('created_at', { ascending: false })
         .limit(1);
 
+    const banner = document.getElementById('globalBanner');
+    const text = document.getElementById('globalBannerText');
+    if (!banner || !text) return;
+
     if (data && data.length > 0) {
-        const banner = document.getElementById('globalBanner');
-        const text = document.getElementById('globalBannerText');
         const ann = data[0];
         if (ann.expires_at && new Date(ann.expires_at) < new Date()) {
             banner.style.display = 'none';
@@ -341,16 +348,17 @@ async function loadGlobalAnnouncement() {
         text.textContent = `📢 ${ann.title}: ${ann.content}`;
         banner.style.display = 'block';
     } else {
-        document.getElementById('globalBanner').style.display = 'none';
+        banner.style.display = 'none';
     }
 }
 
 function closeGlobalBanner() {
-    document.getElementById('globalBanner').style.display = 'none';
+    const banner = document.getElementById('globalBanner');
+    if (banner) banner.style.display = 'none';
 }
 
 // ============================================================
-//  加 载 举 报（已修复空值检查）
+//  加 载 举 报（完全安全版）
 // ============================================================
 async function loadReports() {
     if (currentUserRole !== 'admin') return;
@@ -392,11 +400,17 @@ async function loadReports() {
 
     const count = allReports.length;
 
-    // ❌ 移除对 reportBadge 的操作（因为它在侧边栏中可能还没渲染）
-    // const reportBadge = document.getElementById('reportBadge');
-    // if (reportBadge) { ... }
+    // ✅ 所有 DOM 操作都加空值判断
+    const reportBadge = document.getElementById('reportBadge');
+    if (reportBadge) {
+        reportBadge.textContent = count;
+        if (count > 0) {
+            reportBadge.classList.remove('hidden');
+        } else {
+            reportBadge.classList.add('hidden');
+        }
+    }
 
-    // ✅ 只更新管理员页面中的 reportCountBadge（它在 switchAdminTab('reports') 时会被创建）
     const reportCountBadge = document.getElementById('reportCountBadge');
     if (reportCountBadge) {
         reportCountBadge.textContent = count;
@@ -417,11 +431,13 @@ async function loadNotifications() {
     if (data) {
         allNotifications = data;
         const unread = data.filter(n => !n.is_read).length;
-        if (unread > 0) {
+        if (msgBadge) {
             msgBadge.textContent = unread;
-            msgBadge.classList.remove('hidden');
-        } else {
-            msgBadge.classList.add('hidden');
+            if (unread > 0) {
+                msgBadge.classList.remove('hidden');
+            } else {
+                msgBadge.classList.add('hidden');
+            }
         }
     }
 }
@@ -583,11 +599,13 @@ async function loadContents(searchQuery = '') {
             .eq('status', 'pending');
         if (!countErr) {
             pendingCount = count || 0;
-            if (pendingCount > 0) {
+            if (reviewBadge) {
                 reviewBadge.textContent = pendingCount;
-                reviewBadge.classList.remove('hidden');
-            } else {
-                reviewBadge.classList.add('hidden');
+                if (pendingCount > 0) {
+                    reviewBadge.classList.remove('hidden');
+                } else {
+                    reviewBadge.classList.add('hidden');
+                }
             }
         }
     }
@@ -596,7 +614,7 @@ async function loadContents(searchQuery = '') {
 }
 
 // ============================================================
-//  渲 染 内 容
+//  渲 染 内 容（与之前相同，省略，保持与前面一致）
 // ============================================================
 function renderContents() {
     contentRender.innerHTML = '';
@@ -925,6 +943,7 @@ function switchAdminTab(tab) {
     }
 
     const content = document.getElementById('adminTabContent');
+    if (!content) return;
 
     if (tab === 'reports') {
         loadReports();
@@ -1020,6 +1039,7 @@ async function loadBannedUsers() {
         .order('created_at', { ascending: false });
 
     const content = document.getElementById('adminTabContent');
+    if (!content) return;
     if (!data || data.length === 0) {
         content.innerHTML = `
                     <h3 style="font-size:16px;margin-bottom:12px;">🔒 封禁记录</h3>
@@ -1443,6 +1463,7 @@ async function loadAdminRequests() {
         .limit(20);
 
     const container = document.getElementById('adminRequestList');
+    if (!container) return;
     if (!data || data.length === 0) {
         container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">暂无操作记录</p>';
         return;
@@ -1985,15 +2006,15 @@ function switchTab(tab) {
 // ============================================================
 function updateUI() {
     if (currentUserRole === 'admin') {
-        navReview.classList.remove('hidden');
-        navAdmin.classList.remove('hidden');
-        editAnnounceBtn.classList.remove('hidden');
-        navProfile.classList.remove('hidden');
+        if (navReview) navReview.classList.remove('hidden');
+        if (navAdmin) navAdmin.classList.remove('hidden');
+        if (editAnnounceBtn) editAnnounceBtn.classList.remove('hidden');
+        if (navProfile) navProfile.classList.remove('hidden');
     } else {
-        navReview.classList.add('hidden');
-        navAdmin.classList.add('hidden');
-        editAnnounceBtn.classList.add('hidden');
-        navProfile.classList.remove('hidden');
+        if (navReview) navReview.classList.add('hidden');
+        if (navAdmin) navAdmin.classList.add('hidden');
+        if (editAnnounceBtn) editAnnounceBtn.classList.add('hidden');
+        if (navProfile) navProfile.classList.remove('hidden');
     }
     if (currentUserRole === 'admin') {
         loadReports();
@@ -2077,6 +2098,7 @@ function removeTag(tag) {
 
 function renderTags() {
     const container = document.getElementById('tagList');
+    if (!container) return;
     container.innerHTML = uploadedTagList.map(t =>
         `<span class="tag-item">#${t} <span class="remove" onclick="removeTag('${t}')">✕</span></span>`
     ).join('');
@@ -2099,6 +2121,7 @@ function removeUrl(url) {
 
 function renderUrls() {
     const container = document.getElementById('urlList');
+    if (!container) return;
     container.innerHTML = uploadedUrlList.map(u =>
         `<span class="url-tag">🔗 ${u} <span class="remove" onclick="removeUrl('${u}')">✕</span></span>`
     ).join('');
@@ -2343,6 +2366,7 @@ async function toggleLike(contentId) {
 //  公 告 编 辑
 // ============================================================
 function openAnnounceEditor() {
+    if (!announcementText) return;
     document.getElementById('announceInput').value = announcementText.textContent;
     document.getElementById('announceModal').classList.remove('hidden');
 }
@@ -2373,8 +2397,10 @@ function previewAvatar(input) {
     avatarFileToUpload = file;
     const reader = new FileReader();
     reader.onload = function(e) {
-        document.getElementById('avatarPreview').innerHTML = `<img src="${e.target.result}" alt="avatar">`;
-        document.getElementById('avatarFileName').textContent = file.name;
+        const preview = document.getElementById('avatarPreview');
+        if (preview) preview.innerHTML = `<img src="${e.target.result}" alt="avatar">`;
+        const fileName = document.getElementById('avatarFileName');
+        if (fileName) fileName.textContent = file.name;
     };
     reader.readAsDataURL(file);
 }
@@ -2383,7 +2409,8 @@ function openProfileEdit() {
     if (!currentUser) return;
     avatarFileToUpload = null;
 
-    document.getElementById('userIdDisplay').textContent = currentUser.id;
+    const userIdDisplay = document.getElementById('userIdDisplay');
+    if (userIdDisplay) userIdDisplay.textContent = currentUser.id;
 
     const restrictionMsg = document.getElementById('editRestrictionMsg');
     const restrictionDays = document.getElementById('restrictionDays');
@@ -2395,29 +2422,47 @@ function openProfileEdit() {
         if (diffDays < 30) {
             const daysLeft = 30 - diffDays;
             _canEditProfile = false;
-            restrictionMsg.classList.remove('hidden');
-            restrictionDays.textContent = daysLeft;
-            document.getElementById('saveProfileBtn').disabled = true;
-            document.getElementById('saveProfileBtn').style.opacity = '0.6';
+            if (restrictionMsg) {
+                restrictionMsg.classList.remove('hidden');
+                if (restrictionDays) restrictionDays.textContent = daysLeft;
+            }
+            const saveBtn = document.getElementById('saveProfileBtn');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.6';
+            }
         } else {
             _canEditProfile = true;
-            restrictionMsg.classList.add('hidden');
-            document.getElementById('saveProfileBtn').disabled = false;
-            document.getElementById('saveProfileBtn').style.opacity = '1';
+            if (restrictionMsg) restrictionMsg.classList.add('hidden');
+            const saveBtn = document.getElementById('saveProfileBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+            }
         }
     } else {
         _canEditProfile = true;
-        restrictionMsg.classList.add('hidden');
-        document.getElementById('saveProfileBtn').disabled = false;
-        document.getElementById('saveProfileBtn').style.opacity = '1';
+        if (restrictionMsg) restrictionMsg.classList.add('hidden');
+        const saveBtn = document.getElementById('saveProfileBtn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+        }
     }
 
-    document.getElementById('avatarPreview').innerHTML =
-        `<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-    document.getElementById('avatarFileName').textContent = '点击选择图片';
-    document.getElementById('editAvatar').value = '';
-    document.getElementById('editNickname').value = userNickname.textContent || '';
-    document.getElementById('editBio').value = '';
+    const avatarPreview = document.getElementById('avatarPreview');
+    if (avatarPreview) {
+        avatarPreview.innerHTML =
+            `<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    }
+    const avatarFileName = document.getElementById('avatarFileName');
+    if (avatarFileName) avatarFileName.textContent = '点击选择图片';
+    const editAvatar = document.getElementById('editAvatar');
+    if (editAvatar) editAvatar.value = '';
+    const editNickname = document.getElementById('editNickname');
+    if (editNickname) editNickname.value = userNickname.textContent || '';
+    const editBio = document.getElementById('editBio');
+    if (editBio) editBio.value = '';
 
     supabaseClient.from('profiles')
         .select('*')
@@ -2425,13 +2470,12 @@ function openProfileEdit() {
         .single()
         .then(({ data }) => {
             if (data) {
-                if (data.avatar_url) {
-                    document.getElementById('avatarPreview').innerHTML =
-                        `<img src="${data.avatar_url}" alt="avatar">`;
+                if (data.avatar_url && avatarPreview) {
+                    avatarPreview.innerHTML = `<img src="${data.avatar_url}" alt="avatar">`;
                 }
-                document.getElementById('editAvatar').value = data.avatar_url || '';
-                document.getElementById('editNickname').value = data.nickname || '';
-                document.getElementById('editBio').value = data.bio || '';
+                if (editAvatar) editAvatar.value = data.avatar_url || '';
+                if (editNickname) editNickname.value = data.nickname || '';
+                if (editBio) editBio.value = data.bio || '';
                 _lastUpdatedAt = data.last_updated_at || null;
                 if (_lastUpdatedAt) {
                     const lastUpdated = new Date(_lastUpdatedAt);
@@ -2440,25 +2484,35 @@ function openProfileEdit() {
                     if (diffDays < 30) {
                         const daysLeft = 30 - diffDays;
                         _canEditProfile = false;
-                        restrictionMsg.classList.remove('hidden');
-                        restrictionDays.textContent = daysLeft;
-                        document.getElementById('saveProfileBtn').disabled = true;
-                        document.getElementById('saveProfileBtn').style.opacity = '0.6';
+                        if (restrictionMsg) {
+                            restrictionMsg.classList.remove('hidden');
+                            if (restrictionDays) restrictionDays.textContent = daysLeft;
+                        }
+                        const saveBtn = document.getElementById('saveProfileBtn');
+                        if (saveBtn) {
+                            saveBtn.disabled = true;
+                            saveBtn.style.opacity = '0.6';
+                        }
                     } else {
                         _canEditProfile = true;
-                        restrictionMsg.classList.add('hidden');
-                        document.getElementById('saveProfileBtn').disabled = false;
-                        document.getElementById('saveProfileBtn').style.opacity = '1';
+                        if (restrictionMsg) restrictionMsg.classList.add('hidden');
+                        const saveBtn = document.getElementById('saveProfileBtn');
+                        if (saveBtn) {
+                            saveBtn.disabled = false;
+                            saveBtn.style.opacity = '1';
+                        }
                     }
                 }
             }
         });
 
-    document.getElementById('profileEditModal').classList.remove('hidden');
+    const modal = document.getElementById('profileEditModal');
+    if (modal) modal.classList.remove('hidden');
 }
 
 function closeProfileEdit() {
-    document.getElementById('profileEditModal').classList.add('hidden');
+    const modal = document.getElementById('profileEditModal');
+    if (modal) modal.classList.add('hidden');
 }
 
 async function saveProfile() {
@@ -2473,9 +2527,9 @@ async function saveProfile() {
         }
     }
 
-    const avatar_url_input = document.getElementById('editAvatar').value.trim();
-    const nickname = document.getElementById('editNickname').value.trim();
-    const bio = document.getElementById('editBio').value.trim();
+    const avatar_url_input = document.getElementById('editAvatar')?.value.trim() || '';
+    const nickname = document.getElementById('editNickname')?.value.trim() || '';
+    const bio = document.getElementById('editBio')?.value.trim() || '';
 
     const updateData = {};
     if (nickname) updateData.nickname = nickname;
