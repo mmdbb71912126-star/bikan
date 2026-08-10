@@ -392,7 +392,7 @@ async function loadReports() {
 
     const count = allReports.length;
 
-    // ✅ 所有 DOM 操作都添加空值检查
+    // ✅ 先获取元素，再操作
     const reportBadge = document.getElementById('reportBadge');
     if (reportBadge) {
         reportBadge.textContent = count;
@@ -403,13 +403,8 @@ async function loadReports() {
     if (reportCountBadge) {
         reportCountBadge.textContent = count;
     }
-
-    // 安全起见，检查 reviewBadge 也可能用到
-    const reviewBadge = document.getElementById('reviewBadge');
-    if (reviewBadge) {
-        // 如果需要更新 reviewBadge，在这里操作，否则可省略
-    }
 }
+
 // ============================================================
 //  加 载 消 息
 // ============================================================
