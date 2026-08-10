@@ -6,165 +6,33 @@
     <title>登录 - 必看网</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-            background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .login-box {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(16px);
-            padding: 48px 44px;
-            border-radius: 32px;
-            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.3);
-            max-width: 420px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-        }
-        .login-box .logo {
-            font-size: 52px;
-            margin-bottom: 4px;
-        }
-        .login-box h1 {
-            font-size: 30px;
-            font-weight: 800;
-            color: #0f172a;
-        }
-        .login-box h1 span {
-            color: #6366f1;
-        }
-        .login-box .sub {
-            color: #94a3b8;
-            font-size: 15px;
-            margin: 4px 0 28px 0;
-        }
-        .login-box .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .login-box .input-group input {
-            padding: 14px 18px;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
-            font-size: 16px;
-            background: #fff;
-            transition: all 0.3s;
-        }
-        .login-box .input-group input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-        }
-        .login-box .btn-row {
-            display: flex;
-            gap: 10px;
-        }
-        .login-box .btn-row .btn-primary {
-            flex: 1;
-            padding: 14px;
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .login-box .btn-row .btn-primary:hover {
-            background: #4f46e5;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-        }
-        .login-box .btn-row .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .login-box .btn-row .btn-secondary {
-            flex: 1;
-            padding: 14px;
-            background: #8b5cf6;
-            color: #fff;
-            border: none;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .login-box .btn-row .btn-secondary:hover {
-            background: #7c3aed;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
-        }
-        .login-box .msg {
-            margin-top: 16px;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            min-height: 44px;
-        }
-        .login-box .msg.info {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        .login-box .msg.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-        .login-box .msg.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        .login-box .msg.loading {
-            background: #e0f2fe;
-            color: #075985;
-        }
-        .login-box .hint {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-top: 20px;
-        }
-        .code-section {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .code-section input {
-            flex: 2;
-        }
-        .code-section button {
-            flex: 1;
-        }
-        @media (max-width: 480px) {
-            .login-box {
-                padding: 32px 24px;
-            }
-            .login-box h1 {
-                font-size: 24px;
-            }
-            .btn-row {
-                flex-direction: column;
-            }
-            .code-section {
-                flex-direction: column;
-            }
-            .code-section input,
-            .code-section button {
-                width: 100%;
-            }
-        }
+        /* ... 样式同之前 ... (为了节省篇幅，此处省略，实际请复制完整样式) */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .login-box { background: rgba(255,255,255,0.88); backdrop-filter: blur(16px); padding: 48px 44px; border-radius: 32px; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.3); max-width: 420px; width: 100%; text-align: center; border: 1px solid rgba(255,255,255,0.6); }
+        .login-box .logo { font-size: 52px; margin-bottom: 4px; }
+        .login-box h1 { font-size: 30px; font-weight: 800; color: #0f172a; }
+        .login-box h1 span { color: #6366f1; }
+        .login-box .sub { color: #94a3b8; font-size: 15px; margin: 4px 0 28px 0; }
+        .login-box .input-group { display: flex; flex-direction: column; gap: 12px; }
+        .login-box .input-group input { padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 16px; background: #fff; transition: all 0.3s; }
+        .login-box .input-group input:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.12); }
+        .login-box .btn-row { display: flex; gap: 10px; }
+        .login-box .btn-row .btn-primary { flex:1; padding:14px; background:#6366f1; color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; transition: all 0.3s; cursor:pointer; }
+        .login-box .btn-row .btn-primary:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
+        .login-box .btn-row .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+        .login-box .btn-row .btn-secondary { flex:1; padding:14px; background:#8b5cf6; color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; transition: all 0.3s; cursor:pointer; }
+        .login-box .btn-row .btn-secondary:hover { background:#7c3aed; transform:translateY(-2px); box-shadow:0 8px 24px rgba(139,92,246,0.3); }
+        .login-box .msg { margin-top:16px; padding:10px 16px; border-radius:12px; font-size:14px; min-height:44px; }
+        .login-box .msg.info { background:#f1f5f9; color:#475569; }
+        .login-box .msg.success { background:#dcfce7; color:#166534; }
+        .login-box .msg.error { background:#fee2e2; color:#991b1b; }
+        .login-box .msg.loading { background:#e0f2fe; color:#075985; }
+        .login-box .hint { font-size:13px; color:#94a3b8; margin-top:20px; }
+        .code-section { display: flex; gap: 10px; align-items: center; }
+        .code-section input { flex:2; }
+        .code-section button { flex:1; }
+        @media (max-width:480px) { .login-box { padding:32px 24px; } .login-box h1 { font-size:24px; } .btn-row { flex-direction:column; } .code-section { flex-direction:column; } .code-section input, .code-section button { width:100%; } }
     </style>
 </head>
 <body>
@@ -204,11 +72,8 @@
         const sendCodeBtn = document.getElementById('sendCodeBtn');
         const verifyBtn = document.getElementById('verifyBtn');
 
-        let currentEmail = ''; // 用于验证时核对邮箱
+        let currentEmail = '';
 
-        // ============================================================
-        //  工 具 函 数
-        // ============================================================
         function showLoginMsg(msg, type = 'info') {
             loginMsg.textContent = msg;
             loginMsg.className = 'msg ' + type;
@@ -223,20 +88,49 @@
         }
 
         // ============================================================
-        //  检 查 登 录 状 态
+        //  检 查 登 录 状 态（增强版：验证 token 是否有效）
         // ============================================================
         (async function checkSession() {
             try {
                 console.log('🔍 检查登录状态...');
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session) {
-                    console.log('✅ 用户已登录，跳转到首页');
-                    window.location.href = '/';
+                    // 有 token，验证它是否仍然有效（用户是否存在）
+                    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+                    if (!userError && userData.user) {
+                        // token 有效，已登录，跳转到首页
+                        console.log('✅ 用户已登录，跳转到首页');
+                        window.location.href = '/';
+                        return;
+                    } else {
+                        // token 无效（例如用户已被删除），清除本地凭证
+                        console.warn('⚠️ Token 无效，清除本地存储');
+                        await supabaseClient.auth.signOut();
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        // 清除 IndexedDB 中的 supabase 数据
+                        try {
+                            const dbs = await indexedDB.databases ? await indexedDB.databases() : [];
+                            for (const db of dbs) {
+                                if (db.name && (db.name.includes('supabase') || db.name.includes('localforage'))) {
+                                    indexedDB.deleteDatabase(db.name);
+                                }
+                            }
+                        } catch (e) {}
+                        // 停留在登录页
+                        showLoginMsg('🔐 请重新注册或登录', 'info');
+                    }
                 } else {
                     console.log('❌ 用户未登录，停留在登录页');
                 }
             } catch (e) {
                 console.error('❌ 检查登录状态失败:', e);
+                // 出错也清除存储以防卡死
+                try {
+                    await supabaseClient.auth.signOut();
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (e2) {}
             }
         })();
 
@@ -259,11 +153,10 @@
             showLoginMsg('📤 正在发送验证码...', 'loading');
 
             try {
-                // 发送 OTP 验证码（Supabase 默认发送 6 位数字到邮箱）
                 const { error } = await supabaseClient.auth.signInWithOtp({
                     email: email,
                     options: {
-                        shouldCreateUser: true, // 如果邮箱未注册，自动创建用户
+                        shouldCreateUser: true,
                     }
                 });
 
@@ -300,7 +193,6 @@
                 return;
             }
             if (email !== currentEmail) {
-                // 如果当前输入的邮箱和发送时的不一致，提示重新发送
                 showLoginMsg('❌ 邮箱地址已变更，请重新发送验证码', 'error');
                 return;
             }
@@ -321,7 +213,6 @@
                 } else {
                     console.log('✅ 验证成功！', data);
                     showLoginMsg('✅ 登录成功！正在跳转...', 'success');
-                    // 等待 1 秒后跳转
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1000);
@@ -347,7 +238,7 @@
             if (e.key === 'Enter') handleVerify();
         });
 
-        console.log('🔐 必看网 - 登录页 v5.0 (邮箱6位验证码)');
+        console.log('🔐 必看网 - 登录页 v6.0 (修复无效 token)');
         console.log('✅ 所有事件已绑定');
     </script>
 
