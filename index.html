@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>必看网 - 资源分享社区</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 强制禁止缓存 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
+        /* ===== 全局重置 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -669,30 +674,34 @@
 </head>
 <body>
 
+    <!-- ========================================================== -->
+    <!--  主 界 面                                                   -->
+    <!-- ========================================================== -->
     <div id="app">
+        <!-- 左侧边栏 -->
         <aside class="sidebar" id="sidebar">
             <div class="brand">
                 👁️ <span>必看网</span>
             </div>
             <nav class="nav" id="sideNav">
-                <button class="nav-item active" data-nav="home" onclick="switchNav('home')">
+                <button class="nav-item active" data-nav="home" onclick="window.switchNav('home')">
                     <span class="icon">🏠</span>
                     <span class="label">首页</span>
                 </button>
-                <button class="nav-item" data-nav="upload" onclick="openUploadModal()">
+                <button class="nav-item" data-nav="upload" onclick="window.openUploadModal()">
                     <span class="icon">📤</span>
                     <span class="label">上传</span>
                 </button>
-                <button class="nav-item" data-nav="profile" onclick="switchNav('profile')">
+                <button class="nav-item" data-nav="profile" onclick="window.switchNav('profile')">
                     <span class="icon">👤</span>
                     <span class="label">个人</span>
                 </button>
-                <button class="nav-item hidden" data-nav="review" id="navReview" onclick="switchNav('review')">
+                <button class="nav-item hidden" data-nav="review" id="navReview" onclick="window.switchNav('review')">
                     <span class="icon">🔍</span>
                     <span class="label">审核</span>
                     <span class="badge hidden" id="reviewBadge">0</span>
                 </button>
-                <button class="nav-item hidden" data-nav="admin" id="navAdmin" onclick="openAdminModal()">
+                <button class="nav-item hidden" data-nav="admin" id="navAdmin" onclick="window.openAdminModal()">
                     <span class="icon">👑</span>
                     <span class="label">管理员</span>
                 </button>
@@ -700,16 +709,17 @@
             <div class="user-section">
                 <div class="user-info">
                     <div class="avatar" id="userAvatar">U</div>
-                    <span class="email" id="userEmail">user@example.com</span>
+                    <span class="email" id="userEmail">加载中...</span>
                 </div>
-                <button class="btn-outline" onclick="handleLogout()">🚪 退出</button>
+                <button class="btn-outline" onclick="window.handleLogout()">🚪 退出</button>
             </div>
         </aside>
 
+        <!-- 右侧主区域 -->
         <div class="main-area">
             <div class="announcement-bar" id="announcementBar">
                 <span class="ann-text" id="announcementText">🎉 欢迎来到必看网！</span>
-                <button class="edit-btn hidden" id="editAnnounceBtn" onclick="openAnnounceEditor()">✎ 编辑公告</button>
+                <button class="edit-btn hidden" id="editAnnounceBtn" onclick="window.openAnnounceEditor()">✎ 编辑公告</button>
             </div>
             <div class="content-container" id="contentContainer">
                 <div id="contentRender"></div>
@@ -717,14 +727,18 @@
         </div>
     </div>
 
+    <!-- ========================================================== -->
+    <!--  弹 窗                                                     -->
+    <!-- ========================================================== -->
+
     <!-- 上传弹窗 -->
-    <div id="uploadModal" class="modal-overlay hidden" onclick="if(event.target===this) closeUploadModal()">
+    <div id="uploadModal" class="modal-overlay hidden" onclick="if(event.target===this) window.closeUploadModal()">
         <div class="modal-box" id="uploadModalBox">
             <div class="modal-header">
                 <span>📤 发布内容</span>
-                <button class="close-btn" onclick="closeUploadModal()">✕</button>
+                <button class="close-btn" onclick="window.closeUploadModal()">✕</button>
             </div>
-            <form id="uploadForm" onsubmit="submitContent(event)">
+            <form id="uploadForm" onsubmit="window.submitContent(event)">
                 <div class="form-group">
                     <label>分类 *</label>
                     <select id="uploadCategory" required>
@@ -751,7 +765,7 @@
                     <div class="file-input-wrap" onclick="document.getElementById('uploadFileInput').click()">
                         <span>📎</span>
                         <span class="file-name" id="uploadFileName">点击选择文件</span>
-                        <input type="file" id="uploadFileInput" onchange="updateFileName(this)">
+                        <input type="file" id="uploadFileInput" onchange="window.updateFileName(this)">
                     </div>
                 </div>
                 <button type="submit" class="btn-submit" id="submitBtn">📤 提交审核</button>
@@ -761,62 +775,94 @@
     </div>
 
     <!-- 公告编辑弹窗 -->
-    <div id="announceModal" class="modal-overlay hidden" onclick="if(event.target===this) closeAnnounceModal()">
+    <div id="announceModal" class="modal-overlay hidden" onclick="if(event.target===this) window.closeAnnounceModal()">
         <div class="modal-box" style="max-width:500px;">
             <div class="modal-header">
                 <span>📢 编辑公告</span>
-                <button class="close-btn" onclick="closeAnnounceModal()">✕</button>
+                <button class="close-btn" onclick="window.closeAnnounceModal()">✕</button>
             </div>
             <div class="form-group">
                 <label>公告内容</label>
                 <textarea id="announceInput" rows="3" style="width:100%; padding:12px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; resize:vertical;"></textarea>
             </div>
-            <button onclick="saveAnnouncement()" style="width:100%; padding:14px; background:#6366f1; color:#fff; border:none; border-radius:14px; font-size:17px; font-weight:600;">保存公告</button>
+            <button onclick="window.saveAnnouncement()" style="width:100%; padding:14px; background:#6366f1; color:#fff; border:none; border-radius:14px; font-size:17px; font-weight:600;">保存公告</button>
         </div>
     </div>
 
     <!-- 审核详情弹窗 -->
-    <div id="reviewDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeReviewDetail()">
+    <div id="reviewDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) window.closeReviewDetail()">
         <div class="modal-box" style="max-width:500px;">
             <div class="modal-header">
                 <span>📋 审核详情</span>
-                <button class="close-btn" onclick="closeReviewDetail()">✕</button>
+                <button class="close-btn" onclick="window.closeReviewDetail()">✕</button>
             </div>
             <div id="reviewDetailContent"></div>
         </div>
     </div>
 
     <!-- 管理员管理弹窗 -->
-    <div id="adminModal" class="modal-overlay admin-modal hidden" onclick="if(event.target===this) closeAdminModal()">
+    <div id="adminModal" class="modal-overlay admin-modal hidden" onclick="if(event.target===this) window.closeAdminModal()">
         <div class="modal-box" style="max-width:500px;">
             <div class="modal-header">
                 <span>👑 管理员管理</span>
-                <button class="close-btn" onclick="closeAdminModal()">✕</button>
+                <button class="close-btn" onclick="window.closeAdminModal()">✕</button>
             </div>
             <p style="color:#64748b; margin-bottom:16px;">输入用户邮箱，将其设为管理员</p>
             <div style="display:flex; gap:8px; margin-bottom:16px;">
                 <input type="email" id="adminAddInput" placeholder="输入邮箱" style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px;">
-                <button onclick="addAdmin()" style="padding:10px 24px; background:#6366f1; color:#fff; border:none; border-radius:12px; font-weight:600;">添加</button>
+                <button onclick="window.addAdmin()" style="padding:10px 24px; background:#6366f1; color:#fff; border:none; border-radius:12px; font-weight:600;">添加</button>
             </div>
             <div id="adminList"></div>
         </div>
     </div>
 
-    <div class="version-tag">v6.0.0</div>
+    <div class="version-tag">v7.0.0</div>
 
+    <!-- ========================================================== -->
+    <!--  JavaScript                                                -->
+    <!-- ========================================================== -->
     <script>
         // ============================================================
-        //  配 置
+        //  配 置（只声明一次，使用 supabaseClient 避免冲突）
         // ============================================================
         const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // 重要：使用 supabaseClient，不要用 supabase，避免与 login.html 冲突
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ============================================================
+        //  立 即 检 查 登 录 状 态（未登录跳转到 login.html）
+        // ============================================================
+        (async function checkAuth() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    // 未登录，强制跳转到登录页
+                    window.location.href = '/login.html';
+                    return;
+                }
+                // 已登录，继续执行初始化
+                console.log('✅ 用户已登录:', session.user.email);
+                window.currentUser = session.user;
+                // 显示用户信息
+                document.getElementById('userAvatar').textContent = (session.user.email || 'U').charAt(0).toUpperCase();
+                document.getElementById('userEmail').textContent = session.user.email || '用户';
+                // 加载角色和内容
+                await loadUserRole();
+                await loadAnnouncement();
+                await loadContents();
+                updateUI();
+            } catch (err) {
+                console.error('❌ 认证检查失败:', err);
+                // 出错时也跳转到登录页，保证安全
+                window.location.href = '/login.html';
+            }
+        })();
 
         // ============================================================
         //  状 态
         // ============================================================
-        let currentUser = null;
         let currentUserRole = 'user';
         let currentNav = 'home';
         let allContents = [];
@@ -832,35 +878,9 @@
         const navReview = document.getElementById('navReview');
         const navAdmin = document.getElementById('navAdmin');
         const reviewBadge = document.getElementById('reviewBadge');
-        const userAvatar = document.getElementById('userAvatar');
-        const userEmail = document.getElementById('userEmail');
 
         // ============================================================
-        //  检 查 登 录
-        // ============================================================
-        (async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                window.location.href = '/login.html';
-                return;
-            }
-            currentUser = session.user;
-            userAvatar.textContent = getInitials(session.user.email);
-            userEmail.textContent = session.user.email || '用户';
-            await loadUserRole();
-            await loadAnnouncement();
-            await loadContents();
-            updateUI();
-        })();
-
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (!session) {
-                window.location.href = '/login.html';
-            }
-        });
-
-        // ============================================================
-        //  工 具
+        //  工 具 函 数（暴露到全局）
         // ============================================================
         function getCategoryIcon(cat) {
             const map = { '论坛': '💬', '资源': '📦', '网址': '🔗', 'VPN': '🔒' };
@@ -902,47 +922,47 @@
         }
 
         // ============================================================
-        //  退 出
+        //  退 出 登 录（暴露到全局）
         // ============================================================
-        async function handleLogout() {
+        window.handleLogout = async function() {
             try {
-                await supabase.auth.signOut();
+                await supabaseClient.auth.signOut();
                 localStorage.clear();
                 sessionStorage.clear();
                 window.location.href = '/login.html';
             } catch (e) {
-                // 如果出错，强制跳转
                 window.location.href = '/login.html';
             }
-        }
+        };
 
         // ============================================================
         //  加 载 用 户 角 色
         // ============================================================
         async function loadUserRole() {
-            if (!currentUser) return;
-            const { data, error } = await supabase
+            if (!window.currentUser) return;
+            const { data, error } = await supabaseClient
                 .from('profiles')
                 .select('role')
-                .eq('id', currentUser.id)
+                .eq('id', window.currentUser.id)
                 .single();
             if (data) {
                 currentUserRole = data.role;
             } else {
-                await supabase.from('profiles').upsert({
-                    id: currentUser.id,
-                    role: currentUser.email === '3948677391@qq.com' ? 'admin' : 'user'
+                // 尝试创建 profile
+                await supabaseClient.from('profiles').upsert({
+                    id: window.currentUser.id,
+                    role: window.currentUser.email === '3948677391@qq.com' ? 'admin' : 'user'
                 });
-                currentUserRole = currentUser.email === '3948677391@qq.com' ? 'admin' : 'user';
+                currentUserRole = window.currentUser.email === '3948677391@qq.com' ? 'admin' : 'user';
             }
             updateUI();
         }
 
         // ============================================================
-        //  公 告
+        //  加 载 公 告
         // ============================================================
         async function loadAnnouncement() {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('announcements')
                 .select('*')
                 .eq('is_active', true)
@@ -961,17 +981,17 @@
         }
 
         // ============================================================
-        //  内 容
+        //  加 载 内 容
         // ============================================================
         async function loadContents() {
-            if (!currentUser) return;
+            if (!window.currentUser) return;
 
-            let query = supabase.from('contents').select('*, profiles!user_id(role)');
+            let query = supabaseClient.from('contents').select('*, profiles!user_id(role)');
 
             if (currentNav === 'home') {
                 query = query.eq('status', 'approved');
             } else if (currentNav === 'profile') {
-                query = query.eq('user_id', currentUser.id);
+                query = query.eq('user_id', window.currentUser.id);
             } else if (currentNav === 'review') {
                 if (currentUserRole === 'admin') {
                     query = query.eq('status', 'pending');
@@ -992,7 +1012,7 @@
             allContents = data || [];
 
             if (currentUserRole === 'admin') {
-                const { count, error: countErr } = await supabase
+                const { count, error: countErr } = await supabaseClient
                     .from('contents')
                     .select('*', { count: 'exact', head: true })
                     .eq('status', 'pending');
@@ -1010,6 +1030,9 @@
             renderContents();
         }
 
+        // ============================================================
+        //  渲 染 内 容
+        // ============================================================
         function renderContents() {
             const data = allContents;
             if (!data || data.length === 0) {
@@ -1023,7 +1046,7 @@
 
             let html = '<div class="content-grid">';
             data.forEach(item => {
-                const isOwner = item.user_id === currentUser?.id;
+                const isOwner = item.user_id === window.currentUser?.id;
                 const isAdmin = currentUserRole === 'admin';
                 const showActions = (currentNav === 'review' && isAdmin) || (currentNav === 'profile' && isOwner);
 
@@ -1050,10 +1073,10 @@
                 let actionButtons = '';
                 if (showActions && currentNav === 'review' && isAdmin) {
                     actionButtons =
-                        `<div class="actions"><button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved')">✅ 通过</button><button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected')">❌ 拒绝</button><button class="btn-sm" onclick="viewContentDetail(${item.id})">📄 详情</button></div>`;
+                        `<div class="actions"><button class="btn-sm approve" onclick="window.reviewContent(${item.id}, 'approved')">✅ 通过</button><button class="btn-sm reject" onclick="window.reviewContent(${item.id}, 'rejected')">❌ 拒绝</button><button class="btn-sm" onclick="window.viewContentDetail(${item.id})">📄 详情</button></div>`;
                 } else if (showActions && currentNav === 'profile' && isOwner) {
                     actionButtons =
-                        `<div class="actions"><button class="btn-sm" onclick="deleteContent(${item.id}, '${item.file_url || ''}')">🗑️ 删除</button></div>`;
+                        `<div class="actions"><button class="btn-sm" onclick="window.deleteContent(${item.id}, '${item.file_url || ''}')">🗑️ 删除</button></div>`;
                 }
 
                 html += `
@@ -1073,17 +1096,20 @@
         }
 
         // ============================================================
-        //  导 航
+        //  导 航 切 换（暴露到全局）
         // ============================================================
-        function switchNav(nav) {
+        window.switchNav = function(nav) {
             currentNav = nav;
             document.querySelectorAll('#sideNav .nav-item').forEach(el => {
                 el.classList.toggle('active', el.dataset.nav === nav);
             });
             if (nav === 'review' && currentUserRole !== 'admin') return;
             loadContents();
-        }
+        };
 
+        // ============================================================
+        //  更 新 UI
+        // ============================================================
         function updateUI() {
             if (currentUserRole === 'admin') {
                 navReview.classList.remove('hidden');
@@ -1095,28 +1121,28 @@
                 editAnnounceBtn.classList.add('hidden');
             }
             if (currentNav === 'review' && currentUserRole !== 'admin') {
-                switchNav('home');
+                window.switchNav('home');
             }
         }
 
         // ============================================================
-        //  上 传
+        //  上 传 弹 窗（暴露到全局）
         // ============================================================
-        function openUploadModal() {
-            if (!currentUser) return;
+        window.openUploadModal = function() {
+            if (!window.currentUser) return;
             document.getElementById('uploadModal').classList.remove('hidden');
             document.getElementById('uploadForm').reset();
             document.getElementById('uploadFileName').textContent = '点击选择文件';
             toggleUploadFields('论坛');
-        }
+        };
 
-        function closeUploadModal() {
+        window.closeUploadModal = function() {
             document.getElementById('uploadModal').classList.add('hidden');
-        }
+        };
 
-        function updateFileName(input) {
+        window.updateFileName = function(input) {
             document.getElementById('uploadFileName').textContent = input.files[0]?.name || '点击选择文件';
-        }
+        };
 
         document.getElementById('uploadCategory').addEventListener('change', function() {
             toggleUploadFields(this.value);
@@ -1137,10 +1163,13 @@
             }
         }
 
-        async function submitContent(e) {
+        // ============================================================
+        //  提 交 内 容（暴露到全局）
+        // ============================================================
+        window.submitContent = async function(e) {
             e.preventDefault();
             if (isSubmitting) return;
-            if (!currentUser) { alert('请先登录'); return; }
+            if (!window.currentUser) { alert('请先登录'); return; }
 
             const category = document.getElementById('uploadCategory').value;
             const title = document.getElementById('uploadTitle').value.trim();
@@ -1162,12 +1191,12 @@
                     fileName = null,
                     fileSize = null;
                 if (category === '资源' && file) {
-                    const filePath = `${currentUser.id}/${Date.now()}_${file.name}`;
-                    const { error: uploadError } = await supabase.storage
+                    const filePath = `${window.currentUser.id}/${Date.now()}_${file.name}`;
+                    const { error: uploadError } = await supabaseClient.storage
                         .from('files')
                         .upload(filePath, file);
                     if (uploadError) throw new Error('文件上传失败：' + uploadError.message);
-                    const { data: urlData } = supabase.storage
+                    const { data: urlData } = supabaseClient.storage
                         .from('files')
                         .getPublicUrl(filePath);
                     fileUrl = urlData.publicUrl;
@@ -1175,10 +1204,10 @@
                     fileSize = file.size;
                 }
 
-                const { error: insertError } = await supabase
+                const { error: insertError } = await supabaseClient
                     .from('contents')
                     .insert({
-                        user_id: currentUser.id,
+                        user_id: window.currentUser.id,
                         category: category,
                         title: title,
                         description: description || null,
@@ -1192,7 +1221,7 @@
                 if (insertError) throw new Error('发布失败：' + insertError.message);
 
                 alert('✅ 提交成功！等待管理员审核。');
-                closeUploadModal();
+                window.closeUploadModal();
                 loadContents();
             } catch (err) {
                 alert('❌ ' + err.message);
@@ -1201,35 +1230,35 @@
                 btn.textContent = '📤 提交审核';
                 btn.disabled = false;
             }
-        }
+        };
 
         // ============================================================
-        //  审 核
+        //  审 核 操 作（暴露到全局）
         // ============================================================
-        async function reviewContent(contentId, status) {
+        window.reviewContent = async function(contentId, status) {
             if (!confirm(`确定要 ${status === 'approved' ? '通过' : '拒绝'} 这个内容吗？`)) return;
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('contents')
                 .update({ status: status, updated_at: new Date().toISOString() })
                 .eq('id', contentId);
             if (error) { alert('操作失败：' + error.message); } else { alert('✅ 操作成功');
                 loadContents(); }
-        }
+        };
 
         // ============================================================
-        //  删 除
+        //  删 除 内 容（暴露到全局）
         // ============================================================
-        async function deleteContent(contentId, fileUrl) {
+        window.deleteContent = async function(contentId, fileUrl) {
             if (!confirm('确定要删除这个内容吗？')) return;
             try {
                 if (fileUrl) {
                     const pathParts = fileUrl.split('/');
                     const storagePath = pathParts.slice(pathParts.indexOf('files') + 1).join('/');
                     if (storagePath) {
-                        await supabase.storage.from('files').remove([storagePath]);
+                        await supabaseClient.storage.from('files').remove([storagePath]);
                     }
                 }
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('contents')
                     .delete()
                     .eq('id', contentId);
@@ -1237,35 +1266,35 @@
                 alert('✅ 删除成功');
                 loadContents();
             } catch (err) { alert('❌ 删除失败：' + err.message); }
-        }
+        };
 
         // ============================================================
-        //  公 告 编 辑
+        //  公 告 编 辑（暴露到全局）
         // ============================================================
-        function openAnnounceEditor() {
+        window.openAnnounceEditor = function() {
             document.getElementById('announceInput').value = announcementText.textContent;
             document.getElementById('announceModal').classList.remove('hidden');
-        }
+        };
 
-        function closeAnnounceModal() {
+        window.closeAnnounceModal = function() {
             document.getElementById('announceModal').classList.add('hidden');
-        }
+        };
 
-        async function saveAnnouncement() {
+        window.saveAnnouncement = async function() {
             const content = document.getElementById('announceInput').value.trim();
             if (!content) { alert('请输入公告内容'); return; }
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('announcements')
                 .insert({ content: content, is_active: true });
             if (error) { alert('保存失败：' + error.message); } else { alert('✅ 公告已更新');
-                closeAnnounceModal();
+                window.closeAnnounceModal();
                 loadAnnouncement(); }
-        }
+        };
 
         // ============================================================
-        //  审 核 详 情
+        //  审 核 详 情（暴露到全局）
         // ============================================================
-        function viewContentDetail(contentId) {
+        window.viewContentDetail = function(contentId) {
             const item = allContents.find(c => c.id === contentId);
             if (!item) return;
             const detailHtml = `
@@ -1278,36 +1307,36 @@
                     <div style="font-size:13px;color:#94a3b8;margin-top:8px;">状态：${getStatusText(item.status)} · ${timeAgo(item.created_at)}</div>
                 </div>
                 <div style="display:flex;gap:10px;">
-                    <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved'); closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;">✅ 通过</button>
-                    <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected'); closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;">❌ 拒绝</button>
-                    <button class="btn-sm" onclick="closeReviewDetail()" style="padding:8px 24px;border-radius:10px;background:#f1f5f9;border:1px solid #e2e8f0;">关闭</button>
+                    <button class="btn-sm approve" onclick="window.reviewContent(${item.id}, 'approved'); window.closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;">✅ 通过</button>
+                    <button class="btn-sm reject" onclick="window.reviewContent(${item.id}, 'rejected'); window.closeReviewDetail();" style="padding:8px 24px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;">❌ 拒绝</button>
+                    <button class="btn-sm" onclick="window.closeReviewDetail()" style="padding:8px 24px;border-radius:10px;background:#f1f5f9;border:1px solid #e2e8f0;">关闭</button>
                 </div>
             `;
             document.getElementById('reviewDetailContent').innerHTML = detailHtml;
             document.getElementById('reviewDetailModal').classList.remove('hidden');
-        }
+        };
 
-        function closeReviewDetail() {
+        window.closeReviewDetail = function() {
             document.getElementById('reviewDetailModal').classList.add('hidden');
-        }
+        };
 
         // ============================================================
-        //  管 理 员 管 理
+        //  管 理 员 管 理（暴露到全局）
         // ============================================================
-        async function openAdminModal() {
+        window.openAdminModal = function() {
             if (currentUserRole !== 'admin') return;
             document.getElementById('adminModal').classList.remove('hidden');
-            await loadAdminList();
-        }
+            loadAdminList();
+        };
 
-        function closeAdminModal() {
+        window.closeAdminModal = function() {
             document.getElementById('adminModal').classList.add('hidden');
-        }
+        };
 
         let adminUsers = [];
 
         async function loadAdminList() {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('profiles')
                 .select('id, role')
                 .eq('role', 'admin');
@@ -1327,7 +1356,7 @@
             }
             let html = '';
             for (const admin of adminUsers) {
-                const { data: userData } = await supabase.auth.admin.getUserById(admin.id);
+                const { data: userData } = await supabaseClient.auth.admin.getUserById(admin.id);
                 const email = userData?.user?.email || admin.id;
                 html +=
                     `<div class="user-item"><span class="email">${email}</span><span class="role admin">👑 管理员</span></div>`;
@@ -1335,16 +1364,16 @@
             container.innerHTML = html;
         }
 
-        async function addAdmin() {
+        window.addAdmin = async function() {
             const input = document.getElementById('adminAddInput');
             const email = input.value.trim();
             if (!email) { alert('请输入邮箱'); return; }
             try {
-                const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+                const { data: userData, error: userError } = await supabaseClient.auth.admin.listUsers();
                 if (userError) throw new Error(userError.message);
                 const found = userData.users.find(u => u.email === email);
                 if (!found) { alert('未找到该用户，请确保用户已注册'); return; }
-                const { error: updateError } = await supabase
+                const { error: updateError } = await supabaseClient
                     .from('profiles')
                     .upsert({ id: found.id, role: 'admin' });
                 if (updateError) throw new Error(updateError.message);
@@ -1354,10 +1383,11 @@
                 loadUserRole();
                 updateUI();
             } catch (err) { alert('操作失败：' + err.message); }
-        }
+        };
 
-        console.log('👁️ 必看网 v6.0.0 (密码登录版)');
+        console.log('👁️ 必看网 v7.0.0 (修复版)');
         console.log('📧 管理员: 3948677391@qq.com');
+        console.log('✅ 所有功能已初始化');
     </script>
 
 </body>
