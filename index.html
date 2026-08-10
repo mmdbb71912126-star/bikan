@@ -7,24 +7,33 @@
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
         .hidden { display: none; }
-        input, button { padding: 10px; margin: 5px; }
+        input, button { padding: 10px; margin: 5px; cursor: pointer; }
         .file-item { border: 1px solid #ddd; padding: 10px; margin: 5px 0; display: flex; justify-content: space-between; }
         .file-item a { color: blue; text-decoration: none; }
         .file-item a:hover { text-decoration: underline; }
+        .code-section { margin-top: 10px; }
+        .code-section input { width: 150px; }
+        #message { color: red; margin-top: 10px; }
+        .success { color: green !important; }
     </style>
 </head>
 <body>
 
 <div id="app">
+    <!-- 登录 / 注册 用验证码 -->
     <div id="loginSection">
-        <h2>登录 / 注册</h2>
-        <input type="email" id="email" placeholder="邮箱">
-        <input type="password" id="password" placeholder="密码（至少6位）">
-        <button onclick="signUp()">注册</button>
-        <button onclick="signIn()">登录</button>
-        <p id="message" style="color:red;"></p>
+        <h2>📧 验证码登录 / 注册</h2>
+        <p>输入邮箱，接收验证码</p>
+        <input type="email" id="email" placeholder="请输入邮箱">
+        <button onclick="sendCode()">发送验证码</button>
+        <div class="code-section">
+            <input type="text" id="code" placeholder="输入6位验证码">
+            <button onclick="verifyCode()">登录 / 注册</button>
+        </div>
+        <p id="message"></p>
     </div>
 
+    <!-- 登录后显示 -->
     <div id="dashboardSection" class="hidden">
         <h2>📁 我的资源</h2>
         <button onclick="signOut()">退出登录</button>
@@ -39,55 +48,105 @@
 </div>
 
 <script>
+    // ========== 配置信息 ==========
     const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // 创建客户端（只声明一次，不会重复）
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function signUp() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) return alert('注册失败：' + error.message);
-        alert('注册成功！请登录');
+    let currentEmail = '';
+
+    // 显示消息
+    function showMessage(msg, isSuccess = false) {
+        const el = document.getElementById('message');
+        el.textContent = msg;
+        el.className = isSuccess ? 'success' : '';
     }
 
-    async function signIn() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return alert('登录失败：' + error.message);
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('dashboardSection').classList.remove('hidden');
-        loadFiles();
-    }
+    // ===== 发送验证码 =====
+    window.sendCode = async function() {
+        const email = document.getElementById('email').value.trim();
+        if (!email) {
+            showMessage('请输入邮箱');
+            return;
+        }
+        currentEmail = email;
+        showMessage('发送中...');
 
-    async function signOut() {
-        await supabase.auth.signOut();
+        const { data, error } = await supabaseClient.auth.signInWithOtp({
+            email: email
+        });
+
+        if (error) {
+            showMessage('发送失败：' + error.message);
+        } else {
+            showMessage('✅ 验证码已发送到你的邮箱，请查收（检查垃圾箱）', true);
+        }
+    };
+
+    // ===== 验证验证码 =====
+    window.verifyCode = async function() {
+        const code = document.getElementById('code').value.trim();
+        if (!code || code.length < 6) {
+            showMessage('请输入6位验证码');
+            return;
+        }
+        if (!currentEmail) {
+            showMessage('请先发送验证码');
+            return;
+        }
+
+        showMessage('验证中...');
+
+        const { data, error } = await supabaseClient.auth.verifyOtp({
+            email: currentEmail,
+            token: code,
+            type: 'email'
+        });
+
+        if (error) {
+            showMessage('❌ 验证失败：' + error.message);
+        } else {
+            showMessage('✅ 登录成功！', true);
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            loadFiles();
+        }
+    };
+
+    // ===== 退出登录 =====
+    window.signOut = async function() {
+        await supabaseClient.auth.signOut();
         document.getElementById('loginSection').classList.remove('hidden');
         document.getElementById('dashboardSection').classList.add('hidden');
-    }
+        document.getElementById('email').value = '';
+        document.getElementById('code').value = '';
+        currentEmail = '';
+        showMessage('');
+    };
 
-    async function uploadFile() {
+    // ===== 上传文件 =====
+    window.uploadFile = async function() {
         const fileInput = document.getElementById('fileInput');
         const file = fileInput.files[0];
         if (!file) return alert('请选择一个文件');
 
-        const { data: { user: userData } } = await supabase.auth.getUser();
+        const { data: { user: userData } } = await supabaseClient.auth.getUser();
         if (!userData) return alert('请先登录');
 
         const filePath = `${userData.id}/${Date.now()}_${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabaseClient.storage
             .from('files')
             .upload(filePath, file);
 
         if (uploadError) return alert('上传失败：' + uploadError.message);
 
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = supabaseClient.storage
             .from('files')
             .getPublicUrl(filePath);
 
-        await supabase.from('files').insert({
+        await supabaseClient.from('files').insert({
             user_id: userData.id,
             file_name: file.name,
             file_url: urlData.publicUrl,
@@ -97,13 +156,14 @@
         alert('上传成功！');
         fileInput.value = '';
         loadFiles();
-    }
+    };
 
+    // ===== 加载文件列表 =====
     async function loadFiles() {
-        const { data: { user: userData } } = await supabase.auth.getUser();
+        const { data: { user: userData } } = await supabaseClient.auth.getUser();
         if (!userData) return;
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('files')
             .select('*')
             .eq('user_id', userData.id)
@@ -128,14 +188,12 @@
         });
     }
 
-    supabase.auth.onAuthStateChange((event, session) => {
+    // ===== 监听登录状态变化（自动切换界面） =====
+    supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session) {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
             loadFiles();
-        } else {
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('dashboardSection').classList.add('hidden');
         }
     });
 </script>
