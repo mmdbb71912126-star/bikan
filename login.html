@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 必看网</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            padding: 48px 44px;
+            border-radius: 32px;
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.3);
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .login-box .logo {
+            font-size: 52px;
+            margin-bottom: 4px;
+        }
+        .login-box h1 {
+            font-size: 30px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .login-box h1 span {
+            color: #6366f1;
+        }
+        .login-box .sub {
+            color: #94a3b8;
+            font-size: 15px;
+            margin: 4px 0 28px 0;
+        }
+        .login-box .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .login-box .input-group input {
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 16px;
+            background: #fff;
+            transition: all 0.3s;
+        }
+        .login-box .input-group input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+        .login-box .btn-primary {
+            padding: 14px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .login-box .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        .login-box .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .login-box .msg {
+            margin-top: 16px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            min-height: 44px;
+        }
+        .login-box .msg.info {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .login-box .msg.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .login-box .msg.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .login-box .msg.loading {
+            background: #e0f2fe;
+            color: #075985;
+        }
+        .login-box .hint {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 20px;
+        }
+        .login-box .hint a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .login-box {
+                padding: 32px 24px;
+            }
+            .login-box h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="logo">👁️</div>
+        <h1>必看<span>网</span></h1>
+        <p class="sub">分享 · 交流 · 成长</p>
+        <div class="input-group">
+            <input type="email" id="loginEmail" placeholder="请输入邮箱地址" autocomplete="email">
+            <button class="btn-primary" id="loginBtn" onclick="handleLogin()">📨 发送确认邮件</button>
+        </div>
+        <div id="loginMsg" class="msg info">💡 输入邮箱，点击按钮登录</div>
+        <p class="hint">首次使用自动注册 · 检查垃圾箱 📬</p>
+    </div>
+
+    <script>
+        // ============================================================
+        //  配 置
+        // ============================================================
+        const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
+        const SITE_URL = 'http://bikan.dpdns.org';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const loginEmail = document.getElementById('loginEmail');
+        const loginMsg = document.getElementById('loginMsg');
+        const loginBtn = document.getElementById('loginBtn');
+
+        function showLoginMsg(msg, type = 'info') {
+            loginMsg.textContent = msg;
+            loginMsg.className = 'msg ' + type;
+        }
+
+        // ============================================================
+        //  登 录
+        // ============================================================
+        async function handleLogin() {
+            const email = loginEmail.value.trim();
+            if (!email) {
+                showLoginMsg('❌ 请输入邮箱地址', 'error');
+                return;
+            }
+            if (!email.includes('@') || !email.includes('.')) {
+                showLoginMsg('❌ 请输入有效邮箱', 'error');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = '⏳ 发送中...';
+            showLoginMsg('📤 正在发送确认邮件...', 'loading');
+
+            const { error } = await supabase.auth.signInWithOtp({
+                email: email,
+                options: { emailRedirectTo: SITE_URL }
+            });
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = '📨 发送确认邮件';
+
+            if (error) {
+                showLoginMsg('❌ 发送失败：' + error.message, 'error');
+            } else {
+                showLoginMsg('✅ 邮件已发送！请检查邮箱（含垃圾箱）📬', 'success');
+            }
+        }
+
+        loginEmail.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+
+        // ============================================================
+        //  检 查 是 否 已 登 录
+        // ============================================================
+        (async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                // 已登录，跳转到首页
+                window.location.href = '/';
+            }
+        })();
+
+        // 监听登录状态变化（点击邮件链接后会自动登录）
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                window.location.href = '/';
+            }
+        });
+
+        console.log('🔐 必看网 - 登录页 v1.0');
+    </script>
+
+</body>
+</html>
