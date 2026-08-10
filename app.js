@@ -400,7 +400,7 @@ async function loadReports() {
 
     const count = allReports.length;
 
-    // ✅ 所有 DOM 操作都加空值判断
+    // ✅ 安全更新：先检查元素是否存在
     const reportBadge = document.getElementById('reportBadge');
     if (reportBadge) {
         reportBadge.textContent = count;
