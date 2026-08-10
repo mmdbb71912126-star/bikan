@@ -146,6 +146,7 @@ let _isRedirecting = false;
         await loadUserProfile();
         await loadUserRole();
         await loadAnnouncement();
+        await loadGlobalAnnouncement(); // 现在有对应的函数了
         await loadNotifications();
         await loadFriends();
         await loadFriendRequests();
@@ -350,6 +351,15 @@ async function loadAnnouncement() {
     } else if (announcementText) {
         announcementText.textContent = '🎉 欢迎来到必看网！';
     }
+}
+
+// ============================================================
+//  全 局 公 告（已废弃，仅保留空函数防止报错）
+// ============================================================
+async function loadGlobalAnnouncement() {
+    // 全局公告功能已移至消息分区的系统消息中
+    // 此函数保留空壳，防止旧代码调用时报错
+    return;
 }
 
 // ============================================================
