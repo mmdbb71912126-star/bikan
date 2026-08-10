@@ -331,7 +331,7 @@
 </head>
 <body>
 
-    <!-- ===== 主界面（默认隐藏） ===== -->
+    <!-- ===== 主界面 ===== -->
     <div id="app" class="hidden">
 
         <!-- 侧边栏 -->
@@ -548,7 +548,7 @@
         </div>
     </div>
 
-    <!-- 编辑个人资料弹窗 -->
+    <!-- 编辑个人资料弹窗（头像上传已修复） -->
     <div id="profileEditModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileEdit()">
         <div class="modal-box" style="max-width:460px;">
             <div class="modal-header">
@@ -589,7 +589,7 @@
     </div>
 
     <!-- 版本号 -->
-    <div class="version-tag">v12.1.0</div>
+    <div class="version-tag">v12.2.0</div>
 
     <!-- ========================================================== -->
     <!--  JavaScript                                                -->
@@ -659,7 +659,6 @@
                 await loadAnnouncement();
                 await loadNotifications();
 
-                // 路由处理
                 const params = new URLSearchParams(window.location.search);
                 const page = params.get('page') || 'home';
                 const id = params.get('id');
@@ -927,7 +926,7 @@
                 return;
             }
 
-            // ✅ ID 去重
+            // ID 去重
             const uniqueMap = new Map();
             data.forEach(item => {
                 if (!uniqueMap.has(item.id)) {
@@ -1953,7 +1952,7 @@
         }
 
         // ============================================================
-        //  编 辑 个 人 资 料
+        //  编 辑 个 人 资 料（头像上传已修复）
         // ============================================================
         let avatarFileToUpload = null;
 
@@ -2009,8 +2008,9 @@
             if (nickname) updateData.nickname = nickname;
             if (bio) updateData.bio = bio;
 
+            // ✅ 修复头像上传路径
             if (avatarFileToUpload) {
-                const filePath = `avatars/${currentUser.id}/${Date.now()}_${avatarFileToUpload.name}`;
+                const filePath = `${currentUser.id}/${Date.now()}_${avatarFileToUpload.name}`;
                 const { error: uploadError } = await supabaseClient.storage
                     .from('avatars')
                     .upload(filePath, avatarFileToUpload);
@@ -2042,9 +2042,12 @@
             } else {
                 alert('✅ 保存成功');
                 closeProfileEdit();
-                loadUserProfile();
+                await loadUserProfile();
                 if (currentPage === 'home' || currentPage === 'upload') {
                     loadContents(currentSearchQuery);
+                }
+                if (currentPage === 'detail' && detailContentId) {
+                    loadDetail(detailContentId);
                 }
             }
         }
@@ -2052,7 +2055,7 @@
         // ============================================================
         //  初 始 化
         // ============================================================
-        console.log('👁️ 必看网 v12.1.0 (修复版)');
+        console.log('👁️ 必看网 v12.2.0 (头像修复版)');
         console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
     </script>
 
