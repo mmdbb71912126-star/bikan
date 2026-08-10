@@ -1,164 +1,777 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>我的资源分享站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 小云盘 - 资源分享站</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-        .hidden { display: none; }
-        input, button { padding: 10px; margin: 5px; cursor: pointer; }
-        .file-item { border: 1px solid #ddd; padding: 10px; margin: 5px 0; display: flex; justify-content: space-between; }
-        .file-item a { color: blue; text-decoration: none; }
-        .file-item a:hover { text-decoration: underline; }
-        .code-section { margin-top: 10px; }
-        .code-section input { width: 150px; }
-        #message { color: red; margin-top: 10px; }
-        .success { color: green !important; }
+        /* ===== 全局重置 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9edf5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ===== 主卡片 ===== */
+        .container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 40px 48px;
+            max-width: 720px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        /* ===== 头部 ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: -0.5px;
+        }
+
+        .logo h1 span {
+            color: #6366f1;
+        }
+
+        .badge {
+            font-size: 11px;
+            background: #6366f1;
+            color: white;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== 登录区域 ===== */
+        .login-box {
+            text-align: center;
+            padding: 20px 0 8px 0;
+        }
+
+        .login-box .subtitle {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+
+        .login-box .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .login-box input[type="email"] {
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: white;
+            outline: none;
+            width: 100%;
+        }
+
+        .login-box input[type="email"]:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        }
+
+        .login-box .btn-primary {
+            padding: 14px 24px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .login-box .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+        }
+
+        .login-box .btn-primary:active {
+            transform: translateY(0px);
+        }
+
+        .login-box .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-box .hint {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 16px;
+        }
+
+        .login-box .hint a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* ===== 消息提示 ===== */
+        #message {
+            margin-top: 16px;
+            font-size: 14px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            color: #475569;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        #message.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        #message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        #message.loading {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        /* ===== 仪表盘（登录后） ===== */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .user-email {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .btn-outline {
+            padding: 8px 20px;
+            border: 2px solid #e2e8f0;
+            background: transparent;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: #fef2f2;
+        }
+
+        /* ===== 上传区域 ===== */
+        .upload-area {
+            background: #f8fafc;
+            border: 2px dashed #d1d5db;
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: #f1f4ff;
+        }
+
+        .upload-area .icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .upload-area .highlight {
+            color: #6366f1;
+            font-weight: 600;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        /* ===== 文件列表 ===== */
+        .file-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .file-list-header h3 {
+            font-size: 16px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .file-count {
+            font-size: 13px;
+            color: #94a3b8;
+            background: #f1f5f9;
+            padding: 2px 12px;
+            border-radius: 20px;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .file-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            border-color: #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .file-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #94a3b8;
+            flex-shrink: 0;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-download {
+            padding: 6px 16px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-download:hover {
+            background: #4f46e5;
+            transform: scale(1.02);
+        }
+
+        .btn-delete {
+            padding: 6px 12px;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-delete:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state .big-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ===== 版本号 ===== */
+        .version {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            font-size: 12px;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            user-select: none;
+            z-index: 999;
+            font-weight: 400;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px 20px;
+                border-radius: 24px;
+            }
+
+            .logo h1 {
+                font-size: 18px;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .file-item {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .file-info {
+                width: 100%;
+            }
+
+            .file-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .version {
+                bottom: 8px;
+                left: 8px;
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <!-- 登录 / 注册 用验证码 -->
-    <div id="loginSection">
-        <h2>📧 验证码登录 / 注册</h2>
-        <p>输入邮箱，接收验证码</p>
-        <input type="email" id="email" placeholder="请输入邮箱">
-        <button onclick="sendCode()">发送验证码</button>
-        <div class="code-section">
-            <input type="text" id="code" placeholder="输入6位验证码">
-            <button onclick="verifyCode()">登录 / 注册</button>
+<div class="version">v2.0.0</div>
+
+<div class="container" id="app">
+
+    <!-- ====== 头部 ====== -->
+    <div class="header">
+        <div class="logo">
+            <span class="logo-icon">📦</span>
+            <h1>小<span>云盘</span></h1>
         </div>
-        <p id="message"></p>
+        <span class="badge">✨ 安全分享</span>
     </div>
 
-    <!-- 登录后显示 -->
-    <div id="dashboardSection" class="hidden">
-        <h2>📁 我的资源</h2>
-        <button onclick="signOut()">退出登录</button>
-        <hr>
-        <h3>上传文件</h3>
-        <input type="file" id="fileInput">
-        <button onclick="uploadFile()">上传</button>
-        <hr>
-        <h3>我的文件列表</h3>
-        <div id="fileList"></div>
+    <!-- ====== 登录界面 ====== -->
+    <div id="loginSection" class="login-box">
+        <p class="subtitle">📧 输入邮箱，接收确认链接即可登录</p>
+        <div class="input-group">
+            <input type="email" id="email" placeholder="请输入你的邮箱地址" autocomplete="email">
+            <button class="btn-primary" id="sendBtn" onclick="sendCode()">📨 发送确认邮件</button>
+        </div>
+        <p class="hint">首次使用会自动注册 · 检查垃圾箱哦 📬</p>
+        <div id="message">💡 输入邮箱，点击按钮开始</div>
     </div>
+
+    <!-- ====== 仪表盘（登录后） ====== -->
+    <div id="dashboardSection" class="hidden">
+
+        <!-- 用户信息栏 -->
+        <div class="dashboard-header">
+            <div class="user-info">
+                <div class="avatar" id="userAvatar">📧</div>
+                <span class="user-email" id="userEmail">user@example.com</span>
+            </div>
+            <button class="btn-outline" onclick="signOut()">🚪 退出</button>
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <span class="icon">📤</span>
+            <p>点击上传文件 · 或拖拽到这里</p>
+            <p style="font-size:12px; color:#94a3b8; margin-top:4px;">支持任意格式 · 单个文件上限 50MB</p>
+            <input type="file" id="fileInput" onchange="uploadFile()" multiple>
+        </div>
+
+        <!-- 文件列表 -->
+        <div class="file-list-header">
+            <h3>📂 我的文件</h3>
+            <span class="file-count" id="fileCount">0 个</span>
+        </div>
+        <div class="file-list" id="fileList">
+            <div class="empty-state">
+                <span class="big-icon">☁️</span>
+                <p>还没有文件，上传一个吧！</p>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // ========== 配置信息 ==========
+    // ============================================================
+    //  配 置 信 息
+    // ============================================================
     const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
+    const SITE_URL = 'http://bikan.dpdns.org';
 
-    // 创建客户端（只声明一次，不会重复）
+    // ============================================================
+    //  初 始 化
+    // ============================================================
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentEmail = '';
+    let isSending = false;
 
-    // 显示消息
-    function showMessage(msg, isSuccess = false) {
-        const el = document.getElementById('message');
-        el.textContent = msg;
-        el.className = isSuccess ? 'success' : '';
+    // DOM 引用
+    const loginSection = document.getElementById('loginSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const emailInput = document.getElementById('email');
+    const messageEl = document.getElementById('message');
+    const fileListEl = document.getElementById('fileList');
+    const fileCountEl = document.getElementById('fileCount');
+    const userEmailEl = document.getElementById('userEmail');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // ============================================================
+    //  工 具 函 数
+    // ============================================================
+    function showMessage(msg, type = 'info') {
+        messageEl.textContent = msg;
+        messageEl.className = type;
+        // 自动清除样式
+        if (type === 'info') {
+            messageEl.style.background = '#f1f5f9';
+            messageEl.style.color = '#475569';
+        } else if (type === 'success') {
+            messageEl.style.background = '#dcfce7';
+            messageEl.style.color = '#166534';
+        } else if (type === 'error') {
+            messageEl.style.background = '#fee2e2';
+            messageEl.style.color = '#991b1b';
+        } else if (type === 'loading') {
+            messageEl.style.background = '#e0f2fe';
+            messageEl.style.color = '#075985';
+        }
     }
 
-    // ===== 发送验证码 =====
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const map = {
+            'pdf': '📄', 'doc': '📝', 'docx': '📝',
+            'xls': '📊', 'xlsx': '📊',
+            'ppt': '📽️', 'pptx': '📽️',
+            'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'webp': '🖼️',
+            'mp4': '🎬', 'avi': '🎬', 'mov': '🎬',
+            'mp3': '🎵', 'wav': '🎵', 'flac': '🎵',
+            'zip': '📦', 'rar': '📦', '7z': '📦', 'tar': '📦', 'gz': '📦',
+            'exe': '⚙️', 'msi': '⚙️',
+            'txt': '📃', 'md': '📃',
+            'json': '📋', 'xml': '📋',
+            'html': '🌐', 'css': '🎨', 'js': '⚡',
+            'py': '🐍', 'java': '☕', 'cpp': '⚙️', 'c': '⚙️'
+        };
+        return map[ext] || '📎';
+    }
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // ============================================================
+    //  认 证 相 关
+    // ============================================================
     window.sendCode = async function() {
-        const email = document.getElementById('email').value.trim();
+        const email = emailInput.value.trim();
         if (!email) {
-            showMessage('请输入邮箱');
+            showMessage('❌ 请输入邮箱地址', 'error');
             return;
         }
+        if (!email.includes('@') || !email.includes('.')) {
+            showMessage('❌ 请输入有效的邮箱地址', 'error');
+            return;
+        }
+
+        if (isSending) return;
+        isSending = true;
+        sendBtn.textContent = '⏳ 发送中...';
+        sendBtn.disabled = true;
         currentEmail = email;
-        showMessage('发送中...');
+
+        showMessage('📤 正在发送确认邮件...', 'loading');
 
         const { data, error } = await supabaseClient.auth.signInWithOtp({
-            email: email
+            email: email,
+            options: {
+                emailRedirectTo: SITE_URL
+            }
         });
 
+        isSending = false;
+        sendBtn.textContent = '📨 发送确认邮件';
+        sendBtn.disabled = false;
+
         if (error) {
-            showMessage('发送失败：' + error.message);
+            showMessage('❌ 发送失败：' + error.message, 'error');
+            console.error('Supabase 错误:', error);
         } else {
-            showMessage('✅ 验证码已发送到你的邮箱，请查收（检查垃圾箱）', true);
+            showMessage('✅ 确认邮件已发送！请检查邮箱（包括垃圾箱）📬', 'success');
         }
     };
 
-    // ===== 验证验证码 =====
-    window.verifyCode = async function() {
-        const code = document.getElementById('code').value.trim();
-        if (!code || code.length < 6) {
-            showMessage('请输入6位验证码');
-            return;
-        }
-        if (!currentEmail) {
-            showMessage('请先发送验证码');
-            return;
-        }
+    // 回车键发送
+    emailInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') window.sendCode();
+    });
 
-        showMessage('验证中...');
-
-        const { data, error } = await supabaseClient.auth.verifyOtp({
-            email: currentEmail,
-            token: code,
-            type: 'email'
-        });
-
-        if (error) {
-            showMessage('❌ 验证失败：' + error.message);
-        } else {
-            showMessage('✅ 登录成功！', true);
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            loadFiles();
-        }
-    };
-
-    // ===== 退出登录 =====
+    // ============================================================
+    //  退 出
+    // ============================================================
     window.signOut = async function() {
         await supabaseClient.auth.signOut();
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('dashboardSection').classList.add('hidden');
-        document.getElementById('email').value = '';
-        document.getElementById('code').value = '';
-        currentEmail = '';
-        showMessage('');
+        loginSection.classList.remove('hidden');
+        dashboardSection.classList.add('hidden');
+        emailInput.value = '';
+        showMessage('👋 已退出，下次见！', 'info');
     };
 
-    // ===== 上传文件 =====
+    // ============================================================
+    //  上 传 文 件
+    // ============================================================
     window.uploadFile = async function() {
         const fileInput = document.getElementById('fileInput');
-        const file = fileInput.files[0];
-        if (!file) return alert('请选择一个文件');
+        const files = fileInput.files;
+        if (!files || files.length === 0) return;
 
         const { data: { user: userData } } = await supabaseClient.auth.getUser();
-        if (!userData) return alert('请先登录');
+        if (!userData) {
+            alert('请先登录');
+            return;
+        }
 
-        const filePath = `${userData.id}/${Date.now()}_${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabaseClient.storage
-            .from('files')
-            .upload(filePath, file);
+        // 限制单个文件 50MB
+        for (let f of files) {
+            if (f.size > 50 * 1024 * 1024) {
+                alert(`❌ ${f.name} 超过 50MB 限制`);
+                fileInput.value = '';
+                return;
+            }
+        }
 
-        if (uploadError) return alert('上传失败：' + uploadError.message);
+        showMessage('📤 正在上传...', 'loading');
 
-        const { data: urlData } = supabaseClient.storage
-            .from('files')
-            .getPublicUrl(filePath);
+        let successCount = 0;
+        let failCount = 0;
 
-        await supabaseClient.from('files').insert({
-            user_id: userData.id,
-            file_name: file.name,
-            file_url: urlData.publicUrl,
-            file_size: file.size
-        });
+        for (let file of files) {
+            try {
+                const filePath = `${userData.id}/${Date.now()}_${file.name}`;
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('files')
+                    .upload(filePath, file);
 
-        alert('上传成功！');
+                if (uploadError) {
+                    console.error('上传失败:', uploadError);
+                    failCount++;
+                    continue;
+                }
+
+                const { data: urlData } = supabaseClient.storage
+                    .from('files')
+                    .getPublicUrl(filePath);
+
+                await supabaseClient.from('files').insert({
+                    user_id: userData.id,
+                    file_name: file.name,
+                    file_url: urlData.publicUrl,
+                    file_size: file.size
+                });
+
+                successCount++;
+            } catch (err) {
+                console.error(err);
+                failCount++;
+            }
+        }
+
         fileInput.value = '';
+
+        if (successCount > 0 && failCount === 0) {
+            showMessage(`✅ 全部上传成功！(${successCount} 个文件)`, 'success');
+        } else if (successCount > 0 && failCount > 0) {
+            showMessage(`⚠️ 成功 ${successCount} 个，失败 ${failCount} 个`, 'error');
+        } else {
+            showMessage('❌ 上传失败，请重试', 'error');
+        }
+
         loadFiles();
     };
 
-    // ===== 加载文件列表 =====
+    // ============================================================
+    //  删 除 文 件
+    // ============================================================
+    window.deleteFile = async function(fileId, filePath, fileName) {
+        if (!confirm(`确定要删除 "${fileName}" 吗？`)) return;
+
+        const { data: { user: userData } } = await supabaseClient.auth.getUser();
+        if (!userData) return;
+
+        showMessage('🗑️ 删除中...', 'loading');
+
+        try {
+            // 删除存储文件
+            await supabaseClient.storage.from('files').remove([filePath]);
+            // 删除数据库记录
+            await supabaseClient.from('files').delete().eq('id', fileId);
+
+            showMessage(`✅ 已删除 "${fileName}"`, 'success');
+            loadFiles();
+        } catch (err) {
+            console.error(err);
+            showMessage('❌ 删除失败', 'error');
+        }
+    };
+
+    // ============================================================
+    //  加 载 文 件 列 表
+    // ============================================================
     async function loadFiles() {
         const { data: { user: userData } } = await supabaseClient.auth.getUser();
         if (!userData) return;
@@ -169,33 +782,91 @@
             .eq('user_id', userData.id)
             .order('created_at', { ascending: false });
 
-        if (error) return alert('加载失败：' + error.message);
-
-        const list = document.getElementById('fileList');
-        list.innerHTML = '';
-        if (data.length === 0) {
-            list.innerHTML = '<p>暂无文件，上传一个吧！</p>';
+        if (error) {
+            console.error('加载失败:', error);
+            fileListEl.innerHTML = `<div class="empty-state"><p>❌ 加载失败</p></div>`;
             return;
         }
-        data.forEach(file => {
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <span>📄 ${file.file_name} (${(file.file_size/1024).toFixed(1)} KB)</span>
-                <a href="${file.file_url}" target="_blank">下载</a>
+
+        fileCountEl.textContent = data.length + ' 个';
+
+        if (data.length === 0) {
+            fileListEl.innerHTML = `
+                <div class="empty-state">
+                    <span class="big-icon">☁️</span>
+                    <p>还没有文件，上传一个吧！</p>
+                </div>
             `;
-            list.appendChild(div);
-        });
+            return;
+        }
+
+        fileListEl.innerHTML = data.map(file => {
+            const icon = getFileIcon(file.file_name);
+            const size = formatSize(file.file_size);
+            // 从 file_url 中提取路径
+            const pathParts = file.file_url.split('/');
+            const storagePath = pathParts.slice(pathParts.indexOf('files') + 1).join('/');
+            return `
+                <div class="file-item">
+                    <div class="file-info">
+                        <span class="file-icon">${icon}</span>
+                        <span class="file-name" title="${file.file_name}">${file.file_name}</span>
+                        <span class="file-size">${size}</span>
+                    </div>
+                    <div class="file-actions">
+                        <a href="${file.file_url}" target="_blank" class="btn-download">⬇ 下载</a>
+                        <button class="btn-delete" onclick="deleteFile('${file.id}', '${storagePath}', '${file.file_name}')">✕</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
-    // ===== 监听登录状态变化（自动切换界面） =====
+    // ============================================================
+    //  登 录 状 态 监 听
+    // ============================================================
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session) {
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
+            loginSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+            userEmailEl.textContent = session.user.email || '用户';
+            // 头像首字母
+            const avatar = document.getElementById('userAvatar');
+            const firstChar = (session.user.email || 'U').charAt(0).toUpperCase();
+            avatar.textContent = firstChar;
+
             loadFiles();
+            showMessage('👋 欢迎回来！', 'success');
+        } else {
+            // 如果当前在 dashboard 但 session 没了，退回登录
+            if (!dashboardSection.classList.contains('hidden')) {
+                loginSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+                showMessage('💡 请登录继续', 'info');
+            }
         }
     });
+
+    // ============================================================
+    //  初 始 化 检 查
+    // ============================================================
+    // 页面加载时检查是否已登录
+    (async function checkSession() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            loginSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+            userEmailEl.textContent = session.user.email || '用户';
+            const avatar = document.getElementById('userAvatar');
+            const firstChar = (session.user.email || 'U').charAt(0).toUpperCase();
+            avatar.textContent = firstChar;
+            loadFiles();
+            showMessage('👋 欢迎回来！', 'success');
+        }
+    })();
+
+    console.log('📦 小云盘 v2.0.0 已启动 🚀');
+    console.log('🔗 站点:', SITE_URL);
 </script>
 
 </body>
