@@ -6,8 +6,11 @@
     <title>必看网 - 资源分享社区</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ===== 全局重置 ===== */
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
             background: #f0f2f5;
@@ -15,24 +18,42 @@
             height: 100vh;
             overflow: hidden;
         }
-        input, button, textarea, select { font-family: inherit; outline: none; }
-        button { cursor: pointer; border: none; background: none; }
-        a { text-decoration: none; color: inherit; }
-        .hidden { display: none !important; }
+        input,
+        button,
+        textarea,
+        select {
+            font-family: inherit;
+            outline: none;
+        }
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .hidden {
+            display: none !important;
+        }
 
-        /* ===== 主布局 ===== */
-        #app { display: flex; height: 100vh; overflow: hidden; }
+        #app {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
 
         /* ===== 侧边栏 ===== */
         .sidebar {
-            width: 300px;
+            width: 280px;
             background: #ffffff;
             border-right: 1px solid #eef2f6;
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
             padding: 16px 0;
-            box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02);
             z-index: 10;
             overflow-y: auto;
         }
@@ -45,10 +66,23 @@
             gap: 8px;
             padding-bottom: 20px;
         }
-        .sidebar .brand svg { width:264px; height:180px; flex-shrink:0; }
-        .sidebar .brand span { font-size:20px; font-weight:700; color:#0f172a; }
-        .sidebar .brand span .highlight { color:#6366f1; }
-        .sidebar .nav { flex:1; padding: 12px 12px 0 12px; }
+        .sidebar .brand svg {
+            width: 180px;
+            height: 122px;
+            flex-shrink: 0;
+        }
+        .sidebar .brand span {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .sidebar .brand span .highlight {
+            color: #6366f1;
+        }
+        .sidebar .nav {
+            flex: 1;
+            padding: 12px 12px 0 12px;
+        }
         .sidebar .nav .nav-item {
             display: flex;
             align-items: center;
@@ -67,9 +101,25 @@
             border: none;
             position: relative;
         }
-        .sidebar .nav .nav-item svg { width:20px; height:20px; flex-shrink:0; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .sidebar .nav .nav-item:hover { background: #f1f4ff; color: #6366f1; }
-        .sidebar .nav .nav-item.active { background: #eef2ff; color: #6366f1; font-weight: 600; }
+        .sidebar .nav .nav-item svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .sidebar .nav .nav-item:hover {
+            background: #f1f4ff;
+            color: #6366f1;
+        }
+        .sidebar .nav .nav-item.active {
+            background: #eef2ff;
+            color: #6366f1;
+            font-weight: 600;
+        }
         .sidebar .nav .nav-item .badge {
             background: #ef4444;
             color: #fff;
@@ -94,7 +144,9 @@
             padding: 4px 8px;
             transition: background 0.2s;
         }
-        .sidebar .user-section .user-info:hover { background: #f1f4ff; }
+        .sidebar .user-section .user-info:hover {
+            background: #f1f4ff;
+        }
         .sidebar .user-section .user-info .avatar {
             width: 40px;
             height: 40px;
@@ -109,12 +161,29 @@
             flex-shrink: 0;
             overflow: hidden;
         }
-        .sidebar .user-section .user-info .avatar img { width:100%; height:100%; object-fit:cover; }
-        .sidebar .user-section .user-info .user-detail { flex:1; overflow:hidden; }
-        .sidebar .user-section .user-info .user-detail .name { font-size:14px; font-weight:600; color:#0f172a; }
-        .sidebar .user-section .user-info .user-detail .email { font-size:12px; color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .sidebar .user-section .user-info .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .sidebar .user-section .user-info .user-detail {
+            flex: 1;
+            overflow: hidden;
+        }
+        .sidebar .user-section .user-info .user-detail .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .sidebar .user-section .user-info .user-detail .email {
+            font-size: 12px;
+            color: #94a3b8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         .sidebar .user-section .btn-outline {
-            width:100%;
+            width: 100%;
             padding: 8px;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
@@ -123,16 +192,34 @@
             color: #64748b;
             background: #fff;
             transition: all 0.2s;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        .sidebar .user-section .btn-outline svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .sidebar .user-section .btn-outline:hover { border-color:#ef4444; color:#ef4444; background:#fef2f2; }
+        .sidebar .user-section .btn-outline svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .sidebar .user-section .btn-outline:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: #fef2f2;
+        }
 
         /* ===== 主内容 ===== */
-        .main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#f8fafc; }
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8fafc;
+        }
 
         /* ===== 公告栏 ===== */
         .announcement-bar {
@@ -145,9 +232,16 @@
             flex-shrink: 0;
             min-height: 44px;
         }
-        .announcement-bar .ann-text { font-size:14px; font-weight:500; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .announcement-bar .ann-text {
+            font-size: 14px;
+            font-weight: 500;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         .announcement-bar .edit-btn {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: #fff;
             padding: 2px 14px;
             border-radius: 20px;
@@ -156,12 +250,22 @@
             transition: background 0.2s;
             flex-shrink: 0;
             margin-left: 12px;
-            display:flex;
-            align-items:center;
-            gap:4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        .announcement-bar .edit-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .announcement-bar .edit-btn:hover { background: rgba(255,255,255,0.35); }
+        .announcement-bar .edit-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .announcement-bar .edit-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
 
         /* ===== 顶部导航分区 ===== */
         .top-nav {
@@ -175,7 +279,9 @@
             scrollbar-width: none;
             gap: 4px;
         }
-        .top-nav::-webkit-scrollbar { display: none; }
+        .top-nav::-webkit-scrollbar {
+            display: none;
+        }
         .top-nav .tab {
             flex-shrink: 0;
             padding: 12px 18px;
@@ -188,7 +294,9 @@
             transition: all 0.25s ease;
             white-space: nowrap;
         }
-        .top-nav .tab:hover { color: #0f172a; }
+        .top-nav .tab:hover {
+            color: #0f172a;
+        }
         .top-nav .tab.active {
             color: #6366f1;
             border-bottom-color: #6366f1;
@@ -196,9 +304,18 @@
         }
 
         /* ===== 内容容器 ===== */
-        .content-container { flex:1; overflow-y:auto; padding:16px 24px 80px 24px; }
-        .content-container::-webkit-scrollbar { width:6px; }
-        .content-container::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:8px; }
+        .content-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 24px 80px 24px;
+        }
+        .content-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .content-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
 
         /* ===== 搜索栏 ===== */
         .search-bar {
@@ -215,7 +332,10 @@
             background: #fff;
             transition: all 0.3s;
         }
-        .search-bar input:focus { border-color: #6366f1; box-shadow:0 0 0 4px rgba(99,102,241,0.1); }
+        .search-bar input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
         .search-bar button {
             padding: 10px 20px;
             background: #6366f1;
@@ -227,24 +347,43 @@
             cursor: pointer;
             transition: all 0.3s;
             white-space: nowrap;
-            display:flex;
-            align-items:center;
-            gap:8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .search-bar button svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .search-bar button:hover { background: #4f46e5; }
+        .search-bar button svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .search-bar button:hover {
+            background: #4f46e5;
+        }
 
         /* ===== 内容网格 ===== */
-        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
         .content-card {
             background: #fff;
             border-radius: 14px;
             padding: 18px 20px;
             border: 1px solid #eef2f6;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
             transition: all 0.2s;
+            cursor: pointer;
         }
-        .content-card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.06); border-color: #dce2ec; }
+        .content-card:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            border-color: #dce2ec;
+            transform: translateY(-2px);
+        }
         .content-card .meta {
             display: flex;
             justify-content: space-between;
@@ -252,24 +391,49 @@
             font-size: 12px;
             color: #94a3b8;
             margin-bottom: 6px;
-            flex-wrap:wrap;
-            gap:4px;
+            flex-wrap: wrap;
+            gap: 4px;
         }
         .content-card .meta .cat {
             padding: 1px 10px;
             border-radius: 20px;
             font-weight: 500;
             font-size: 11px;
-            display:inline-flex;
-            align-items:center;
-            gap:4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        .content-card .meta .cat svg { width:12px; height:12px; flex-shrink:0; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .content-card .meta .cat.forum { background:#fce7f3; color:#db2777; }
-        .content-card .meta .cat.res { background:#fef3c7; color:#d97706; }
-        .content-card .meta .cat.url { background:#d1fae5; color:#059669; }
-        .content-card .meta .cat.vpn { background:#dbeafe; color:#2563eb; }
-        .content-card .meta .tags { display:flex; gap:4px; flex-wrap:wrap; }
+        .content-card .meta .cat svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .content-card .meta .cat.forum {
+            background: #fce7f3;
+            color: #db2777;
+        }
+        .content-card .meta .cat.res {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .content-card .meta .cat.url {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .content-card .meta .cat.vpn {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .content-card .meta .tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
         .content-card .meta .tags .tag {
             background: #f1f5f9;
             padding: 1px 8px;
@@ -284,11 +448,16 @@
             border-radius: 12px;
             font-size: 10px;
             font-weight: 600;
-            display:inline-flex;
-            align-items:center;
-            gap:3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
         }
-        .content-card .meta .hot svg { width:12px; height:12px; fill:currentColor; stroke:none; }
+        .content-card .meta .hot svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+            stroke: none;
+        }
         .content-card .meta .recommended {
             background: #f59e0b;
             color: #fff;
@@ -296,19 +465,69 @@
             border-radius: 12px;
             font-size: 10px;
             font-weight: 600;
-            display:inline-flex;
-            align-items:center;
-            gap:3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
         }
-        .content-card .meta .recommended svg { width:12px; height:12px; fill:currentColor; stroke:currentColor; stroke-width:1.5; }
-        .content-card .title { font-size:17px; font-weight:600; color:#0f172a; margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-        .content-card .desc { font-size:14px; color:#475569; line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
+        .content-card .meta .recommended svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+            stroke: currentColor;
+            stroke-width: 1.5;
+        }
+        .content-card .title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 4px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .content-card .desc {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
         .content-card .file-info {
-            background:#f1f5f9; padding:4px 12px; border-radius:8px; font-size:13px; display:inline-flex; align-items:center; gap:6px; margin-top:4px;
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
         }
-        .content-card .file-info svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
-        .content-card .file-info a { color:#6366f1; font-weight:500; word-break:break-all; }
-        .content-card .actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+        .content-card .file-info svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .content-card .file-info a {
+            color: #6366f1;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .content-card .actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
         .content-card .actions .btn-sm {
             padding: 3px 14px;
             border-radius: 8px;
@@ -318,57 +537,148 @@
             background: #fff;
             color: #475569;
             transition: all 0.2s;
-            display:inline-flex;
-            align-items:center;
-            gap:4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        .content-card .actions .btn-sm svg { width:14px; height:14px; flex-shrink:0; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .content-card .actions .btn-sm:hover { background:#f1f5f9; }
-        .content-card .actions .btn-sm.approve { background:#dcfce7; color:#166534; border-color:#86efac; }
-        .content-card .actions .btn-sm.approve:hover { background:#bbf7d0; }
-        .content-card .actions .btn-sm.reject { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
-        .content-card .actions .btn-sm.reject:hover { background:#fecaca; }
-        .content-card .actions .btn-sm.liked { background:#eef2ff; color:#6366f1; border-color:#6366f1; }
-
+        .content-card .actions .btn-sm svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .content-card .actions .btn-sm:hover {
+            background: #f1f5f9;
+        }
+        .content-card .actions .btn-sm.approve {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+        .content-card .actions .btn-sm.approve:hover {
+            background: #bbf7d0;
+        }
+        .content-card .actions .btn-sm.reject {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fca5a5;
+        }
+        .content-card .actions .btn-sm.reject:hover {
+            background: #fecaca;
+        }
+        .content-card .actions .btn-sm.liked {
+            background: #eef2ff;
+            color: #6366f1;
+            border-color: #6366f1;
+        }
         .content-card .status-badge {
-            font-size:11px; font-weight:500; padding:1px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 1px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        .content-card .status-badge svg { width:12px; height:12px; flex-shrink:0; }
-        .content-card .status-badge.pending { background:#fef3c7; color:#d97706; }
-        .content-card .status-badge.approved { background:#dcfce7; color:#166534; }
-        .content-card .status-badge.rejected { background:#fee2e2; color:#991b1b; }
-
+        .content-card .status-badge svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+        }
+        .content-card .status-badge.pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .content-card .status-badge.approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .content-card .status-badge.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
         .content-card .footer {
-            display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid #f1f5f9; font-size:12px; color:#94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 12px;
+            color: #94a3b8;
         }
-        .content-card .footer .user { display:flex; align-items:center; gap:6px; }
+        .content-card .footer .user {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
         .content-card .footer .user .avatar-sm {
-            width:24px; height:24px; border-radius:50%; background:#6366f1; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; overflow:hidden;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            overflow: hidden;
         }
-        .content-card .footer .user .avatar-sm img { width:100%; height:100%; object-fit:cover; }
-        .content-card .footer .stats { display:flex; gap:12px; }
-        .content-card .footer .stats span { cursor:pointer; display:flex; align-items:center; gap:4px; }
-        .content-card .footer .stats span:hover { color:#6366f1; }
-        .content-card .footer .stats span svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
-        .content-card .footer .stats span.liked svg { fill:#ef4444; stroke:#ef4444; }
-
-        .content-card .comment-section { margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9; }
-        .content-card .comment-section .comment-input { display:flex; gap:8px; }
-        .content-card .comment-section .comment-input input { flex:1; padding:6px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; }
-        .content-card .comment-section .comment-input button { padding:6px 14px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:4px; }
-        .content-card .comment-section .comment-input button svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .content-card .comment-section .comment-list { margin-top:8px; }
-        .content-card .comment-section .comment-list .comment-item {
-            display:flex; gap:8px; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:13px;
+        .content-card .footer .user .avatar-sm img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        .content-card .comment-section .comment-list .comment-item .avatar-sm { width:24px; height:24px; border-radius:50%; background:#6366f1; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; flex-shrink:0; }
-        .content-card .comment-section .comment-list .comment-item .cmt-content { flex:1; }
-        .content-card .comment-section .comment-list .comment-item .cmt-content .cmt-user { font-weight:600; color:#0f172a; }
-        .content-card .comment-section .comment-list .comment-item .cmt-content .cmt-text { color:#475569; }
-        .content-card .comment-section .comment-list .comment-item .cmt-time { font-size:11px; color:#94a3b8; flex-shrink:0; }
+        .content-card .footer .stats {
+            display: flex;
+            gap: 12px;
+        }
+        .content-card .footer .stats span {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .content-card .footer .stats span:hover {
+            color: #6366f1;
+        }
+        .content-card .footer .stats span svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .content-card .footer .stats span.liked svg {
+            fill: #ef4444;
+            stroke: #ef4444;
+        }
 
-        .empty-state { text-align:center; padding:60px 20px; color:#94a3b8; grid-column:1/-1; }
-        .empty-state svg { width:56px; height:56px; stroke:#cbd5e1; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; display:block; margin:0 auto 10px; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+            grid-column: 1/-1;
+        }
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            stroke: #cbd5e1;
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            display: block;
+            margin: 0 auto 10px;
+        }
 
         /* ===== 上传分区顶部按钮 ===== */
         .upload-header {
@@ -379,7 +689,10 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-        .upload-header h2 { font-size:22px; color:#0f172a; }
+        .upload-header h2 {
+            font-size: 22px;
+            color: #0f172a;
+        }
         .upload-header .btn-publish {
             padding: 10px 24px;
             background: #6366f1;
@@ -390,49 +703,639 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            display:flex;
-            align-items:center;
-            gap:8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .upload-header .btn-publish svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .upload-header .btn-publish:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
+        .upload-header .btn-publish svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .upload-header .btn-publish:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        /* ===== 详情页 ===== */
+        .detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .detail-container .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #6366f1;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .detail-container .back-btn:hover {
+            background: #eef2ff;
+        }
+        .detail-container .back-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .detail-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px 32px;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+        .detail-card .detail-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .detail-card .detail-meta .cat {
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 12px;
+        }
+        .detail-card .detail-meta .cat.forum {
+            background: #fce7f3;
+            color: #db2777;
+        }
+        .detail-card .detail-meta .cat.res {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .detail-card .detail-meta .cat.url {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .detail-card .detail-meta .cat.vpn {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .detail-card .detail-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        .detail-card .detail-desc {
+            font-size: 16px;
+            color: #475569;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+        .detail-card .detail-file {
+            background: #f1f5f9;
+            padding: 10px 16px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .detail-card .detail-file a {
+            color: #6366f1;
+            font-weight: 500;
+        }
+        .detail-card .detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .detail-card .detail-tags .tag {
+            background: #f1f5f9;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .detail-card .detail-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 13px;
+            color: #94a3b8;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .detail-card .detail-footer .user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .detail-card .detail-footer .user .avatar-sm {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            overflow: hidden;
+        }
+        .detail-card .detail-footer .user .avatar-sm img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .detail-card .detail-footer .stats {
+            display: flex;
+            gap: 16px;
+        }
+        .detail-card .detail-footer .stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .detail-card .detail-footer .stats span:hover {
+            color: #6366f1;
+        }
+        .detail-card .detail-footer .stats span.liked svg {
+            fill: #ef4444;
+            stroke: #ef4444;
+        }
+        .detail-card .detail-footer .stats svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        /* 详情页评论 */
+        .detail-comments {
+            margin-top: 24px;
+        }
+        .detail-comments h3 {
+            font-size: 18px;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+        .detail-comments .comment-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .detail-comments .comment-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #fff;
+            transition: all 0.3s;
+        }
+        .detail-comments .comment-input input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        .detail-comments .comment-input button {
+            padding: 10px 20px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .detail-comments .comment-input button:hover {
+            background: #4f46e5;
+        }
+        .detail-comments .comment-input button svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .detail-comments .comment-list .comment-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .detail-comments .comment-list .comment-item:last-child {
+            border-bottom: none;
+        }
+        .detail-comments .comment-list .comment-item .avatar-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .detail-comments .comment-list .comment-item .avatar-sm img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .detail-comments .comment-list .comment-item .cmt-content {
+            flex: 1;
+        }
+        .detail-comments .comment-list .comment-item .cmt-content .cmt-user {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 13px;
+        }
+        .detail-comments .comment-list .comment-item .cmt-content .cmt-text {
+            color: #475569;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+        .detail-comments .comment-list .comment-item .cmt-time {
+            font-size: 11px;
+            color: #94a3b8;
+            flex-shrink: 0;
+        }
+
+        /* 推荐内容 */
+        .recommend-section {
+            margin-top: 32px;
+        }
+        .recommend-section h3 {
+            font-size: 18px;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+        .recommend-section .recommend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .recommend-section .recommend-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1px solid #eef2f6;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .recommend-section .recommend-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border-color: #dce2ec;
+            transform: translateY(-2px);
+        }
+        .recommend-section .recommend-item .rec-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .recommend-section .recommend-item .rec-meta {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .recommend-section .recommend-item .rec-meta .rec-cat {
+            padding: 0 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        .recommend-section .recommend-item .rec-meta .rec-cat.forum {
+            background: #fce7f3;
+            color: #db2777;
+        }
+        .recommend-section .recommend-item .rec-meta .rec-cat.res {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .recommend-section .recommend-item .rec-meta .rec-cat.url {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .recommend-section .recommend-item .rec-meta .rec-cat.vpn {
+            background: #dbeafe;
+            color: #2563eb;
+        }
 
         /* ===== 弹窗 ===== */
         .modal-overlay {
-            position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn 0.2s ease;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
         }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes fadeOut { from{opacity:1} to{opacity:0} }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
         .modal-box {
-            background:#fff; border-radius:24px; padding:28px 32px; max-width:560px; width:100%; max-height:90vh; overflow-y:auto; animation:slideUp 0.25s ease;
+            background: #fff;
+            border-radius: 24px;
+            padding: 28px 32px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.25s ease;
         }
-        @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
-        .modal-box .modal-header { display:flex; justify-content:space-between; align-items:center; font-size:20px; font-weight:700; margin-bottom:18px; color:#0f172a; }
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-box .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            color: #0f172a;
+        }
         .modal-box .modal-header .close-btn {
-            width:32px; height:32px; border-radius:50%; background:#f1f5f9; color:#64748b; transition:0.2s; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #64748b;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
         }
-        .modal-box .modal-header .close-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .modal-box .modal-header .close-btn:hover { background:#e2e8f0; }
-        .modal-box .form-group { margin-bottom:14px; }
-        .modal-box .form-group label { display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:4px; }
-        .modal-box .form-group input, .modal-box .form-group select, .modal-box .form-group textarea {
-            width:100%; padding:10px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; background:#f8fafc; transition:0.2s;
+        .modal-box .modal-header .close-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
-        .modal-box .form-group input:focus, .modal-box .form-group select:focus, .modal-box .form-group textarea:focus {
-            border-color:#6366f1; background:#fff;
+        .modal-box .modal-header .close-btn:hover {
+            background: #e2e8f0;
         }
-        .modal-box .form-group textarea { resize:vertical; min-height:70px; }
-
-        /* ===== 文件上传 ===== */
+        .modal-box .form-group {
+            margin-bottom: 14px;
+        }
+        .modal-box .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+        .modal-box .form-group input,
+        .modal-box .form-group select,
+        .modal-box .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            background: #f8fafc;
+            transition: 0.2s;
+        }
+        .modal-box .form-group input:focus,
+        .modal-box .form-group select:focus,
+        .modal-box .form-group textarea:focus {
+            border-color: #6366f1;
+            background: #fff;
+        }
+        .modal-box .form-group textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
         .modal-box .form-group .file-input-wrap {
-            display:flex; align-items:center; gap:10px; background:#f8fafc; padding:8px 14px; border-radius:12px; border:2px dashed #d1d5db; cursor:pointer; transition:0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 8px 14px;
+            border-radius: 12px;
+            border: 2px dashed #d1d5db;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .modal-box .form-group .file-input-wrap:hover { border-color:#6366f1; background:#f1f4ff; }
-        .modal-box .form-group .file-input-wrap input[type="file"] { display:none; }
-        .modal-box .form-group .file-input-wrap .file-name { font-size:14px; color:#64748b; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .modal-box .form-group .file-input-wrap svg { width:18px; height:18px; stroke:#94a3b8; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+        .modal-box .form-group .file-input-wrap:hover {
+            border-color: #6366f1;
+            background: #f1f4ff;
+        }
+        .modal-box .form-group .file-input-wrap input[type="file"] {
+            display: none;
+        }
+        .modal-box .form-group .file-input-wrap .file-name {
+            font-size: 14px;
+            color: #64748b;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .modal-box .form-group .file-input-wrap svg {
+            width: 18px;
+            height: 18px;
+            stroke: #94a3b8;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .modal-box .form-group .url-input-wrap {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-box .form-group .url-input-wrap input {
+            flex: 1;
+            min-width: 200px;
+        }
+        .modal-box .form-group .url-input-wrap button {
+            padding: 8px 14px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .modal-box .form-group .url-input-wrap button svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .modal-box .form-group .url-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .modal-box .form-group .url-list .url-tag {
+            background: #eef2ff;
+            color: #6366f1;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .modal-box .form-group .url-list .url-tag .remove {
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .modal-box .form-group .tag-input-wrap {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal-box .form-group .tag-input-wrap input {
+            flex: 1;
+            min-width: 120px;
+        }
+        .modal-box .form-group .tag-input-wrap button {
+            padding: 6px 14px;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            border-radius: 10px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .modal-box .form-group .tag-input-wrap button svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .modal-box .form-group .tag-input-wrap button:hover {
+            background: #cbd5e1;
+        }
+        .modal-box .form-group .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .modal-box .form-group .tag-list .tag-item {
+            background: #f1f5f9;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .modal-box .form-group .tag-list .tag-item .remove {
+            cursor: pointer;
+            font-weight: 700;
+            color: #ef4444;
+        }
+        .modal-box .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .modal-box .btn-submit svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .modal-box .btn-submit:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        .modal-box .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-        /* ===== 头像预览 ===== */
+        /* 头像预览 */
         .avatar-preview {
             width: 80px;
             height: 80px;
@@ -447,70 +1350,146 @@
             font-size: 32px;
             color: #94a3b8;
         }
-        .avatar-preview img { width:100%; height:100%; object-fit:cover; }
-
-        .modal-box .form-group .url-input-wrap { display:flex; gap:8px; flex-wrap:wrap; }
-        .modal-box .form-group .url-input-wrap input { flex:1; min-width:200px; }
-        .modal-box .form-group .url-input-wrap button {
-            padding:8px 14px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:4px;
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        .modal-box .form-group .url-input-wrap button svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .modal-box .form-group .url-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-        .modal-box .form-group .url-list .url-tag { background:#eef2ff; color:#6366f1; padding:2px 10px; border-radius:12px; font-size:12px; display:flex; align-items:center; gap:6px; }
-        .modal-box .form-group .url-list .url-tag .remove { cursor:pointer; font-weight:700; }
-        .modal-box .form-group .tag-input-wrap { display:flex; gap:8px; flex-wrap:wrap; }
-        .modal-box .form-group .tag-input-wrap input { flex:1; min-width:120px; }
-        .modal-box .form-group .tag-input-wrap button {
-            padding:6px 14px; background:#e2e8f0; color:#475569; border:none; border-radius:10px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:4px;
-        }
-        .modal-box .form-group .tag-input-wrap button svg { width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .modal-box .form-group .tag-input-wrap button:hover { background:#cbd5e1; }
-        .modal-box .form-group .tag-list { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
-        .modal-box .form-group .tag-list .tag-item { background:#f1f5f9; padding:2px 10px; border-radius:12px; font-size:12px; display:flex; align-items:center; gap:6px; }
-        .modal-box .form-group .tag-list .tag-item .remove { cursor:pointer; font-weight:700; color:#ef4444; }
-        .modal-box .btn-submit {
-            width:100%; padding:12px; background:#6366f1; color:#fff; border:none; border-radius:14px; font-size:16px; font-weight:600; transition:all 0.3s; margin-top:6px; display:flex; align-items:center; justify-content:center; gap:8px;
-        }
-        .modal-box .btn-submit svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-        .modal-box .btn-submit:hover { background:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
-        .modal-box .btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
 
         /* ===== 通知列表 ===== */
         .notification-item {
-            display:flex; gap:12px; padding:12px 0; border-bottom:1px solid #f1f5f9;
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
         }
-        .notification-item .noti-icon { width:20px; height:20px; flex-shrink:0; }
-        .notification-item .noti-icon svg { width:100%; height:100%; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .notification-item .noti-content { flex:1; }
-        .notification-item .noti-content .noti-text { font-size:14px; color:#1e293b; }
-        .notification-item .noti-content .noti-text .highlight { color:#6366f1; font-weight:500; }
-        .notification-item .noti-content .noti-time { font-size:12px; color:#94a3b8; }
-        .notification-item.unread { background:#f8faff; border-radius:8px; padding:12px; }
+        .notification-item .noti-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .notification-item .noti-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .notification-item .noti-content {
+            flex: 1;
+        }
+        .notification-item .noti-content .noti-text {
+            font-size: 14px;
+            color: #1e293b;
+        }
+        .notification-item .noti-content .noti-text .highlight {
+            color: #6366f1;
+            font-weight: 500;
+        }
+        .notification-item .noti-content .noti-time {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .notification-item.unread {
+            background: #f8faff;
+            border-radius: 8px;
+            padding: 12px;
+        }
 
         /* ===== 版本号 ===== */
         .version-tag {
-            position:fixed; bottom:16px; right:24px; font-size:11px; color:#cbd5e1; background:rgba(255,255,255,0.6); padding:2px 12px; border-radius:20px; backdrop-filter:blur(4px); z-index:50; user-select:none; pointer-events:none;
+            position: fixed;
+            bottom: 16px;
+            right: 24px;
+            font-size: 11px;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 2px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            z-index: 50;
+            user-select: none;
+            pointer-events: none;
         }
 
         /* ===== 响应式 ===== */
         @media (max-width:768px) {
-            .sidebar { width:60px; padding:8px 0; }
-            .sidebar .brand { padding:0 0 8px 0; gap:2px; }
-            .sidebar .brand svg { width:44px; height:30px; }
-            .sidebar .brand span { font-size:0; }
-            .sidebar .nav .nav-item { justify-content:center; padding:10px 0; font-size:0; }
-            .sidebar .nav .nav-item svg { width:22px; height:22px; }
-            .sidebar .nav .nav-item .label { display:none; }
-            .sidebar .nav .nav-item .badge { position:absolute; top:2px; right:2px; font-size:8px; padding:1px 6px; }
-            .sidebar .user-section .user-info .user-detail { display:none; }
-            .sidebar .user-section .btn-outline { font-size:0; padding:6px 0; }
-            .sidebar .user-section .btn-outline svg { width:18px; height:18px; }
-            .content-container { padding:12px; }
-            .content-grid { grid-template-columns:1fr; }
-            .modal-box { padding:20px; }
-            .search-bar { flex-direction:column; }
-            .search-bar button { width:100%; justify-content:center; }
-            .top-nav .tab { padding:10px 12px; font-size:13px; }
+            .sidebar {
+                width: 60px;
+                padding: 8px 0;
+            }
+            .sidebar .brand {
+                padding: 0 0 8px 0;
+                gap: 2px;
+            }
+            .sidebar .brand svg {
+                width: 44px;
+                height: 30px;
+            }
+            .sidebar .brand span {
+                font-size: 0;
+            }
+            .sidebar .nav .nav-item {
+                justify-content: center;
+                padding: 10px 0;
+                font-size: 0;
+            }
+            .sidebar .nav .nav-item svg {
+                width: 22px;
+                height: 22px;
+            }
+            .sidebar .nav .nav-item .label {
+                display: none;
+            }
+            .sidebar .nav .nav-item .badge {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                font-size: 8px;
+                padding: 1px 6px;
+            }
+            .sidebar .user-section .user-info .user-detail {
+                display: none;
+            }
+            .sidebar .user-section .btn-outline {
+                font-size: 0;
+                padding: 6px 0;
+            }
+            .sidebar .user-section .btn-outline svg {
+                width: 18px;
+                height: 18px;
+            }
+            .content-container {
+                padding: 12px;
+            }
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-box {
+                padding: 20px;
+            }
+            .search-bar {
+                flex-direction: column;
+            }
+            .search-bar button {
+                width: 100%;
+                justify-content: center;
+            }
+            .top-nav .tab {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            .detail-card {
+                padding: 16px;
+            }
+            .detail-card .detail-title {
+                font-size: 20px;
+            }
+            .recommend-section .recommend-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
@@ -530,25 +1509,25 @@
                 <span>必看<span class="highlight">网</span></span>
             </div>
             <nav class="nav" id="sideNav">
-                <button class="nav-item active" data-nav="home" onclick="switchNav('home')">
+                <button class="nav-item active" data-page="home" onclick="navigateTo('home')">
                     <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
                     <span class="label">首页</span>
                 </button>
-                <button class="nav-item" data-nav="upload" onclick="switchNav('upload')">
+                <button class="nav-item" data-page="upload" onclick="navigateTo('upload')">
                     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     <span class="label">上传</span>
                 </button>
-                <button class="nav-item" data-nav="messages" onclick="switchNav('messages')">
+                <button class="nav-item" data-page="messages" onclick="navigateTo('messages')">
                     <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                     <span class="label">消息</span>
                     <span class="badge hidden" id="msgBadge">0</span>
                 </button>
-                <button class="nav-item hidden" data-nav="review" id="navReview" onclick="switchNav('review')">
+                <button class="nav-item hidden" data-page="review" id="navReview" onclick="navigateTo('review')">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <span class="label">审核</span>
                     <span class="badge hidden" id="reviewBadge">0</span>
                 </button>
-                <button class="nav-item hidden" data-nav="admin" id="navAdmin" onclick="openAdminModal()">
+                <button class="nav-item hidden" data-page="admin" id="navAdmin" onclick="openAdminModal()">
                     <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     <span class="label">管理员</span>
                 </button>
@@ -733,19 +1712,6 @@
         </div>
     </div>
 
-    <!-- 审核详情弹窗 -->
-    <div id="reviewDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeReviewDetail()">
-        <div class="modal-box" style="max-width:500px;">
-            <div class="modal-header">
-                <span>审核详情</span>
-                <button class="close-btn" onclick="closeReviewDetail()">
-                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            </div>
-            <div id="reviewDetailContent"></div>
-        </div>
-    </div>
-
     <!-- 编辑个人资料弹窗（支持图片上传） -->
     <div id="profileEditModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileEdit()">
         <div class="modal-box" style="max-width:460px;">
@@ -787,7 +1753,7 @@
     </div>
 
     <!-- 版本号 -->
-    <div class="version-tag">v11.0.0</div>
+    <div class="version-tag">v12.0.0</div>
 
     <!-- ========================================================== -->
     <!--  JavaScript                                                -->
@@ -807,7 +1773,7 @@
         // ============================================================
         let currentUser = null;
         let currentUserRole = 'user';
-        let currentNav = 'home';
+        let currentPage = 'home';
         let currentTab = '推荐';
         let allContents = [];
         let allNotifications = [];
@@ -818,6 +1784,9 @@
         let uploadedTags = [];
         let currentSearchQuery = '';
         let isMainAdmin = false;
+        let detailContentId = null;
+        let detailContentData = null;
+        let detailComments = [];
 
         // ============================================================
         //  DOM 引 用
@@ -853,7 +1822,18 @@
                 await loadUserRole();
                 await loadAnnouncement();
                 await loadNotifications();
-                await loadContents();
+
+                // 路由处理：检测 URL 参数
+                const params = new URLSearchParams(window.location.search);
+                const page = params.get('page') || 'home';
+                const id = params.get('id');
+
+                if (page === 'detail' && id) {
+                    navigateTo('detail', id);
+                } else {
+                    navigateTo(page);
+                }
+
                 updateUI();
             } catch (err) {
                 console.error('认证失败:', err);
@@ -864,6 +1844,82 @@
         supabaseClient.auth.onAuthStateChange((event, session) => {
             if (!session) {
                 window.location.href = '/login.html';
+            }
+        });
+
+        // ============================================================
+        //  路 由 系 统
+        // ============================================================
+        function navigateTo(page, id) {
+            if (page === 'detail' && id) {
+                currentPage = 'detail';
+                detailContentId = id;
+                // 更新 URL
+                const url = new URL(window.location);
+                url.searchParams.set('page', 'detail');
+                url.searchParams.set('id', id);
+                window.history.pushState({ page: 'detail', id: id }, '', url);
+                loadDetail(id);
+                return;
+            }
+
+            currentPage = page;
+
+            // 更新 URL
+            const url = new URL(window.location);
+            if (page === 'home') {
+                url.searchParams.delete('page');
+                url.searchParams.delete('id');
+            } else {
+                url.searchParams.set('page', page);
+                url.searchParams.delete('id');
+            }
+            window.history.pushState({ page: page }, '', url);
+
+            // 更新侧边栏高亮
+            document.querySelectorAll('#sideNav .nav-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.page === page);
+            });
+
+            // 显示/隐藏顶部导航
+            if (page === 'home') {
+                topNav.classList.remove('hidden');
+                searchContainer.classList.remove('hidden');
+                document.querySelectorAll('#topNav .tab').forEach(el => {
+                    el.classList.toggle('active', el.dataset.tab === currentTab);
+                });
+            } else {
+                topNav.classList.add('hidden');
+                searchContainer.classList.add('hidden');
+            }
+
+            // 根据页面加载内容
+            if (page === 'messages') {
+                loadNotifications();
+                renderMessages();
+            } else if (page === 'review') {
+                if (currentUserRole === 'admin') {
+                    loadContents();
+                }
+            } else if (page === 'upload') {
+                loadContents();
+            } else if (page === 'home') {
+                loadContents(currentSearchQuery);
+            } else {
+                contentRender.innerHTML =
+                    `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><p>页面建设中</p></div>`;
+            }
+        }
+
+        // 监听浏览器回退/前进
+        window.addEventListener('popstate', function(event) {
+            const params = new URLSearchParams(window.location.search);
+            const page = params.get('page') || 'home';
+            const id = params.get('id');
+            if (page === 'detail' && id) {
+                navigateTo('detail', id);
+            } else {
+                navigateTo(page);
             }
         });
 
@@ -960,8 +2016,48 @@
             }
         }
 
+        function renderMessages() {
+            if (!allNotifications || allNotifications.length === 0) {
+                contentRender.innerHTML =
+                    `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>暂无消息</p></div>`;
+                return;
+            }
+
+            let html = '<div style="max-width:600px;margin:0 auto;">';
+            allNotifications.forEach(n => {
+                const iconMap = {
+                    'approved': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>',
+                    'rejected': '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+                    'comment': '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+                    'like': '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>',
+                    'admin_request': '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+                    'admin_response': '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 3 14 7 18"/><line x1="3" y1="14" x2="18" y2="14"/></svg>'
+                };
+                html += `
+                    <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
+                        <span class="noti-icon">${iconMap[n.type] || ''}</span>
+                        <div class="noti-content">
+                            <div class="noti-text">${n.content}</div>
+                            <div class="noti-time">${timeAgo(n.created_at)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            contentRender.innerHTML = html;
+        }
+
+        async function markNotificationRead(id) {
+            await supabaseClient
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('id', id);
+            await loadNotifications();
+            if (currentPage === 'messages') renderMessages();
+        }
+
         // ============================================================
-        //  加 载 内 容（根据当前导航和分区）
+        //  加 载 内 容
         // ============================================================
         async function loadContents(searchQuery = '') {
             if (!currentUser) return;
@@ -971,9 +2067,7 @@
                 profiles!user_id (id, nickname, avatar_url, role)
             `);
 
-            // ===== 根据导航（侧边栏）决定查询条件 =====
-            if (currentNav === 'home') {
-                // 首页：只显示已审核的内容，再按顶部tab分区筛选
+            if (currentPage === 'home') {
                 query = query.eq('status', 'approved');
                 if (currentTab !== '推荐') {
                     query = query.eq('category', currentTab);
@@ -981,19 +2075,14 @@
                 if (searchQuery) {
                     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,file_name.ilike.%${searchQuery}%,url.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
                 }
-            } else if (currentNav === 'upload') {
-                // 上传：显示用户自己的所有内容（已审核 + 待审核 + 已拒绝）
+            } else if (currentPage === 'upload') {
                 query = query.eq('user_id', currentUser.id);
-            } else if (currentNav === 'review') {
-                // 审核：仅管理员可看，显示所有待审核
+            } else if (currentPage === 'review') {
                 if (currentUserRole === 'admin') {
                     query = query.eq('status', 'pending');
                 } else {
                     query = query.eq('status', 'approved').limit(0);
                 }
-            } else if (currentNav === 'messages') {
-                // 消息：不加载内容
-                query = query.eq('status', 'approved').limit(0);
             } else {
                 query = query.eq('status', 'approved');
             }
@@ -1005,7 +2094,15 @@
                 allContents = [];
                 return;
             }
-            allContents = data || [];
+
+            // ✅ ID 去重：用 Map 去重
+            const uniqueMap = new Map();
+            data.forEach(item => {
+                if (!uniqueMap.has(item.id)) {
+                    uniqueMap.set(item.id, item);
+                }
+            });
+            allContents = Array.from(uniqueMap.values());
 
             // 获取点赞状态
             if (currentUser && allContents.length > 0) {
@@ -1023,7 +2120,6 @@
                 }
             }
 
-            // 统计待审核数量（管理员）
             if (currentUserRole === 'admin') {
                 const { count, error: countErr } = await supabaseClient
                     .from('contents')
@@ -1044,20 +2140,12 @@
         }
 
         // ============================================================
-        //  渲 染 内 容（先清空再渲染，防止重复）
+        //  渲 染 内 容
         // ============================================================
         function renderContents() {
-            // ✅ 先清空容器
             contentRender.innerHTML = '';
 
-            // 消息页
-            if (currentNav === 'messages') {
-                renderNotifications();
-                return;
-            }
-
-            // 上传页面：显示发布按钮 + 内容列表
-            if (currentNav === 'upload') {
+            if (currentPage === 'upload') {
                 let html = `
                     <div class="upload-header">
                         <h2>我的内容</h2>
@@ -1072,20 +2160,15 @@
                 return;
             }
 
-            // 其他页面直接渲染
             renderContentList(allContents);
         }
 
-        // ============================================================
-        //  渲 染 内 容 列 表
-        // ============================================================
         function renderContentList(data) {
             if (!data || data.length === 0) {
                 let msg = '暂无内容';
-                if (currentNav === 'home') msg = '该分区暂无内容，发布第一个吧！';
-                else if (currentNav === 'upload') msg = '你还没有发布任何内容，点击上方按钮发布第一个吧！';
-                else if (currentNav === 'review') msg = '暂无待审核内容';
-                else if (currentNav === 'messages') msg = '暂无消息';
+                if (currentPage === 'home') msg = '该分区暂无内容，发布第一个吧！';
+                else if (currentPage === 'upload') msg = '你还没有发布任何内容，点击上方按钮发布第一个吧！';
+                else if (currentPage === 'review') msg = '暂无待审核内容';
                 contentRender.innerHTML += `
                     <div class="empty-state">
                         <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
@@ -1099,7 +2182,7 @@
             data.forEach(item => {
                 const isOwner = item.user_id === currentUser?.id;
                 const isAdmin = currentUserRole === 'admin';
-                const showActions = (currentNav === 'review' && isAdmin) || (currentNav === 'upload' && isOwner);
+                const showActions = (currentPage === 'review' && isAdmin) || (currentPage === 'upload' && isOwner);
                 const isLiked = item._isLiked || false;
 
                 let extraHtml = '';
@@ -1127,7 +2210,7 @@
                 }
 
                 let statusBadge = '';
-                if (currentNav === 'upload') {
+                if (currentPage === 'upload') {
                     const map = {
                         'pending': `<span class="status-badge pending"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>待审核</span>`,
                         'approved': `<span class="status-badge approved"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>已通过</span>`,
@@ -1146,7 +2229,7 @@
                 }
 
                 let actionButtons = '';
-                if (showActions && currentNav === 'review' && isAdmin) {
+                if (showActions && currentPage === 'review' && isAdmin) {
                     actionButtons = `
                         <div class="actions">
                             <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>通过</button>
@@ -1155,7 +2238,7 @@
                             <button class="btn-sm" onclick="viewContentDetail(${item.id})"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>详情</button>
                         </div>
                     `;
-                } else if (showActions && currentNav === 'upload' && isOwner) {
+                } else if (showActions && currentPage === 'upload' && isOwner) {
                     actionButtons = `
                         <div class="actions">
                             <button class="btn-sm" onclick="deleteContent(${item.id}, '${item.file_url || ''}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>删除</button>
@@ -1163,7 +2246,7 @@
                     `;
                 }
 
-                if (currentNav === 'home' && isAdmin) {
+                if (currentPage === 'home' && isAdmin) {
                     actionButtons += `
                         <div class="actions" style="margin-top:4px;">
                             <button class="btn-sm" onclick="toggleRecommend(${item.id}, ${item.is_recommended || false})" style="font-size:11px;">${item.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
@@ -1175,8 +2258,11 @@
                     `<img src="${item.profiles.avatar_url}" alt="avatar">` :
                     (item.profiles?.nickname || 'U').charAt(0).toUpperCase();
 
+                // 点击卡片跳转到详情页
+                const cardClick = `navigateTo('detail', ${item.id})`;
+
                 html += `
-                    <div class="content-card">
+                    <div class="content-card" onclick="${cardClick}">
                         <div class="meta">
                             <span class="cat ${getCategoryClass(item.category)}">${getCategoryIcon(item.category)} ${item.category}</span>
                             <span>${timeAgo(item.created_at)}</span>
@@ -1194,76 +2280,332 @@
                                 <span>${item.profiles?.nickname || '用户'}</span>
                             </span>
                             <span class="stats">
-                                <span onclick="toggleLike(${item.id})" class="${isLiked ? 'liked' : ''}">
+                                <span onclick="event.stopPropagation();toggleLike(${item.id})" class="${isLiked ? 'liked' : ''}">
                                     <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
                                     ${item.likes_count || 0}
                                 </span>
-                                <span onclick="toggleComments(${item.id})">
+                                <span onclick="event.stopPropagation();">
                                     <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                                     ${item.comments_count || 0}
                                 </span>
                             </span>
-                        </div>
-                        <div class="comment-section hidden" id="comments-${item.id}">
-                            <div class="comment-input">
-                                <input type="text" id="commentInput-${item.id}" placeholder="写评论..." maxlength="200">
-                                <button onclick="postComment(${item.id})">
-                                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                                    发送
-                                </button>
-                            </div>
-                            <div class="comment-list" id="commentList-${item.id}">
-                                <div style="color:#94a3b8;font-size:13px;padding:8px 0;">加载评论中...</div>
-                            </div>
                         </div>
                     </div>
                 `;
             });
             html += '</div>';
             contentRender.innerHTML += html;
-
-            // 搜索栏在首页显示，其他页面隐藏
-            if (currentNav === 'home') {
-                searchContainer.classList.remove('hidden');
-            } else {
-                searchContainer.classList.add('hidden');
-            }
         }
 
         // ============================================================
-        //  渲 染 消 息
+        //  内 容 详 情 页
         // ============================================================
-        function renderNotifications() {
-            if (!allNotifications || allNotifications.length === 0) {
+        async function loadDetail(contentId) {
+            if (!currentUser) return;
+
+            // 获取内容详情
+            const { data: content, error } = await supabaseClient
+                .from('contents')
+                .select(`
+                    *,
+                    profiles!user_id (id, nickname, avatar_url, role)
+                `)
+                .eq('id', contentId)
+                .single();
+
+            if (error || !content) {
                 contentRender.innerHTML =
-                    `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><p>暂无消息</p></div>`;
+                    `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><p>内容不存在或已被删除</p></div>`;
                 return;
             }
 
-            let html = '<div style="max-width:600px;margin:0 auto;">';
-            allNotifications.forEach(n => {
-                let iconHtml = '';
-                const iconMap = {
-                    'approved': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>',
-                    'rejected': '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-                    'comment': '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
-                    'like': '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>',
-                    'admin_request': '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
-                    'admin_response': '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 3 14 7 18"/><line x1="3" y1="14" x2="18" y2="14"/></svg>'
-                };
-                iconHtml = `<span class="noti-icon">${iconMap[n.type] || ''}</span>`;
-                html += `
-                    <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
-                        ${iconHtml}
-                        <div class="noti-content">
-                            <div class="noti-text">${n.content}</div>
-                            <div class="noti-time">${timeAgo(n.created_at)}</div>
+            detailContentData = content;
+
+            // 检查当前用户是否点赞
+            const { data: likeData } = await supabaseClient
+                .from('likes')
+                .select('id')
+                .eq('user_id', currentUser.id)
+                .eq('content_id', contentId)
+                .single();
+            const isLiked = !!likeData;
+
+            // 获取评论
+            const { data: comments, error: cmtError } = await supabaseClient
+                .from('comments')
+                .select(`
+                    *,
+                    profiles!user_id (id, nickname, avatar_url)
+                `)
+                .eq('content_id', contentId)
+                .order('created_at', { ascending: true });
+
+            detailComments = comments || [];
+
+            // 获取推荐内容（同分类，已审核，排除自己）
+            const { data: recs } = await supabaseClient
+                .from('contents')
+                .select(`
+                    *,
+                    profiles!user_id (id, nickname, avatar_url)
+                `)
+                .eq('status', 'approved')
+                .eq('category', content.category)
+                .neq('id', contentId)
+                .order('created_at', { ascending: false })
+                .limit(6);
+
+            // 渲染详情页
+            renderDetail(content, isLiked, recs || []);
+        }
+
+        function renderDetail(content, isLiked, recs) {
+            const avatarHtml = content.profiles?.avatar_url ?
+                `<img src="${content.profiles.avatar_url}" alt="avatar">` :
+                (content.profiles?.nickname || 'U').charAt(0).toUpperCase();
+
+            let extraHtml = '';
+            if (content.file_url) {
+                extraHtml = `
+                    <div class="detail-file">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                        <a href="${content.file_url}" target="_blank">${content.file_name || '下载文件'}</a>
+                        ${content.file_size ? ' · ' + formatSize(content.file_size) : ''}
+                    </div>
+                `;
+            }
+            if (content.url) {
+                extraHtml = `
+                    <div class="detail-file">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                        <a href="${content.url}" target="_blank">${content.url}</a>
+                    </div>
+                `;
+            }
+
+            let tagsHtml = '';
+            if (content.tags && content.tags.length > 0) {
+                tagsHtml = `<div class="detail-tags">${content.tags.map(t => `<span class="tag">#${t}</span>`).join('')}</div>`;
+            }
+
+            let recHtml = '';
+            if (recs.length > 0) {
+                recHtml = `
+                    <div class="recommend-section">
+                        <h3>📌 类似内容推荐</h3>
+                        <div class="recommend-grid">
+                            ${recs.map(r => {
+                                const recAvatar = r.profiles?.avatar_url ? `<img src="${r.profiles.avatar_url}" alt="avatar">` : (r.profiles?.nickname || 'U').charAt(0).toUpperCase();
+                                return `
+                                    <div class="recommend-item" onclick="navigateTo('detail', ${r.id})">
+                                        <div class="rec-title">${r.title}</div>
+                                        <div class="rec-meta">
+                                            <span class="rec-cat ${getCategoryClass(r.category)}">${getCategoryIcon(r.category)} ${r.category}</span>
+                                            <span>${timeAgo(r.created_at)}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 `;
-            });
-            html += '</div>';
+            }
+
+            let commentsHtml = '';
+            if (detailComments.length > 0) {
+                commentsHtml = detailComments.map(c => {
+                    const cAvatar = c.profiles?.avatar_url ?
+                        `<img src="${c.profiles.avatar_url}" alt="avatar">` :
+                        (c.profiles?.nickname || 'U').charAt(0).toUpperCase();
+                    return `
+                        <div class="comment-item">
+                            <span class="avatar-sm">${cAvatar}</span>
+                            <div class="cmt-content">
+                                <div class="cmt-user">${c.profiles?.nickname || '用户'}</div>
+                                <div class="cmt-text">${c.content}</div>
+                            </div>
+                            <span class="cmt-time">${timeAgo(c.created_at)}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                commentsHtml = '<div style="color:#94a3b8;font-size:14px;padding:8px 0;">暂无评论</div>';
+            }
+
+            const isAdmin = currentUserRole === 'admin';
+
+            let adminActions = '';
+            if (isAdmin && content.status === 'pending') {
+                adminActions = `
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button class="btn-sm approve" onclick="reviewContent(${content.id}, 'approved');navigateTo('home')" style="padding:6px 18px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>通过</button>
+                        <button class="btn-sm reject" onclick="reviewContent(${content.id}, 'rejected');navigateTo('home')" style="padding:6px 18px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>拒绝</button>
+                        <button class="btn-sm" onclick="toggleRecommend(${content.id}, ${content.is_recommended || false})" style="padding:6px 18px;border-radius:10px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;">${content.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
+                    </div>
+                `;
+            } else if (isAdmin) {
+                adminActions = `
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button class="btn-sm" onclick="toggleRecommend(${content.id}, ${content.is_recommended || false})" style="padding:6px 18px;border-radius:10px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;">${content.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div class="detail-container">
+                    <div class="back-btn" onclick="navigateTo('home')">
+                        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                        返回首页
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-meta">
+                            <span class="cat ${getCategoryClass(content.category)}">${getCategoryIcon(content.category)} ${content.category}</span>
+                            <span>${timeAgo(content.created_at)}</span>
+                            ${content.is_recommended ? '<span style="background:#f59e0b;color:#fff;padding:0 10px;border-radius:12px;font-size:11px;font-weight:600;">⭐ 推荐</span>' : ''}
+                            ${content.likes_count >= 1000 ? '<span style="background:#ef4444;color:#fff;padding:0 10px;border-radius:12px;font-size:11px;font-weight:600;">🔥 热门</span>' : ''}
+                            ${content.status === 'pending' ? '<span style="background:#fef3c7;color:#d97706;padding:0 10px;border-radius:12px;font-size:11px;font-weight:600;">⏳ 待审核</span>' : ''}
+                        </div>
+                        <div class="detail-title">${content.title}</div>
+                        ${content.description ? `<div class="detail-desc">${content.description}</div>` : ''}
+                        ${extraHtml}
+                        ${tagsHtml}
+                        ${adminActions}
+                        <div class="detail-footer">
+                            <span class="user">
+                                <span class="avatar-sm">${avatarHtml}</span>
+                                <span>${content.profiles?.nickname || '用户'}</span>
+                            </span>
+                            <span class="stats">
+                                <span onclick="toggleLikeDetail(${content.id})" class="${isLiked ? 'liked' : ''}">
+                                    <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                                    ${content.likes_count || 0}
+                                </span>
+                                <span>
+                                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                                    ${content.comments_count || 0}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="detail-comments">
+                        <h3>💬 评论 (${content.comments_count || 0})</h3>
+                        <div class="comment-input">
+                            <input type="text" id="detailCommentInput" placeholder="写评论..." maxlength="200">
+                            <button onclick="postDetailComment(${content.id})">
+                                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                                发送
+                            </button>
+                        </div>
+                        <div class="comment-list" id="detailCommentList">
+                            ${commentsHtml}
+                        </div>
+                    </div>
+
+                    ${recHtml}
+                </div>
+            `;
+
             contentRender.innerHTML = html;
+        }
+
+        // ============================================================
+        //  详 情 页 点 赞
+        // ============================================================
+        async function toggleLikeDetail(contentId) {
+            if (!currentUser) return;
+            const item = detailContentData;
+            if (!item) return;
+
+            // 检查是否已点赞
+            const { data: exist } = await supabaseClient
+                .from('likes')
+                .select('id')
+                .eq('user_id', currentUser.id)
+                .eq('content_id', contentId)
+                .single();
+
+            if (exist) {
+                await supabaseClient
+                    .from('likes')
+                    .delete()
+                    .eq('user_id', currentUser.id)
+                    .eq('content_id', contentId);
+                item.likes_count = (item.likes_count || 1) - 1;
+            } else {
+                await supabaseClient
+                    .from('likes')
+                    .insert({ user_id: currentUser.id, content_id: contentId });
+                item.likes_count = (item.likes_count || 0) + 1;
+
+                // 发送通知给内容作者
+                if (item.user_id !== currentUser.id) {
+                    await supabaseClient.from('notifications').insert({
+                        user_id: item.user_id,
+                        type: 'like',
+                        content: `❤️ ${currentUser.email} 点赞了你的内容 "${item.title}"`,
+                        link: `/detail?id=${contentId}`
+                    });
+                }
+            }
+
+            // 更新数据库中的点赞数
+            await supabaseClient
+                .from('contents')
+                .update({ likes_count: item.likes_count })
+                .eq('id', contentId);
+
+            // 重新加载详情页
+            loadDetail(contentId);
+            // 重新加载通知
+            loadNotifications();
+        }
+
+        // ============================================================
+        //  详 情 页 评 论
+        // ============================================================
+        async function postDetailComment(contentId) {
+            const input = document.getElementById('detailCommentInput');
+            const content = input.value.trim();
+            if (!content) { alert('请输入评论内容'); return; }
+            if (!currentUser) { alert('请先登录'); return; }
+
+            const { error } = await supabaseClient
+                .from('comments')
+                .insert({
+                    user_id: currentUser.id,
+                    content_id: contentId,
+                    content: content
+                });
+
+            if (error) {
+                alert('评论失败：' + error.message);
+                return;
+            }
+
+            // 更新内容的评论数
+            const item = detailContentData;
+            if (item) {
+                item.comments_count = (item.comments_count || 0) + 1;
+                await supabaseClient
+                    .from('contents')
+                    .update({ comments_count: item.comments_count })
+                    .eq('id', contentId);
+            }
+
+            // 发送通知给内容作者
+            if (item && item.user_id !== currentUser.id) {
+                await supabaseClient.from('notifications').insert({
+                    user_id: item.user_id,
+                    type: 'comment',
+                    content: `💬 ${currentUser.email} 评论了你的内容 "${item.title}"：${content}`,
+                    link: `/detail?id=${contentId}`
+                });
+            }
+
+            input.value = '';
+            loadDetail(contentId);
+            loadNotifications();
         }
 
         // ============================================================
@@ -1304,41 +2646,14 @@
         }
 
         // ============================================================
-        //  切 换 侧 边 栏 导 航
-        // ============================================================
-        function switchNav(nav) {
-            currentNav = nav;
-            // 如果切换到首页，恢复顶部tab高亮
-            if (nav === 'home') {
-                document.querySelectorAll('#topNav .tab').forEach(el => {
-                    el.classList.toggle('active', el.dataset.tab === currentTab);
-                });
-            } else {
-                document.querySelectorAll('#topNav .tab').forEach(el => el.classList.remove('active'));
-            }
-            document.querySelectorAll('#sideNav .nav-item').forEach(el => {
-                el.classList.toggle('active', el.dataset.nav === nav);
-            });
-            if (nav === 'review' && currentUserRole !== 'admin') return;
-            if (nav === 'admin' && currentUserRole !== 'admin') return;
-            if (nav === 'messages') {
-                loadNotifications();
-                renderContents();
-                return;
-            }
-            loadContents(currentSearchQuery);
-        }
-
-        // ============================================================
-        //  切 换 顶 部 分 区
+        //  切 换 分 区
         // ============================================================
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('#topNav .tab').forEach(el => {
                 el.classList.toggle('active', el.dataset.tab === tab);
             });
-            // 如果当前在首页，刷新内容
-            if (currentNav === 'home') {
+            if (currentPage === 'home') {
                 loadContents(currentSearchQuery);
             }
         }
@@ -1355,9 +2670,6 @@
                 navReview.classList.add('hidden');
                 navAdmin.classList.add('hidden');
                 editAnnounceBtn.classList.add('hidden');
-            }
-            if (currentNav === 'review' && currentUserRole !== 'admin') {
-                switchNav('home');
             }
         }
 
@@ -1381,7 +2693,9 @@
         function doSearch() {
             const query = searchInput.value.trim();
             currentSearchQuery = query;
-            loadContents(query);
+            if (currentPage === 'home') {
+                loadContents(query);
+            }
         }
 
         // ============================================================
@@ -1532,7 +2846,9 @@
 
                 alert('✅ 提交成功！等待管理员审核。');
                 closeUploadModal();
-                loadContents(currentSearchQuery);
+                if (currentPage === 'home' || currentPage === 'upload') {
+                    loadContents(currentSearchQuery);
+                }
             } catch (err) {
                 alert('❌ ' + err.message);
             } finally {
@@ -1568,17 +2884,22 @@
                         user_id: content.user_id,
                         type: status === 'approved' ? 'approved' : 'rejected',
                         content: msg,
-                        link: '/'
+                        link: `/detail?id=${contentId}`
                     });
                 }
                 alert('✅ 操作成功');
-                loadContents(currentSearchQuery);
                 loadNotifications();
+                if (currentPage === 'home' || currentPage === 'upload' || currentPage === 'review') {
+                    loadContents(currentSearchQuery);
+                }
+                if (currentPage === 'detail' && detailContentId) {
+                    loadDetail(detailContentId);
+                }
             }
         }
 
         // ============================================================
-        //  推 荐 / 取 消 推 荐
+        //  推 荐
         // ============================================================
         async function toggleRecommend(contentId, current) {
             if (!confirm(`确定要 ${current ? '取消推荐' : '推荐'} 这个内容吗？`)) return;
@@ -1590,7 +2911,12 @@
                 alert('操作失败：' + error.message);
             } else {
                 alert('✅ 操作成功');
-                loadContents(currentSearchQuery);
+                if (currentPage === 'home' || currentPage === 'upload' || currentPage === 'review') {
+                    loadContents(currentSearchQuery);
+                }
+                if (currentPage === 'detail' && detailContentId) {
+                    loadDetail(detailContentId);
+                }
             }
         }
 
@@ -1613,12 +2939,17 @@
                     .eq('id', contentId);
                 if (error) throw new Error(error.message);
                 alert('✅ 删除成功');
-                loadContents(currentSearchQuery);
+                if (currentPage === 'home' || currentPage === 'upload' || currentPage === 'review') {
+                    loadContents(currentSearchQuery);
+                }
+                if (currentPage === 'detail') {
+                    navigateTo('home');
+                }
             } catch (err) { alert('❌ 删除失败：' + err.message); }
         }
 
         // ============================================================
-        //  点 赞
+        //  点 赞（列表页）
         // ============================================================
         async function toggleLike(contentId) {
             if (!currentUser) return;
@@ -1647,99 +2978,26 @@
                 }
                 item._isLiked = true;
                 item.likes_count = (item.likes_count || 0) + 1;
-            }
-            renderContents();
-        }
 
-        // ============================================================
-        //  评 论
-        // ============================================================
-        async function postComment(contentId) {
-            const input = document.getElementById(`commentInput-${contentId}`);
-            const content = input.value.trim();
-            if (!content) { alert('请输入评论内容'); return; }
-            if (!currentUser) { alert('请先登录'); return; }
-
-            const { error } = await supabaseClient
-                .from('comments')
-                .insert({
-                    user_id: currentUser.id,
-                    content_id: contentId,
-                    content: content
-                });
-
-            if (error) {
-                alert('评论失败：' + error.message);
-                return;
-            }
-
-            const { data: item } = await supabaseClient
-                .from('contents')
-                .select('user_id, title')
-                .eq('id', contentId)
-                .single();
-            if (item && item.user_id !== currentUser.id) {
-                await supabaseClient.from('notifications').insert({
-                    user_id: item.user_id,
-                    type: 'comment',
-                    content: `💬 ${currentUser.email} 评论了你的内容 "${item.title}"：${content}`,
-                    link: '/'
-                });
-            }
-
-            input.value = '';
-            loadContents(currentSearchQuery);
-            loadNotifications();
-        }
-
-        // ============================================================
-        //  切 换 评 论 区
-        // ============================================================
-        async function toggleComments(contentId) {
-            const container = document.getElementById(`comments-${contentId}`);
-            if (!container) return;
-            if (container.classList.contains('hidden')) {
-                container.classList.remove('hidden');
-                const { data, error } = await supabaseClient
-                    .from('comments')
-                    .select(`*, profiles!user_id (nickname, avatar_url)`)
-                    .eq('content_id', contentId)
-                    .order('created_at', { ascending: true });
-                const list = document.getElementById(`commentList-${contentId}`);
-                if (data && data.length > 0) {
-                    list.innerHTML = data.map(c => {
-                        const avatar = c.profiles?.avatar_url ?
-                            `<img src="${c.profiles.avatar_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">` :
-                            (c.profiles?.nickname || 'U').charAt(0).toUpperCase();
-                        return `
-                            <div class="comment-item">
-                                <span class="avatar-sm">${avatar}</span>
-                                <div class="cmt-content">
-                                    <span class="cmt-user">${c.profiles?.nickname || '用户'}</span>
-                                    <span class="cmt-text">${c.content}</span>
-                                </div>
-                                <span class="cmt-time">${timeAgo(c.created_at)}</span>
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    list.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:8px 0;">暂无评论</div>';
+                // 发送通知给内容作者
+                if (item.user_id !== currentUser.id) {
+                    await supabaseClient.from('notifications').insert({
+                        user_id: item.user_id,
+                        type: 'like',
+                        content: `❤️ ${currentUser.email} 点赞了你的内容 "${item.title}"`,
+                        link: `/detail?id=${contentId}`
+                    });
                 }
-            } else {
-                container.classList.add('hidden');
             }
-        }
 
-        // ============================================================
-        //  消 息 标 记 已 读
-        // ============================================================
-        async function markNotificationRead(id) {
+            // 更新数据库
             await supabaseClient
-                .from('notifications')
-                .update({ is_read: true })
-                .eq('id', id);
-            await loadNotifications();
+                .from('contents')
+                .update({ likes_count: item.likes_count })
+                .eq('id', contentId);
+
             renderContents();
+            loadNotifications();
         }
 
         // ============================================================
@@ -1765,37 +3023,6 @@
                 closeAnnounceModal();
                 loadAnnouncement();
             }
-        }
-
-        // ============================================================
-        //  审 核 详 情
-        // ============================================================
-        function viewContentDetail(contentId) {
-            const item = allContents.find(c => c.id === contentId);
-            if (!item) return;
-            const detailHtml = `
-                <div style="margin-bottom:16px;">
-                    <div style="color:#94a3b8;font-size:13px;">分类：${item.category}</div>
-                    <div style="font-size:20px;font-weight:700;margin:8px 0;">${item.title}</div>
-                    ${item.description ? `<div style="color:#475569;line-height:1.6;margin-bottom:8px;">${item.description}</div>` : ''}
-                    ${item.file_url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;margin-bottom:8px;"><a href="${item.file_url}" target="_blank">📎 下载文件</a></div>` : ''}
-                    ${item.url ? `<div style="background:#f1f5f9;padding:8px 12px;border-radius:8px;margin-bottom:8px;"><a href="${item.url}" target="_blank">🔗 ${item.url}</a></div>` : ''}
-                    ${item.tags && item.tags.length > 0 ? `<div style="font-size:13px;color:#64748b;">标签：#${item.tags.join(' #')}</div>` : ''}
-                    <div style="font-size:13px;color:#94a3b8;margin-top:8px;">状态：${getStatusText(item.status)} · ${timeAgo(item.created_at)} · ❤️ ${item.likes_count || 0} · 💬 ${item.comments_count || 0}</div>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved'); closeReviewDetail();" style="padding:8px 20px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>通过</button>
-                    <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected'); closeReviewDetail();" style="padding:8px 20px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>拒绝</button>
-                    <button class="btn-sm" onclick="toggleRecommend(${item.id}, ${item.is_recommended || false}); closeReviewDetail();" style="padding:8px 20px;border-radius:10px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;">${item.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
-                    <button class="btn-sm" onclick="closeReviewDetail()" style="padding:8px 20px;border-radius:10px;background:#f1f5f9;border:1px solid #e2e8f0;">关闭</button>
-                </div>
-            `;
-            document.getElementById('reviewDetailContent').innerHTML = detailHtml;
-            document.getElementById('reviewDetailModal').classList.remove('hidden');
-        }
-
-        function closeReviewDetail() {
-            document.getElementById('reviewDetailModal').classList.add('hidden');
         }
 
         // ============================================================
@@ -1886,147 +3113,4 @@
             }
 
             const { error } = await supabaseClient
-                .from('admin_requests')
-                .insert({
-                    requester_id: currentUser.id,
-                    target_id: target.id,
-                    action_type: actionType,
-                    reason: reason,
-                    status: 'pending'
-                });
-
-            if (error) {
-                alert('提交失败：' + error.message);
-                return;
-            }
-
-            const { data: mainAdmin } = await supabaseClient
-                .from('profiles')
-                .select('id')
-                .eq('email', MAIN_ADMIN_EMAIL)
-                .single();
-            if (mainAdmin) {
-                await supabaseClient.from('notifications').insert({
-                    user_id: mainAdmin.id,
-                    type: 'admin_request',
-                    content: `👑 ${currentUser.email} 申请${actionType === 'add' ? '添加' : '撤销'}管理员：${targetEmail}，理由：${reason}`,
-                    link: '/'
-                });
-            }
-
-            alert('✅ 申请已提交，等待主管理员审核');
-            document.getElementById('adminTargetEmail').value = '';
-            document.getElementById('adminReason').value = '';
-            loadAdminRequests();
-            loadNotifications();
-        }
-
-        // ============================================================
-        //  编 辑 个 人 资 料（支持图片上传）
-        // ============================================================
-        let avatarFileToUpload = null;
-
-        function previewAvatar(input) {
-            const file = input.files[0];
-            if (!file) return;
-            avatarFileToUpload = file;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('avatarPreview').innerHTML = `<img src="${e.target.result}" alt="avatar">`;
-                document.getElementById('avatarFileName').textContent = file.name;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function openProfileEdit() {
-            if (!currentUser) return;
-            avatarFileToUpload = null;
-            document.getElementById('avatarPreview').innerHTML =
-                `<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-            document.getElementById('avatarFileName').textContent = '点击选择图片';
-            document.getElementById('editAvatar').value = '';
-            document.getElementById('editNickname').value = userNickname.textContent || '';
-            document.getElementById('editBio').value = '';
-            supabaseClient.from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single()
-                .then(({ data }) => {
-                    if (data) {
-                        if (data.avatar_url) {
-                            document.getElementById('avatarPreview').innerHTML =
-                                `<img src="${data.avatar_url}" alt="avatar">`;
-                        }
-                        document.getElementById('editAvatar').value = data.avatar_url || '';
-                        document.getElementById('editNickname').value = data.nickname || '';
-                        document.getElementById('editBio').value = data.bio || '';
-                    }
-                });
-            document.getElementById('profileEditModal').classList.remove('hidden');
-        }
-
-        function closeProfileEdit() {
-            document.getElementById('profileEditModal').classList.add('hidden');
-        }
-
-        async function saveProfile() {
-            const avatar_url_input = document.getElementById('editAvatar').value.trim();
-            const nickname = document.getElementById('editNickname').value.trim();
-            const bio = document.getElementById('editBio').value.trim();
-
-            const updateData = {};
-            if (nickname) updateData.nickname = nickname;
-            if (bio) updateData.bio = bio;
-
-            // 处理头像：如果有上传文件，先上传到 storage
-            if (avatarFileToUpload) {
-                const filePath = `avatars/${currentUser.id}/${Date.now()}_${avatarFileToUpload.name}`;
-                const { error: uploadError } = await supabaseClient.storage
-                    .from('avatars')
-                    .upload(filePath, avatarFileToUpload);
-                if (!uploadError) {
-                    const { data: urlData } = supabaseClient.storage
-                        .from('avatars')
-                        .getPublicUrl(filePath);
-                    updateData.avatar_url = urlData.publicUrl;
-                } else {
-                    console.warn('头像上传失败:', uploadError);
-                    // 如果上传失败，尝试使用输入的URL
-                    if (avatar_url_input) updateData.avatar_url = avatar_url_input;
-                }
-            } else if (avatar_url_input) {
-                updateData.avatar_url = avatar_url_input;
-            }
-
-            if (Object.keys(updateData).length === 0) {
-                alert('没有修改任何内容');
-                return;
-            }
-
-            const { error } = await supabaseClient
-                .from('profiles')
-                .update(updateData)
-                .eq('id', currentUser.id);
-
-            if (error) {
-                alert('保存失败：' + error.message);
-            } else {
-                alert('✅ 保存成功');
-                closeProfileEdit();
-                loadUserProfile();
-                loadContents(currentSearchQuery);
-            }
-        }
-
-        // ============================================================
-        //  初 始 化
-        // ============================================================
-        console.log('👁️ 必看网 v11.0.0 (全功能修复版)');
-        console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
-
-        // 初始加载时高亮推荐
-        document.querySelector('#topNav .tab[data-tab="推荐"]')?.classList.add('active');
-    </script>
-
-</body>
-</html>
+                .
