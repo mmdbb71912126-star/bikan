@@ -6,6 +6,7 @@
     <title>必看网 - 资源分享社区</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* ===== 全局重置 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -378,6 +379,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
             transition: all 0.2s;
             cursor: pointer;
+            position: relative;
         }
         .content-card:hover {
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
@@ -476,6 +478,27 @@
             stroke: currentColor;
             stroke-width: 1.5;
         }
+        .content-card .report-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: color 0.2s;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            backdrop-filter: blur(4px);
+        }
+        .content-card .report-btn:hover {
+            color: #ef4444;
+        }
         .content-card .title {
             font-size: 17px;
             font-weight: 600;
@@ -486,6 +509,7 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            padding-right: 30px;
         }
         .content-card .desc {
             font-size: 14px;
@@ -767,6 +791,7 @@
             padding: 28px 32px;
             border: 1px solid #eef2f6;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            position: relative;
         }
         .detail-card .detail-meta {
             display: flex;
@@ -904,6 +929,23 @@
             stroke-linecap: round;
             stroke-linejoin: round;
             flex-shrink: 0;
+        }
+        .detail-card .detail-report-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 18px;
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .detail-card .detail-report-btn:hover {
+            color: #ef4444;
+            background: #fef2f2;
         }
 
         /* ===== 详情评论 ===== */
@@ -1460,6 +1502,22 @@
             color: #94a3b8;
             margin-top: 4px;
         }
+        .profile-header .profile-info .ban-status {
+            margin-top: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .profile-header .profile-info .ban-status.banned {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .profile-header .profile-info .ban-status.normal {
+            background: #dcfce7;
+            color: #166534;
+        }
 
         /* ===== 通知列表 ===== */
         .notification-item {
@@ -1501,6 +1559,61 @@
             background: #f8faff;
             border-radius: 8px;
             padding: 12px;
+        }
+
+        /* ===== 全局公告横幅 ===== */
+        .global-announcement-banner {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            padding: 8px 20px;
+            text-align: center;
+            font-size: 13px;
+            border-bottom: 2px solid #f59e0b;
+            display: none;
+            flex-shrink: 0;
+        }
+        .global-announcement-banner .banner-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .global-announcement-banner .banner-content .close-banner {
+            background: none;
+            border: none;
+            color: #92400e;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+            opacity: 0.6;
+        }
+        .global-announcement-banner .banner-content .close-banner:hover {
+            opacity: 1;
+        }
+
+        /* ===== QQ群提示 ===== */
+        .qq-group-tip {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #166534;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .qq-group-tip .qq-icon {
+            font-size: 20px;
+        }
+        .qq-group-tip .qq-number {
+            font-weight: 700;
+            color: #15803d;
+            cursor: pointer;
+            user-select: all;
         }
 
         .version-tag {
@@ -1604,6 +1717,14 @@
 </head>
 <body>
 
+    <!-- ===== 全局公告横幅 ===== -->
+    <div id="globalBanner" class="global-announcement-banner" style="display:none;">
+        <div class="banner-content">
+            <span id="globalBannerText">📢 全局公告内容</span>
+            <button class="close-banner" onclick="closeGlobalBanner()">✕</button>
+        </div>
+    </div>
+
     <!-- ===== 主界面 ===== -->
     <div id="app" class="hidden">
 
@@ -1639,6 +1760,7 @@
                 <button class="nav-item hidden" data-page="admin" id="navAdmin" onclick="openAdminModal()">
                     <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     <span class="label">管理员</span>
+                    <span class="badge hidden" id="reportBadge">0</span>
                 </button>
             </nav>
             <div class="user-section">
@@ -1784,44 +1906,92 @@
         </div>
     </div>
 
-    <!-- 管理员管理 -->
+    <!-- ===== 管理员总览弹窗（含封禁、举报、全局公告） ===== -->
     <div id="adminModal" class="modal-overlay hidden" onclick="if(event.target===this) closeAdminModal()">
-        <div class="modal-box" style="max-width:500px;">
+        <div class="modal-box" style="max-width:600px;">
             <div class="modal-header">
-                <span>管理员管理</span>
+                <span>👑 管理中心</span>
                 <button class="close-btn" onclick="closeAdminModal()">
                     <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
+
+            <!-- Tab 切换 -->
+            <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid #eef2f6;flex-wrap:wrap;">
+                <button onclick="switchAdminTab('users')" id="adminTabUsers" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid #6366f1;font-weight:600;color:#6366f1;background:none;cursor:pointer;font-size:14px;">👤 用户管理</button>
+                <button onclick="switchAdminTab('reports')" id="adminTabReports" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid transparent;font-weight:500;color:#64748b;background:none;cursor:pointer;font-size:14px;">🚨 举报 (<span id="reportCountBadge">0</span>)</button>
+                <button onclick="switchAdminTab('announce')" id="adminTabAnnounce" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid transparent;font-weight:500;color:#64748b;background:none;cursor:pointer;font-size:14px;">📢 全局公告</button>
+                <button onclick="switchAdminTab('bans')" id="adminTabBans" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid transparent;font-weight:500;color:#64748b;background:none;cursor:pointer;font-size:14px;">🔒 封禁记录</button>
+            </div>
+
             <div id="adminContent">
-                <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
-                <div style="margin-bottom:12px;">
-                    <label style="font-size:13px;font-weight:600;">操作</label>
-                    <select id="adminActionType" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;margin-top:4px;">
-                        <option value="add">➕ 添加管理员</option>
-                        <option value="remove">➖ 撤销管理员</option>
-                    </select>
+                <!-- 默认显示用户管理 -->
+                <div id="adminTabContent">
+                    <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:13px;font-weight:600;">操作</label>
+                        <select id="adminActionType" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;margin-top:4px;">
+                            <option value="add_admin">➕ 添加管理员 (通过ID)</option>
+                            <option value="remove_admin">➖ 撤销管理员 (通过ID)</option>
+                            <option value="ban_user">🔒 封禁用户 (通过ID)</option>
+                            <option value="unban_user">🔓 取消封禁 (通过ID)</option>
+                            <option value="block_upload">🚫 限制上传 (通过ID)</option>
+                            <option value="unblock_upload">✅ 解除上传限制 (通过ID)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>目标用户ID</label>
+                        <input type="text" id="adminTargetId" placeholder="输入用户ID (UUID格式)">
+                    </div>
+                    <div class="form-group" id="adminExtraField">
+                        <label>封禁时间（可选，不填为永久）</label>
+                        <input type="datetime-local" id="adminBanExpires">
+                    </div>
+                    <div class="form-group">
+                        <label>理由 *</label>
+                        <textarea id="adminReason" placeholder="请输入操作理由" rows="2" required></textarea>
+                    </div>
+                    <button onclick="submitAdminAction()" class="btn-submit">
+                        <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        执行操作
+                    </button>
+                    <hr style="margin:16px 0;border-color:#eef2f6;">
+                    <p style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:8px;">📋 操作记录</p>
+                    <div id="adminRequestList"></div>
                 </div>
-                <div class="form-group">
-                    <label>目标用户邮箱</label>
-                    <input type="email" id="adminTargetEmail" placeholder="请输入用户邮箱">
-                </div>
-                <div class="form-group">
-                    <label>理由 *</label>
-                    <textarea id="adminReason" placeholder="请输入操作理由" rows="2" required></textarea>
-                </div>
-                <button onclick="submitAdminRequest()" class="btn-submit">
-                    <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    提交申请
-                </button>
-                <hr style="margin:16px 0;border-color:#eef2f6;">
-                <p style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:8px;">我的申请记录</p>
-                <div id="adminRequestList"></div>
+            </div>
+
+            <!-- QQ群提示 -->
+            <div class="qq-group-tip">
+                <span class="qq-icon">🐧</span>
+                <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                <span style="color:#64748b;font-size:12px;">如被误封请在群内艾特管理员申诉</span>
             </div>
         </div>
     </div>
 
-    <!-- ===== 编辑个人资料弹窗（含ID显示 + 30天限制） ===== -->
+    <!-- ===== 举报弹窗 ===== -->
+    <div id="reportModal" class="modal-overlay hidden" onclick="if(event.target===this) closeReportModal()">
+        <div class="modal-box" style="max-width:460px;">
+            <div class="modal-header">
+                <span>🚨 举报内容</span>
+                <button class="close-btn" onclick="closeReportModal()">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="form-group">
+                <label>举报理由 *</label>
+                <textarea id="reportReason" placeholder="请详细描述举报原因..." rows="4" maxlength="500"></textarea>
+                <div style="font-size:12px;color:#94a3b8;margin-top:4px;text-align:right;"><span id="reportCharCount">0</span>/500</div>
+            </div>
+            <button onclick="submitReport()" class="btn-submit">
+                <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                提交举报
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== 编辑个人资料弹窗 ===== -->
     <div id="profileEditModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileEdit()">
         <div class="modal-box" style="max-width:460px;">
             <div class="modal-header">
@@ -1830,18 +2000,13 @@
                     <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-
-            <!-- 用户ID显示 -->
             <div class="user-id-display" style="margin-bottom:12px;">
                 <label>🆔 用户ID</label>
                 <div class="id-value" id="userIdDisplay">加载中...</div>
             </div>
-
-            <!-- 30天限制提示 -->
             <div id="editRestrictionMsg" class="restriction-msg hidden">
                 ⏳ 距离下次修改还有 <span class="countdown" id="restrictionDays">0</span> 天
             </div>
-
             <div class="avatar-preview" id="avatarPreview">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
@@ -1870,11 +2035,29 @@
                 <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 保存
             </button>
+            <div class="qq-group-tip" style="margin-top:12px;">
+                <span class="qq-icon">🐧</span>
+                <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                <span style="color:#64748b;font-size:12px;">如被误封请在群内艾特管理员申诉</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 举报详情弹窗（管理员查看） ===== -->
+    <div id="reportDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeReportDetail()">
+        <div class="modal-box" style="max-width:500px;">
+            <div class="modal-header">
+                <span>📋 举报详情</span>
+                <button class="close-btn" onclick="closeReportDetail()">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div id="reportDetailContent"></div>
         </div>
     </div>
 
     <!-- 版本号 -->
-    <div class="version-tag">v13.0.0</div>
+    <div class="version-tag">v14.0.0</div>
 
     <!-- ========================================================== -->
     <!--  JavaScript                                                -->
@@ -1898,6 +2081,7 @@
         let currentTab = '推荐';
         let allContents = [];
         let allNotifications = [];
+        let allReports = [];
         let pendingCount = 0;
         let isSubmitting = false;
         let uploadedFiles = [];
@@ -1911,6 +2095,8 @@
         let avatarFileToUpload = null;
         let _canEditProfile = true;
         let _lastUpdatedAt = null;
+        let currentReportContentId = null;
+        let currentAdminTab = 'users';
 
         // ============================================================
         //  DOM 引 用
@@ -1922,6 +2108,7 @@
         const navReview = document.getElementById('navReview');
         const navAdmin = document.getElementById('navAdmin');
         const reviewBadge = document.getElementById('reviewBadge');
+        const reportBadge = document.getElementById('reportBadge');
         const msgBadge = document.getElementById('msgBadge');
         const userAvatar = document.getElementById('userAvatar');
         const userEmail = document.getElementById('userEmail');
@@ -1946,6 +2133,8 @@
                 await loadUserRole();
                 await loadAnnouncement();
                 await loadNotifications();
+                await loadGlobalAnnouncement();
+                await loadReports();
 
                 const params = new URLSearchParams(window.location.search);
                 const page = params.get('page') || 'home';
@@ -2135,6 +2324,61 @@
         }
 
         // ============================================================
+        //  加 载 全 局 公 告
+        // ============================================================
+        async function loadGlobalAnnouncement() {
+            const { data, error } = await supabaseClient
+                .from('global_announcements')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (data && data.length > 0) {
+                const banner = document.getElementById('globalBanner');
+                const text = document.getElementById('globalBannerText');
+                const ann = data[0];
+                // 检查是否过期
+                if (ann.expires_at && new Date(ann.expires_at) < new Date()) {
+                    banner.style.display = 'none';
+                    return;
+                }
+                text.textContent = `📢 ${ann.title}: ${ann.content}`;
+                banner.style.display = 'block';
+            } else {
+                document.getElementById('globalBanner').style.display = 'none';
+            }
+        }
+
+        function closeGlobalBanner() {
+            document.getElementById('globalBanner').style.display = 'none';
+        }
+
+        // ============================================================
+        //  加 载 举 报
+        // ============================================================
+        async function loadReports() {
+            if (currentUserRole !== 'admin') return;
+            const { data, error } = await supabaseClient
+                .from('reports')
+                .select('*, reporter:reporter_id(email), content:content_id(title)')
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false });
+
+            if (data) {
+                allReports = data;
+                const count = data.length;
+                reportBadge.textContent = count;
+                if (count > 0) {
+                    reportBadge.classList.remove('hidden');
+                } else {
+                    reportBadge.classList.add('hidden');
+                }
+                document.getElementById('reportCountBadge').textContent = count;
+            }
+        }
+
+        // ============================================================
         //  加 载 消 息
         // ============================================================
         async function loadNotifications() {
@@ -2172,7 +2416,14 @@
                     'comment': '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
                     'like': '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>',
                     'admin_request': '<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
-                    'admin_response': '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 3 14 7 18"/><line x1="3" y1="14" x2="18" y2="14"/></svg>'
+                    'admin_response': '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 3 14 7 18"/><line x1="3" y1="14" x2="18" y2="14"/></svg>',
+                    'global_announcement': '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>',
+                    'ban': '<svg viewBox="0 0 24 24" stroke="#991b1b"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+                    'unban': '<svg viewBox="0 0 24 24" stroke="#166534"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12"/></svg>',
+                    'report_created': '<svg viewBox="0 0 24 24" stroke="#ef4444"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+                    'report_resolved': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>',
+                    'upload_blocked': '<svg viewBox="0 0 24 24" stroke="#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+                    'upload_unblocked': '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>'
                 };
                 html += `
                     <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
@@ -2198,10 +2449,38 @@
         }
 
         // ============================================================
-        //  加 载 内 容
+        //  加 载 内 容（带封禁检查）
         // ============================================================
         async function loadContents(searchQuery = '') {
             if (!currentUser) return;
+
+            // 检查是否被封禁
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('is_banned, ban_expires_at, upload_blocked_until')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (profile?.is_banned) {
+                const expires = profile.ban_expires_at ? new Date(profile.ban_expires_at) : null;
+                if (!expires || expires > new Date()) {
+                    // 被封禁，显示封禁信息
+                    contentRender.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" stroke="#ef4444"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                            <p style="font-size:18px;font-weight:600;color:#ef4444;">🚫 账号已被封禁</p>
+                            <p style="color:#64748b;margin-top:8px;">${profile.ban_reason || '违规操作'}</p>
+                            ${expires ? `<p style="color:#64748b;font-size:13px;margin-top:4px;">封禁至：${expires.toLocaleString()}</p>` : '<p style="color:#64748b;font-size:13px;margin-top:4px;">永久封禁</p>'}
+                            <div class="qq-group-tip" style="margin-top:16px;max-width:400px;margin-left:auto;margin-right:auto;">
+                                <span class="qq-icon">🐧</span>
+                                <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                                <span style="color:#64748b;font-size:12px;">如被误封请在群内艾特管理员申诉</span>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+            }
 
             let query = supabaseClient.from('contents').select(`
                 *,
@@ -2217,6 +2496,22 @@
                     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,file_name.ilike.%${searchQuery}%,url.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
                 }
             } else if (currentPage === 'upload') {
+                // 检查上传限制
+                if (profile?.upload_blocked_until && new Date(profile.upload_blocked_until) > new Date()) {
+                    contentRender.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" stroke="#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <p style="font-size:18px;font-weight:600;color:#d97706;">🚫 上传已被限制</p>
+                            <p style="color:#64748b;margin-top:8px;">限制上传至：${new Date(profile.upload_blocked_until).toLocaleString()}</p>
+                            <div class="qq-group-tip" style="margin-top:16px;max-width:400px;margin-left:auto;margin-right:auto;">
+                                <span class="qq-icon">🐧</span>
+                                <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                                <span style="color:#64748b;font-size:12px;">如有疑问请在群内联系管理员</span>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
                 query = query.eq('user_id', currentUser.id);
             } else if (currentPage === 'review') {
                 if (currentUserRole === 'admin') {
@@ -2279,7 +2574,7 @@
         }
 
         // ============================================================
-        //  渲 染 内 容
+        //  渲 染 内 容（含举报按钮）
         // ============================================================
         function renderContents() {
             contentRender.innerHTML = '';
@@ -2399,8 +2694,16 @@
 
                 const cardClick = `navigateTo('detail', ${item.id})`;
 
+                // 举报按钮
+                const reportBtn = `
+                    <button class="report-btn" onclick="event.stopPropagation();openReportModal(${item.id})" title="举报此内容">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </button>
+                `;
+
                 html += `
                     <div class="content-card" onclick="${cardClick}">
+                        ${reportBtn}
                         <div class="meta">
                             <span class="cat ${getCategoryClass(item.category)}">${getCategoryIcon(item.category)} ${item.category}</span>
                             <span>${timeAgo(item.created_at)}</span>
@@ -2436,6 +2739,583 @@
         }
 
         // ============================================================
+        //  举 报 功 能
+        // ============================================================
+        function openReportModal(contentId) {
+            if (!currentUser) {
+                alert('请先登录');
+                return;
+            }
+            currentReportContentId = contentId;
+            document.getElementById('reportReason').value = '';
+            document.getElementById('reportCharCount').textContent = '0';
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        // 字数统计
+        document.addEventListener('DOMContentLoaded', function() {
+            const reasonInput = document.getElementById('reportReason');
+            if (reasonInput) {
+                reasonInput.addEventListener('input', function() {
+                    document.getElementById('reportCharCount').textContent = this.value.length;
+                });
+            }
+        });
+
+        async function submitReport() {
+            const reason = document.getElementById('reportReason').value.trim();
+            if (!reason) {
+                alert('请输入举报理由');
+                return;
+            }
+            if (reason.length < 5) {
+                alert('举报理由至少5个字');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('reports')
+                .insert({
+                    reporter_id: currentUser.id,
+                    content_id: currentReportContentId,
+                    reason: reason,
+                    status: 'pending'
+                });
+
+            if (error) {
+                alert('举报失败：' + error.message);
+                return;
+            }
+
+            // 通知所有管理员
+            const { data: admins } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin');
+
+            if (admins) {
+                const content = await supabaseClient
+                    .from('contents')
+                    .select('title')
+                    .eq('id', currentReportContentId)
+                    .single();
+
+                for (const admin of admins) {
+                    await supabaseClient.from('notifications').insert({
+                        user_id: admin.id,
+                        type: 'report_created',
+                        content: `🚨 ${currentUser.email} 举报了内容 "${content.data?.title || '未知'}"：${reason}`,
+                        link: `/admin`
+                    });
+                }
+            }
+
+            alert('✅ 举报已提交，管理员将尽快处理');
+            closeReportModal();
+            loadReports();
+        }
+
+        // ============================================================
+        //  举 报 详 情（管理员查看）
+        // ============================================================
+        function openReportDetail(reportId) {
+            const report = allReports.find(r => r.id === reportId);
+            if (!report) return;
+
+            const content = report.content;
+            const reporter = report.reporter;
+
+            const detailHtml = `
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:13px;color:#94a3b8;">举报人：<strong>${reporter?.email || '未知'}</strong></div>
+                    <div style="font-size:13px;color:#94a3b8;margin-top:4px;">被举报内容：<strong>${content?.title || '已删除'}</strong></div>
+                    <div style="font-size:13px;color:#94a3b8;margin-top:4px;">举报理由：</div>
+                    <div style="background:#f8fafc;padding:12px;border-radius:10px;margin-top:4px;font-size:14px;color:#1e293b;">${report.reason}</div>
+                    <div style="font-size:12px;color:#94a3b8;margin-top:8px;">举报时间：${timeAgo(report.created_at)}</div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn-sm approve" onclick="resolveReport(${report.id}, 'resolved', 'content_deleted')" style="padding:8px 16px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;">🗑️ 删除内容</button>
+                    <button class="btn-sm" onclick="resolveReport(${report.id}, 'resolved', 'user_banned')" style="padding:8px 16px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;">🔒 封禁用户</button>
+                    <button class="btn-sm" onclick="resolveReport(${report.id}, 'resolved', 'upload_blocked')" style="padding:8px 16px;border-radius:10px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;font-weight:600;">🚫 限制上传</button>
+                    <button class="btn-sm" onclick="resolveReport(${report.id}, 'dismissed', null)" style="padding:8px 16px;border-radius:10px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">❌ 驳回</button>
+                </div>
+            `;
+
+            document.getElementById('reportDetailContent').innerHTML = detailHtml;
+            document.getElementById('reportDetailModal').classList.remove('hidden');
+        }
+
+        function closeReportDetail() {
+            document.getElementById('reportDetailModal').classList.add('hidden');
+        }
+
+        async function resolveReport(reportId, status, action) {
+            if (!confirm(`确定要${status === 'resolved' ? '处理' : '驳回'}这个举报吗？`)) return;
+
+            const { data: report } = await supabaseClient
+                .from('reports')
+                .select('content_id')
+                .eq('id', reportId)
+                .single();
+
+            if (report && action === 'content_deleted') {
+                // 删除内容
+                await supabaseClient
+                    .from('contents')
+                    .delete()
+                    .eq('id', report.content_id);
+            }
+
+            if (report && action === 'user_banned') {
+                // 封禁用户（需要先获取内容的user_id）
+                const { data: content } = await supabaseClient
+                    .from('contents')
+                    .select('user_id')
+                    .eq('id', report.content_id)
+                    .single();
+                if (content) {
+                    await banUser(content.user_id, '因举报封禁', 'permanent', currentUser.id);
+                }
+            }
+
+            if (report && action === 'upload_blocked') {
+                const { data: content } = await supabaseClient
+                    .from('contents')
+                    .select('user_id')
+                    .eq('id', report.content_id)
+                    .single();
+                if (content) {
+                    const until = new Date();
+                    until.setDate(until.getDate() + 7); // 限制上传7天
+                    await supabaseClient
+                        .from('profiles')
+                        .update({ upload_blocked_until: until.toISOString() })
+                        .eq('id', content.user_id);
+                    await supabaseClient.from('notifications').insert({
+                        user_id: content.user_id,
+                        type: 'upload_blocked',
+                        content: `🚫 因举报被限制上传7天，如有疑问请联系管理员`,
+                        link: '/'
+                    });
+                }
+            }
+
+            await supabaseClient
+                .from('reports')
+                .update({
+                    status: status,
+                    action_taken: action,
+                    processed_by: currentUser.id,
+                    processed_at: new Date().toISOString()
+                })
+                .eq('id', reportId);
+
+            alert('✅ 操作完成');
+            closeReportDetail();
+            loadReports();
+            loadContents(currentSearchQuery);
+        }
+
+        // ============================================================
+        //  封 禁 功 能
+        // ============================================================
+        async function banUser(userId, reason, banType, bannedBy) {
+            const expiresAt = banType === 'temporary' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
+
+            const { error } = await supabaseClient
+                .from('banned_users')
+                .insert({
+                    user_id: userId,
+                    banned_by: bannedBy,
+                    reason: reason,
+                    ban_type: banType,
+                    expires_at: expiresAt
+                });
+
+            if (error) {
+                console.error('封禁失败:', error);
+                return false;
+            }
+
+            // 发送通知给被禁用户
+            const { data: user } = await supabaseClient.auth.admin.getUserById(userId);
+            const msg = banType === 'permanent' ?
+                `🔒 你的账号已被永久封禁，理由：${reason}` :
+                `🔒 你的账号已被封禁至 ${new Date(expiresAt).toLocaleString()}，理由：${reason}`;
+            await supabaseClient.from('notifications').insert({
+                user_id: userId,
+                type: 'ban',
+                content: msg,
+                link: '/'
+            });
+
+            return true;
+        }
+
+        async function unbanUser(userId) {
+            const { error } = await supabaseClient
+                .from('banned_users')
+                .delete()
+                .eq('user_id', userId);
+
+            if (error) {
+                console.error('取消封禁失败:', error);
+                return false;
+            }
+
+            await supabaseClient.from('notifications').insert({
+                user_id: userId,
+                type: 'unban',
+                content: '🔓 你的账号已被解封，欢迎回来！',
+                link: '/'
+            });
+
+            return true;
+        }
+
+        // ============================================================
+        //  管 理 员 操 作（通过ID添加/撤销管理员、封禁等）
+        // ============================================================
+        async function submitAdminAction() {
+            if (!currentUser || currentUserRole !== 'admin') {
+                alert('无权限');
+                return;
+            }
+
+            const actionType = document.getElementById('adminActionType').value;
+            const targetId = document.getElementById('adminTargetId').value.trim();
+            const reason = document.getElementById('adminReason').value.trim();
+            const banExpires = document.getElementById('adminBanExpires').value;
+
+            if (!targetId) {
+                alert('请输入目标用户ID');
+                return;
+            }
+            if (!reason) {
+                alert('请输入操作理由');
+                return;
+            }
+
+            // 验证目标用户是否存在
+            const { data: targetUser, error: userError } = await supabaseClient
+                .from('profiles')
+                .select('id, role, email')
+                .eq('id', targetId)
+                .single();
+
+            if (userError || !targetUser) {
+                alert('未找到该用户，请检查ID是否正确');
+                return;
+            }
+
+            if (targetUser.id === currentUser.id) {
+                alert('不能操作自己');
+                return;
+            }
+
+            try {
+                switch (actionType) {
+                    case 'add_admin':
+                        if (targetUser.role === 'admin') {
+                            alert('该用户已经是管理员');
+                            return;
+                        }
+                        await supabaseClient
+                            .from('profiles')
+                            .update({ role: 'admin' })
+                            .eq('id', targetId);
+                        await supabaseClient.from('notifications').insert({
+                            user_id: targetId,
+                            type: 'admin_response',
+                            content: `👑 你已被 ${currentUser.email} 设为管理员`,
+                            link: '/'
+                        });
+                        alert('✅ 已设为管理员');
+                        break;
+
+                    case 'remove_admin':
+                        if (targetUser.role !== 'admin') {
+                            alert('该用户不是管理员');
+                            return;
+                        }
+                        if (targetUser.email === MAIN_ADMIN_EMAIL) {
+                            alert('不能撤销主管理员');
+                            return;
+                        }
+                        await supabaseClient
+                            .from('profiles')
+                            .update({ role: 'user' })
+                            .eq('id', targetId);
+                        await supabaseClient.from('notifications').insert({
+                            user_id: targetId,
+                            type: 'admin_response',
+                            content: `📋 你已被 ${currentUser.email} 撤销管理员权限`,
+                            link: '/'
+                        });
+                        alert('✅ 已撤销管理员');
+                        break;
+
+                    case 'ban_user':
+                        const banType = banExpires ? 'temporary' : 'permanent';
+                        const success = await banUser(targetId, reason, banType, currentUser.id);
+                        if (success) {
+                            alert('✅ 封禁成功');
+                        } else {
+                            alert('❌ 封禁失败，用户可能已被封禁');
+                        }
+                        break;
+
+                    case 'unban_user':
+                        const unbanSuccess = await unbanUser(targetId);
+                        if (unbanSuccess) {
+                            alert('✅ 已取消封禁');
+                        } else {
+                            alert('❌ 该用户未被封禁');
+                        }
+                        break;
+
+                    case 'block_upload':
+                        const until = new Date();
+                        until.setDate(until.getDate() + 7);
+                        await supabaseClient
+                            .from('profiles')
+                            .update({ upload_blocked_until: until.toISOString() })
+                            .eq('id', targetId);
+                        await supabaseClient.from('notifications').insert({
+                            user_id: targetId,
+                            type: 'upload_blocked',
+                            content: `🚫 因 ${reason}，上传功能被限制至 ${until.toLocaleString()}`,
+                            link: '/'
+                        });
+                        alert('✅ 已限制上传7天');
+                        break;
+
+                    case 'unblock_upload':
+                        await supabaseClient
+                            .from('profiles')
+                            .update({ upload_blocked_until: null })
+                            .eq('id', targetId);
+                        await supabaseClient.from('notifications').insert({
+                            user_id: targetId,
+                            type: 'upload_unblocked',
+                            content: '✅ 上传限制已解除',
+                            link: '/'
+                        });
+                        alert('✅ 已解除上传限制');
+                        break;
+
+                    default:
+                        alert('未知操作');
+                }
+
+                // 刷新
+                await loadUserRole();
+                await loadUserProfile();
+                await loadReports();
+                document.getElementById('adminTargetId').value = '';
+                document.getElementById('adminReason').value = '';
+                document.getElementById('adminBanExpires').value = '';
+                loadAdminRequests();
+
+            } catch (err) {
+                alert('操作失败：' + err.message);
+            }
+        }
+
+        // ============================================================
+        //  管 理 员 Tab 切 换
+        // ============================================================
+        function switchAdminTab(tab) {
+            currentAdminTab = tab;
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                btn.style.borderBottom = '3px solid transparent';
+                btn.style.color = '#64748b';
+                btn.style.fontWeight = '500';
+            });
+            const activeBtn = document.getElementById(`adminTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            if (activeBtn) {
+                activeBtn.style.borderBottom = '3px solid #6366f1';
+                activeBtn.style.color = '#6366f1';
+                activeBtn.style.fontWeight = '600';
+            }
+
+            const content = document.getElementById('adminTabContent');
+
+            if (tab === 'reports') {
+                loadReports();
+                let html = `
+                    <h3 style="font-size:16px;margin-bottom:12px;">🚨 待处理举报</h3>
+                    ${allReports.length === 0 ? '<p style="color:#94a3b8;">暂无待处理举报</p>' : ''}
+                    ${allReports.map(r => `
+                        <div style="padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="openReportDetail(${r.id})">
+                            <div style="font-size:14px;color:#1e293b;">${r.content?.title || '已删除'}</div>
+                            <div style="font-size:12px;color:#94a3b8;">举报人：${r.reporter?.email || '未知'} · ${timeAgo(r.created_at)}</div>
+                            <div style="font-size:12px;color:#64748b;margin-top:4px;">"${r.reason}"</div>
+                            <button class="btn-sm" style="margin-top:6px;padding:2px 12px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;">查看详情</button>
+                        </div>
+                    `).join('')}
+                `;
+                content.innerHTML = html;
+                return;
+            }
+
+            if (tab === 'announce') {
+                let html = `
+                    <h3 style="font-size:16px;margin-bottom:12px;">📢 发布全局公告</h3>
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input type="text" id="globalAnnounceTitle" placeholder="公告标题" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label>内容 *</label>
+                        <textarea id="globalAnnounceContent" placeholder="公告内容" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>过期时间（可选）</label>
+                        <input type="datetime-local" id="globalAnnounceExpires">
+                    </div>
+                    <button onclick="publishGlobalAnnouncement()" class="btn-submit">
+                        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                        发布全局公告
+                    </button>
+                `;
+                content.innerHTML = html;
+                return;
+            }
+
+            if (tab === 'bans') {
+                loadBannedUsers();
+                return;
+            }
+
+            // 默认用户管理（已在HTML中）
+            // 重新显示用户管理界面
+            content.innerHTML = `
+                <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px;font-weight:600;">操作</label>
+                    <select id="adminActionType" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;margin-top:4px;">
+                        <option value="add_admin">➕ 添加管理员 (通过ID)</option>
+                        <option value="remove_admin">➖ 撤销管理员 (通过ID)</option>
+                        <option value="ban_user">🔒 封禁用户 (通过ID)</option>
+                        <option value="unban_user">🔓 取消封禁 (通过ID)</option>
+                        <option value="block_upload">🚫 限制上传 (通过ID)</option>
+                        <option value="unblock_upload">✅ 解除上传限制 (通过ID)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>目标用户ID</label>
+                    <input type="text" id="adminTargetId" placeholder="输入用户ID (UUID格式)">
+                </div>
+                <div class="form-group" id="adminExtraField">
+                    <label>封禁时间（可选，不填为永久）</label>
+                    <input type="datetime-local" id="adminBanExpires">
+                </div>
+                <div class="form-group">
+                    <label>理由 *</label>
+                    <textarea id="adminReason" placeholder="请输入操作理由" rows="2" required></textarea>
+                </div>
+                <button onclick="submitAdminAction()" class="btn-submit">
+                    <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    执行操作
+                </button>
+                <hr style="margin:16px 0;border-color:#eef2f6;">
+                <p style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:8px;">📋 操作记录</p>
+                <div id="adminRequestList"></div>
+            `;
+            loadAdminRequests();
+        }
+
+        // ============================================================
+        //  加 载 封 禁 列 表
+        // ============================================================
+        async function loadBannedUsers() {
+            const { data, error } = await supabaseClient
+                .from('banned_users')
+                .select('*, banned_by_user:banned_by(email)')
+                .order('created_at', { ascending: false });
+
+            const content = document.getElementById('adminTabContent');
+            if (!data || data.length === 0) {
+                content.innerHTML = `
+                    <h3 style="font-size:16px;margin-bottom:12px;">🔒 封禁记录</h3>
+                    <p style="color:#94a3b8;">暂无封禁记录</p>
+                `;
+                return;
+            }
+
+            let html = `
+                <h3 style="font-size:16px;margin-bottom:12px;">🔒 封禁记录</h3>
+                ${data.map(b => `
+                    <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                        <div>用户ID：<span style="font-family:monospace;font-size:12px;">${b.user_id}</span></div>
+                        <div>理由：${b.reason}</div>
+                        <div>封禁类型：${b.ban_type === 'permanent' ? '永久' : '临时'}</div>
+                        ${b.expires_at ? `<div>到期时间：${new Date(b.expires_at).toLocaleString()}</div>` : ''}
+                        <div style="color:#94a3b8;font-size:12px;">操作人：${b.banned_by_user?.email || '系统'} · ${timeAgo(b.created_at)}</div>
+                    </div>
+                `).join('')}
+            `;
+            content.innerHTML = html;
+        }
+
+        // ============================================================
+        //  发 布 全 局 公 告
+        // ============================================================
+        async function publishGlobalAnnouncement() {
+            const title = document.getElementById('globalAnnounceTitle').value.trim();
+            const content = document.getElementById('globalAnnounceContent').value.trim();
+            const expires = document.getElementById('globalAnnounceExpires').value;
+
+            if (!content) {
+                alert('请输入公告内容');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('global_announcements')
+                .insert({
+                    title: title || '系统公告',
+                    content: content,
+                    created_by: currentUser.id,
+                    expires_at: expires || null,
+                    is_active: true
+                });
+
+            if (error) {
+                alert('发布失败：' + error.message);
+                return;
+            }
+
+            // 通知所有用户
+            const { data: users } = await supabaseClient
+                .from('profiles')
+                .select('id');
+
+            if (users) {
+                for (const user of users) {
+                    await supabaseClient.from('notifications').insert({
+                        user_id: user.id,
+                        type: 'global_announcement',
+                        content: `📢 ${title || '系统公告'}：${content}`,
+                        link: '/'
+                    });
+                }
+            }
+
+            alert('✅ 全局公告已发布');
+            document.getElementById('globalAnnounceTitle').value = '';
+            document.getElementById('globalAnnounceContent').value = '';
+            document.getElementById('globalAnnounceExpires').value = '';
+            await loadGlobalAnnouncement();
+            switchAdminTab('announce');
+        }
+
+        // ============================================================
         //  用 户 主 页（查看他人资料）
         // ============================================================
         async function loadUserProfileView(userId) {
@@ -2453,7 +3333,6 @@
                 return;
             }
 
-            // 获取该用户已审核的内容
             const { data: contents, error: contentsError } = await supabaseClient
                 .from('contents')
                 .select('*')
@@ -2464,6 +3343,11 @@
             const avatarHtml = profile.avatar_url ?
                 `<img src="${profile.avatar_url}" alt="avatar">` :
                 (profile.nickname || 'U').charAt(0).toUpperCase();
+
+            const isBanned = profile.is_banned;
+            const banStatusHtml = isBanned ?
+                `<span class="ban-status banned">🚫 已封禁</span>` :
+                `<span class="ban-status normal">✅ 正常</span>`;
 
             let html = `
                 <div class="detail-container">
@@ -2479,6 +3363,7 @@
                                 <div class="id-text">🆔 ${profile.id}</div>
                                 ${profile.bio ? `<div class="bio-text">${profile.bio}</div>` : ''}
                                 <div class="join-text">👤 加入于 ${timeAgo(profile.created_at)}</div>
+                                <div>${banStatusHtml}</div>
                             </div>
                         </div>
                         <div style="padding-top:16px;border-top:1px solid #f1f5f9;">
@@ -2498,6 +3383,11 @@
                             ` : `<p style="color:#94a3b8;font-size:14px;">该用户暂无公开内容</p>`}
                         </div>
                     </div>
+                    <div class="qq-group-tip">
+                        <span class="qq-icon">🐧</span>
+                        <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                        <span style="color:#64748b;font-size:12px;">如被误封请在群内艾特管理员申诉</span>
+                    </div>
                 </div>
             `;
 
@@ -2505,11 +3395,12 @@
         }
 
         // ============================================================
-        //  详 情 页
+        //  详 情 页（含举报按钮）
         // ============================================================
         async function loadDetail(contentId) {
             if (!currentUser) return;
 
+            // 检查内容是否存在
             const { data: content, error } = await supabaseClient
                 .from('contents')
                 .select(`
@@ -2660,6 +3551,9 @@
                         返回首页
                     </div>
                     <div class="detail-card">
+                        <button class="detail-report-btn" onclick="openReportModal(${content.id})" title="举报此内容">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </button>
                         <div class="detail-meta">
                             <span class="cat ${getCategoryClass(content.category)}">${getCategoryIcon(content.category)} ${content.category}</span>
                             <span>${timeAgo(content.created_at)}</span>
@@ -2705,6 +3599,11 @@
                     </div>
 
                     ${recHtml}
+                    <div class="qq-group-tip" style="margin-top:16px;">
+                        <span class="qq-icon">🐧</span>
+                        <span>必看网官方QQ群：<span class="qq-number">976926251</span></span>
+                        <span style="color:#64748b;font-size:12px;">如被误封请在群内艾特管理员申诉</span>
+                    </div>
                 </div>
             `;
 
@@ -2859,6 +3758,10 @@
                 navReview.classList.add('hidden');
                 navAdmin.classList.add('hidden');
                 editAnnounceBtn.classList.add('hidden');
+            }
+            // 如果有待处理举报，显示在管理按钮上
+            if (currentUserRole === 'admin') {
+                loadReports();
             }
         }
 
@@ -3212,18 +4115,24 @@
         }
 
         // ============================================================
-        //  管 理 员 管 理
+        //  管 理 员 总 览 弹 窗
         // ============================================================
         async function openAdminModal() {
             if (currentUserRole !== 'admin') return;
             document.getElementById('adminModal').classList.remove('hidden');
+            // 重置到用户管理 tab
+            switchAdminTab('users');
             await loadAdminRequests();
+            await loadReports();
         }
 
         function closeAdminModal() {
             document.getElementById('adminModal').classList.add('hidden');
         }
 
+        // ============================================================
+        //  加 载 操 作 记 录
+        // ============================================================
         async function loadAdminRequests() {
             const { data, error } = await supabaseClient
                 .from('admin_requests')
@@ -3234,7 +4143,7 @@
 
             const container = document.getElementById('adminRequestList');
             if (!data || data.length === 0) {
-                container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">暂无申请记录</p>';
+                container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">暂无操作记录</p>';
                 return;
             }
             container.innerHTML = data.map(r => {
@@ -3242,7 +4151,7 @@
                 const actionMap = { 'add': '添加管理员', 'remove': '撤销管理员' };
                 return `
                     <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
-                        <div>${actionMap[r.action_type]}：${r.target?.email || '未知用户'}</div>
+                        <div>${actionMap[r.action_type] || r.action_type}：${r.target?.email || '未知用户'}</div>
                         <div style="color:#64748b;font-size:12px;">理由：${r.reason}</div>
                         <div>状态：${statusMap[r.status] || r.status}</div>
                         <div style="color:#94a3b8;font-size:11px;">${timeAgo(r.created_at)}</div>
@@ -3251,87 +4160,8 @@
             }).join('');
         }
 
-        async function submitAdminRequest() {
-            if (!currentUser) return;
-            const actionType = document.getElementById('adminActionType').value;
-            const targetEmail = document.getElementById('adminTargetEmail').value.trim();
-            const reason = document.getElementById('adminReason').value.trim();
-
-            if (!targetEmail) { alert('请输入目标用户邮箱'); return; }
-            if (!reason) { alert('请输入操作理由'); return; }
-
-            const { data: users, error: userError } = await supabaseClient.auth.admin.listUsers();
-            if (userError) { alert('查找用户失败：' + userError.message); return; }
-            const target = users.users.find(u => u.email === targetEmail);
-            if (!target) { alert('未找到该用户，请确保用户已注册'); return; }
-            if (target.email === MAIN_ADMIN_EMAIL) { alert('不能操作主管理员'); return; }
-
-            if (isMainAdmin) {
-                const newRole = actionType === 'add' ? 'admin' : 'user';
-                const { error } = await supabaseClient
-                    .from('profiles')
-                    .update({ role: newRole })
-                    .eq('id', target.id);
-                if (error) {
-                    alert('操作失败：' + error.message);
-                    return;
-                }
-                const msg = actionType === 'add' ?
-                    `👑 你已被 ${currentUser.email} 设为管理员` :
-                    `📋 你已被 ${currentUser.email} 撤销管理员权限`;
-                await supabaseClient.from('notifications').insert({
-                    user_id: target.id,
-                    type: 'admin_response',
-                    content: msg,
-                    link: '/'
-                });
-                alert('✅ 操作成功');
-                document.getElementById('adminTargetEmail').value = '';
-                document.getElementById('adminReason').value = '';
-                loadAdminRequests();
-                loadUserRole();
-                updateUI();
-                return;
-            }
-
-            const { error } = await supabaseClient
-                .from('admin_requests')
-                .insert({
-                    requester_id: currentUser.id,
-                    target_id: target.id,
-                    action_type: actionType,
-                    reason: reason,
-                    status: 'pending'
-                });
-
-            if (error) {
-                alert('提交失败：' + error.message);
-                return;
-            }
-
-            const { data: mainAdmin } = await supabaseClient
-                .from('profiles')
-                .select('id')
-                .eq('email', MAIN_ADMIN_EMAIL)
-                .single();
-            if (mainAdmin) {
-                await supabaseClient.from('notifications').insert({
-                    user_id: mainAdmin.id,
-                    type: 'admin_request',
-                    content: `👑 ${currentUser.email} 申请${actionType === 'add' ? '添加' : '撤销'}管理员：${targetEmail}，理由：${reason}`,
-                    link: '/'
-                });
-            }
-
-            alert('✅ 申请已提交，等待主管理员审核');
-            document.getElementById('adminTargetEmail').value = '';
-            document.getElementById('adminReason').value = '';
-            loadAdminRequests();
-            loadNotifications();
-        }
-
         // ============================================================
-        //  编 辑 个 人 资 料（含 ID 显示 + 30天限制）
+        //  编 辑 个 人 资 料（含 QQ群提示）
         // ============================================================
         function previewAvatar(input) {
             const file = input.files[0];
@@ -3349,10 +4179,8 @@
             if (!currentUser) return;
             avatarFileToUpload = null;
 
-            // 显示用户 ID
             document.getElementById('userIdDisplay').textContent = currentUser.id;
 
-            // 检查 30 天限制
             const restrictionMsg = document.getElementById('editRestrictionMsg');
             const restrictionDays = document.getElementById('restrictionDays');
 
@@ -3380,7 +4208,6 @@
                 document.getElementById('saveProfileBtn').style.opacity = '1';
             }
 
-            // 加载当前资料
             document.getElementById('avatarPreview').innerHTML =
                 `<svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
             document.getElementById('avatarFileName').textContent = '点击选择图片';
@@ -3402,7 +4229,6 @@
                         document.getElementById('editNickname').value = data.nickname || '';
                         document.getElementById('editBio').value = data.bio || '';
                         _lastUpdatedAt = data.last_updated_at || null;
-                        // 再次检查限制（因为有新数据）
                         if (_lastUpdatedAt) {
                             const lastUpdated = new Date(_lastUpdatedAt);
                             const now = new Date();
@@ -3432,7 +4258,6 @@
         }
 
         async function saveProfile() {
-            // ===== 检查 30 天限制 =====
             if (!_canEditProfile && _lastUpdatedAt) {
                 const lastUpdated = new Date(_lastUpdatedAt);
                 const now = new Date();
@@ -3452,7 +4277,6 @@
             if (nickname) updateData.nickname = nickname;
             if (bio) updateData.bio = bio;
 
-            // 头像上传
             if (avatarFileToUpload) {
                 const filePath = `${currentUser.id}/${Date.now()}_${avatarFileToUpload.name}`;
                 const { error: uploadError } = await supabaseClient.storage
@@ -3476,7 +4300,6 @@
                 return;
             }
 
-            // 更新 last_updated_at
             updateData.last_updated_at = new Date().toISOString();
 
             const { error } = await supabaseClient
@@ -3498,7 +4321,6 @@
                 if (currentPage === 'detail' && detailContentId) {
                     loadDetail(detailContentId);
                 }
-                // 重新加载用户资料更新侧边栏
                 loadUserProfile();
             }
         }
@@ -3506,8 +4328,27 @@
         // ============================================================
         //  初 始 化
         // ============================================================
-        console.log('👁️ 必看网 v13.0.0 (完整版)');
+        console.log('👁️ 必看网 v14.0.0 (完整管理版)');
         console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
+        console.log('🐧 官方QQ群: 976926251');
+
+        // 检查封禁状态
+        setInterval(async function() {
+            if (currentUser) {
+                const { data } = await supabaseClient
+                    .from('profiles')
+                    .select('is_banned, ban_expires_at')
+                    .eq('id', currentUser.id)
+                    .single();
+                if (data?.is_banned) {
+                    const expires = data.ban_expires_at ? new Date(data.ban_expires_at) : null;
+                    if (!expires || expires > new Date()) {
+                        // 被封禁，刷新页面或跳转
+                        location.reload();
+                    }
+                }
+            }
+        }, 60000); // 每分钟检查一次
     </script>
 
 </body>
