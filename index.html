@@ -1084,7 +1084,7 @@
             font-size: 13px;
             cursor: pointer;
         }
-        .detail-comments .comment-list .comment-item .cmt-content .cmt-user:hover {
+        .detail-comments .comment-list .comment-item .cmt-user:hover {
             color: #6366f1;
         }
         .detail-comments .comment-list .comment-item .cmt-content .cmt-text {
@@ -1239,19 +1239,23 @@
         .modal-box .modal-header .close-btn:hover {
             background: #e2e8f0;
         }
-        .modal-box .form-group {
+
+        /* ========================================================== */
+        /*  修 复：将输入框和按钮样式提取为全局类（不再依赖 .modal-box） */
+        /* ========================================================== */
+        .form-group {
             margin-bottom: 14px;
         }
-        .modal-box .form-group label {
+        .form-group label {
             display: block;
             font-size: 13px;
             font-weight: 600;
             color: #334155;
             margin-bottom: 4px;
         }
-        .modal-box .form-group input,
-        .modal-box .form-group select,
-        .modal-box .form-group textarea {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 10px 14px;
             border: 2px solid #e2e8f0;
@@ -1260,17 +1264,17 @@
             background: #f8fafc;
             transition: 0.2s;
         }
-        .modal-box .form-group input:focus,
-        .modal-box .form-group select:focus,
-        .modal-box .form-group textarea:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             border-color: #6366f1;
             background: #fff;
         }
-        .modal-box .form-group textarea {
+        .form-group textarea {
             resize: vertical;
             min-height: 70px;
         }
-        .modal-box .form-group .file-input-wrap {
+        .form-group .file-input-wrap {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -1281,14 +1285,14 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .modal-box .form-group .file-input-wrap:hover {
+        .form-group .file-input-wrap:hover {
             border-color: #6366f1;
             background: #f1f4ff;
         }
-        .modal-box .form-group .file-input-wrap input[type="file"] {
+        .form-group .file-input-wrap input[type="file"] {
             display: none;
         }
-        .modal-box .form-group .file-input-wrap .file-name {
+        .form-group .file-input-wrap .file-name {
             font-size: 14px;
             color: #64748b;
             flex: 1;
@@ -1296,7 +1300,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .modal-box .form-group .file-input-wrap svg {
+        .form-group .file-input-wrap svg {
             width: 18px;
             height: 18px;
             stroke: #94a3b8;
@@ -1306,16 +1310,16 @@
             stroke-linejoin: round;
             flex-shrink: 0;
         }
-        .modal-box .form-group .url-input-wrap {
+        .form-group .url-input-wrap {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-        .modal-box .form-group .url-input-wrap input {
+        .form-group .url-input-wrap input {
             flex: 1;
             min-width: 200px;
         }
-        .modal-box .form-group .url-input-wrap button {
+        .form-group .url-input-wrap button {
             padding: 8px 14px;
             background: #6366f1;
             color: #fff;
@@ -1327,7 +1331,7 @@
             align-items: center;
             gap: 4px;
         }
-        .modal-box .form-group .url-input-wrap button svg {
+        .form-group .url-input-wrap button svg {
             width: 14px;
             height: 14px;
             stroke: currentColor;
@@ -1336,13 +1340,13 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-        .modal-box .form-group .url-list {
+        .form-group .url-list {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
             margin-top: 6px;
         }
-        .modal-box .form-group .url-list .url-tag {
+        .form-group .url-list .url-tag {
             background: #eef2ff;
             color: #6366f1;
             padding: 2px 10px;
@@ -1352,20 +1356,20 @@
             align-items: center;
             gap: 6px;
         }
-        .modal-box .form-group .url-list .url-tag .remove {
+        .form-group .url-list .url-tag .remove {
             cursor: pointer;
             font-weight: 700;
         }
-        .modal-box .form-group .tag-input-wrap {
+        .form-group .tag-input-wrap {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-        .modal-box .form-group .tag-input-wrap input {
+        .form-group .tag-input-wrap input {
             flex: 1;
             min-width: 120px;
         }
-        .modal-box .form-group .tag-input-wrap button {
+        .form-group .tag-input-wrap button {
             padding: 6px 14px;
             background: #e2e8f0;
             color: #475569;
@@ -1377,7 +1381,7 @@
             align-items: center;
             gap: 4px;
         }
-        .modal-box .form-group .tag-input-wrap button svg {
+        .form-group .tag-input-wrap button svg {
             width: 12px;
             height: 12px;
             stroke: currentColor;
@@ -1386,16 +1390,16 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-        .modal-box .form-group .tag-input-wrap button:hover {
+        .form-group .tag-input-wrap button:hover {
             background: #cbd5e1;
         }
-        .modal-box .form-group .tag-list {
+        .form-group .tag-list {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             margin-top: 6px;
         }
-        .modal-box .form-group .tag-list .tag-item {
+        .form-group .tag-list .tag-item {
             background: #f1f5f9;
             padding: 2px 10px;
             border-radius: 12px;
@@ -1404,12 +1408,13 @@
             align-items: center;
             gap: 6px;
         }
-        .modal-box .form-group .tag-list .tag-item .remove {
+        .form-group .tag-list .tag-item .remove {
             cursor: pointer;
             font-weight: 700;
             color: #ef4444;
         }
-        .modal-box .btn-submit {
+
+        .btn-submit {
             width: 100%;
             padding: 12px;
             background: #6366f1;
@@ -1424,8 +1429,9 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            cursor: pointer;
         }
-        .modal-box .btn-submit svg {
+        .btn-submit svg {
             width: 18px;
             height: 18px;
             stroke: currentColor;
@@ -1434,16 +1440,17 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-        .modal-box .btn-submit:hover {
+        .btn-submit:hover {
             background: #4f46e5;
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
         }
-        .modal-box .btn-submit:disabled {
+        .btn-submit:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
+        /* ========================================================== */
 
         /* ===== 头像预览 ===== */
         .avatar-preview {
@@ -2127,7 +2134,7 @@
     </div>
 
     <!-- 版本号 -->
-    <div class="version-tag">v16.0.0</div>
+    <div class="version-tag">v16.0.1</div>
 
     <!-- ===== 引入 JavaScript 文件 ===== -->
     <script src="app.js"></script>
