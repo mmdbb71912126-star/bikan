@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
     <title>必看网</title>
 
-    <!-- 浏览器标签页图标（Favicon）：使用你的原版 Logo，颜色改成深红色 -->
+    <!-- 标签页图标（深红色） -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M12 50 Q25 10 50 10 Q75 10 88 50 Q75 90 50 90 Q25 90 12 50 Z' fill='none' stroke='%238b0000' stroke-width='14' stroke-linejoin='round'/%3E%3Crect x='45' y='28' width='10' height='20' rx='4' fill='%238b0000'/%3E%3Crect x='47' y='56' width='6' height='6' rx='3' fill='%238b0000'/%3E%3C/svg%3E">
 
     <style>
@@ -13,19 +13,19 @@
            全局 CSS 变量（深绿 + 黑色主题）
            ============================================================ */
         :root {
-            --bg-primary: #000000;          /* 主背景纯黑 */
-            --bg-secondary: #0d1117;        /* 侧边栏/次要背景 */
-            --bg-card: #1e2f25;             /* 卡片背景深绿 */
-            --bg-card-hover: #2d3f33;       /* 卡片悬浮深绿 */
-            --border-color: #2d3f33;        /* 边框颜色 */
+            --bg-primary: #000000;
+            --bg-secondary: #0d1117;
+            --bg-card: #1e2f25;
+            --bg-card-hover: #2d3f33;
+            --border-color: #2d3f33;
             
-            --text-primary: #e6edf3;        /* 主文字浅灰白 */
-            --text-secondary: #94a3b8;      /* 辅助文字 */
-            --text-danger: #ef4444;         /* 删除/危险色 */
+            --text-primary: #e6edf3;
+            --text-secondary: #94a3b8;
+            --text-danger: #ef4444;
             
-            --accent-green: #2d6a4f;        /* 强调/按钮深绿色 */
-            --accent-green-hover: #1e4a35;  /* 强调色悬浮 */
-            --accent-red: #8b0000;          /* Logo 和少量点缀深红色 */
+            --accent-green: #2d6a4f;
+            --accent-green-hover: #1e4a35;
+            --accent-red: #8b0000;
             
             --radius-md: 12px;
             --radius-sm: 8px;
@@ -47,7 +47,7 @@
         a:hover { text-decoration: underline; }
 
         /* ============================================================
-           侧边栏
+           侧边栏（含收起逻辑）
            ============================================================ */
         #sideNav {
             position: fixed;
@@ -65,25 +65,13 @@
             overflow: hidden;
         }
 
-        /* 侧边栏收起状态 */
-        #sideNav.collapsed {
-            width: 60px;
-        }
+        #sideNav.collapsed { width: 60px; }
         #sideNav.collapsed .nav-item span,
         #sideNav.collapsed .nav-group-title,
-        #sideNav.collapsed .nav-footer {
-            display: none;
-        }
-        #sideNav.collapsed .nav-item {
-            justify-content: center;
-            padding: 12px 0;
-        }
-        #sideNav.collapsed #sidebarToggle {
-            margin: 0 auto;
-            width: 40px;
-        }
+        #sideNav.collapsed .nav-footer { display: none; }
+        #sideNav.collapsed .nav-item { justify-content: center; padding: 12px 0; }
+        #sideNav.collapsed #sidebarToggle { margin: 0 auto; width: 40px; }
 
-        /* 收起/展开按钮 */
         #sidebarToggle {
             background: transparent;
             border: 1px solid var(--border-color);
@@ -100,43 +88,25 @@
         }
         #sidebarToggle:hover { background-color: var(--bg-card); }
 
-        /* 导航项 */
         .nav-group { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
-        .nav-group-title { font-size: 12px; color: var(--text-secondary); padding: 8px 4px 12px 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .nav-group-title { font-size: 12px; color: var(--text-secondary); padding: 8px 4px 12px 4px; }
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 12px; border-radius: var(--radius-sm);
+            cursor: pointer; transition: var(--transition);
+            color: var(--text-secondary); font-size: 14px; font-weight: 500;
             white-space: nowrap;
         }
         .nav-item:hover { background-color: var(--bg-card); color: var(--text-primary); }
         .nav-item.active { background-color: var(--accent-green); color: #fff; }
         .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
-        .badge {
-            background: var(--text-danger);
-            color: #fff;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            margin-left: auto;
-        }
+        .badge { background: var(--text-danger); color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 12px; margin-left: auto; }
         .badge.hidden { display: none; }
 
-        .nav-footer {
-            padding: 16px 12px 0 12px;
-            border-top: 1px solid var(--border-color);
-            margin-top: 8px;
-        }
+        .nav-footer { padding: 16px 12px 0 12px; border-top: 1px solid var(--border-color); margin-top: 8px; }
 
         /* ============================================================
-           主内容区域
+           主内容区（修复排版偏左的核心代码）
            ============================================================ */
         #mainContent {
             margin-left: 220px;
@@ -144,69 +114,66 @@
             padding: 16px 24px 80px 24px;
             min-height: 100vh;
             transition: margin-left 0.3s ease;
-            max-width: 100%;
+            
+            /* 关键修复：让所有内容水平居中 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         #sideNav.collapsed + #mainContent { margin-left: 60px; }
 
-        /* 顶栏 */
-        #topNav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 12px;
+        /* 限制动态渲染内容的宽度，防止贴边 */
+        #contentRender {
+            min-height: 400px;
+            width: 100%;
+            max-width: 1000px;
         }
-        #topNav.hidden { display: none; }
-        .tabs { display: flex; gap: 4px; overflow-x: auto; }
-        .tab {
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--text-secondary);
-            transition: var(--transition);
-            white-space: nowrap;
-        }
-        .tab:hover { background: var(--bg-card); color: var(--text-primary); }
-        .tab.active { background: var(--accent-green); color: #fff; }
 
-        #searchContainer {
-            display: flex;
-            align-items: center;
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 4px 16px;
-            border: 1px solid transparent;
-            transition: var(--transition);
-        }
-        #searchContainer:focus-within { border-color: var(--accent-green); }
-        #searchContainer.hidden { display: none; }
-        #searchInput {
-            background: transparent;
-            border: none;
-            padding: 8px 4px;
-            color: var(--text-primary);
-            outline: none;
-            font-size: 14px;
-            width: 180px;
-        }
+        /* 侧边栏在特殊页面隐藏的逻辑（由 router.js 控制） */
+        #sideNav.hidden { display: none !important; }
+        #sidebarToggle.hidden { display: none !important; }
 
         /* ============================================================
-           动态内容区（由 app.js 渲染）
+           通用按钮样式（修复硬切块、胶带感）
            ============================================================ */
-        #contentRender { min-height: 400px; }
-        .hidden { display: none !important; }
-
-        /* 内容卡片网格 */
-        .content-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-            margin-top: 8px;
+        .btn-publish, .btn-submit {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
         }
+        .btn-publish:hover, .btn-submit:hover {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: #fff;
+        }
+
+        /* 胶囊式标签（二级分区、推荐徽章） */
+        .capsule-tab {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .capsule-tab:hover { background: var(--bg-card); color: var(--text-primary); }
+        .capsule-tab.active { background: var(--accent-green); color: #fff; border-color: var(--accent-green); }
+
+        /* ============================================================
+           内容卡片与模态框
+           ============================================================ */
         .content-card {
             background: var(--bg-card);
             border-radius: var(--radius-md);
@@ -215,60 +182,13 @@
             cursor: pointer;
             transition: var(--transition);
             position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
         }
         .content-card:hover {
             background: var(--bg-card-hover);
             transform: translateY(-2px);
             border-color: var(--accent-green);
         }
-        .content-card .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-        .content-card .desc { font-size: 14px; color: var(--text-secondary); }
-        .content-card .meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-        .content-card .footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid var(--border-color);
-            font-size: 13px;
-        }
-        .content-card .stats span { display: inline-flex; align-items: center; gap: 4px; margin-left: 12px; cursor: pointer; }
-        .content-card .stats span.liked { color: var(--text-danger); }
-
-        /* 工具类 */
-        .detail-container { max-width: 800px; margin: 0 auto; }
-        .back-btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-secondary); margin-bottom: 16px; transition: var(--transition); font-size: 14px; }
-        .back-btn:hover { color: var(--text-primary); }
-        .detail-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 20px; border: 1px solid var(--border-color); margin-bottom: 16px; position: relative; }
-        .detail-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-        .detail-desc { color: var(--text-secondary); margin-bottom: 12px; }
-        .detail-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px; color: var(--text-secondary); }
-        .detail-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); }
-        .detail-report-btn, .detail-fav-btn { position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: 4px; transition: var(--transition); }
-        .detail-report-btn:hover, .detail-fav-btn:hover { color: var(--text-primary); background: var(--bg-card-hover); }
-        .detail-fav-btn { right: 44px; }
-
-        .avatar-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-card-hover); display: inline-flex; align-items: center; justify-content: center; overflow: hidden; font-size: 12px; font-weight: 600; color: var(--text-primary); }
-        .avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
-
-        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
-        .empty-state svg { width: 48px; height: 48px; stroke: var(--text-secondary); margin-bottom: 12px; }
-
-        .tag { display: inline-block; background: var(--bg-secondary); color: var(--text-secondary); padding: 2px 10px; border-radius: 12px; font-size: 12px; margin: 0 4px 4px 0; }
-        .qq-group-tip { border: 1px solid var(--accent-green); background: rgba(45, 106, 79, 0.1); border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
-        .qq-number { color: var(--text-primary); font-weight: 600; }
-
-        /* 消息分类卡片 */
-        .message-category { transition: var(--transition); }
-        .message-category:hover { background: var(--bg-card-hover) !important; }
-
-        /* ============================================================
-           模态框（统一深色风格）
-           ============================================================ */
+        
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
@@ -289,6 +209,7 @@
             background: transparent; border: none;
             color: var(--text-secondary); font-size: 24px; cursor: pointer;
         }
+
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary); }
         .form-group input, .form-group textarea, .form-group select {
@@ -300,25 +221,10 @@
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
             border-color: var(--accent-green); outline: none;
         }
-        .btn-submit, .btn-publish {
-            background: var(--accent-green); color: #fff;
-            border: none; border-radius: var(--radius-sm);
-            padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
-            display: inline-flex; align-items: center; gap: 6px;
-            transition: var(--transition);
-        }
-        .btn-submit:hover, .btn-publish:hover { background: var(--accent-green-hover); }
-        .btn-sm { padding: 4px 12px; border-radius: var(--radius-sm); border: none; font-size: 13px; cursor: pointer; transition: var(--transition); }
-        .btn-sm.approve { background: #dcfce7; color: #166534; }
-        .btn-sm.reject { background: #fee2e2; color: #991b1b; }
 
-        /* 开关 */
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); transition: .4s; border-radius: 24px; border: 1px solid var(--border-color); }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background: var(--text-secondary); transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background: var(--accent-green); border-color: var(--accent-green); }
-        input:checked + .slider:before { transform: translateX(20px); background: #fff; }
+        .qq-group-tip { border: 1px solid var(--border-color); background: rgba(45, 106, 79, 0.1); border-radius: var(--radius-md); padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+
+        .hidden { display: none !important; }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
@@ -327,59 +233,53 @@
             #sideNav .nav-item { justify-content: center; padding: 12px 0; }
             #sideNav #sidebarToggle { margin: 0 auto 16px auto; width: 36px; }
             #mainContent { margin-left: 60px; padding: 12px; }
-            .content-grid { grid-template-columns: 1fr; }
-            #searchInput { width: 120px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ============================================================
-    主应用（由 app.js 控制显示/隐藏）
-    ============================================================ -->
+    <!-- 主应用 -->
     <div id="app" class="hidden">
         
         <!-- ====== 左侧导航栏 ====== -->
         <div id="sideNav">
-            <!-- 收起/展开按钮 -->
-            <button id="sidebarToggle" onclick="toggleSidebar()" title="收起/展开侧边栏">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <button id="sidebarToggle" onclick="toggleSidebar()" title="收起/展开">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
 
             <div class="nav-group">
                 <div class="nav-group-title">导航</div>
                 <div class="nav-item active" data-page="home" onclick="navigateTo('home')">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
                     <span>首页</span>
                 </div>
                 <div class="nav-item" data-page="upload" onclick="navigateTo('upload')">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     <span>我的内容</span>
                 </div>
                 <div class="nav-item" data-page="messages" onclick="navigateTo('messages')">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                     <span>消息</span>
                     <span class="badge hidden" id="msgBadge">0</span>
                 </div>
-                <!-- 管理员入口 -->
                 <div class="nav-item hidden" data-page="review" onclick="navigateTo('review')" id="navReview">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     <span>待审核</span>
                     <span class="badge hidden" id="reviewBadge">0</span>
                 </div>
                 <div class="nav-item hidden" data-page="admin" onclick="navigateTo('admin')" id="navAdmin">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
                     <span>管理中心</span>
                 </div>
                 <div class="nav-item" data-page="profile" onclick="navigateTo('profile')" id="navProfile">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     <span>个人中心</span>
                 </div>
             </div>
 
             <div class="nav-footer">
                 <div class="nav-item" onclick="handleLogout()" style="color:var(--text-danger);">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     <span>退出</span>
                 </div>
             </div>
@@ -387,158 +287,66 @@
 
         <!-- ====== 主内容区 ====== -->
         <div id="mainContent">
-            <!-- 顶栏 -->
-            <div id="topNav">
-                <div class="tabs">
-                    <div class="tab active" data-tab="推荐" onclick="switchTab('推荐')">推荐</div>
-                    <div class="tab" data-tab="论坛" onclick="switchTab('论坛')">论坛</div>
-                    <div class="tab" data-tab="资源分享" onclick="switchTab('资源分享')">资源分享</div>
-                    <div class="tab" data-tab="网址分享" onclick="switchTab('网址分享')">网址分享</div>
-                    <div class="tab" data-tab="VPN分享" onclick="switchTab('VPN分享')">VPN分享</div>
-                </div>
-                <div id="searchContainer">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="searchInput" placeholder="搜索内容..." onkeydown="if(event.key==='Enter') doSearch()">
-                </div>
-            </div>
-
-            <!-- 动态渲染内容 -->
             <div id="contentRender"></div>
         </div>
     </div>
 
     <!-- ============================================================
-    模态框组件（必须存在于 HTML 中，由 JS 控制显示）
+    模态框组件（供 JS 调用）
     ============================================================ -->
-
-    <!-- 上传弹窗 -->
     <div id="uploadModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close" onclick="closeUploadModal()">✕</button>
-            <h2 style="margin-bottom: 16px;">发布新内容</h2>
+            <h2 style="margin-bottom:16px;">发布新内容</h2>
             <form id="uploadForm" onsubmit="submitContent(event)">
-                <div class="form-group">
-                    <label>分区</label>
-                    <select id="uploadCategory">
-                        <option value="论坛">论坛</option>
-                        <option value="资源分享">资源分享</option>
-                        <option value="网址分享">网址分享</option>
-                        <option value="VPN分享">VPN分享</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>标题 *</label>
-                    <input type="text" id="uploadTitle" placeholder="输入标题" maxlength="100" required>
-                </div>
-                <div class="form-group">
-                    <label>描述</label>
-                    <textarea id="uploadDesc" placeholder="输入描述（可选）" rows="2"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>上传文件（可多个）</label>
-                    <input type="file" id="uploadFile" multiple onchange="updateFileNames(this)" style="padding:6px;">
-                    <div id="uploadFileName" style="font-size:12px; color:var(--text-secondary); margin-top:4px;">点击选择文件（可多个）</div>
-                </div>
-                <div class="form-group" id="urlGroup">
-                    <label>链接（可多个）</label>
-                    <div style="display:flex; gap:8px;">
-                        <input type="url" id="uploadUrlInput" placeholder="https://..." style="flex:1;">
-                        <button type="button" onclick="addUrl()" style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); padding:0 16px; border-radius:var(--radius-sm); cursor:pointer;">添加</button>
-                    </div>
-                    <div id="urlList" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>
-                </div>
-                <div class="form-group">
-                    <label>标签</label>
-                    <div style="display:flex; gap:8px;">
-                        <input type="text" id="tagInput" placeholder="输入标签按回车" onkeydown="if(event.key==='Enter'){addTag();event.preventDefault();}" style="flex:1;">
-                        <button type="button" onclick="addTag()" style="background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); padding:0 16px; border-radius:var(--radius-sm); cursor:pointer;">添加</button>
-                    </div>
-                    <div id="tagList" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;"></div>
-                </div>
-                <button type="submit" class="btn-submit" id="submitBtn" style="width:100%; justify-content:center; margin-top:8px;">提交审核</button>
+                <div class="form-group"><label>分区</label><select id="uploadCategory"><option>论坛</option><option>资源分享</option><option>网址分享</option><option>VPN分享</option></select></div>
+                <div class="form-group"><label>标题 *</label><input type="text" id="uploadTitle" required></div>
+                <div class="form-group"><label>描述</label><textarea id="uploadDesc" rows="2"></textarea></div>
+                <div class="form-group"><label>上传文件</label><input type="file" id="uploadFile" multiple onchange="updateFileNames(this)"><div id="uploadFileName" style="font-size:12px;color:var(--text-secondary);">点击选择文件</div></div>
+                <div class="form-group" id="urlGroup"><label>链接</label><div style="display:flex;gap:8px;"><input type="url" id="uploadUrlInput" style="flex:1;"><button type="button" onclick="addUrl()" class="btn-publish">添加</button></div><div id="urlList"></div></div>
+                <div class="form-group"><label>标签</label><div style="display:flex;gap:8px;"><input type="text" id="tagInput" onkeydown="if(event.key==='Enter'){addTag();event.preventDefault();}" style="flex:1;"><button type="button" onclick="addTag()" class="btn-publish">添加</button></div><div id="tagList"></div></div>
+                <button type="submit" class="btn-publish" id="submitBtn" style="width:100%;justify-content:center;">提交审核</button>
             </form>
         </div>
     </div>
 
-    <!-- 公告编辑弹窗 -->
     <div id="announceModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close" onclick="closeAnnounceModal()">✕</button>
-            <h2 style="margin-bottom: 16px;">编辑公告</h2>
-            <div class="form-group">
-                <label>公告内容</label>
-                <textarea id="announceInput" rows="3" placeholder="输入新的公告内容"></textarea>
-            </div>
-            <button onclick="saveAnnouncement()" class="btn-submit">保存公告</button>
+            <h2 style="margin-bottom:16px;">编辑公告</h2>
+            <div class="form-group"><label>公告内容</label><textarea id="announceInput" rows="3"></textarea></div>
+            <button onclick="saveAnnouncement()" class="btn-publish">保存公告</button>
         </div>
     </div>
 
-    <!-- 个人资料编辑弹窗 -->
     <div id="profileEditModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close" onclick="closeProfileEdit()">✕</button>
-            <h2 style="margin-bottom: 16px;">编辑资料</h2>
-            <div class="form-group">
-                <label>用户ID（系统内部）</label>
-                <div id="userIdDisplay" style="background:var(--bg-primary); padding:8px 12px; border-radius:var(--radius-sm); font-size:13px; color:var(--text-secondary);"></div>
-            </div>
-            <div class="form-group">
-                <label>自定义展示ID（可随时修改）</label>
-                <input type="text" id="editDisplayId" placeholder="输入你想要的展示ID">
-            </div>
-            <div class="form-group">
-                <label>昵称</label>
-                <input type="text" id="editNickname" placeholder="输入昵称">
-            </div>
-            <div class="form-group">
-                <label>个人简介</label>
-                <textarea id="editBio" rows="2" placeholder="介绍一下你自己"></textarea>
-            </div>
-            <div class="form-group">
-                <label>头像</label>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div id="avatarPreview" style="width:48px; height:48px; border-radius:50%; background:var(--bg-card); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </div>
-                    <div>
-                        <input type="file" id="editAvatar" accept="image/*" onchange="previewAvatar(this)" style="font-size:13px;">
-                        <div id="avatarFileName" style="font-size:12px; color:var(--text-secondary);">点击选择图片</div>
-                    </div>
-                </div>
-            </div>
-            <button onclick="saveProfile()" class="btn-submit" id="saveProfileBtn" style="width:100%; justify-content:center;">保存修改</button>
+            <h2 style="margin-bottom:16px;">编辑资料</h2>
+            <div class="form-group"><label>展示ID</label><input type="text" id="editDisplayId"></div>
+            <div class="form-group"><label>昵称</label><input type="text" id="editNickname"></div>
+            <div class="form-group"><label>简介</label><textarea id="editBio" rows="2"></textarea></div>
+            <div class="form-group"><label>头像</label><div style="display:flex;align-items:center;gap:12px;"><div id="avatarPreview" style="width:48px;height:48px;border-radius:50%;background:var(--bg-card);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><input type="file" id="editAvatar" accept="image/*" onchange="previewAvatar(this)"><div id="avatarFileName" style="font-size:12px;color:var(--text-secondary);">点击选择</div></div></div>
+            <button onclick="saveProfile()" class="btn-publish" id="saveProfileBtn" style="width:100%;justify-content:center;">保存修改</button>
         </div>
     </div>
 
-    <!-- 举报弹窗 -->
     <div id="reportModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="modal-close" onclick="closeReportModal()">✕</button>
-            <h2 style="margin-bottom: 16px;">举报内容</h2>
-            <div class="form-group">
-                <label>举报理由</label>
-                <textarea id="reportReason" rows="3" placeholder="请详细描述举报理由（至少5个字）" maxlength="500"></textarea>
-                <div style="text-align:right; font-size:12px; color:var(--text-secondary); margin-top:4px;"><span id="reportCharCount">0</span>/500</div>
-            </div>
-            <button onclick="submitReport()" class="btn-submit" style="width:100%; justify-content:center;">提交举报</button>
-        </div>
-    </div>
-
-    <!-- 举报详情弹窗（管理员用） -->
-    <div id="reportDetailModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeReportDetail()">✕</button>
-            <h2 style="margin-bottom: 16px;">举报详情</h2>
-            <div id="reportDetailContent"></div>
+            <h2 style="margin-bottom:16px;">举报内容</h2>
+            <div class="form-group"><label>理由</label><textarea id="reportReason" rows="3" maxlength="500"></textarea><div style="text-align:right;font-size:12px;color:var(--text-secondary);"><span id="reportCharCount">0</span>/500</div></div>
+            <button onclick="submitReport()" class="btn-publish" style="width:100%;justify-content:center;">提交举报</button>
         </div>
     </div>
 
     <!-- ============================================================
-    加载 JS 文件（注意顺序：先 SDK，再图标，后主应用）
+    加载 JS（严格按照顺序）
     ============================================================ -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="icon.js"></script>
-    <script src="app.js"></script>
+    <script src="router.js"></script>
+    <!-- 注意：旧版 app.js 已彻底移除，后续功能由 home.js、profile.js 等模块文件接管 -->
 
 </body>
 </html>
