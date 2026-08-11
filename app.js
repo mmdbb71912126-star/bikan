@@ -42,7 +42,7 @@ let chatMessages = [];
 //  跳 转 防 止 死 循 环 标 志
 // ============================================================
 let _isRedirecting = false;
-let _hasRedirected = false; // 新增：防止反复横跳
+let _hasRedirected = false;
 
 // ============================================================
 //  DOM 引 用（安全获取，可能为 null）
@@ -65,7 +65,7 @@ const searchInput = document.getElementById('searchInput');
 const topNav = document.getElementById('topNav');
 
 // ============================================================
-//  检 查 登 录（修复：防止无限重定向死循环）
+//  检 查 登 录（终极修复：主动刷新缓存防弹回）
 // ============================================================
 (async function checkAuth() {
     if (_isRedirecting || _hasRedirected) {
@@ -75,16 +75,18 @@ const topNav = document.getElementById('topNav');
     console.log('🔍 首页检查登录状态...');
 
     try {
-        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-        if (sessionError) {
-            console.error('❌ 获取 session 失败:', sessionError);
-            _isRedirecting = true;
-            _hasRedirected = true;
-            window.location.href = '/login.html';
-            return;
+        // 1. 尝试获取 session
+        let { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        
+        // 2. 如果 session 为空且没有错误，尝试主动刷新（关键修复！）
+        if (!session && !sessionError) {
+            console.log('🔄 session缓存失效，尝试主动刷新...');
+            const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession();
+            if (!refreshError && refreshData.session) {
+                session = refreshData.session;
+                console.log('✅ 刷新成功，Session已恢复');
+            }
         }
-
-        console.log('📦 session:', session ? '存在' : '不存在');
 
         if (!session) {
             console.log('❌ 无 session，跳转到登录页');
@@ -94,6 +96,7 @@ const topNav = document.getElementById('topNav');
             return;
         }
 
+        // 3. 验证 token 有效性
         console.log('🔑 验证 token 有效性...');
         const { data: userData, error: userError } = await supabaseClient.auth.getUser();
         if (userError || !userData.user) {
@@ -175,9 +178,12 @@ const topNav = document.getElementById('topNav');
     }
 })();
 
+// 修复：改进 onAuthStateChange，避免初始化时误触发跳转
 supabaseClient.auth.onAuthStateChange((event, session) => {
-    if (!session) {
-        console.log('🔴 会话失效，跳转到登录页');
+    // 只有在明确登出且没有 session 且当前没有正在跳转时，才进行跳转
+    if (event === 'SIGNED_OUT' && !session && !_isRedirecting && !_hasRedirected) {
+        console.log('🔴 检测到登出事件，跳转到登录页');
+        _hasRedirected = true;
         window.location.href = '/login.html';
     }
 });
@@ -409,9 +415,6 @@ async function loadReports() {
 
     if (data && data.length > 0) {
         for (let report of data) {
-            // 修复：前端不能调用 admin.getUserById，改为直接显示"用户"
-            // 原为：const { data: userData } = await supabaseClient.auth.admin.getUserById(report.reporter_id);
-            // report.reporter_email = userData?.user?.email || '未知用户';
             report.reporter_email = '用户'; 
             
             try {
@@ -479,7 +482,6 @@ function renderMessages() {
             <h2 style="font-size:20px;margin-bottom:16px;">💬 消息</h2>
     `;
 
-    // 修复：加入了 report_created 类型，管理员才能看到Bug反馈
     const systemNotifications = allNotifications.filter(n =>
         ['global_announcement', 'approved', 'rejected', 'ban', 'unban', 'upload_blocked', 'upload_unblocked', 'report_created'].includes(n.type)
     );
@@ -2348,7 +2350,6 @@ async function submitAdminAction() {
         document.getElementById('adminReason').value = '';
         document.getElementById('adminBanExpires').value = '';
         
-        // 修复：操作成功后刷新操作记录
         loadAdminRequests();
 
     } catch (err) {
@@ -2819,7 +2820,7 @@ async function submitReport() {
 // ============================================================
 //  初 始 化
 // ============================================================
-console.log('👁️ 必看网 v16.0.1 (修复版 - 含日志)');
+console.log('👁️ 必看网 v16.0.2 (终极修复版 - 根治无限重定向)');
 console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
 console.log('🐧 官方QQ群: 976926251');
 console.log('✅ 所有功能已加载');
