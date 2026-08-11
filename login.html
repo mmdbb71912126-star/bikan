@@ -443,7 +443,7 @@
         };
 
         // ============================================================
-        //  检 查 登 录（含详细日志 + token 有效性验证）
+        //  检 查 登 录（修复：只检查不自动跳转）
         // ============================================================
         let _isChecking = false;
 
@@ -468,6 +468,7 @@
 
                 if (!session) {
                     console.log('✅ 无 session，停留在登录页');
+                    showLoginMsg('输入邮箱和密码登录，或使用 Google 一键登录', 'info');
                     _isChecking = false;
                     return;
                 }
@@ -491,8 +492,7 @@
                         }
                     } catch (e) {}
                     _isChecking = false;
-                    console.log('🔄 token 无效，已清除存储，重新加载页面');
-                    location.reload();
+                    showLoginMsg('登录已过期，请重新登录', 'error');
                     return;
                 }
 
@@ -502,7 +502,7 @@
                     localStorage.clear();
                     sessionStorage.clear();
                     _isChecking = false;
-                    location.reload();
+                    showLoginMsg('登录已过期，请重新登录', 'error');
                     return;
                 }
 
@@ -535,14 +535,22 @@
                     }
                 }
 
-                // 4. 一切正常，跳转到首页
-                console.log('✅ 一切正常，跳转到首页');
-                window.location.href = '/';
+                // 4. 已登录，不自动跳转，改为显示成功状态
+                console.log('✅ 已登录，准备让用户手动进入首页');
+                showLoginMsg('✅ 已登录，点击下方按钮进入首页', 'success');
+                loginBtn.innerHTML = '✅ 进入首页';
+                loginBtn.onclick = function() { window.location.href = '/'; };
+                loginBtn.disabled = false;
+                // 禁用 Google 按钮防止重复登录
+                googleBtn.disabled = true;
+                googleBtn.style.opacity = '0.6';
+
             } catch (e) {
                 console.error('❌ 检查登录状态异常:', e);
                 await supabaseClient.auth.signOut();
                 localStorage.clear();
                 sessionStorage.clear();
+                showLoginMsg('系统异常，请刷新重试', 'error');
             }
             _isChecking = false;
         })();
@@ -611,8 +619,15 @@
                 } catch (e) {
                     console.warn('检查封禁状态失败:', e);
                 }
-                showLoginMsg('登录成功！', 'success');
-                setTimeout(() => { window.location.href = '/'; }, 500);
+                // 登录成功，不自动跳转，改为显示成功并让用户点击进入首页
+                showLoginMsg('✅ 登录成功，点击下方按钮进入首页', 'success');
+                loginBtn.innerHTML = '✅ 进入首页';
+                loginBtn.onclick = function() { window.location.href = '/'; };
+                loginBtn.disabled = false;
+                googleBtn.disabled = true;
+                googleBtn.style.opacity = '0.6';
+                // 清空密码框
+                loginPassword.value = '';
             }
         }
 
@@ -684,6 +699,7 @@
                     document.getElementById('loginEmail').value = email;
                     registerPassword.value = '';
                     registerPasswordConfirm.value = '';
+                    // 注册成功后切换到登录表单，但不自动登录
                     setTimeout(() => {
                         showLogin();
                         showLoginMsg('注册成功！请查看邮箱验证后登录', 'success');
@@ -710,7 +726,7 @@
         registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
         registerPasswordConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleRegister(); });
 
-        console.log('🔐 必看网 - 登录页 v16.0 (含日志 + token验证)');
+        console.log('🔐 必看网 - 登录页 v16.0.1 (修复自动跳转)');
         console.log('📧 主管理员:', '3948677391@qq.com');
         console.log('🐧 官方QQ群: 976926251');
     </script>
