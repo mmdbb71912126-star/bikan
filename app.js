@@ -9,6 +9,29 @@ const SITE_URL = 'http://bikan.dpdns.org';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================================
+//  图 标 库（用纯 SVG 替换所有表情符号）
+// ============================================================
+const ICONS = {
+    // 分类
+    CAT_FORUM: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    CAT_RES: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`,
+    CAT_URL: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+    CAT_VPN: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+
+    // 交互
+    LIKE: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`,
+    COMMENT: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    UPLOAD: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+    SEARCH: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    STAR: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    REPORT: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    ADMIN: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>`,
+    LOGOUT: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+    FRIEND: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>`,
+    BAN: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`
+};
+
+// ============================================================
 //  状 态
 // ============================================================
 let currentUser = null;
@@ -39,12 +62,6 @@ let currentChatFriendId = null;
 let chatMessages = [];
 
 // ============================================================
-//  跳 转 防 止 死 循 环 标 志
-// ============================================================
-let _isRedirecting = false;
-let _hasRedirected = false;
-
-// ============================================================
 //  DOM 引 用（安全获取，可能为 null）
 // ============================================================
 const app = document.getElementById('app');
@@ -65,38 +82,40 @@ const searchInput = document.getElementById('searchInput');
 const topNav = document.getElementById('topNav');
 
 // ============================================================
-//  检 查 登 录（终极修复：主动刷新缓存防弹回）
+//  跳 转 锁（防止死循环）
+// ============================================================
+let _isRedirecting = false;
+
+// ============================================================
+//  检 查 登 录（含详细日志 + token 有效性验证）
 // ============================================================
 (async function checkAuth() {
-    if (_isRedirecting || _hasRedirected) {
-        console.log('⚠️ 正在跳转中或已跳转，跳过检查');
+    if (_isRedirecting) {
+        console.log('⚠️ 正在跳转中，跳过检查');
         return;
     }
     console.log('🔍 首页检查登录状态...');
 
     try {
-        // 1. 尝试获取 session
-        let { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-        
-        // 2. 如果 session 为空且没有错误，尝试主动刷新（关键修复！）
-        if (!session && !sessionError) {
-            console.log('🔄 session缓存失效，尝试主动刷新...');
-            const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession();
-            if (!refreshError && refreshData.session) {
-                session = refreshData.session;
-                console.log('✅ 刷新成功，Session已恢复');
-            }
-        }
-
-        if (!session) {
-            console.log('❌ 无 session，跳转到登录页');
+        // 1. 获取 session
+        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) {
+            console.error('❌ 获取 session 失败:', sessionError);
             _isRedirecting = true;
-            _hasRedirected = true;
             window.location.href = '/login.html';
             return;
         }
 
-        // 3. 验证 token 有效性
+        console.log('📦 session:', session ? '存在' : '不存在');
+
+        if (!session) {
+            console.log('❌ 无 session，跳转到登录页');
+            _isRedirecting = true;
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // 2. 验证 token 有效性（关键步骤）
         console.log('🔑 验证 token 有效性...');
         const { data: userData, error: userError } = await supabaseClient.auth.getUser();
         if (userError || !userData.user) {
@@ -114,7 +133,6 @@ const topNav = document.getElementById('topNav');
                 }
             } catch (e) {}
             _isRedirecting = true;
-            _hasRedirected = true;
             console.log('🔄 token 无效，跳转到登录页');
             window.location.href = '/login.html';
             return;
@@ -123,6 +141,7 @@ const topNav = document.getElementById('topNav');
         console.log('✅ token 有效，用户:', userData.user.email);
         currentUser = userData.user;
 
+        // 3. 检查封禁
         console.log('🔍 检查封禁状态...');
         const { data: profile } = await supabaseClient
             .from('profiles')
@@ -173,17 +192,13 @@ const topNav = document.getElementById('topNav');
     } catch (err) {
         console.error('❌ 认证失败:', err);
         _isRedirecting = true;
-        _hasRedirected = true;
         window.location.href = '/login.html';
     }
 })();
 
-// 修复：改进 onAuthStateChange，避免初始化时误触发跳转
 supabaseClient.auth.onAuthStateChange((event, session) => {
-    // 只有在明确登出且没有 session 且当前没有正在跳转时，才进行跳转
-    if (event === 'SIGNED_OUT' && !session && !_isRedirecting && !_hasRedirected) {
-        console.log('🔴 检测到登出事件，跳转到登录页');
-        _hasRedirected = true;
+    if (!session) {
+        console.log('🔴 会话失效，跳转到登录页');
         window.location.href = '/login.html';
     }
 });
@@ -397,7 +412,7 @@ async function loadFriendRequests() {
 }
 
 // ============================================================
-//  加 载 举 报（修复：删除前端禁止的 Admin API 调用）
+//  加 载 举 报（修复：去除 admin.getUserById 导致的 403 错误）
 // ============================================================
 async function loadReports() {
     if (currentUserRole !== 'admin') return;
@@ -415,8 +430,16 @@ async function loadReports() {
 
     if (data && data.length > 0) {
         for (let report of data) {
-            report.reporter_email = '用户'; 
-            
+            try {
+                const { data: userData } = await supabaseClient
+                    .from('profiles')
+                    .select('email')
+                    .eq('id', report.reporter_id)
+                    .single();
+                report.reporter_email = userData?.email || '未知用户';
+            } catch (e) {
+                report.reporter_email = '未知用户';
+            }
             try {
                 const { data: contentData } = await supabaseClient
                     .from('contents')
@@ -435,6 +458,7 @@ async function loadReports() {
 
     const count = allReports.length;
 
+    // 安全更新徽章
     const reportBadge = document.getElementById('reportBadge');
     if (reportBadge) {
         reportBadge.textContent = count;
@@ -477,18 +501,20 @@ async function loadNotifications() {
 }
 
 function renderMessages() {
+    // 构建消息分区内容（将 Emoji 替换为 SVG 图标）
     let html = `
         <div style="max-width:700px;margin:0 auto;">
             <h2 style="font-size:20px;margin-bottom:16px;">💬 消息</h2>
     `;
 
+    // 系统消息
     const systemNotifications = allNotifications.filter(n =>
-        ['global_announcement', 'approved', 'rejected', 'ban', 'unban', 'upload_blocked', 'upload_unblocked', 'report_created'].includes(n.type)
+        ['global_announcement', 'approved', 'rejected', 'ban', 'unban', 'upload_blocked', 'upload_unblocked'].includes(n.type)
     );
     html += `
         <div style="margin-bottom:20px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                ${ICONS.CAT_FORUM}
                 <span style="font-weight:600;font-size:15px;">系统消息</span>
                 <span style="font-size:11px;color:#94a3b8;">${systemNotifications.length}</span>
             </div>
@@ -496,13 +522,12 @@ function renderMessages() {
             ${systemNotifications.slice(0, 10).map(n => `
                 <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
                     <span class="noti-icon">
-                        ${n.type === 'global_announcement' ? '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>' :
-                        n.type === 'ban' ? '<svg viewBox="0 0 24 24" stroke="#991b1b"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' :
-                        n.type === 'unban' ? '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>' :
-                        n.type === 'approved' ? '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>' :
-                        n.type === 'rejected' ? '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' :
-                        n.type === 'report_created' ? '<svg viewBox="0 0 24 24" stroke="#f59e0b"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' :
-                        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'}
+                        ${n.type === 'global_announcement' ? ICONS.CAT_FORUM :
+                        n.type === 'ban' ? ICONS.BAN :
+                        n.type === 'unban' ? ICONS.STAR :
+                        n.type === 'approved' ? ICONS.STAR :
+                        n.type === 'rejected' ? ICONS.REPORT :
+                        ICONS.COMMENT}
                     </span>
                     <div class="noti-content">
                         <div class="noti-text">${n.content}</div>
@@ -513,13 +538,14 @@ function renderMessages() {
         </div>
     `;
 
+    // 活动消息
     const activityNotifications = allNotifications.filter(n =>
         ['like', 'comment'].includes(n.type)
     );
     html += `
         <div style="margin-bottom:20px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                ${ICONS.COMMENT}
                 <span style="font-weight:600;font-size:15px;">互动消息</span>
                 <span style="font-size:11px;color:#94a3b8;">${activityNotifications.length}</span>
             </div>
@@ -527,8 +553,7 @@ function renderMessages() {
             ${activityNotifications.slice(0, 10).map(n => `
                 <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead('${n.id}')">
                     <span class="noti-icon">
-                        ${n.type === 'like' ? '<svg viewBox="0 0 24 24" stroke="#ef4444"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>' :
-                        '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'}
+                        ${n.type === 'like' ? ICONS.LIKE : ICONS.COMMENT}
                     </span>
                     <div class="noti-content">
                         <div class="noti-text">${n.content}</div>
@@ -543,7 +568,7 @@ function renderMessages() {
     html += `
         <div style="margin-bottom:20px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                ${ICONS.FRIEND}
                 <span style="font-weight:600;font-size:15px;">好友申请</span>
                 <span style="font-size:11px;color:#94a3b8;">${friendRequests.length}</span>
             </div>
@@ -570,7 +595,7 @@ function renderMessages() {
     html += `
         <div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                ${ICONS.FRIEND}
                 <span style="font-weight:600;font-size:15px;">好友 (${allFriends.length})</span>
                 <button onclick="openAddFriend()" style="padding:2px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;">+ 添加</button>
             </div>
@@ -596,7 +621,7 @@ function renderMessages() {
     html += `
         <div style="margin-top:20px;padding-top:16px;border-top:2px solid #eef2f6;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                ${ICONS.REPORT}
                 <span style="font-weight:600;font-size:15px;">Bug 反馈</span>
                 <span style="font-size:11px;color:#94a3b8;">1天限1条</span>
             </div>
@@ -625,12 +650,19 @@ function renderMessages() {
 //  其 他 函 数（简化，核心功能保留）
 // ============================================================
 function sendFriendRequest() { /* 实现 */ }
+
 function handleFriendRequest() { /* 实现 */ }
+
 function openChat() { /* 实现 */ }
+
 function closeFriendModal() { /* 实现 */ }
+
 function loadChatMessages() { /* 实现 */ }
+
 function renderChatMessages() { /* 实现 */ }
+
 function sendChatMessage() { /* 实现 */ }
+
 function sendChatFile() { /* 实现 */ }
 
 async function toggleFavorite(contentId) {
@@ -858,7 +890,7 @@ function renderContents() {
                     <div class="upload-header">
                         <h2>我的内容</h2>
                         <button class="btn-publish" onclick="openUploadModal()">
-                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            ${ICONS.UPLOAD}
                             发布新内容
                         </button>
                     </div>
@@ -898,7 +930,7 @@ function renderContentList(data) {
             const isImage = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(item.file_name || '');
             extraHtml = `
                         <div class="file-info">
-                            <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                            ${ICONS.CAT_RES}
                             <a href="${item.file_url}" target="_blank">${item.file_name || '下载文件'}</a>
                             ${item.file_size ? ' · ' + formatSize(item.file_size) : ''}
                             ${isImage ? `<div class="image-preview"><img src="${item.file_url}" alt="${item.file_name}" loading="lazy"></div>` : ''}
@@ -908,7 +940,7 @@ function renderContentList(data) {
         if (item.url) {
             extraHtml = `
                         <div class="file-info">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                            ${ICONS.CAT_URL}
                             <a href="${item.url}" target="_blank">${item.url}</a>
                         </div>
                     `;
@@ -922,36 +954,36 @@ function renderContentList(data) {
         let statusBadge = '';
         if (currentPage === 'upload') {
             const map = {
-                'pending': `<span class="status-badge pending"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>待审核</span>`,
-                'approved': `<span class="status-badge approved"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>已通过</span>`,
-                'rejected': `<span class="status-badge rejected"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>已拒绝</span>`
+                'pending': `<span class="status-badge pending">${ICONS.COMMENT} 待审核</span>`,
+                'approved': `<span class="status-badge approved">${ICONS.STAR} 已通过</span>`,
+                'rejected': `<span class="status-badge rejected">${ICONS.REPORT} 已拒绝</span>`
             };
             statusBadge = map[item.status] || '';
         }
 
         let hotBadge = '';
         if (item.likes_count >= 1000) {
-            hotBadge = `<span class="hot"><svg viewBox="0 0 24 24"><path d="M12 2C12 2 8 8 8 12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12C16 8 12 2 12 2Z"/><path d="M12 16C14.2091 16 16 14.2091 16 12C16 12 18 14 18 16C18 18.2091 16.2091 20 14 20H10C7.79086 20 6 18.2091 6 16C6 14 8 12 8 12C8 14.2091 9.79086 16 12 16Z"/></svg>热门</span>`;
+            hotBadge = `<span class="hot">${ICONS.LIKE} 热门</span>`;
         }
         let recommendBadge = '';
         if (item.is_recommended) {
-            recommendBadge = `<span class="recommended"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>推荐</span>`;
+            recommendBadge = `<span class="recommended">${ICONS.STAR} 推荐</span>`;
         }
 
         let actionButtons = '';
         if (showActions && currentPage === 'review' && isAdmin) {
             actionButtons = `
                         <div class="actions">
-                            <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>通过</button>
-                            <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>拒绝</button>
+                            <button class="btn-sm approve" onclick="reviewContent(${item.id}, 'approved')">${ICONS.STAR} 通过</button>
+                            <button class="btn-sm reject" onclick="reviewContent(${item.id}, 'rejected')">${ICONS.REPORT} 拒绝</button>
                             <button class="btn-sm" onclick="toggleRecommend(${item.id}, ${item.is_recommended || false})">${item.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
-                            <button class="btn-sm" onclick="viewContentDetail(${item.id})"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>详情</button>
+                            <button class="btn-sm" onclick="viewContentDetail(${item.id})">${ICONS.SEARCH} 详情</button>
                         </div>
                     `;
         } else if (showActions && currentPage === 'upload' && isOwner) {
             actionButtons = `
                         <div class="actions">
-                            <button class="btn-sm" onclick="deleteContent(${item.id}, '${item.file_url || ''}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>删除</button>
+                            <button class="btn-sm" onclick="deleteContent(${item.id}, '${item.file_url || ''}')">${ICONS.REPORT} 删除</button>
                         </div>
                     `;
         }
@@ -972,13 +1004,13 @@ function renderContentList(data) {
 
         const reportBtn = `
                     <button class="report-btn" onclick="event.stopPropagation();openReportModal(${item.id})" title="举报此内容">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        ${ICONS.REPORT}
                     </button>
                 `;
 
         const favBtn = `
                     <button class="report-btn" onclick="event.stopPropagation();toggleFavorite(${item.id})" style="right:44px;top:10px;z-index:5;" title="收藏">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        ${ICONS.STAR}
                     </button>
                 `;
 
@@ -1004,11 +1036,11 @@ function renderContentList(data) {
                             </span>
                             <span class="stats">
                                 <span onclick="event.stopPropagation();toggleLike(${item.id})" class="${isLiked ? 'liked' : ''}">
-                                    <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                                    ${ICONS.LIKE}
                                     ${item.likes_count || 0}
                                 </span>
                                 <span onclick="event.stopPropagation();">
-                                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                                    ${ICONS.COMMENT}
                                     ${item.comments_count || 0}
                                 </span>
                             </span>
@@ -1024,8 +1056,13 @@ function renderContentList(data) {
 //  工 具 函 数
 // ============================================================
 function getCategoryIcon(cat) {
-    const map = { '论坛': '💬', '资源分享': '📦', '网址分享': '🔗', 'VPN分享': '🔒' };
-    return map[cat] || '📎';
+    const map = {
+        '论坛': ICONS.CAT_FORUM,
+        '资源分享': ICONS.CAT_RES,
+        '网址分享': ICONS.CAT_URL,
+        'VPN分享': ICONS.CAT_VPN
+    };
+    return map[cat] || ICONS.CAT_RES;
 }
 
 function getCategoryClass(cat) {
@@ -1281,8 +1318,7 @@ async function submitContent(e) {
         alert('❌ ' + err.message);
     } finally {
         isSubmitting = false;
-        btn.innerHTML =
-            '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> 提交审核';
+        btn.innerHTML = `${ICONS.UPLOAD} 提交审核`;
         btn.disabled = false;
     }
 }
@@ -1671,7 +1707,8 @@ function renderProfile() {
                 const diffDays = Math.floor((now - lastUpdated) / (1000 * 60 * 60 * 24));
                 if (diffDays < 30) {
                     const daysLeft = 30 - diffDays;
-                    restrictionMsg = `<div class="restriction-msg">⏳ 距离下次修改还有 <strong>${daysLeft}</strong> 天</div>`;
+                    // 优化：缩小字号、变灰、居中
+                    restrictionMsg = `<div style="font-size:12px; color:#94a3b8; margin-top:8px; text-align:center;">⏳ 距离下次资料修改还有 ${daysLeft} 天</div>`;
                 }
             }
 
@@ -1696,8 +1733,9 @@ function renderProfile() {
                                 ${restrictionMsg}
                                 <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9;">
                                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                        <button class="btn-publish" onclick="openProfileEdit()" style="background:#6366f1;">
-                                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                        <!-- 修复：蓝底白字 -->
+                                        <button class="btn-publish" onclick="openProfileEdit()" style="background:#6366f1; color:#ffffff;">
+                                            ${ICONS.UPLOAD}
                                             编辑资料
                                         </button>
                                     </div>
@@ -1767,19 +1805,19 @@ function renderAdminPage() {
 
                         <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid #eef2f6;flex-wrap:wrap;">
                             <button onclick="switchAdminTab('users')" id="adminTabUsers" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid #6366f1;font-weight:600;color:#6366f1;background:none;cursor:pointer;font-size:14px;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                ${ICONS.ADMIN}
                                 用户管理
                             </button>
                             <button onclick="switchAdminTab('reports')" id="adminTabReports" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid transparent;font-weight:500;color:#64748b;background:none;cursor:pointer;font-size:14px;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                ${ICONS.REPORT}
                                 举报 (<span id="reportCountBadge">0</span>)
                             </button>
                             <button onclick="switchAdminTab('announce')" id="adminTabAnnounce" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid transparent;font-weight:500;color:#64748b;background:none;cursor:pointer;font-size:14px;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                                ${ICONS.CAT_FORUM}
                                 全局公告
                             </button>
                             <button onclick="switchAdminTab('bans')" id="adminTabBans" class="admin-tab-btn" style="padding:8px 16px;border-bottom:3px solid transparent;font-weight:500;color:#64748b;background:none;cursor:pointer;font-size:14px;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                ${ICONS.BAN}
                                 封禁记录
                             </button>
                         </div>
@@ -1802,7 +1840,7 @@ function renderAdminPage() {
                                     <label>目标用户ID</label>
                                     <input type="text" id="adminTargetId" placeholder="输入用户ID (UUID格式)">
                                 </div>
-                                <div class="form-group" id="adminExtraField">
+                                <div class="form-group" id="adminExtraField" style="display: none;">
                                     <label>封禁时间（可选，不填为永久）</label>
                                     <input type="datetime-local" id="adminBanExpires">
                                 </div>
@@ -1811,7 +1849,7 @@ function renderAdminPage() {
                                     <textarea id="adminReason" placeholder="请输入操作理由" rows="2" required></textarea>
                                 </div>
                                 <button onclick="submitAdminAction()" class="btn-submit">
-                                    <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                    ${ICONS.ADMIN}
                                     执行操作
                                 </button>
                                 <hr style="margin:16px 0;border-color:#eef2f6;">
@@ -1829,13 +1867,29 @@ function renderAdminPage() {
                 </div>
             `;
     contentRender.innerHTML = html;
+
+    // 初始化：监听操作类型切换，控制封禁时间输入框的显示/隐藏
+    const actionSelect = document.getElementById('adminActionType');
+    if (actionSelect) {
+        actionSelect.addEventListener('change', function() {
+            const extra = document.getElementById('adminExtraField');
+            if (extra) {
+                if (this.value === 'ban_user') {
+                    extra.style.display = 'block';
+                } else {
+                    extra.style.display = 'none';
+                }
+            }
+        });
+    }
+
     switchAdminTab('users');
 }
 
 // ============================================================
 //  管 理 员 Tab 切 换
 // ============================================================
-function switchAdminTab(tab) {
+async function switchAdminTab(tab) { // 改为 async
     currentAdminTab = tab;
     document.querySelectorAll('.admin-tab-btn').forEach(btn => {
         btn.style.borderBottom = '3px solid transparent';
@@ -1886,11 +1940,39 @@ function switchAdminTab(tab) {
                         <input type="datetime-local" id="globalAnnounceExpires">
                     </div>
                     <button onclick="publishGlobalAnnouncement()" class="btn-submit">
-                        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                        ${ICONS.CAT_FORUM}
                         发布全局公告
                     </button>
+                    <hr style="margin:16px 0;border-color:#eef2f6;">
+                    <h3 style="font-size:16px;margin-bottom:12px;">已发布公告</h3>
+                    <div id="announceList"></div>
                 `;
         content.innerHTML = html;
+
+        // 异步加载公告列表并添加撤销按钮
+        (async function loadAnnounceList() {
+            const { data, error } = await supabaseClient
+                .from('global_announcements')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
+            const container = document.getElementById('announceList');
+            if (!container) return;
+            if (error || !data || data.length === 0) {
+                container.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:8px 0;">暂无已发布公告</div>';
+                return;
+            }
+            container.innerHTML = data.map(a => `
+                <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px;">
+                    <div style="font-weight:600;">${a.title || '系统公告'}</div>
+                    <div style="color:#475569;margin:4px 0;">${a.content}</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:#94a3b8;font-size:11px;">${timeAgo(a.created_at)}</span>
+                        <button onclick="revokeGlobalAnnouncement('${a.id}')" style="padding:4px 12px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;font-size:11px;cursor:pointer;">撤销</button>
+                    </div>
+                </div>
+            `).join('');
+        })();
         return;
     }
 
@@ -1899,40 +1981,25 @@ function switchAdminTab(tab) {
         return;
     }
 
-    content.innerHTML = `
-                <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
-                <div style="margin-bottom:12px;">
-                    <label style="font-size:13px;font-weight:600;">操作</label>
-                    <select id="adminActionType" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:12px;font-size:15px;margin-top:4px;">
-                        <option value="add_admin">添加管理员 (通过ID)</option>
-                        <option value="remove_admin">撤销管理员 (通过ID)</option>
-                        <option value="ban_user">封禁用户 (通过ID)</option>
-                        <option value="unban_user">取消封禁 (通过ID)</option>
-                        <option value="block_upload">限制上传 (通过ID)</option>
-                        <option value="unblock_upload">解除上传限制 (通过ID)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>目标用户ID</label>
-                    <input type="text" id="adminTargetId" placeholder="输入用户ID (UUID格式)">
-                </div>
-                <div class="form-group" id="adminExtraField">
-                    <label>封禁时间（可选，不填为永久）</label>
-                    <input type="datetime-local" id="adminBanExpires">
-                </div>
-                <div class="form-group">
-                    <label>理由 *</label>
-                    <textarea id="adminReason" placeholder="请输入操作理由" rows="2" required></textarea>
-                </div>
-                <button onclick="submitAdminAction()" class="btn-submit">
-                    <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    执行操作
-                </button>
-                <hr style="margin:16px 0;border-color:#eef2f6;">
-                <p style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:8px;">操作记录</p>
-                <div id="adminRequestList"></div>
-            `;
+    // 默认用户管理（已经渲染好了，只加载记录）
     loadAdminRequests();
+}
+
+// ============================================================
+//  撤 销 全 局 公 告（新增函数）
+// ============================================================
+async function revokeGlobalAnnouncement(id) {
+    if (!confirm('确定要撤销这条公告吗？')) return;
+    const { error } = await supabaseClient
+        .from('global_announcements')
+        .update({ is_active: false, is_deleted: true })
+        .eq('id', id);
+    if (error) {
+        alert('撤销失败：' + error.message);
+    } else {
+        alert('✅ 公告已撤销');
+        switchAdminTab('announce');
+    }
 }
 
 // ============================================================
@@ -2060,19 +2127,19 @@ function openReportDetail(reportId) {
                         </div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
                             <button class="btn-sm approve" onclick="resolveReport(${report.id}, 'resolved', 'content_deleted')" style="padding:8px 16px;border-radius:10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:600;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                ${ICONS.STAR}
                                 删除内容
                             </button>
                             <button class="btn-sm" onclick="resolveReport(${report.id}, 'resolved', 'user_banned')" style="padding:8px 16px;border-radius:10px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                ${ICONS.BAN}
                                 封禁用户
                             </button>
                             <button class="btn-sm" onclick="resolveReport(${report.id}, 'resolved', 'upload_blocked')" style="padding:8px 16px;border-radius:10px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;font-weight:600;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/><polyline points="12 12 12 16 10 14"/><polyline points="12 12 16 14 12 16"/><line x1="4" y1="20" x2="20" y2="4"/></svg>
+                                ${ICONS.CAT_VPN}
                                 限制上传
                             </button>
                             <button class="btn-sm" onclick="resolveReport(${report.id}, 'dismissed', null)" style="padding:8px 16px;border-radius:10px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
+                                ${ICONS.REPORT}
                                 驳回
                             </button>
                         </div>
@@ -2210,7 +2277,7 @@ async function unbanUser(userId) {
 }
 
 // ============================================================
-//  管 理 员 操 作 提 交（修复：操作后刷新记录列表）
+//  管 理 员 操 作 提 交
 // ============================================================
 async function submitAdminAction() {
     if (!currentUser || currentUserRole !== 'admin') {
@@ -2349,7 +2416,6 @@ async function submitAdminAction() {
         document.getElementById('adminTargetId').value = '';
         document.getElementById('adminReason').value = '';
         document.getElementById('adminBanExpires').value = '';
-        
         loadAdminRequests();
 
     } catch (err) {
@@ -2419,8 +2485,8 @@ async function loadUserProfileView(userId) {
 
     const isBanned = profile.is_banned;
     const banStatusHtml = isBanned ?
-        `<span class="ban-status banned">🚫 已封禁</span>` :
-        `<span class="ban-status normal">✅ 正常</span>`;
+        `<span class="ban-status banned">${ICONS.BAN} 已封禁</span>` :
+        `<span class="ban-status normal">${ICONS.STAR} 正常</span>`;
 
     let html = `
                 <div class="detail-container">
@@ -2527,6 +2593,7 @@ async function loadDetail(contentId) {
 }
 
 function renderDetail(content, isLiked, recs) {
+    // 简化版详情渲染，保留核心功能
     const avatarHtml = content.profiles?.avatar_url ?
         `<img src="${content.profiles.avatar_url}" alt="avatar">` :
         (content.profiles?.nickname || 'U').charAt(0).toUpperCase();
@@ -2601,8 +2668,8 @@ function renderDetail(content, isLiked, recs) {
     if (isAdmin && content.status === 'pending') {
         adminActions = `
                     <div style="margin-top:12px;display:flex;gap:8px;">
-                        <button class="btn-sm approve" onclick="reviewContent(${content.id}, 'approved')">✅ 通过</button>
-                        <button class="btn-sm reject" onclick="reviewContent(${content.id}, 'rejected')">❌ 拒绝</button>
+                        <button class="btn-sm approve" onclick="reviewContent(${content.id}, 'approved')">${ICONS.STAR} 通过</button>
+                        <button class="btn-sm reject" onclick="reviewContent(${content.id}, 'rejected')">${ICONS.REPORT} 拒绝</button>
                         <button class="btn-sm" onclick="toggleRecommend(${content.id}, ${content.is_recommended || false})">${content.is_recommended ? '⭐ 取消推荐' : '⭐ 推荐'}</button>
                     </div>
                 `;
@@ -2622,7 +2689,7 @@ function renderDetail(content, isLiked, recs) {
                     </div>
                     <div class="detail-card">
                         <button class="detail-report-btn" onclick="openReportModal(${content.id})" title="举报此内容">
-                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            ${ICONS.REPORT}
                         </button>
                         <div class="detail-meta">
                             <span class="cat ${getCategoryClass(content.category)}">${getCategoryIcon(content.category)} ${content.category}</span>
@@ -2643,11 +2710,11 @@ function renderDetail(content, isLiked, recs) {
                             </span>
                             <span class="stats">
                                 <span onclick="toggleLikeDetail(${content.id})" class="${isLiked ? 'liked' : ''}">
-                                    <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                                    ${ICONS.LIKE}
                                     ${content.likes_count || 0}
                                 </span>
                                 <span>
-                                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                                    ${ICONS.COMMENT}
                                     ${content.comments_count || 0}
                                 </span>
                             </span>
@@ -2820,12 +2887,12 @@ async function submitReport() {
 // ============================================================
 //  初 始 化
 // ============================================================
-console.log('👁️ 必看网 v16.0.2 (终极修复版 - 根治无限重定向)');
+console.log('👁️ 必看网 v16.0.0 (完整版 - 含日志)');
 console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
 console.log('🐧 官方QQ群: 976926251');
 console.log('✅ 所有功能已加载');
 
-// 封禁状态定期检查（安全防泄漏优化，改为仅查询当前用户）
+// 封禁状态定期检查
 setInterval(async function() {
     if (currentUser) {
         const { data } = await supabaseClient
