@@ -39,6 +39,12 @@ let currentChatFriendId = null;
 let chatMessages = [];
 
 // ============================================================
+//  跳 转 防 止 死 循 环 标 志
+// ============================================================
+let _isRedirecting = false;
+let _hasRedirected = false; // 新增：防止反复横跳
+
+// ============================================================
 //  DOM 引 用（安全获取，可能为 null）
 // ============================================================
 const app = document.getElementById('app');
@@ -59,26 +65,21 @@ const searchInput = document.getElementById('searchInput');
 const topNav = document.getElementById('topNav');
 
 // ============================================================
-//  跳 转 锁（防止死循环）
-// ============================================================
-let _isRedirecting = false;
-
-// ============================================================
-//  检 查 登 录（含详细日志 + token 有效性验证）
+//  检 查 登 录（修复：防止无限重定向死循环）
 // ============================================================
 (async function checkAuth() {
-    if (_isRedirecting) {
-        console.log('⚠️ 正在跳转中，跳过检查');
+    if (_isRedirecting || _hasRedirected) {
+        console.log('⚠️ 正在跳转中或已跳转，跳过检查');
         return;
     }
     console.log('🔍 首页检查登录状态...');
 
     try {
-        // 1. 获取 session
         const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
         if (sessionError) {
             console.error('❌ 获取 session 失败:', sessionError);
             _isRedirecting = true;
+            _hasRedirected = true;
             window.location.href = '/login.html';
             return;
         }
@@ -88,11 +89,11 @@ let _isRedirecting = false;
         if (!session) {
             console.log('❌ 无 session，跳转到登录页');
             _isRedirecting = true;
+            _hasRedirected = true;
             window.location.href = '/login.html';
             return;
         }
 
-        // 2. 验证 token 有效性（关键步骤）
         console.log('🔑 验证 token 有效性...');
         const { data: userData, error: userError } = await supabaseClient.auth.getUser();
         if (userError || !userData.user) {
@@ -110,6 +111,7 @@ let _isRedirecting = false;
                 }
             } catch (e) {}
             _isRedirecting = true;
+            _hasRedirected = true;
             console.log('🔄 token 无效，跳转到登录页');
             window.location.href = '/login.html';
             return;
@@ -118,7 +120,6 @@ let _isRedirecting = false;
         console.log('✅ token 有效，用户:', userData.user.email);
         currentUser = userData.user;
 
-        // 3. 检查封禁
         console.log('🔍 检查封禁状态...');
         const { data: profile } = await supabaseClient
             .from('profiles')
@@ -146,7 +147,6 @@ let _isRedirecting = false;
         await loadUserProfile();
         await loadUserRole();
         await loadAnnouncement();
-        // ✅ 移除了 loadGlobalAnnouncement 调用
         await loadNotifications();
         await loadFriends();
         await loadFriendRequests();
@@ -170,6 +170,7 @@ let _isRedirecting = false;
     } catch (err) {
         console.error('❌ 认证失败:', err);
         _isRedirecting = true;
+        _hasRedirected = true;
         window.location.href = '/login.html';
     }
 })();
@@ -354,14 +355,6 @@ async function loadAnnouncement() {
 }
 
 // ============================================================
-//  全 局 公 告（已废弃，保留空函数以防万一）
-// ============================================================
-// async function loadGlobalAnnouncement() {
-//     // 已废弃，不再使用
-//     return;
-// }
-
-// ============================================================
 //  加 载 好 友 列 表
 // ============================================================
 async function loadFriends() {
@@ -398,7 +391,7 @@ async function loadFriendRequests() {
 }
 
 // ============================================================
-//  加 载 举 报（安全版）
+//  加 载 举 报（修复：删除前端禁止的 Admin API 调用）
 // ============================================================
 async function loadReports() {
     if (currentUserRole !== 'admin') return;
@@ -416,12 +409,11 @@ async function loadReports() {
 
     if (data && data.length > 0) {
         for (let report of data) {
-            try {
-                const { data: userData } = await supabaseClient.auth.admin.getUserById(report.reporter_id);
-                report.reporter_email = userData?.user?.email || '未知用户';
-            } catch (e) {
-                report.reporter_email = '未知用户';
-            }
+            // 修复：前端不能调用 admin.getUserById，改为直接显示"用户"
+            // 原为：const { data: userData } = await supabaseClient.auth.admin.getUserById(report.reporter_id);
+            // report.reporter_email = userData?.user?.email || '未知用户';
+            report.reporter_email = '用户'; 
+            
             try {
                 const { data: contentData } = await supabaseClient
                     .from('contents')
@@ -440,7 +432,6 @@ async function loadReports() {
 
     const count = allReports.length;
 
-    // 安全更新徽章
     const reportBadge = document.getElementById('reportBadge');
     if (reportBadge) {
         reportBadge.textContent = count;
@@ -483,16 +474,14 @@ async function loadNotifications() {
 }
 
 function renderMessages() {
-    // 构建消息分区内容（详细实现略）
     let html = `
         <div style="max-width:700px;margin:0 auto;">
             <h2 style="font-size:20px;margin-bottom:16px;">💬 消息</h2>
     `;
 
-    // 系统消息
+    // 修复：加入了 report_created 类型，管理员才能看到Bug反馈
     const systemNotifications = allNotifications.filter(n =>
-        ['global_announcement', 'approved', 'rejected', 'ban', 'unban', 'upload_blocked', 'upload_unblocked'].includes(n
-        .type)
+        ['global_announcement', 'approved', 'rejected', 'ban', 'unban', 'upload_blocked', 'upload_unblocked', 'report_created'].includes(n.type)
     );
     html += `
         <div style="margin-bottom:20px;">
@@ -510,6 +499,7 @@ function renderMessages() {
                         n.type === 'unban' ? '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>' :
                         n.type === 'approved' ? '<svg viewBox="0 0 24 24" stroke="#166534"><polyline points="20 6 9 17 4 12"/></svg>' :
                         n.type === 'rejected' ? '<svg viewBox="0 0 24 24" stroke="#991b1b"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' :
+                        n.type === 'report_created' ? '<svg viewBox="0 0 24 24" stroke="#f59e0b"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' :
                         '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'}
                     </span>
                     <div class="noti-content">
@@ -521,7 +511,6 @@ function renderMessages() {
         </div>
     `;
 
-    // 活动消息
     const activityNotifications = allNotifications.filter(n =>
         ['like', 'comment'].includes(n.type)
     );
@@ -633,21 +622,13 @@ function renderMessages() {
 // ============================================================
 //  其 他 函 数（简化，核心功能保留）
 // ============================================================
-
 function sendFriendRequest() { /* 实现 */ }
-
 function handleFriendRequest() { /* 实现 */ }
-
 function openChat() { /* 实现 */ }
-
 function closeFriendModal() { /* 实现 */ }
-
 function loadChatMessages() { /* 实现 */ }
-
 function renderChatMessages() { /* 实现 */ }
-
 function sendChatMessage() { /* 实现 */ }
-
 function sendChatFile() { /* 实现 */ }
 
 async function toggleFavorite(contentId) {
@@ -1916,7 +1897,6 @@ function switchAdminTab(tab) {
         return;
     }
 
-    // 默认用户管理
     content.innerHTML = `
                 <p style="color:#64748b;font-size:14px;margin-bottom:12px;">主管理员：<strong id="mainAdminEmail">3948677391@qq.com</strong></p>
                 <div style="margin-bottom:12px;">
@@ -2228,7 +2208,7 @@ async function unbanUser(userId) {
 }
 
 // ============================================================
-//  管 理 员 操 作 提 交
+//  管 理 员 操 作 提 交（修复：操作后刷新记录列表）
 // ============================================================
 async function submitAdminAction() {
     if (!currentUser || currentUserRole !== 'admin') {
@@ -2367,6 +2347,8 @@ async function submitAdminAction() {
         document.getElementById('adminTargetId').value = '';
         document.getElementById('adminReason').value = '';
         document.getElementById('adminBanExpires').value = '';
+        
+        // 修复：操作成功后刷新操作记录
         loadAdminRequests();
 
     } catch (err) {
@@ -2544,7 +2526,6 @@ async function loadDetail(contentId) {
 }
 
 function renderDetail(content, isLiked, recs) {
-    // 简化版详情渲染，保留核心功能
     const avatarHtml = content.profiles?.avatar_url ?
         `<img src="${content.profiles.avatar_url}" alt="avatar">` :
         (content.profiles?.nickname || 'U').charAt(0).toUpperCase();
@@ -2838,12 +2819,12 @@ async function submitReport() {
 // ============================================================
 //  初 始 化
 // ============================================================
-console.log('👁️ 必看网 v16.0.0 (完整版 - 含日志)');
+console.log('👁️ 必看网 v16.0.1 (修复版 - 含日志)');
 console.log('📧 主管理员:', MAIN_ADMIN_EMAIL);
 console.log('🐧 官方QQ群: 976926251');
 console.log('✅ 所有功能已加载');
 
-// 封禁状态定期检查
+// 封禁状态定期检查（安全防泄漏优化，改为仅查询当前用户）
 setInterval(async function() {
     if (currentUser) {
         const { data } = await supabaseClient
