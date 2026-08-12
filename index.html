@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>我的网站</title>
     <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
     <style>
         /* ===== 全局重置 ===== */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -18,420 +24,533 @@
             justify-content: center;
             padding: 20px;
         }
+
         .card {
             background: white;
             border-radius: 24px;
             padding: 40px 32px;
             max-width: 440px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             transition: all 0.2s;
         }
-        /* ===== 登录相关样式（复用之前的） ===== */
-        h2 { font-weight: 600; font-size: 28px; margin-bottom: 8px; color: #1e293b; }
-        .subtitle { color: #64748b; margin-bottom: 28px; font-size: 14px; }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; font-weight: 500; font-size: 14px; color: #334155; margin-bottom: 5px; }
+
+        /* ===== 登录相关样式 ===== */
+        h2 {
+            font-weight: 600;
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 28px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
         input {
-            width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 12px;
-            font-size: 15px; transition: 0.2s; outline: none;
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: 0.2s;
+            outline: none;
         }
-        input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2); }
+
+        input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
         .btn {
-            width: 100%; padding: 14px; background: #667eea; color: white;
-            border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
-            cursor: pointer; transition: 0.2s; margin-top: 6px;
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 6px;
         }
-        .btn:hover { background: #5a6fd6; transform: translateY(-1px); }
+
+        .btn:hover {
+            background: #5a6fd6;
+            transform: translateY(-1px);
+        }
+
         .btn-google {
-            background: white; color: #1e293b; border: 1px solid #e2e8f0;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+            background: white;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        .btn-google:hover { background: #f8fafc; }
+
+        .btn-google:hover {
+            background: #f8fafc;
+        }
+
         .divider {
-            display: flex; align-items: center; gap: 12px; margin: 20px 0;
-            color: #94a3b8; font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: #94a3b8;
+            font-size: 13px;
         }
-        .divider::before, .divider::after {
-            content: ""; flex: 1; height: 1px; background: #e2e8f0;
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
         }
+
         .footer-link {
-            text-align: center; margin-top: 20px; font-size: 14px; color: #64748b;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #64748b;
         }
+
         .footer-link a {
-            color: #667eea; text-decoration: none; font-weight: 500; cursor: pointer;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
         }
-        .footer-link a:hover { text-decoration: underline; }
+
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+
         .back-link {
-            display: inline-block; margin-bottom: 20px; color: #667eea; cursor: pointer; font-weight: 500;
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 500;
         }
-        .back-link:hover { text-decoration: underline; }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
         .message {
-            margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 14px;
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 14px;
             display: none;
         }
-        .message.error { background: #fee2e2; color: #b91c1c; display: block; }
-        .message.success { background: #dcfce7; color: #166534; display: block; }
-        .hidden { display: none !important; }
+
+        .message.error {
+            background: #fee2e2;
+            color: #b91c1c;
+            display: block;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
 
         /* ===== 主页（Dashboard）样式 ===== */
         #dashboardContainer {
             max-width: 600px;
         }
+
         .welcome {
             font-size: 22px;
             font-weight: 600;
             margin-bottom: 8px;
         }
+
         .user-email {
             color: #64748b;
             margin-bottom: 24px;
             font-size: 14px;
         }
+
         .btn-logout {
             background: #ef4444;
         }
+
         .btn-logout:hover {
             background: #dc2626;
         }
+
         .btn-secondary {
             background: #e2e8f0;
             color: #1e293b;
         }
+
         .btn-secondary:hover {
             background: #cbd5e1;
         }
     </style>
 </head>
+
 <body>
 
-<div class="card" id="app">
-    <!-- ========================================================= -->
-    <!-- 认证界面 (登录/注册/忘记密码)                               -->
-    <!-- ========================================================= -->
-    <div id="authContainer">
-        <!-- 登录面板 -->
-        <div id="loginPanel">
-            <h2>欢迎回来</h2>
-            <div class="subtitle">登录你的账户</div>
+    <div class="card" id="app">
+        <!-- ========================================================= -->
+        <!-- 认证界面 (登录/注册/忘记密码)                               -->
+        <!-- ========================================================= -->
+        <div id="authContainer">
+            <!-- 登录面板 -->
+            <div id="loginPanel">
+                <h2>欢迎回来</h2>
+                <div class="subtitle">登录你的账户</div>
 
-            <button class="btn btn-google" id="googleLoginBtn">
-                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                Google 一键登录
-            </button>
+                <button class="btn btn-google" id="googleLoginBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Google 一键登录
+                </button>
 
-            <div class="divider">或使用邮箱</div>
+                <div class="divider">或使用邮箱</div>
 
-            <div class="form-group">
-                <label>邮箱地址</label>
-                <input type="email" id="loginEmail" placeholder="your@email.com" />
+                <div class="form-group">
+                    <label>邮箱地址</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com" />
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" />
+                </div>
+                <button class="btn" id="loginBtn">登录</button>
+
+                <div id="loginMessage" class="message"></div>
+
+                <div class="footer-link">
+                    <a id="gotoForgot">忘记密码？点我验证</a> &nbsp;·&nbsp;
+                    <a id="gotoRegister">没有账号？点我注册</a>
+                </div>
             </div>
-            <div class="form-group">
-                <label>密码</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" />
+
+            <!-- 注册面板 -->
+            <div id="registerPanel" class="hidden">
+                <h2>创建账户</h2>
+                <div class="subtitle">快速注册，开始体验</div>
+
+                <button class="btn btn-google" id="googleRegisterBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Google 一键注册
+                </button>
+
+                <div class="divider">或使用邮箱注册</div>
+
+                <div class="form-group">
+                    <label>邮箱地址</label>
+                    <input type="email" id="regEmail" placeholder="your@email.com" />
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="regPassword" placeholder="至少6位" />
+                </div>
+                <div class="form-group">
+                    <label>确认密码</label>
+                    <input type="password" id="regConfirm" placeholder="再次输入密码" />
+                </div>
+                <button class="btn" id="registerBtn">发送验证邮件</button>
+
+                <div id="registerMessage" class="message"></div>
+
+                <div class="footer-link">
+                    已有账号？<a id="gotoLoginFromRegister">点我登录</a>
+                </div>
             </div>
-            <button class="btn" id="loginBtn">登录</button>
 
-            <div id="loginMessage" class="message"></div>
+            <!-- 忘记密码面板 -->
+            <div id="forgotPanel" class="hidden">
+                <a class="back-link" id="backFromForgot">← 返回</a>
+                <h2>重置密码</h2>
+                <div class="subtitle">我们将发送重置链接到你的邮箱</div>
 
-            <div class="footer-link">
-                <a id="gotoForgot">忘记密码？点我验证</a> &nbsp;·&nbsp;
-                <a id="gotoRegister">没有账号？点我注册</a>
+                <div class="form-group">
+                    <label>邮箱地址</label>
+                    <input type="email" id="forgotEmail" placeholder="your@email.com" />
+                </div>
+                <button class="btn" id="forgotBtn">点击发送验证邮件</button>
+
+                <div id="forgotMessage" class="message"></div>
             </div>
         </div>
 
-        <!-- 注册面板 -->
-        <div id="registerPanel" class="hidden">
-            <h2>创建账户</h2>
-            <div class="subtitle">快速注册，开始体验</div>
-
-            <button class="btn btn-google" id="googleRegisterBtn">
-                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                Google 一键注册
-            </button>
-
-            <div class="divider">或使用邮箱注册</div>
-
-            <div class="form-group">
-                <label>邮箱地址</label>
-                <input type="email" id="regEmail" placeholder="your@email.com" />
+        <!-- ========================================================= -->
+        <!-- 主页界面 (登录后显示)                                       -->
+        <!-- ========================================================= -->
+        <div id="dashboardContainer" class="hidden">
+            <div class="welcome" id="welcomeUser">👋 欢迎回来</div>
+            <div class="user-email" id="userEmail">user@example.com</div>
+            <p style="margin: 16px 0; color: #475569;">
+                你已经成功登录，这里是你的个人主页。
+            </p>
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button class="btn btn-secondary" id="goToSettings" style="flex:1;">设置</button>
+                <button class="btn btn-logout" id="logoutBtn" style="flex:1;">退出登录</button>
             </div>
-            <div class="form-group">
-                <label>密码</label>
-                <input type="password" id="regPassword" placeholder="至少6位" />
-            </div>
-            <div class="form-group">
-                <label>确认密码</label>
-                <input type="password" id="regConfirm" placeholder="再次输入密码" />
-            </div>
-            <button class="btn" id="registerBtn">发送验证邮件</button>
-
-            <div id="registerMessage" class="message"></div>
-
-            <div class="footer-link">
-                已有账号？<a id="gotoLoginFromRegister">点我登录</a>
-            </div>
-        </div>
-
-        <!-- 忘记密码面板 -->
-        <div id="forgotPanel" class="hidden">
-            <a class="back-link" id="backFromForgot">← 返回</a>
-            <h2>重置密码</h2>
-            <div class="subtitle">我们将发送重置链接到你的邮箱</div>
-
-            <div class="form-group">
-                <label>邮箱地址</label>
-                <input type="email" id="forgotEmail" placeholder="your@email.com" />
-            </div>
-            <button class="btn" id="forgotBtn">点击发送验证邮件</button>
-
-            <div id="forgotMessage" class="message"></div>
+            <!-- 这里可以添加更多内容 -->
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- 主页界面 (登录后显示)                                       -->
-    <!-- ========================================================= -->
-    <div id="dashboardContainer" class="hidden">
-        <div class="welcome" id="welcomeUser">👋 欢迎回来</div>
-        <div class="user-email" id="userEmail">user@example.com</div>
-        <p style="margin: 16px 0; color: #475569;">
-            你已经成功登录，这里是你的个人主页。
-        </p>
-        <div style="display: flex; gap: 12px; margin-top: 20px;">
-            <button class="btn btn-secondary" id="goToSettings" style="flex:1;">设置</button>
-            <button class="btn btn-logout" id="logoutBtn" style="flex:1;">退出登录</button>
-        </div>
-        <!-- 这里可以添加更多内容 -->
-    </div>
-</div>
+    <script>
+        // =============================================================
+        // 1. 配置 Supabase（直接填入你的项目信息）
+        // =============================================================
+        const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
 
-<script>
-    // =============================================================
-    // 1. 配置 Supabase（替换为你的实际值）
-    // =============================================================
-    const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
+        // =============================================================
+        // 2. 安全初始化 Supabase 客户端（避免重复声明）
+        // =============================================================
+        if (!window._supabaseClient) {
+            window._supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        const supabase = window._supabaseClient;
 
-    // =============================================================
-    // 2. 初始化 Supabase 客户端
-    // =============================================================
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // =============================================================
+        // 3. DOM 元素引用
+        // =============================================================
+        const authContainer = document.getElementById('authContainer');
+        const dashboardContainer = document.getElementById('dashboardContainer');
+        const welcomeUser = document.getElementById('welcomeUser');
+        const userEmail = document.getElementById('userEmail');
 
-    // =============================================================
-    // 3. DOM 元素引用
-    // =============================================================
-    const authContainer = document.getElementById('authContainer');
-    const dashboardContainer = document.getElementById('dashboardContainer');
-    const welcomeUser = document.getElementById('welcomeUser');
-    const userEmail = document.getElementById('userEmail');
+        // 登录面板
+        const loginPanel = document.getElementById('loginPanel');
+        const registerPanel = document.getElementById('registerPanel');
+        const forgotPanel = document.getElementById('forgotPanel');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginMessage = document.getElementById('loginMessage');
+        const googleLoginBtn = document.getElementById('googleLoginBtn');
+        const gotoRegister = document.getElementById('gotoRegister');
+        const gotoForgot = document.getElementById('gotoForgot');
+        const backFromForgot = document.getElementById('backFromForgot');
 
-    // 登录面板
-    const loginPanel = document.getElementById('loginPanel');
-    const registerPanel = document.getElementById('registerPanel');
-    const forgotPanel = document.getElementById('forgotPanel');
-    const loginEmail = document.getElementById('loginEmail');
-    const loginPassword = document.getElementById('loginPassword');
-    const loginBtn = document.getElementById('loginBtn');
-    const loginMessage = document.getElementById('loginMessage');
-    const googleLoginBtn = document.getElementById('googleLoginBtn');
-    const gotoRegister = document.getElementById('gotoRegister');
-    const gotoForgot = document.getElementById('gotoForgot');
-    const backFromForgot = document.getElementById('backFromForgot');
+        // 注册面板
+        const regEmail = document.getElementById('regEmail');
+        const regPassword = document.getElementById('regPassword');
+        const regConfirm = document.getElementById('regConfirm');
+        const registerBtn = document.getElementById('registerBtn');
+        const registerMessage = document.getElementById('registerMessage');
+        const googleRegisterBtn = document.getElementById('googleRegisterBtn');
+        const gotoLoginFromRegister = document.getElementById('gotoLoginFromRegister');
 
-    // 注册面板
-    const regEmail = document.getElementById('regEmail');
-    const regPassword = document.getElementById('regPassword');
-    const regConfirm = document.getElementById('regConfirm');
-    const registerBtn = document.getElementById('registerBtn');
-    const registerMessage = document.getElementById('registerMessage');
-    const googleRegisterBtn = document.getElementById('googleRegisterBtn');
-    const gotoLoginFromRegister = document.getElementById('gotoLoginFromRegister');
+        // 忘记密码
+        const forgotEmail = document.getElementById('forgotEmail');
+        const forgotBtn = document.getElementById('forgotBtn');
+        const forgotMessage = document.getElementById('forgotMessage');
 
-    // 忘记密码
-    const forgotEmail = document.getElementById('forgotEmail');
-    const forgotBtn = document.getElementById('forgotBtn');
-    const forgotMessage = document.getElementById('forgotMessage');
+        // 主页
+        const logoutBtn = document.getElementById('logoutBtn');
+        const goToSettings = document.getElementById('goToSettings');
 
-    // 主页
-    const logoutBtn = document.getElementById('logoutBtn');
-    const goToSettings = document.getElementById('goToSettings');
+        // =============================================================
+        // 4. 界面切换函数
+        // =============================================================
+        function showAuthPanel(panel) {
+            loginPanel.classList.add('hidden');
+            registerPanel.classList.add('hidden');
+            forgotPanel.classList.add('hidden');
+            panel.classList.remove('hidden');
+            // 清除所有消息
+            document.querySelectorAll('.message').forEach(el => {
+                el.className = 'message';
+                el.textContent = '';
+            });
+        }
 
-    // =============================================================
-    // 4. 界面切换函数
-    // =============================================================
-    function showAuthPanel(panel) {
-        loginPanel.classList.add('hidden');
-        registerPanel.classList.add('hidden');
-        forgotPanel.classList.add('hidden');
-        panel.classList.remove('hidden');
-        // 清除所有消息
-        document.querySelectorAll('.message').forEach(el => {
-            el.className = 'message';
-            el.textContent = '';
+        // 认证面板内的导航
+        gotoRegister.addEventListener('click', () => showAuthPanel(registerPanel));
+        gotoLoginFromRegister.addEventListener('click', () => showAuthPanel(loginPanel));
+        gotoForgot.addEventListener('click', () => showAuthPanel(forgotPanel));
+        backFromForgot.addEventListener('click', () => showAuthPanel(loginPanel));
+
+        // =============================================================
+        // 5. 显示消息
+        // =============================================================
+        function setMessage(element, text, type = 'error') {
+            element.textContent = text;
+            element.className = 'message ' + type;
+        }
+
+        // =============================================================
+        // 6. 切换视图（认证 vs 主页）
+        // =============================================================
+        function showDashboard(user) {
+            authContainer.classList.add('hidden');
+            dashboardContainer.classList.remove('hidden');
+            welcomeUser.textContent = '👋 你好，' + user.email.split('@')[0];
+            userEmail.textContent = user.email;
+        }
+
+        function showAuth() {
+            authContainer.classList.remove('hidden');
+            dashboardContainer.classList.add('hidden');
+            // 重置到登录面板
+            showAuthPanel(loginPanel);
+        }
+
+        // =============================================================
+        // 7. 登录功能
+        // =============================================================
+        loginBtn.addEventListener('click', async () => {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value;
+            if (!email || !password) {
+                setMessage(loginMessage, '请填写完整的邮箱和密码');
+                return;
+            }
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                setMessage(loginMessage, error.message);
+            } else {
+                showDashboard(data.user);
+            }
         });
-    }
 
-    // 认证面板内的导航
-    gotoRegister.addEventListener('click', () => showAuthPanel(registerPanel));
-    gotoLoginFromRegister.addEventListener('click', () => showAuthPanel(loginPanel));
-    gotoForgot.addEventListener('click', () => showAuthPanel(forgotPanel));
-    backFromForgot.addEventListener('click', () => showAuthPanel(loginPanel));
-
-    // =============================================================
-    // 5. 显示消息
-    // =============================================================
-    function setMessage(element, text, type = 'error') {
-        element.textContent = text;
-        element.className = `message ${type}`;
-    }
-
-    // =============================================================
-    // 6. 切换视图（认证 vs 主页）
-    // =============================================================
-    function showDashboard(user) {
-        authContainer.classList.add('hidden');
-        dashboardContainer.classList.remove('hidden');
-        welcomeUser.textContent = `👋 你好，${user.email.split('@')[0]}`;
-        userEmail.textContent = user.email;
-    }
-
-    function showAuth() {
-        authContainer.classList.remove('hidden');
-        dashboardContainer.classList.add('hidden');
-        // 重置到登录面板
-        showAuthPanel(loginPanel);
-    }
-
-    // =============================================================
-    // 7. 登录功能
-    // =============================================================
-    loginBtn.addEventListener('click', async () => {
-        const email = loginEmail.value.trim();
-        const password = loginPassword.value;
-        if (!email || !password) {
-            setMessage(loginMessage, '请填写完整的邮箱和密码');
-            return;
-        }
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            setMessage(loginMessage, error.message);
-        } else {
-            // 登录成功，切换到主页
-            showDashboard(data.user);
-        }
-    });
-
-    googleLoginBtn.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: window.location.origin }
+        googleLoginBtn.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
+            });
+            if (error) setMessage(loginMessage, error.message);
         });
-        if (error) setMessage(loginMessage, error.message);
-        // 跳转到 Google 认证，回调后会回到当前页面，页面加载时会自动检测会话
-    });
 
-    // =============================================================
-    // 8. 注册功能
-    // =============================================================
-    registerBtn.addEventListener('click', async () => {
-        const email = regEmail.value.trim();
-        const password = regPassword.value;
-        const confirm = regConfirm.value;
-        if (!email || !password || !confirm) {
-            setMessage(registerMessage, '请填写所有字段');
-            return;
-        }
-        if (password.length < 6) {
-            setMessage(registerMessage, '密码至少6位');
-            return;
-        }
-        if (password !== confirm) {
-            setMessage(registerMessage, '两次密码输入不一致');
-            return;
-        }
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { emailRedirectTo: window.location.origin }
+        // =============================================================
+        // 8. 注册功能
+        // =============================================================
+        registerBtn.addEventListener('click', async () => {
+            const email = regEmail.value.trim();
+            const password = regPassword.value;
+            const confirm = regConfirm.value;
+            if (!email || !password || !confirm) {
+                setMessage(registerMessage, '请填写所有字段');
+                return;
+            }
+            if (password.length < 6) {
+                setMessage(registerMessage, '密码至少6位');
+                return;
+            }
+            if (password !== confirm) {
+                setMessage(registerMessage, '两次密码输入不一致');
+                return;
+            }
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: { emailRedirectTo: window.location.origin }
+            });
+            if (error) {
+                setMessage(registerMessage, error.message);
+            } else {
+                setMessage(registerMessage, '✅ 验证邮件已发送，请查收邮箱并点击链接完成注册！', 'success');
+            }
         });
-        if (error) {
-            setMessage(registerMessage, error.message);
-        } else {
-            setMessage(registerMessage, '✅ 验证邮件已发送，请查收邮箱并点击链接完成注册！', 'success');
-        }
-    });
 
-    googleRegisterBtn.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: window.location.origin }
+        googleRegisterBtn.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
+            });
+            if (error) setMessage(registerMessage, error.message);
         });
-        if (error) setMessage(registerMessage, error.message);
-    });
 
-    // =============================================================
-    // 9. 忘记密码
-    // =============================================================
-    forgotBtn.addEventListener('click', async () => {
-        const email = forgotEmail.value.trim();
-        if (!email) {
-            setMessage(forgotMessage, '请输入你的邮箱地址');
-            return;
-        }
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/update-password.html' // 可自定义
+        // =============================================================
+        // 9. 忘记密码
+        // =============================================================
+        forgotBtn.addEventListener('click', async () => {
+            const email = forgotEmail.value.trim();
+            if (!email) {
+                setMessage(forgotMessage, '请输入你的邮箱地址');
+                return;
+            }
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/update-password.html' // 可自定义
+            });
+            if (error) {
+                setMessage(forgotMessage, error.message);
+            } else {
+                setMessage(forgotMessage, '✅ 重置链接已发送，请查收邮箱！', 'success');
+            }
         });
-        if (error) {
-            setMessage(forgotMessage, error.message);
-        } else {
-            setMessage(forgotMessage, '✅ 重置链接已发送，请查收邮箱！', 'success');
-        }
-    });
 
-    // =============================================================
-    // 10. 退出登录
-    // =============================================================
-    logoutBtn.addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        showAuth();
-        // 清除可能的消息
-        setMessage(loginMessage, '已退出登录', 'success');
-    });
-
-    // =============================================================
-    // 11. 初始加载：检测登录状态
-    // =============================================================
-    (async function init() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            showDashboard(session.user);
-        } else {
+        // =============================================================
+        // 10. 退出登录
+        // =============================================================
+        logoutBtn.addEventListener('click', async () => {
+            await supabase.auth.signOut();
             showAuth();
-        }
-    })();
+            setMessage(loginMessage, '已退出登录', 'success');
+        });
 
-    // =============================================================
-    // 12. 监听认证状态变化（处理 OAuth 回调等）
-    // =============================================================
-    supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-            showDashboard(session.user);
-        }
-        if (event === 'SIGNED_OUT') {
-            showAuth();
-        }
-        // 处理 token 刷新等
-        if (event === 'TOKEN_REFRESHED') {
-            // 可忽略
-        }
-    });
+        // =============================================================
+        // 11. 初始加载：检测登录状态
+        // =============================================================
+        (async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                showDashboard(session.user);
+            } else {
+                showAuth();
+            }
+        })();
 
-    // 设置按钮占位
-    goToSettings.addEventListener('click', () => {
-        alert('设置页面开发中...');
-    });
-</script>
+        // =============================================================
+        // 12. 监听认证状态变化（处理 OAuth 回调等）
+        // =============================================================
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                showDashboard(session.user);
+            }
+            if (event === 'SIGNED_OUT') {
+                showAuth();
+            }
+        });
+
+        // 设置按钮占位
+        goToSettings.addEventListener('click', () => {
+            alert('设置页面开发中...');
+        });
+    </script>
 
 </body>
 </html>
