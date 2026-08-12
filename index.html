@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面 - bikan.dpdns.org</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        .box {
+            background: rgba(255,255,255,0.15);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+        }
+        .status {
+            font-size: 1.2rem;
+            background: rgba(0,0,0,0.2);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .check {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🚀 网站已上线！</h1>
+        <p>如果你能看到这个页面，说明：</p>
+        <ul style="text-align: left; max-width: 400px; margin: 20px auto; line-height: 2;">
+            <li>✅ DNS 解析成功</li>
+            <li>✅ GitHub Pages 域名验证通过</li>
+            <li>✅ SSL 证书已生效</li>
+            <li>✅ 网站内容部署成功</li>
+        </ul>
+        <div class="status">🎉 一切正常！</div>
+        <div class="check">
+            <p>域名：bikan.dpdns.org</p>
+            <p>部署时间：<span id="time"></span></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>
