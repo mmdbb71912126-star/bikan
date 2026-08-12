@@ -123,18 +123,29 @@
             html += `<li class="nav-item${active}" data-route="${item.key}">${item.icon}<span>${item.label}</span></li>`;
         });
         html += '</ul>';
-        // 底部用户信息
-        html += `<div class="sidebar-footer">
+        sidebarNav.innerHTML = html;
+
+        // 处理底部用户信息，固定在侧边栏底部
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+        // 移除旧的 footer（如果存在）
+        const oldFooter = sidebar.querySelector('.sidebar-footer');
+        if (oldFooter) oldFooter.remove();
+        // 创建新的 footer
+        const footer = document.createElement('div');
+        footer.className = 'sidebar-footer';
+        footer.innerHTML = `
             <div class="user-mini" data-route="${ROUTES.PROFILE}">
                 ${getUserAvatarHTML(currentUser, 'avatar-sm')}
                 <div class="user-mini-info">
                     <div class="user-mini-name">${getUserDisplayName(currentUser)}</div>
-                    <div class="user-mini-id">${getUserHandle(currentUser)}</div>
+                    <div class="user-mini-id">${currentUserAuth ? currentUserAuth.email : getUserHandle(currentUser)}</div>
                 </div>
                 <button class="logout-btn" id="logoutBtn" title="退出登录">${Icons.logout}</button>
             </div>
-        </div>`;
-        sidebarNav.innerHTML = html;
+        `;
+        sidebar.appendChild(footer);
+
         // 绑定退出按钮
         document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -224,8 +235,6 @@
                 .order('like_count', { ascending: false })
                 .order('created_at', { ascending: false });
         } else if (type === 'recommended') {
-            // 推荐：管理员设置的帖子，简化处理为点赞数大于一定阈值，或者使用 is_recommended 字段（原表无，可以后续添加）
-            // 这里简单取点赞数>0 的前20
             query = supabaseClient
                 .from('posts')
                 .select('*, profiles:user_id(id, username, nickname, avatar_url, is_online)')
@@ -243,7 +252,6 @@
             return;
         }
         container.innerHTML = '';
-        // 对于每条帖子，判断当前用户是否点赞/收藏
         const postsWithState = await Promise.all(data.map(async post => {
             const [likeRes, favRes] = await Promise.all([
                 supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
@@ -277,7 +285,6 @@
                 return;
             }
             resultsDiv.innerHTML = '搜索中...';
-            // 搜索帖子（按内容模糊匹配）
             const [postRes, userRes, topicRes, fileRes] = await Promise.all([
                 supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online)').ilike('content', `%${keyword}%`).limit(20),
                 supabaseClient.from('profiles').select('*').or(`username.ilike.%${keyword}%,nickname.ilike.%${keyword}%`).limit(20),
@@ -373,14 +380,12 @@
                 showToast('请输入话题名称', 'error');
                 return;
             }
-            // 检查账号注册时间是否大于30天
             const createdAt = new Date(currentUser.created_at);
             const days = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
             if (days < 30) {
                 showToast('账号注册需满30天才能创建话题', 'error');
                 return;
             }
-            // 检查已创建话题数量（包括待审核）
             const { count, error: countError } = await supabaseClient
                 .from('topics')
                 .select('id', { count: 'exact', head: true })
@@ -413,9 +418,7 @@
             </div>
             <div id="socialContent"></div>`;
         const contentDiv = document.getElementById('socialContent');
-        // 默认加载好友
         await loadFriends(contentDiv);
-        // tab切换
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
@@ -440,7 +443,6 @@
             container.innerHTML = `<p>加载失败: ${error.message}</p>`;
             return;
         }
-        // 互相跟随才算好友？简化：所有关注的人都是好友
         const friends = data.map(d => d.following);
         if (!friends.length) {
             container.innerHTML = '<p>暂无好友，去关注一些人吧</p>';
@@ -490,7 +492,6 @@
 
     async function loadMessages(container) {
         container.innerHTML = '加载中...';
-        // 简化：列出最近会话的用户（从 messages 去重）
         const { data, error } = await supabaseClient
             .from('messages')
             .select('id, sender_id, receiver_id, content, created_at, profiles_sender:sender_id(id, username, nickname, avatar_url), profiles_receiver:receiver_id(id, username, nickname, avatar_url)')
@@ -501,7 +502,6 @@
             container.innerHTML = `<p>加载失败: ${error.message}</p>`;
             return;
         }
-        // 简单按对话对象分组
         const conversations = {};
         data.forEach(msg => {
             const other = msg.sender_id === currentUser.id ? msg.profiles_receiver : msg.profiles_sender;
@@ -556,17 +556,14 @@
                 <input type="file" id="chatFileInput" multiple />
             </div>`;
         const modal = openModal('与 ' + getUserDisplayName(otherUser) + ' 聊天', content);
-        // 发送文字
         modal.querySelector('#sendChatBtn').addEventListener('click', async () => {
             const text = modal.querySelector('#chatInput').value.trim();
             if (!text) return;
             await sendMessage(otherUser.id, text, null);
             modal.querySelector('#chatInput').value = '';
-            // 刷新消息
             const newMsgs = await loadChatMessages(otherUser.id);
             renderChatMessages(modal.querySelector('#chatMessages'), newMsgs);
         });
-        // 发送文件
         modal.querySelector('#chatFileInput').addEventListener('change', async (e) => {
             const files = e.target.files;
             for (const file of files) {
@@ -631,7 +628,6 @@
             container.innerHTML = `<p>加载失败: ${error.message}</p>`;
             return;
         }
-        // 标记已读
         await supabaseClient.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
         notificationsUnread = 0;
         updateNavBadge();
@@ -696,7 +692,7 @@
         container.innerHTML = '';
         for (const post of data) {
             post.is_owner = true;
-            post.liked_by_me = false; // 简化
+            post.liked_by_me = false;
             post.favorited_by_me = false;
             container.appendChild(renderPostCard(post));
         }
@@ -757,7 +753,6 @@
                 return;
             }
             const updates = { nickname, username, bio };
-            // 头像上传
             const avatarFile = container.querySelector('#editAvatar').files[0];
             if (avatarFile) {
                 try {
@@ -790,9 +785,13 @@
                 showToast('请输入问题描述', 'error');
                 return;
             }
-            // 此处可以插入反馈表，但现有表无反馈表，简化用通知发给管理员
+            const adminId = await getAdminId();
+            if (!adminId) {
+                showToast('无法获取管理员信息', 'error');
+                return;
+            }
             const { error } = await supabaseClient.from('notifications').insert({
-                user_id: currentUser.is_admin ? currentUser.id : (await getAdminId()),
+                user_id: adminId,
                 type: 'system',
                 content: '用户反馈: ' + content,
                 actor_id: currentUser.id
@@ -807,7 +806,6 @@
     }
 
     async function getAdminId() {
-        // 简化：返回管理员 ID（数据库管理员邮箱）
         const { data } = await supabaseClient.from('profiles').select('id').eq('is_admin', true).single();
         return data?.id || null;
     }
@@ -985,7 +983,6 @@
     }
 
     async function loadRecommendAdmin(container) {
-        // 简化：列出点赞数>0 的帖子，管理员可设置推荐（实际上我们没有 is_recommended 字段，这里用点赞数排序模拟）
         container.innerHTML = '<p>推荐管理：选择帖子标记为推荐（功能开发中，当前展示热门帖子）</p>';
         const { data, error } = await supabaseClient
             .from('posts')
@@ -1028,9 +1025,8 @@
     // ---------- 帖子详情页 ----------
     async function openPostDetail(postId) {
         if (!postId) return;
-        // 记录历史
+        currentPostId = postId;
         await supabaseClient.from('view_history').upsert({ user_id: currentUser.id, post_id: postId, viewed_at: new Date().toISOString() }, { onConflict: 'user_id,post_id' });
-        // 获取帖子详情
         const { data: post, error } = await supabaseClient
             .from('posts')
             .select('*, profiles:user_id(id, username, nickname, avatar_url, is_online)')
@@ -1047,42 +1043,50 @@
         post.liked_by_me = !!likeRes.data;
         post.favorited_by_me = !!favRes.data;
         post.is_owner = post.user_id === currentUser.id;
-        // 渲染详情
         mainContent.innerHTML = `
             <button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button>
             <div id="postDetailContainer" style="margin-top: 16px;"></div>`;
-        document.querySelector('[data-action="back"]').addEventListener('click', () => navigateTo(currentRoute));
+        document.querySelector('[data-action="back"]').addEventListener('click', () => {
+            currentPostId = null;
+            navigateTo(currentRoute);
+        });
         const detailContainer = document.getElementById('postDetailContainer');
         detailContainer.appendChild(renderPostCard(post, { showActions: true, isDetail: true }));
-        // 渲染媒体完整内容
         if (post.media && post.media.length) {
             const mediaDiv = document.createElement('div');
             mediaDiv.innerHTML = post.media.map(file => renderFileDetail(file)).join('');
             detailContainer.appendChild(mediaDiv);
         }
-        // 评论区域
         detailContainer.innerHTML += `<div class="comments-section"><h3>评论</h3><div id="commentsList"></div>
             <div class="comment-form" style="margin-top: 16px;">
                 <textarea id="commentInput" placeholder="写下你的评论..." rows="3"></textarea>
                 <button class="btn btn-primary" id="submitCommentBtn" style="margin-top: 8px;">${Icons.comment} 发表评论</button>
             </div></div>`;
         await loadComments(postId);
-        // 事件绑定
         detailContainer.querySelector('#submitCommentBtn').addEventListener('click', async () => {
             const content = detailContainer.querySelector('#commentInput').value.trim();
             if (!content) {
                 showToast('请输入评论内容', 'error');
                 return;
             }
-            const { error } = await supabaseClient.from('comments').insert({
+            const parentId = detailContainer.querySelector('#commentInput').dataset.parentId || null;
+            const replyToUserId = detailContainer.querySelector('#commentInput').dataset.replyToUserId || null;
+            const insertData = {
                 post_id: postId,
                 user_id: currentUser.id,
                 content
-            });
+            };
+            if (parentId) {
+                insertData.parent_id = parentId;
+                insertData.reply_to_user_id = replyToUserId;
+            }
+            const { error } = await supabaseClient.from('comments').insert(insertData);
             if (error) {
                 showToast('评论失败: ' + error.message, 'error');
             } else {
                 detailContainer.querySelector('#commentInput').value = '';
+                delete detailContainer.querySelector('#commentInput').dataset.parentId;
+                delete detailContainer.querySelector('#commentInput').dataset.replyToUserId;
                 await loadComments(postId);
             }
         });
@@ -1102,12 +1106,10 @@
             return;
         }
         listDiv.innerHTML = '';
-        // 分离主评论和回复
         const mainComments = data.filter(c => !c.parent_id);
         const replies = data.filter(c => c.parent_id);
         mainComments.forEach(comment => {
             listDiv.appendChild(renderCommentItem(comment));
-            // 找回复
             const commentReplies = replies.filter(r => r.parent_id === comment.id);
             commentReplies.forEach(reply => {
                 const replyEl = renderCommentItem(reply, { isReply: true });
@@ -1130,13 +1132,6 @@
             const requestId = target.dataset.requestId;
             const id = target.dataset.id;
 
-            // 导航相关
-            if (action === 'back') {
-                // 已在详情处理
-                return;
-            }
-
-            // 帖子操作
             if (action === 'like' && postId) {
                 await toggleLike(postId, target);
             } else if (action === 'favorite' && postId) {
@@ -1153,17 +1148,18 @@
                 if (confirm('确认删除这条帖子吗？')) {
                     await supabaseClient.from('posts').delete().eq('id', postId);
                     showToast('已删除', 'success');
+                    if (currentPostId === postId) {
+                        currentPostId = null;
+                    }
                     navigateTo(currentRoute);
                 }
             } else if (action === 'like-comment' && commentId) {
                 await toggleCommentLike(commentId, target);
             } else if (action === 'reply-comment' && commentId) {
-                // 简化：直接聚焦评论框并设置父评论
                 const commentInput = document.getElementById('commentInput');
                 if (commentInput) {
                     commentInput.focus();
                     commentInput.dataset.parentId = commentId;
-                    // 获取回复用户
                     const { data } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
                     if (data) commentInput.dataset.replyToUserId = data.user_id;
                 }
@@ -1171,7 +1167,6 @@
                 showReportModal('comment', commentId);
             } else if (action === 'join-topic' && topicId) {
                 navigateTo(ROUTES.FORUM);
-                // 打开话题详情
                 await openTopicDetail(topicId);
             } else if (action === 'accept-friend' && requestId) {
                 await supabaseClient.from('friend_requests').update({ status: 'accepted' }).eq('id', requestId);
@@ -1193,7 +1188,6 @@
                 showToast('已忽略', 'success');
                 if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
             } else if (action === 'action-report' && id) {
-                // 简单处理：标记为已处理，封禁目标用户或删除目标内容
                 const targetType = target.dataset.targetType;
                 const targetId = target.dataset.targetId;
                 if (targetType === 'post') {
@@ -1223,14 +1217,12 @@
             }
         });
 
-        // 点击帖子卡片打开详情
         document.addEventListener('click', (e) => {
             const postCard = e.target.closest('.post-card');
             if (postCard && !e.target.closest('[data-action]') && !e.target.closest('.media-item')) {
                 const postId = postCard.querySelector('[data-post-id]')?.dataset.postId;
                 if (postId) openPostDetail(postId);
             }
-            // 点击媒体项预览
             const mediaItem = e.target.closest('.media-item');
             if (mediaItem) {
                 const url = mediaItem.dataset.fileUrl;
@@ -1244,7 +1236,6 @@
                     }
                 }
             }
-            // 点击标签搜索
             const tag = e.target.closest('.tag');
             if (tag) {
                 currentTab = EXPLORE_TABS.SEARCH;
@@ -1257,7 +1248,6 @@
             }
         });
 
-        // 侧边栏导航
         sidebarNav.addEventListener('click', (e) => {
             const navItem = e.target.closest('.nav-item');
             if (navItem) {
@@ -1274,7 +1264,6 @@
         } else {
             await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
         }
-        // 刷新当前视图（简化）
         navigateTo(currentRoute);
     }
 
@@ -1295,7 +1284,6 @@
         } else {
             await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
         }
-        // 刷新评论列表
         if (currentPostId) await loadComments(currentPostId);
     }
 
@@ -1328,7 +1316,7 @@
         const content = `
             <p>分享链接：</p>
             <input type="text" value="${url}" readonly style="width:100%; margin-bottom: 12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');" />
-            <p>或转发给站内好友（功能简化，直接转发）</p>
+            <p>或转发给站内好友</p>
             <button class="btn btn-primary" data-action="repost" data-post-id="${postId}">${Icons.repost} 转发</button>`;
         openModal('分享', content);
     }
@@ -1407,7 +1395,6 @@
             <div id="topicPosts"></div>`;
         document.querySelector('[data-action="back"]').addEventListener('click', () => navigateTo(ROUTES.FORUM));
         const postsDiv = document.getElementById('topicPosts');
-        // 获取话题下帖子（按点赞数和时间排序）
         const { data: topicPosts, error } = await supabaseClient
             .from('topic_posts')
             .select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online))')
@@ -1419,7 +1406,6 @@
         }
         postsDiv.innerHTML = '';
         const posts = topicPosts.map(tp => tp.post).sort((a, b) => {
-            // 点赞多优先，时间新优先
             if (b.like_count !== a.like_count) return b.like_count - a.like_count;
             return new Date(b.created_at) - new Date(a.created_at);
         });
@@ -1436,8 +1422,6 @@
     }
 
     // ---------- 启动 ----------
-    document.addEventListener('DOMContentLoaded', init);
-    // 如果 DOM 已加载
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
