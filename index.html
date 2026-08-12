@@ -4,8 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>我的网站</title>
-    <!-- Supabase JS SDK -->
+    <!-- 加载 Supabase SDK (使用多个 CDN 备用) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
+    <!-- 如果第一个 CDN 失败，尝试第二个 -->
+    <script>
+        if (typeof window.supabase === 'undefined') {
+            document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
+        }
     </script>
     <style>
         /* ===== 全局重置 ===== */
@@ -213,6 +219,18 @@
         .btn-secondary:hover {
             background: #cbd5e1;
         }
+
+        /* 调试信息 */
+        #debugInfo {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #334155;
+            text-align: left;
+            display: none;
+        }
     </style>
 </head>
 
@@ -325,231 +343,333 @@
                 <button class="btn btn-secondary" id="goToSettings" style="flex:1;">设置</button>
                 <button class="btn btn-logout" id="logoutBtn" style="flex:1;">退出登录</button>
             </div>
-            <!-- 这里可以添加更多内容 -->
         </div>
+
+        <!-- 调试信息区域 (默认隐藏，出错时显示) -->
+        <div id="debugInfo"></div>
     </div>
 
     <script>
         // =============================================================
-        // 1. 配置 Supabase（直接填入你的项目信息）
+        // 0. 页面加载时立即弹窗，证明 JS 已执行
+        // =============================================================
+        alert('✅ 页面脚本已启动！如果看到此弹窗，说明 JavaScript 正在运行。');
+
+        // =============================================================
+        // 1. 配置 Supabase（请替换为你的实际值）
         // =============================================================
         const SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
 
         // =============================================================
-        // 2. 安全初始化 Supabase 客户端（避免重复声明）
+        // 2. 安全初始化 Supabase 客户端
         // =============================================================
-        if (!window._supabaseClient) {
-            window._supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-        const supabase = window._supabaseClient;
+        let supabase = null;
+        let sdkLoaded = false;
 
-        // =============================================================
-        // 3. DOM 元素引用
-        // =============================================================
-        const authContainer = document.getElementById('authContainer');
-        const dashboardContainer = document.getElementById('dashboardContainer');
-        const welcomeUser = document.getElementById('welcomeUser');
-        const userEmail = document.getElementById('userEmail');
-
-        // 登录面板
-        const loginPanel = document.getElementById('loginPanel');
-        const registerPanel = document.getElementById('registerPanel');
-        const forgotPanel = document.getElementById('forgotPanel');
-        const loginEmail = document.getElementById('loginEmail');
-        const loginPassword = document.getElementById('loginPassword');
-        const loginBtn = document.getElementById('loginBtn');
-        const loginMessage = document.getElementById('loginMessage');
-        const googleLoginBtn = document.getElementById('googleLoginBtn');
-        const gotoRegister = document.getElementById('gotoRegister');
-        const gotoForgot = document.getElementById('gotoForgot');
-        const backFromForgot = document.getElementById('backFromForgot');
-
-        // 注册面板
-        const regEmail = document.getElementById('regEmail');
-        const regPassword = document.getElementById('regPassword');
-        const regConfirm = document.getElementById('regConfirm');
-        const registerBtn = document.getElementById('registerBtn');
-        const registerMessage = document.getElementById('registerMessage');
-        const googleRegisterBtn = document.getElementById('googleRegisterBtn');
-        const gotoLoginFromRegister = document.getElementById('gotoLoginFromRegister');
-
-        // 忘记密码
-        const forgotEmail = document.getElementById('forgotEmail');
-        const forgotBtn = document.getElementById('forgotBtn');
-        const forgotMessage = document.getElementById('forgotMessage');
-
-        // 主页
-        const logoutBtn = document.getElementById('logoutBtn');
-        const goToSettings = document.getElementById('goToSettings');
-
-        // =============================================================
-        // 4. 界面切换函数
-        // =============================================================
-        function showAuthPanel(panel) {
-            loginPanel.classList.add('hidden');
-            registerPanel.classList.add('hidden');
-            forgotPanel.classList.add('hidden');
-            panel.classList.remove('hidden');
-            // 清除所有消息
-            document.querySelectorAll('.message').forEach(el => {
-                el.className = 'message';
-                el.textContent = '';
-            });
-        }
-
-        // 认证面板内的导航
-        gotoRegister.addEventListener('click', () => showAuthPanel(registerPanel));
-        gotoLoginFromRegister.addEventListener('click', () => showAuthPanel(loginPanel));
-        gotoForgot.addEventListener('click', () => showAuthPanel(forgotPanel));
-        backFromForgot.addEventListener('click', () => showAuthPanel(loginPanel));
-
-        // =============================================================
-        // 5. 显示消息
-        // =============================================================
-        function setMessage(element, text, type = 'error') {
-            element.textContent = text;
-            element.className = 'message ' + type;
-        }
-
-        // =============================================================
-        // 6. 切换视图（认证 vs 主页）
-        // =============================================================
-        function showDashboard(user) {
-            authContainer.classList.add('hidden');
-            dashboardContainer.classList.remove('hidden');
-            welcomeUser.textContent = '👋 你好，' + user.email.split('@')[0];
-            userEmail.textContent = user.email;
-        }
-
-        function showAuth() {
-            authContainer.classList.remove('hidden');
-            dashboardContainer.classList.add('hidden');
-            // 重置到登录面板
-            showAuthPanel(loginPanel);
-        }
-
-        // =============================================================
-        // 7. 登录功能
-        // =============================================================
-        loginBtn.addEventListener('click', async () => {
-            const email = loginEmail.value.trim();
-            const password = loginPassword.value;
-            if (!email || !password) {
-                setMessage(loginMessage, '请填写完整的邮箱和密码');
-                return;
-            }
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                setMessage(loginMessage, error.message);
+        try {
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                sdkLoaded = true;
+                console.log('✅ Supabase SDK 加载成功');
             } else {
-                showDashboard(data.user);
+                throw new Error('Supabase SDK 未加载，请检查网络或 CDN 链接。');
             }
-        });
+        } catch (err) {
+            console.error('❌ Supabase 初始化失败:', err.message);
+            // 显示调试信息
+            const debug = document.getElementById('debugInfo');
+            debug.style.display = 'block';
+            debug.innerHTML = '<strong>⚠️ 错误：</strong> ' + err.message +
+                '<br>请检查网络连接或刷新页面重试。';
+            // 即使 SDK 加载失败，按钮事件依然绑定，但会给出提示
+        }
 
-        googleLoginBtn.addEventListener('click', async () => {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin }
+        // =============================================================
+        // 3. 等待 DOM 完全加载后绑定事件
+        // =============================================================
+        window.onload = function() {
+            console.log('📄 DOM 已完全加载，开始绑定事件...');
+
+            // 获取所有需要操作的元素
+            const elements = {
+                authContainer: document.getElementById('authContainer'),
+                dashboardContainer: document.getElementById('dashboardContainer'),
+                welcomeUser: document.getElementById('welcomeUser'),
+                userEmail: document.getElementById('userEmail'),
+                loginPanel: document.getElementById('loginPanel'),
+                registerPanel: document.getElementById('registerPanel'),
+                forgotPanel: document.getElementById('forgotPanel'),
+                loginEmail: document.getElementById('loginEmail'),
+                loginPassword: document.getElementById('loginPassword'),
+                loginBtn: document.getElementById('loginBtn'),
+                loginMessage: document.getElementById('loginMessage'),
+                googleLoginBtn: document.getElementById('googleLoginBtn'),
+                gotoRegister: document.getElementById('gotoRegister'),
+                gotoForgot: document.getElementById('gotoForgot'),
+                backFromForgot: document.getElementById('backFromForgot'),
+                regEmail: document.getElementById('regEmail'),
+                regPassword: document.getElementById('regPassword'),
+                regConfirm: document.getElementById('regConfirm'),
+                registerBtn: document.getElementById('registerBtn'),
+                registerMessage: document.getElementById('registerMessage'),
+                googleRegisterBtn: document.getElementById('googleRegisterBtn'),
+                gotoLoginFromRegister: document.getElementById('gotoLoginFromRegister'),
+                forgotEmail: document.getElementById('forgotEmail'),
+                forgotBtn: document.getElementById('forgotBtn'),
+                forgotMessage: document.getElementById('forgotMessage'),
+                logoutBtn: document.getElementById('logoutBtn'),
+                goToSettings: document.getElementById('goToSettings'),
+            };
+
+            // 检查关键元素是否存在
+            for (const [key, el] of Object.entries(elements)) {
+                if (!el) {
+                    console.error(`❌ 元素 #${key} 未找到，请检查 HTML 结构。`);
+                    alert(`错误：元素 #${key} 不存在，页面可能不完整。`);
+                    return;
+                }
+            }
+
+            // =============================================================
+            // 4. 界面切换函数
+            // =============================================================
+            function showAuthPanel(panel) {
+                elements.loginPanel.classList.add('hidden');
+                elements.registerPanel.classList.add('hidden');
+                elements.forgotPanel.classList.add('hidden');
+                panel.classList.remove('hidden');
+                // 清除所有消息
+                document.querySelectorAll('.message').forEach(el => {
+                    el.className = 'message';
+                    el.textContent = '';
+                });
+            }
+
+            // 认证面板内的导航
+            elements.gotoRegister.addEventListener('click', function(e) {
+                e.preventDefault();
+                showAuthPanel(elements.registerPanel);
             });
-            if (error) setMessage(loginMessage, error.message);
-        });
-
-        // =============================================================
-        // 8. 注册功能
-        // =============================================================
-        registerBtn.addEventListener('click', async () => {
-            const email = regEmail.value.trim();
-            const password = regPassword.value;
-            const confirm = regConfirm.value;
-            if (!email || !password || !confirm) {
-                setMessage(registerMessage, '请填写所有字段');
-                return;
-            }
-            if (password.length < 6) {
-                setMessage(registerMessage, '密码至少6位');
-                return;
-            }
-            if (password !== confirm) {
-                setMessage(registerMessage, '两次密码输入不一致');
-                return;
-            }
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: { emailRedirectTo: window.location.origin }
+            elements.gotoLoginFromRegister.addEventListener('click', function(e) {
+                e.preventDefault();
+                showAuthPanel(elements.loginPanel);
             });
-            if (error) {
-                setMessage(registerMessage, error.message);
-            } else {
-                setMessage(registerMessage, '✅ 验证邮件已发送，请查收邮箱并点击链接完成注册！', 'success');
-            }
-        });
-
-        googleRegisterBtn.addEventListener('click', async () => {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.origin }
+            elements.gotoForgot.addEventListener('click', function(e) {
+                e.preventDefault();
+                showAuthPanel(elements.forgotPanel);
             });
-            if (error) setMessage(registerMessage, error.message);
-        });
-
-        // =============================================================
-        // 9. 忘记密码
-        // =============================================================
-        forgotBtn.addEventListener('click', async () => {
-            const email = forgotEmail.value.trim();
-            if (!email) {
-                setMessage(forgotMessage, '请输入你的邮箱地址');
-                return;
-            }
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + '/update-password.html' // 可自定义
+            elements.backFromForgot.addEventListener('click', function(e) {
+                e.preventDefault();
+                showAuthPanel(elements.loginPanel);
             });
-            if (error) {
-                setMessage(forgotMessage, error.message);
-            } else {
-                setMessage(forgotMessage, '✅ 重置链接已发送，请查收邮箱！', 'success');
+
+            // =============================================================
+            // 5. 显示消息
+            // =============================================================
+            function setMessage(element, text, type = 'error') {
+                element.textContent = text;
+                element.className = 'message ' + type;
             }
-        });
 
-        // =============================================================
-        // 10. 退出登录
-        // =============================================================
-        logoutBtn.addEventListener('click', async () => {
-            await supabase.auth.signOut();
-            showAuth();
-            setMessage(loginMessage, '已退出登录', 'success');
-        });
+            // =============================================================
+            // 6. 切换视图（认证 vs 主页）
+            // =============================================================
+            function showDashboard(user) {
+                elements.authContainer.classList.add('hidden');
+                elements.dashboardContainer.classList.remove('hidden');
+                elements.welcomeUser.textContent = '👋 你好，' + user.email.split('@')[0];
+                elements.userEmail.textContent = user.email;
+            }
 
-        // =============================================================
-        // 11. 初始加载：检测登录状态
-        // =============================================================
-        (async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                showDashboard(session.user);
-            } else {
+            function showAuth() {
+                elements.authContainer.classList.remove('hidden');
+                elements.dashboardContainer.classList.add('hidden');
+                showAuthPanel(elements.loginPanel);
+            }
+
+            // =============================================================
+            // 7. 登录功能（检查 SDK 是否可用）
+            // =============================================================
+            elements.loginBtn.addEventListener('click', async function() {
+                if (!sdkLoaded || !supabase) {
+                    setMessage(elements.loginMessage, '⚠️ Supabase SDK 未加载，请检查网络或刷新重试。');
+                    return;
+                }
+                const email = elements.loginEmail.value.trim();
+                const password = elements.loginPassword.value;
+                if (!email || !password) {
+                    setMessage(elements.loginMessage, '请填写完整的邮箱和密码');
+                    return;
+                }
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) {
+                        setMessage(elements.loginMessage, error.message);
+                    } else {
+                        showDashboard(data.user);
+                    }
+                } catch (err) {
+                    setMessage(elements.loginMessage, '网络错误：' + err.message);
+                }
+            });
+
+            elements.googleLoginBtn.addEventListener('click', async function() {
+                if (!sdkLoaded || !supabase) {
+                    setMessage(elements.loginMessage, '⚠️ Supabase SDK 未加载，请检查网络或刷新重试。');
+                    return;
+                }
+                try {
+                    const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: { redirectTo: window.location.origin }
+                    });
+                    if (error) setMessage(elements.loginMessage, error.message);
+                } catch (err) {
+                    setMessage(elements.loginMessage, '网络错误：' + err.message);
+                }
+            });
+
+            // =============================================================
+            // 8. 注册功能
+            // =============================================================
+            elements.registerBtn.addEventListener('click', async function() {
+                if (!sdkLoaded || !supabase) {
+                    setMessage(elements.registerMessage, '⚠️ Supabase SDK 未加载，请检查网络或刷新重试。');
+                    return;
+                }
+                const email = elements.regEmail.value.trim();
+                const password = elements.regPassword.value;
+                const confirm = elements.regConfirm.value;
+                if (!email || !password || !confirm) {
+                    setMessage(elements.registerMessage, '请填写所有字段');
+                    return;
+                }
+                if (password.length < 6) {
+                    setMessage(elements.registerMessage, '密码至少6位');
+                    return;
+                }
+                if (password !== confirm) {
+                    setMessage(elements.registerMessage, '两次密码输入不一致');
+                    return;
+                }
+                try {
+                    const { data, error } = await supabase.auth.signUp({
+                        email,
+                        password,
+                        options: { emailRedirectTo: window.location.origin }
+                    });
+                    if (error) {
+                        setMessage(elements.registerMessage, error.message);
+                    } else {
+                        setMessage(elements.registerMessage, '✅ 验证邮件已发送，请查收邮箱并点击链接完成注册！', 'success');
+                    }
+                } catch (err) {
+                    setMessage(elements.registerMessage, '网络错误：' + err.message);
+                }
+            });
+
+            elements.googleRegisterBtn.addEventListener('click', async function() {
+                if (!sdkLoaded || !supabase) {
+                    setMessage(elements.registerMessage, '⚠️ Supabase SDK 未加载，请检查网络或刷新重试。');
+                    return;
+                }
+                try {
+                    const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: { redirectTo: window.location.origin }
+                    });
+                    if (error) setMessage(elements.registerMessage, error.message);
+                } catch (err) {
+                    setMessage(elements.registerMessage, '网络错误：' + err.message);
+                }
+            });
+
+            // =============================================================
+            // 9. 忘记密码
+            // =============================================================
+            elements.forgotBtn.addEventListener('click', async function() {
+                if (!sdkLoaded || !supabase) {
+                    setMessage(elements.forgotMessage, '⚠️ Supabase SDK 未加载，请检查网络或刷新重试。');
+                    return;
+                }
+                const email = elements.forgotEmail.value.trim();
+                if (!email) {
+                    setMessage(elements.forgotMessage, '请输入你的邮箱地址');
+                    return;
+                }
+                try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.origin + '/update-password.html'
+                    });
+                    if (error) {
+                        setMessage(elements.forgotMessage, error.message);
+                    } else {
+                        setMessage(elements.forgotMessage, '✅ 重置链接已发送，请查收邮箱！', 'success');
+                    }
+                } catch (err) {
+                    setMessage(elements.forgotMessage, '网络错误：' + err.message);
+                }
+            });
+
+            // =============================================================
+            // 10. 退出登录
+            // =============================================================
+            elements.logoutBtn.addEventListener('click', async function() {
+                if (!sdkLoaded || !supabase) {
+                    alert('SDK 未加载，无法退出。');
+                    return;
+                }
+                await supabase.auth.signOut();
                 showAuth();
-            }
-        })();
+                setMessage(elements.loginMessage, '已退出登录', 'success');
+            });
 
-        // =============================================================
-        // 12. 监听认证状态变化（处理 OAuth 回调等）
-        // =============================================================
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                showDashboard(session.user);
-            }
-            if (event === 'SIGNED_OUT') {
-                showAuth();
-            }
-        });
+            // =============================================================
+            // 11. 设置按钮占位
+            // =============================================================
+            elements.goToSettings.addEventListener('click', function() {
+                alert('设置页面开发中...');
+            });
 
-        // 设置按钮占位
-        goToSettings.addEventListener('click', () => {
-            alert('设置页面开发中...');
-        });
+            // =============================================================
+            // 12. 初始加载：检测登录状态
+            // =============================================================
+            (async function init() {
+                if (!sdkLoaded || !supabase) {
+                    console.warn('⚠️ Supabase 不可用，无法检测登录状态，显示登录界面。');
+                    showAuth();
+                    return;
+                }
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        showDashboard(session.user);
+                    } else {
+                        showAuth();
+                    }
+                } catch (err) {
+                    console.error('获取会话失败：', err);
+                    showAuth();
+                }
+            })();
+
+            // =============================================================
+            // 13. 监听认证状态变化（处理 OAuth 回调等）
+            // =============================================================
+            if (sdkLoaded && supabase) {
+                supabase.auth.onAuthStateChange((event, session) => {
+                    if (event === 'SIGNED_IN' && session) {
+                        showDashboard(session.user);
+                    }
+                    if (event === 'SIGNED_OUT') {
+                        showAuth();
+                    }
+                });
+            }
+
+            console.log('✅ 所有事件绑定完成！');
+        }; // window.onload 结束
     </script>
 
 </body>
