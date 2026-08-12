@@ -3,198 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>我的网站</title>
+    <title>必看 - 登录</title>
     <!-- 加载 Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-    </script>
-    <style>
-        /* ===== 全部样式 ===== */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 24px;
-            padding: 40px 32px;
-            max-width: 440px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-        h2 {
-            font-weight: 600;
-            font-size: 28px;
-            margin-bottom: 8px;
-            color: #1e293b;
-        }
-        .subtitle {
-            color: #64748b;
-            margin-bottom: 28px;
-            font-size: 14px;
-        }
-        .form-group {
-            margin-bottom: 18px;
-        }
-        label {
-            display: block;
-            font-weight: 500;
-            font-size: 14px;
-            color: #334155;
-            margin-bottom: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 15px;
-            outline: none;
-            transition: 0.2s;
-        }
-        input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-top: 6px;
-        }
-        .btn:hover {
-            background: #5a6fd6;
-            transform: translateY(-1px);
-        }
-        .btn-google {
-            background: white;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .btn-google:hover {
-            background: #f8fafc;
-        }
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 20px 0;
-            color: #94a3b8;
-            font-size: 13px;
-        }
-        .divider::before,
-        .divider::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
-        }
-        .footer-link {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #64748b;
-        }
-        .footer-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .footer-link a:hover {
-            text-decoration: underline;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #667eea;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .back-link:hover {
-            text-decoration: underline;
-        }
-        .message {
-            margin-top: 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            display: none;
-        }
-        .message.error {
-            background: #fee2e2;
-            color: #b91c1c;
-            display: block;
-        }
-        .message.success {
-            background: #dcfce7;
-            color: #166534;
-            display: block;
-        }
-        .hidden {
-            display: none !important;
-        }
-        #dashboardContainer {
-            max-width: 600px;
-        }
-        .welcome {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .user-email {
-            color: #64748b;
-            margin-bottom: 24px;
-            font-size: 14px;
-        }
-        .btn-logout {
-            background: #ef4444;
-        }
-        .btn-logout:hover {
-            background: #dc2626;
-        }
-        .btn-secondary {
-            background: #e2e8f0;
-            color: #1e293b;
-        }
-        .btn-secondary:hover {
-            background: #cbd5e1;
-        }
-        #debugInfo {
-            margin-top: 20px;
-            padding: 10px;
-            background: #f1f5f9;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #334155;
-            text-align: left;
-            display: none;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 加载全局样式 -->
+    <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-
-    <div class="card" id="app">
+<body class="login-body">
+    <div class="card" id="authCard">
         <!-- 认证界面 -->
         <div id="authContainer">
             <!-- 登录面板 -->
@@ -219,7 +35,7 @@
                     <label>密码</label>
                     <input type="password" id="loginPassword" placeholder="••••••••" />
                 </div>
-                <button class="btn" id="loginBtn">登录</button>
+                <button class="btn btn-primary btn-block" id="loginBtn">登录</button>
                 <div id="loginMessage" class="message"></div>
                 <div class="footer-link">
                     <a id="gotoForgot">忘记密码？点我验证</a> &nbsp;·&nbsp;
@@ -253,7 +69,7 @@
                     <label>确认密码</label>
                     <input type="password" id="regConfirm" placeholder="再次输入密码" />
                 </div>
-                <button class="btn" id="registerBtn">发送验证邮件</button>
+                <button class="btn btn-primary btn-block" id="registerBtn">发送验证邮件</button>
                 <div id="registerMessage" class="message"></div>
                 <div class="footer-link">
                     已有账号？<a id="gotoLoginFromRegister">点我登录</a>
@@ -269,62 +85,38 @@
                     <label>邮箱地址</label>
                     <input type="email" id="forgotEmail" placeholder="your@email.com" />
                 </div>
-                <button class="btn" id="forgotBtn">点击发送验证邮件</button>
+                <button class="btn btn-primary btn-block" id="forgotBtn">点击发送验证邮件</button>
                 <div id="forgotMessage" class="message"></div>
             </div>
         </div>
-
-        <!-- 主页界面 (登录后显示) -->
-        <div id="dashboardContainer" class="hidden">
-            <div class="welcome" id="welcomeUser">👋 欢迎回来</div>
-            <div class="user-email" id="userEmail">user@example.com</div>
-            <p style="margin: 16px 0; color: #475569;">
-                你已经成功登录，这里是你的个人主页。
-            </p>
-            <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn btn-secondary" id="goToSettings" style="flex:1;">设置</button>
-                <button class="btn btn-logout" id="logoutBtn" style="flex:1;">退出登录</button>
-            </div>
-        </div>
-
-        <!-- 调试信息 -->
-        <div id="debugInfo"></div>
     </div>
 
     <script>
-        // =============================================================
-        // 所有代码封装在 window.onload 中，避免全局变量冲突
-        // =============================================================
+        // ============================================================
+        // 认证脚本（无 emoji，使用文字或 SVG）
+        // ============================================================
         window.onload = function() {
-
-            // -------- 1. 配置 Supabase --------
+            // Supabase 配置
             var SUPABASE_URL = 'https://bazpyoiklkoajdhfkwly.supabase.co';
             var SUPABASE_ANON_KEY = 'sb_publishable_lTx_tYITroL8_jVVR4EjAA_Eg61lBFT';
 
-            // -------- 2. 检查 SDK 是否加载 --------
+            // 初始化
             var supabaseClient = null;
             var sdkReady = false;
             try {
                 if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
                     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                     sdkReady = true;
-                    console.log('✅ Supabase SDK 加载成功');
                 } else {
                     throw new Error('Supabase SDK 未加载');
                 }
             } catch (e) {
-                console.error('❌ Supabase 初始化失败:', e.message);
-                document.getElementById('debugInfo').style.display = 'block';
-                document.getElementById('debugInfo').innerHTML = '<strong>⚠️ 错误：</strong> ' + e.message +
-                    '<br>请检查网络连接或刷新页面重试。';
+                console.error(e);
+                showMessage('loginMessage', '初始化失败，请刷新重试');
             }
 
-            // -------- 3. 获取所有元素 --------
+            // 获取元素
             var elements = {
-                authContainer: document.getElementById('authContainer'),
-                dashboardContainer: document.getElementById('dashboardContainer'),
-                welcomeUser: document.getElementById('welcomeUser'),
-                userEmail: document.getElementById('userEmail'),
                 loginPanel: document.getElementById('loginPanel'),
                 registerPanel: document.getElementById('registerPanel'),
                 forgotPanel: document.getElementById('forgotPanel'),
@@ -345,221 +137,135 @@
                 gotoLoginFromRegister: document.getElementById('gotoLoginFromRegister'),
                 forgotEmail: document.getElementById('forgotEmail'),
                 forgotBtn: document.getElementById('forgotBtn'),
-                forgotMessage: document.getElementById('forgotMessage'),
-                logoutBtn: document.getElementById('logoutBtn'),
-                goToSettings: document.getElementById('goToSettings'),
+                forgotMessage: document.getElementById('forgotMessage')
             };
 
-            // 检查是否所有元素都存在
-            for (var key in elements) {
-                if (!elements[key]) {
-                    console.error('❌ 元素 #' + key + ' 未找到');
-                    alert('错误：页面元素缺失，请检查 HTML。');
-                    return;
-                }
+            function showMessage(id, text, isSuccess) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = text;
+                el.className = 'message ' + (isSuccess ? 'success' : 'error');
             }
 
-            // -------- 4. 辅助函数 --------
-            function showAuthPanel(panel) {
+            function showPanel(panel) {
                 elements.loginPanel.classList.add('hidden');
                 elements.registerPanel.classList.add('hidden');
                 elements.forgotPanel.classList.add('hidden');
                 panel.classList.remove('hidden');
-                document.querySelectorAll('.message').forEach(function(el) {
-                    el.className = 'message';
-                    el.textContent = '';
+                // 清空消息
+                ['loginMessage', 'registerMessage', 'forgotMessage'].forEach(function(id) {
+                    var msg = document.getElementById(id);
+                    if (msg) msg.className = 'message';
                 });
             }
 
-            function setMessage(element, text, type) {
-                element.textContent = text;
-                element.className = 'message ' + (type || 'error');
-            }
-
-            function showDashboard(user) {
-                elements.authContainer.classList.add('hidden');
-                elements.dashboardContainer.classList.remove('hidden');
-                elements.welcomeUser.textContent = '👋 你好，' + user.email.split('@')[0];
-                elements.userEmail.textContent = user.email;
-            }
-
-            function showAuth() {
-                elements.authContainer.classList.remove('hidden');
-                elements.dashboardContainer.classList.add('hidden');
-                showAuthPanel(elements.loginPanel);
-            }
-
-            // -------- 5. 事件绑定 --------
             // 导航
             elements.gotoRegister.addEventListener('click', function(e) { e.preventDefault();
-                showAuthPanel(elements.registerPanel); });
+                showPanel(elements.registerPanel); });
             elements.gotoLoginFromRegister.addEventListener('click', function(e) { e.preventDefault();
-                showAuthPanel(elements.loginPanel); });
+                showPanel(elements.loginPanel); });
             elements.gotoForgot.addEventListener('click', function(e) { e.preventDefault();
-                showAuthPanel(elements.forgotPanel); });
+                showPanel(elements.forgotPanel); });
             elements.backFromForgot.addEventListener('click', function(e) { e.preventDefault();
-                showAuthPanel(elements.loginPanel); });
+                showPanel(elements.loginPanel); });
 
             // 登录
             elements.loginBtn.addEventListener('click', function() {
-                if (!sdkReady) {
-                    setMessage(elements.loginMessage, '⚠️ SDK 未加载，请刷新重试');
-                    return;
-                }
+                if (!sdkReady) return showMessage('loginMessage', 'SDK未就绪');
                 var email = elements.loginEmail.value.trim();
                 var password = elements.loginPassword.value;
-                if (!email || !password) {
-                    setMessage(elements.loginMessage, '请填写完整的邮箱和密码');
-                    return;
-                }
+                if (!email || !password) return showMessage('loginMessage', '请输入邮箱和密码');
                 supabaseClient.auth.signInWithPassword({ email: email, password: password })
                     .then(function(result) {
                         if (result.error) {
-                            setMessage(elements.loginMessage, result.error.message);
+                            showMessage('loginMessage', result.error.message);
                         } else {
-                            showDashboard(result.data.user);
+                            // 登录成功，跳转到主应用
+                            window.location.href = 'app.html';
                         }
                     })
                     .catch(function(err) {
-                        setMessage(elements.loginMessage, '网络错误：' + err.message);
+                        showMessage('loginMessage', '网络错误：' + err.message);
                     });
             });
 
+            // Google 登录
             elements.googleLoginBtn.addEventListener('click', function() {
-                if (!sdkReady) {
-                    setMessage(elements.loginMessage, '⚠️ SDK 未加载，请刷新重试');
-                    return;
-                }
+                if (!sdkReady) return showMessage('loginMessage', 'SDK未就绪');
                 supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
-                    options: { redirectTo: window.location.origin }
+                    options: { redirectTo: window.location.origin + '/app.html' }
                 }).then(function(result) {
-                    if (result.error) setMessage(elements.loginMessage, result.error.message);
+                    if (result.error) showMessage('loginMessage', result.error.message);
                 }).catch(function(err) {
-                    setMessage(elements.loginMessage, '网络错误：' + err.message);
+                    showMessage('loginMessage', '网络错误：' + err.message);
                 });
             });
 
             // 注册
             elements.registerBtn.addEventListener('click', function() {
-                if (!sdkReady) {
-                    setMessage(elements.registerMessage, '⚠️ SDK 未加载，请刷新重试');
-                    return;
-                }
+                if (!sdkReady) return showMessage('registerMessage', 'SDK未就绪');
                 var email = elements.regEmail.value.trim();
                 var password = elements.regPassword.value;
                 var confirm = elements.regConfirm.value;
-                if (!email || !password || !confirm) {
-                    setMessage(elements.registerMessage, '请填写所有字段');
-                    return;
-                }
-                if (password.length < 6) {
-                    setMessage(elements.registerMessage, '密码至少6位');
-                    return;
-                }
-                if (password !== confirm) {
-                    setMessage(elements.registerMessage, '两次密码输入不一致');
-                    return;
-                }
+                if (!email || !password || !confirm) return showMessage('registerMessage', '请填写所有字段');
+                if (password.length < 6) return showMessage('registerMessage', '密码至少6位');
+                if (password !== confirm) return showMessage('registerMessage', '两次密码不一致');
                 supabaseClient.auth.signUp({
                     email: email,
                     password: password,
-                    options: { emailRedirectTo: window.location.origin }
+                    options: { emailRedirectTo: window.location.origin + '/app.html' }
                 }).then(function(result) {
                     if (result.error) {
-                        setMessage(elements.registerMessage, result.error.message);
+                        showMessage('registerMessage', result.error.message);
                     } else {
-                        setMessage(elements.registerMessage, '✅ 验证邮件已发送，请查收邮箱并点击链接完成注册！', 'success');
+                        showMessage('registerMessage', '验证邮件已发送，请查收邮箱并点击链接完成注册', true);
                     }
                 }).catch(function(err) {
-                    setMessage(elements.registerMessage, '网络错误：' + err.message);
+                    showMessage('registerMessage', '网络错误：' + err.message);
                 });
             });
 
+            // Google 注册
             elements.googleRegisterBtn.addEventListener('click', function() {
-                if (!sdkReady) {
-                    setMessage(elements.registerMessage, '⚠️ SDK 未加载，请刷新重试');
-                    return;
-                }
+                if (!sdkReady) return showMessage('registerMessage', 'SDK未就绪');
                 supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
-                    options: { redirectTo: window.location.origin }
+                    options: { redirectTo: window.location.origin + '/app.html' }
                 }).then(function(result) {
-                    if (result.error) setMessage(elements.registerMessage, result.error.message);
+                    if (result.error) showMessage('registerMessage', result.error.message);
                 }).catch(function(err) {
-                    setMessage(elements.registerMessage, '网络错误：' + err.message);
+                    showMessage('registerMessage', '网络错误：' + err.message);
                 });
             });
 
             // 忘记密码
             elements.forgotBtn.addEventListener('click', function() {
-                if (!sdkReady) {
-                    setMessage(elements.forgotMessage, '⚠️ SDK 未加载，请刷新重试');
-                    return;
-                }
+                if (!sdkReady) return showMessage('forgotMessage', 'SDK未就绪');
                 var email = elements.forgotEmail.value.trim();
-                if (!email) {
-                    setMessage(elements.forgotMessage, '请输入你的邮箱地址');
-                    return;
-                }
+                if (!email) return showMessage('forgotMessage', '请输入邮箱地址');
                 supabaseClient.auth.resetPasswordForEmail(email, {
                     redirectTo: window.location.origin + '/update-password.html'
                 }).then(function(result) {
                     if (result.error) {
-                        setMessage(elements.forgotMessage, result.error.message);
+                        showMessage('forgotMessage', result.error.message);
                     } else {
-                        setMessage(elements.forgotMessage, '✅ 重置链接已发送，请查收邮箱！', 'success');
+                        showMessage('forgotMessage', '重置链接已发送，请查收邮箱', true);
                     }
                 }).catch(function(err) {
-                    setMessage(elements.forgotMessage, '网络错误：' + err.message);
+                    showMessage('forgotMessage', '网络错误：' + err.message);
                 });
             });
 
-            // 退出
-            elements.logoutBtn.addEventListener('click', function() {
-                if (!sdkReady) {
-                    alert('SDK 未加载，无法退出');
-                    return;
-                }
-                supabaseClient.auth.signOut().then(function() {
-                    showAuth();
-                    setMessage(elements.loginMessage, '已退出登录', 'success');
-                });
-            });
-
-            // 设置按钮占位
-            elements.goToSettings.addEventListener('click', function() {
-                alert('设置页面开发中...');
-            });
-
-            // -------- 6. 初始检测登录状态 --------
+            // 自动检测登录状态，如果已登录直接跳转
             if (sdkReady) {
                 supabaseClient.auth.getSession().then(function(result) {
                     if (result.data.session) {
-                        showDashboard(result.data.session.user);
-                    } else {
-                        showAuth();
-                    }
-                }).catch(function() {
-                    showAuth();
-                });
-
-                // 监听认证变化
-                supabaseClient.auth.onAuthStateChange(function(event, session) {
-                    if (event === 'SIGNED_IN' && session) {
-                        showDashboard(session.user);
-                    }
-                    if (event === 'SIGNED_OUT') {
-                        showAuth();
+                        window.location.href = 'app.html';
                     }
                 });
-            } else {
-                showAuth();
             }
-
-            console.log('✅ 所有事件绑定完成，页面已就绪。');
-        }; // end window.onload
+        };
     </script>
-
 </body>
 </html>
