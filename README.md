@@ -20,3 +20,47 @@
 - 部署：GitHub Pages / Vercel / Netlify 等静态托管
 
 ## 文件结构
+
+bikan/
+├── index.html # 登录/注册页
+├── app.html # 主应用页面
+├── update-password.html # 密码重置页面
+├── css/
+│ └── style.css # 全局样式
+├── js/
+│ ├── config.js # Supabase 配置与工具函数
+│ ├── components.js # 通用 UI 组件与 SVG 图标
+│ └── app.js # 核心应用逻辑
+└── README.md
+
+
+## 部署步骤
+
+### 1. 创建 Supabase 项目
+
+在 [supabase.com](https://supabase.com) 创建新项目，获取：
+
+- Project URL（例如 `https://xxxx.supabase.co`）
+- Anon Key（公开可读的 API key）
+
+### 2. 配置数据库
+
+在 Supabase SQL Editor 中执行以下步骤：
+
+#### a) 创建表、函数、触发器、RLS 策略
+
+执行项目中的 SQL 初始化脚本（见下文）。
+
+#### b) 创建存储桶
+
+执行以下 SQL 创建存储桶：
+
+```sql
+insert into storage.buckets (id, name, public)
+values 
+  ('avatars', 'avatars', true),
+  ('posts', 'posts', true),
+  ('messages', 'messages', false),
+  ('announcements', 'announcements', true),
+  ('reports', 'reports', false)
+on conflict (id) do nothing;
