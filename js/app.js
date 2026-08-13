@@ -48,7 +48,6 @@
             }
             currentUser = profile;
 
-            // 如果被封禁，显示红色遮罩
             if (currentUser.is_banned) {
                 addBannedOverlay();
             }
@@ -557,7 +556,6 @@
         }
         enterFullscreen();
         mainContent.innerHTML = '<p>加载用户信息...</p>';
-        // 获取用户信息
         const { data: profile, error: profileError } = await supabaseClient
             .from('profiles')
             .select('*')
@@ -567,22 +565,18 @@
             exitFullscreen();
             return showToast('用户不存在', 'error');
         }
-        // 统计关注数（该用户关注了多少人）
-        const { count: followingCount, error: followingError } = await supabaseClient
+        const { count: followingCount } = await supabaseClient
             .from('follows')
             .select('id', { count: 'exact', head: true })
             .eq('follower_id', userId);
-        // 统计粉丝数（多少人关注了该用户）
-        const { count: followerCount, error: followerError } = await supabaseClient
+        const { count: followerCount } = await supabaseClient
             .from('follows')
             .select('id', { count: 'exact', head: true })
             .eq('following_id', userId);
-        // 统计收藏数
-        const { count: favCount, error: favError } = await supabaseClient
+        const { count: favCount } = await supabaseClient
             .from('favorites')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', userId);
-        // 判断当前用户是否已关注他
         const { data: followData } = await supabaseClient
             .from('follows')
             .select('id')
@@ -590,9 +584,8 @@
             .eq('following_id', userId)
             .maybeSingle();
         const isFollowing = !!followData;
-
-        const favPublic = profile.favorites_public !== false; // 默认 true
-        const followingPublic = profile.following_public !== false; // 默认 true
+        const favPublic = profile.favorites_public !== false;
+        const followingPublic = profile.following_public !== false;
 
         mainContent.innerHTML = `
             <button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button>
@@ -620,12 +613,10 @@
             </div>
             ${favPublic ? `<div id="userFavs"></div>` : ''}
         `;
-        // 绑定返回
         document.querySelector('[data-action="back"]').addEventListener('click', () => {
             exitFullscreen();
             navigateTo(ROUTES.SOCIAL);
         });
-        // 关注/取关
         const followBtn = document.getElementById('followBtn');
         if (followBtn) followBtn.addEventListener('click', async () => {
             await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
@@ -638,13 +629,11 @@
             showToast('已取关', 'success');
             viewUserProfile(userId);
         });
-        // 拉黑
         document.getElementById('blockBtn').addEventListener('click', async () => {
             await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId });
             showToast('已拉黑', 'success');
             viewUserProfile(userId);
         });
-        // 查看关注列表
         const viewFollowingBtn = document.getElementById('viewFollowingBtn');
         if (viewFollowingBtn) {
             viewFollowingBtn.addEventListener('click', async () => {
@@ -653,9 +642,7 @@
                     .select('following:following_id(id, username, nickname, avatar_url, is_banned)')
                     .eq('follower_id', userId)
                     .limit(50);
-                if (listError || !followingList.length) {
-                    return showToast('暂无关注列表', 'error');
-                }
+                if (listError || !followingList.length) return showToast('暂无关注列表', 'error');
                 let listHtml = '<ul style="list-style:none;padding:0;">';
                 followingList.forEach(item => {
                     const u = item.following;
@@ -669,7 +656,6 @@
                 openModal('关注列表', listHtml);
             });
         }
-        // 如果收藏公开，加载用户收藏的帖子
         if (favPublic) {
             const favsContainer = document.getElementById('userFavs');
             const { data: favs, error: favsError } = await supabaseClient
@@ -1170,7 +1156,6 @@
             const id = target.dataset.id;
             const notificationId = target.dataset.notificationId;
 
-            // 封禁用户禁止操作（除了 qq-appeal）
             if (currentUser.is_banned && action !== 'qq-appeal') {
                 return showToast('你已被封禁，无法进行此操作', 'error');
             }
@@ -1261,7 +1246,6 @@
         });
 
         document.addEventListener('click', (e) => {
-            // 通知卡片点击查看详情
             const notificationCard = e.target.closest('.notification-card');
             if (notificationCard) {
                 const postId = notificationCard.dataset.postId;
