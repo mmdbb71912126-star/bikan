@@ -477,7 +477,7 @@
             card.className = 'user-card';
             card.innerHTML = `
                 <div class="avatar" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
-                    ${getUserAvatarHTML(f, 'avatar').replace('avatar', 'avatar')}
+                    ${getUserAvatarHTML(f, 'avatar')}
                 </div>
                 <div class="user-card-info" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
                     <div class="post-user-name">${getUserDisplayName(f)}</div>
@@ -490,7 +490,6 @@
             card.querySelector('[data-action="chat"]').addEventListener('click', () => {
                 window.location.href = `chat.html?userId=${f.id}`;
             });
-            // 头像和信息点击进入他人主页
             card.querySelectorAll('[data-action="view-profile"]').forEach(el => {
                 el.addEventListener('click', () => viewUserProfile(f.id));
             });
@@ -593,6 +592,7 @@
         const isFollowing = !!followData;
 
         const favPublic = profile.favorites_public !== false; // 默认 true
+        const followingPublic = profile.following_public !== false; // 默认 true
 
         mainContent.innerHTML = `
             <button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button>
@@ -610,6 +610,7 @@
                 <span>粉丝 ${followerCount || 0}</span>
                 ${favPublic ? `<span>收藏 ${favCount || 0}</span>` : ''}
             </div>
+            ${followingPublic ? `<button class="btn btn-secondary btn-sm" id="viewFollowingBtn">查看关注列表</button>` : ''}
             <div style="display:flex;gap:8px;margin-bottom:20px;">
                 ${isFollowing ? 
                     `<button class="btn btn-secondary" id="unfollowBtn">取关</button>` :
@@ -643,6 +644,31 @@
             showToast('已拉黑', 'success');
             viewUserProfile(userId);
         });
+        // 查看关注列表
+        const viewFollowingBtn = document.getElementById('viewFollowingBtn');
+        if (viewFollowingBtn) {
+            viewFollowingBtn.addEventListener('click', async () => {
+                const { data: followingList, error: listError } = await supabaseClient
+                    .from('follows')
+                    .select('following:following_id(id, username, nickname, avatar_url, is_banned)')
+                    .eq('follower_id', userId)
+                    .limit(50);
+                if (listError || !followingList.length) {
+                    return showToast('暂无关注列表', 'error');
+                }
+                let listHtml = '<ul style="list-style:none;padding:0;">';
+                followingList.forEach(item => {
+                    const u = item.following;
+                    listHtml += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+                        ${getUserAvatarHTML(u, 'avatar-sm')}
+                        <span class="post-user-name">${getUserDisplayName(u)}</span>
+                        <span class="post-user-id">${getUserHandle(u)}</span>
+                    </li>`;
+                });
+                listHtml += '</ul>';
+                openModal('关注列表', listHtml);
+            });
+        }
         // 如果收藏公开，加载用户收藏的帖子
         if (favPublic) {
             const favsContainer = document.getElementById('userFavs');
@@ -750,6 +776,9 @@
             <div class="form-group">
                 <label><input type="checkbox" id="editFavoritesPublic" ${currentUser.favorites_public !== false ? 'checked' : ''} /> 公开我的收藏</label>
             </div>
+            <div class="form-group">
+                <label><input type="checkbox" id="editFollowingPublic" ${currentUser.following_public !== false ? 'checked' : ''} /> 公开我的关注</label>
+            </div>
             <button class="btn btn-primary" id="saveProfileBtn">保存</button>`;
         const avatarContainer = container.querySelector('#settingsAvatar');
         avatarContainer.addEventListener('click', () => {
@@ -773,10 +802,11 @@
             const username = container.querySelector('#editUsername').value.trim();
             const bio = container.querySelector('#editBio').value.trim();
             const favoritesPublic = container.querySelector('#editFavoritesPublic').checked;
+            const followingPublic = container.querySelector('#editFollowingPublic').checked;
             if (!nickname || !username) return showToast('昵称和ID不能为空', 'error');
             if (!/^[a-z0-9_@.]+$/.test(username)) return showToast('ID 只能包含小写字母、数字、下划线、@ 和点', 'error');
             if (currentUser.updated_at && Date.now() - new Date(currentUser.updated_at).getTime() < 15*24*60*60*1000) return showToast('个人资料每15天只能修改一次', 'error');
-            const updates = { nickname, username, bio, favorites_public: favoritesPublic, updated_at: new Date().toISOString() };
+            const updates = { nickname, username, bio, favorites_public: favoritesPublic, following_public: followingPublic, updated_at: new Date().toISOString() };
             if (pendingAvatarUrl) updates.avatar_url = pendingAvatarUrl;
             const { error } = await supabaseClient.from('profiles').update(updates).eq('id', currentUser.id);
             if (error) return showToast('保存失败: ' + error.message, 'error');
