@@ -453,24 +453,39 @@
     }
 
     async function loadFriends(container) {
-        container.innerHTML = '加载中...';
-        const { data, error } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_online, is_banned, bio)').eq('follower_id', currentUser.id);
-        if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
-        const friends = data.map(d => d.following);
-        if (!friends.length) return container.innerHTML = '<p>暂无好友，去关注一些人吧</p>';
-        container.innerHTML = '';
-        friends.forEach(f => {
-            const card = document.createElement('div'); card.className = 'user-card';
-            card.innerHTML = `<div class="avatar" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">${getUserAvatarHTML(f, 'avatar')}</div>
-                <div class="user-card-info" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
-                    <div class="post-user-name">${getUserDisplayName(f)}</div><div class="post-user-id">${getUserHandle(f)}</div>${f.bio?`<div style="font-size:13px;color:var(--text-secondary);">${f.bio}</div>`:''}
-                </div>
-                <div class="user-card-actions"><button class="btn btn-secondary btn-sm chat-btn" data-user-id="${f.id}">${Icons.message} <span>私聊</span></button></div>`;
-            card.querySelector('[data-action="chat"]')?.addEventListener('click', () => window.location.href = `chat.html?userId=${f.id}`);
-            card.querySelectorAll('[data-action="view-profile"]').forEach(el => el.addEventListener('click', () => viewUserProfile(f.id)));
-            container.appendChild(card);
+    container.innerHTML = '加载中...';
+    const { data, error } = await supabaseClient
+        .from('follows')
+        .select('following:following_id(id, username, nickname, avatar_url, is_online, is_banned, bio)')
+        .eq('follower_id', currentUser.id);
+    if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
+    const friends = data.map(d => d.following);
+    if (!friends.length) return container.innerHTML = '<p>暂无好友，去关注一些人吧</p>';
+    container.innerHTML = '';
+    friends.forEach(f => {
+        const card = document.createElement('div');
+        card.className = 'user-card';
+        card.innerHTML = `
+            <div class="avatar" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">${getUserAvatarHTML(f, 'avatar')}</div>
+            <div class="user-card-info" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
+                <div class="post-user-name">${getUserDisplayName(f)}</div>
+                <div class="post-user-id">${getUserHandle(f)}</div>
+                ${f.bio ? `<div style="font-size:13px;color:var(--text-secondary);">${f.bio}</div>` : ''}
+            </div>
+            <div class="user-card-actions">
+                <button class="btn btn-secondary btn-sm chat-btn" data-action="chat" data-user-id="${f.id}">${Icons.message} <span>私聊</span></button>
+            </div>`;
+        // 绑定私聊按钮
+        card.querySelector('[data-action="chat"]').addEventListener('click', () => {
+            window.location.href = `chat.html?userId=${f.id}`;
         });
-    }
+        // 绑定头像和信息点击
+        card.querySelectorAll('[data-action="view-profile"]').forEach(el => {
+            el.addEventListener('click', () => viewUserProfile(f.id));
+        });
+        container.appendChild(card);
+    });
+}
 
     async function loadFriendRequests(container) {
         container.innerHTML = '加载中...';
