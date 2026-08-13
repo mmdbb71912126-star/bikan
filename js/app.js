@@ -131,21 +131,14 @@
 
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
-        const oldFooter = sidebar.querySelector('.sidebar-footer');
-        if (oldFooter) oldFooter.remove();
-        const footer = document.createElement('div');
-        footer.className = 'sidebar-footer';
-        footer.innerHTML = `
-            <div class="user-mini" data-route="${ROUTES.PROFILE}">
-                ${getUserAvatarHTML(currentUser, 'avatar-sm')}
-                <div class="user-mini-info">
-                    <div class="user-mini-name">${getUserDisplayName(currentUser)}</div>
-                    <div class="user-mini-id">${currentUserAuth ? currentUserAuth.email : getUserHandle(currentUser)}</div>
-                </div>
-                <button class="logout-btn" id="logoutBtn" title="退出登录">${Icons.logout}</button>
-            </div>
-        `;
-        sidebar.appendChild(footer);
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+        const userAvatarSmall = document.getElementById('userAvatarSmall');
+        const userDisplayName = document.getElementById('userDisplayName');
+        const userEmail = document.getElementById('userEmail');
+        if (userAvatarSmall) userAvatarSmall.innerHTML = getUserAvatarHTML(currentUser, 'avatar-sm');
+        if (userDisplayName) userDisplayName.textContent = getUserDisplayName(currentUser);
+        if (userEmail) userEmail.textContent = currentUserAuth ? currentUserAuth.email : getUserHandle(currentUser);
 
         document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
             e.stopPropagation();
