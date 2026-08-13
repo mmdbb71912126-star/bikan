@@ -260,7 +260,7 @@
         updateAllBadges();
     }
 
-    // ---------- 全屏控制 ----------
+    // ---------- 全屏控制（保留，但详情已独立）----------
     function enterFullscreen() { document.body.classList.add('fullscreen-app'); }
     function exitFullscreen() { document.body.classList.remove('fullscreen-app'); }
 
@@ -335,6 +335,9 @@
             <div class="post-content">${ann.content || ''}</div>
             <div style="font-size:13px;color:var(--text-light);">${timeAgo(ann.created_at)}</div>
         `;
+        card.addEventListener('click', () => {
+            window.location.href = 'post-detail.html?type=announcement&id=' + ann.id;
+        });
         container.appendChild(card);
     }
 
@@ -525,121 +528,9 @@
         data.forEach(n => container.appendChild(renderNotificationItem(n)));
     }
 
-    // ---------- 他人主页 ----------
-    async function viewUserProfile(userId) {
-        if (userId === currentUser.id) { navigateTo(ROUTES.PROFILE); return; }
-        enterFullscreen();
-        mainContent.innerHTML = '<p>加载用户信息...</p>';
-        const { data: profile, error: profileError } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
-        if (profileError || !profile) { exitFullscreen(); return showToast('用户不存在', 'error'); }
-        const { count: followingCount } = await supabaseClient.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', userId);
-        const { count: followerCount } = await supabaseClient.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', userId);
-        const { count: favCount } = await supabaseClient.from('favorites').select('id', { count: 'exact', head: true }).eq('user_id', userId);
-        const { data: followData } = await supabaseClient.from('follows').select('id').eq('follower_id', currentUser.id).eq('following_id', userId).maybeSingle();
-        const isFollowing = !!followData;
-        const favPublic = profile.favorites_public !== false;
-        const followingPublic = profile.following_public !== false;
-
-        mainContent.innerHTML = `
-            <button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button>
-            <div style="position:relative; display:inline-block; float:right;">
-                <button class="btn btn-secondary btn-sm" id="moreMenuBtn">${Icons.more}</button>
-            </div>
-            <div class="profile-header" style="display:flex;align-items:center;gap:20px;margin:20px 0;">
-                ${getUserAvatarHTML(profile, 'avatar-lg')}
-                <div>
-                    <h2>${getUserDisplayName(profile)}</h2>
-                    <p>${getUserHandle(profile)}</p>
-                    <p style="color:var(--text-secondary);">${profile.bio||'暂无简介'}</p>
-                    <p style="font-size:13px;color:var(--text-light);">注册于 ${new Date(profile.created_at).toLocaleDateString()}</p>
-                </div>
-            </div>
-            <div style="display:flex;gap:20px;margin-bottom:20px;">
-                <span>关注 ${followingCount||0}</span>
-                <span>粉丝 ${followerCount||0}</span>
-                ${favPublic?`<span>收藏 ${favCount||0}</span>`:''}
-            </div>
-            ${followingPublic?`<button class="btn btn-secondary btn-sm" id="viewFollowingBtn">查看关注列表</button>`:''}
-            <div style="display:flex;gap:8px;margin-bottom:20px;">
-                ${isFollowing ? `<button class="btn btn-secondary" id="unfollowBtn" style="min-width:80px;">取关</button>` : `<button class="btn btn-primary" id="followBtn">关注</button>`}
-                <button class="btn btn-primary" id="friendRequestBtn">好友请求</button>
-                ${favPublic?`<button class="btn btn-secondary" id="viewFavBtn">查看收藏</button>`:`<button class="btn btn-secondary" disabled title="收藏未公开">${Icons.lock || '🔒'} 收藏</button>`}
-            </div>
-            <div id="userContent"></div>
-        `;
-
-        document.getElementById('moreMenuBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            const menu = document.createElement('div');
-            menu.className = 'more-menu';
-            menu.innerHTML = `
-                <button data-action="report-user" data-user-id="${profile.id}">举报</button>
-                <button data-action="block-user" data-user-id="${profile.id}">拉黑</button>
-                <button data-action="share-profile" data-user-id="${profile.id}">分享主页</button>
-            `;
-            document.body.appendChild(menu);
-            document.addEventListener('click', function closeMenu(ev) {
-                if (!menu.contains(ev.target) && ev.target !== document.getElementById('moreMenuBtn')) {
-                    menu.remove();
-                    document.removeEventListener('click', closeMenu);
-                }
-            });
-        });
-
-        document.querySelector('[data-action="back"]').addEventListener('click', () => { exitFullscreen(); navigateTo(ROUTES.SOCIAL); });
-
-        const followBtn = document.getElementById('followBtn');
-        if (followBtn) followBtn.addEventListener('click', async () => { await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId }); showToast('已关注','success'); viewUserProfile(userId); });
-        const unfollowBtn = document.getElementById('unfollowBtn');
-        if (unfollowBtn) unfollowBtn.addEventListener('click', async () => { await supabaseClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId); showToast('已取关','success'); viewUserProfile(userId); });
-
-        document.getElementById('friendRequestBtn').addEventListener('click', async () => {
-            const existing = await supabaseClient.from('friend_requests').select('id').eq('sender_id', currentUser.id).eq('receiver_id', userId).maybeSingle();
-            if (existing.data) return showToast('已发送好友请求', 'error');
-            await supabaseClient.from('friend_requests').insert({ sender_id: currentUser.id, receiver_id: userId, status: 'pending' });
-            showToast('好友请求已发送', 'success');
-        });
-
-        const viewFavBtn = document.getElementById('viewFavBtn');
-        if (viewFavBtn && favPublic) {
-            viewFavBtn.addEventListener('click', async () => {
-                const userContent = document.getElementById('userContent');
-                const { data: favs } = await supabaseClient.from('favorites').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', userId).order('created_at', { ascending: false });
-                if (!favs?.length) userContent.innerHTML = '<p>暂无公开收藏</p>';
-                else {
-                    userContent.innerHTML = '';
-                    favs.forEach(f => { if (f.post) { f.post.is_owner = f.post.user_id === currentUser.id; userContent.appendChild(renderPostCard(f.post)); } });
-                }
-            });
-        }
-
-        const viewFollowingBtn = document.getElementById('viewFollowingBtn');
-        if (viewFollowingBtn) viewFollowingBtn.addEventListener('click', async () => {
-            const { data: followingList } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_banned)').eq('follower_id', userId).limit(50);
-            if (!followingList?.length) return showToast('暂无关注列表','error');
-            let listHtml = '<ul style="list-style:none;padding:0;">';
-            followingList.forEach(item => {
-                const u = item.following;
-                listHtml += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">${getUserAvatarHTML(u,'avatar-sm')}<span class="post-user-name">${getUserDisplayName(u)}</span><span class="post-user-id">${getUserHandle(u)}</span></li>`;
-            });
-            listHtml += '</ul>';
-            openModal('关注列表', listHtml);
-        });
-
-        document.querySelector('[data-action="share-profile"]')?.addEventListener('click', () => {
-            const url = window.location.origin + '/app.html#user-' + userId;
-            openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`);
-        });
-
-        document.querySelector('[data-action="report-user"]')?.addEventListener('click', () => {
-            showReportModal('user', userId);
-        });
-
-        document.querySelector('[data-action="block-user"]')?.addEventListener('click', async () => {
-            await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId });
-            showToast('已拉黑','success');
-            viewUserProfile(userId);
-        });
+    // ---------- 他人主页（跳转到独立页面）----------
+    function viewUserProfile(userId) {
+        window.location.href = 'post-detail.html?type=user&id=' + userId;
     }
 
     // ---------- 个人与设置（退出按钮只在个人资料tab）----------
@@ -708,6 +599,7 @@
             fileInput.click();
         });
 
+        // 公开设置立即生效
         container.querySelector('#editFavoritesPublic').addEventListener('change', async (e) => {
             const val = e.target.checked;
             await supabaseClient.from('profiles').update({ favorites_public: val }).eq('id', currentUser.id);
@@ -915,14 +807,14 @@
         });
     }
 
-    // ---------- 帖子详情 ----------
+    // ---------- 帖子详情（跳转）----------
     function openPostDetail(postId) {
-        window.location.href = 'post-detail.html?id=' + postId;
+        window.location.href = 'post-detail.html?type=post&id=' + postId;
     }
 
-    // ---------- 话题详情 ----------
+    // ---------- 话题详情（跳转）----------
     function openTopicDetail(topicId) {
-        window.location.href = 'topic-detail.html?id=' + topicId;
+        window.location.href = 'post-detail.html?type=topic&id=' + topicId;
     }
 
     // ---------- 全局事件委托 ----------
@@ -977,13 +869,11 @@
             else if (action === 'reject-topic' && id) { await supabaseClient.from('topics').update({ status:'rejected' }).eq('id', id); showToast('已拒绝','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
             else if (action === 'delete-announcement' && id) { await supabaseClient.from('announcements').delete().eq('id', id); showToast('已删除','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
             else if (action === 'qq-appeal' && notificationId) { e.stopPropagation(); navigator.clipboard.writeText('976926251').then(() => { showToast('QQ群号已复制，请到群内 @管理员 申诉','success'); target.textContent='已提示'; target.disabled=true; }).catch(() => showToast('请手动搜索 QQ 群：976926251','error')); }
+            else if (action === 'join-topic' && topicId) { openTopicDetail(topicId); }
             else if (action === 'like-topic' && topicId) { showToast('话题点赞功能开发中','info'); }
             else if (action === 'favorite-topic' && topicId) { showToast('话题收藏功能开发中','info'); }
             else if (action === 'share-topic' && topicId) { showToast('话题分享功能开发中','info'); }
             else if (action === 'report-topic' && topicId) { showReportModal('topic', topicId); }
-            else if (action === 'report-user' && userId) { showReportModal('user', userId); }
-            else if (action === 'block-user' && userId) { await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId }); showToast('已拉黑','success'); }
-            else if (action === 'share-profile' && userId) { const url = window.location.origin + '/app.html#user-' + userId; openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`); }
         });
 
         document.addEventListener('click', (e) => {
@@ -1014,18 +904,15 @@
         supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id).then(async ({ data }) => {
             const friends = data.map(d => d.following);
             let friendOptions = '';
-            if (friends.length) {
-                friends.forEach(f => { friendOptions += `<button class="btn btn-secondary btn-sm" data-share-friend-id="${f.id}">${getUserDisplayName(f)}</button>`; });
-            } else {
-                friendOptions = '<p>暂无互关好友</p>';
-            }
+            if (friends.length) friends.forEach(f => friendOptions += `<button class="btn btn-secondary btn-sm" data-share-friend-id="${f.id}">${getUserDisplayName(f)}</button>`);
+            else friendOptions = '<p>暂无互关好友</p>';
             const content = `<p>选择发送给好友：</p><div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${friendOptions}</div><button class="btn btn-secondary" id="copyLinkBtn">复制链接</button>`;
             const modal = openModal('分享', content);
-            modal.querySelector('#copyLinkBtn').addEventListener('click', () => { const url = window.location.origin + '/post-detail.html?id=' + postId; navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success')); });
+            modal.querySelector('#copyLinkBtn').addEventListener('click', () => { const url = window.location.origin + '/post-detail.html?type=post&id=' + postId; navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success')); });
             modal.querySelectorAll('[data-share-friend-id]').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const receiverId = btn.dataset.shareFriendId;
-                    await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: receiverId, content: window.location.origin + '/post-detail.html?id=' + postId, is_read: false });
+                    await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: receiverId, content: window.location.origin + '/post-detail.html?type=post&id=' + postId, is_read: false });
                     modal.remove();
                     showToast('已发送到私聊','success');
                 });
@@ -1056,6 +943,25 @@
             modal.remove(); showToast('已更新', 'success');
             if (currentPostId === postId) openPostDetail(postId); else navigateTo(currentRoute);
         });
+    }
+
+    // 分享评论函数（从 post-detail.html 复制）
+    async function shareComment(commentId) {
+        const { data: comment } = await supabaseClient.from('comments').select('content, post_id').eq('id', commentId).single();
+        if (!comment) return;
+        const shareContent = comment.content || '';
+        const postLink = window.location.origin + '/post-detail.html?type=post&id=' + comment.post_id;
+        const content = `<p>分享评论：</p><p style="background:var(--bg-light);padding:8px;border-radius:6px;">${shareContent}</p><button class="btn btn-secondary" id="copyCommentBtn">复制评论</button><button class="btn btn-secondary" id="copyPostLinkBtn">复制帖子链接</button><hr><p>发送到好友私聊：</p><div id="friendList"></div>`;
+        const modal = openModal('分享评论', content);
+        modal.querySelector('#copyCommentBtn').addEventListener('click', () => navigator.clipboard.writeText(shareContent).then(() => showToast('评论已复制','success')));
+        modal.querySelector('#copyPostLinkBtn').addEventListener('click', () => navigator.clipboard.writeText(postLink).then(() => showToast('链接已复制','success')));
+        const friendListDiv = modal.querySelector('#friendList');
+        const { data: follows } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id);
+        if (follows?.length) follows.forEach(f => {
+            const btn = document.createElement('button'); btn.className = 'btn btn-secondary btn-sm'; btn.textContent = getUserDisplayName(f.following);
+            btn.addEventListener('click', async () => { await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false }); modal.remove(); showToast('已发送到私聊','success'); });
+            friendListDiv.appendChild(btn);
+        }); else friendListDiv.innerHTML = '<p>暂无好友</p>';
     }
 
     // ---------- 启动 ----------
