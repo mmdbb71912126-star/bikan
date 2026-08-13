@@ -276,7 +276,7 @@ textarea {
 
 /* 侧边栏导航 */
 .sidebar {
-    width: 280px;
+    width: 400px;                     /* 加宽侧边栏以容纳大 logo */
     background: white;
     border-right: 1px solid var(--border);
     display: flex;
@@ -290,18 +290,18 @@ textarea {
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 2px;   /* 原来是 12px，现在改为 2px，让 logo 和标题靠近 */
+    gap: 8px;                        /* 适当间隙，避免太挤 */
 }
 
 .sidebar-logo {
-    width: 108px;
-    height: 73px;
+    width: 216px;                     /* 原 108px 放大 2 倍 */
+    height: 147px;                    /* 216 * 680 / 1000 = 146.88，取整 */
     border-radius: 8px;
     flex-shrink: 0;
 }
 
 .sidebar-title {
-    font-size: 28px;
+    font-size: 36px;                  /* 标题同步放大 */
     font-weight: 700;
     color: var(--text-main);
     white-space: nowrap;
