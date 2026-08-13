@@ -276,7 +276,7 @@ textarea {
 
 /* 侧边栏导航 */
 .sidebar {
-    width: 240px;
+    width: 280px;                     /* 增加宽度以容纳大 logo */
     background: white;
     border-right: 1px solid var(--border);
     display: flex;
@@ -290,17 +290,18 @@ textarea {
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .sidebar-logo {
-    width: 36px;
-    height: 36px;
+    width: 108px;                     /* logo 放大 3 倍（原 36px） */
+    height: 73px;                     /* 保持原始宽高比约 1.47 */
     border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .sidebar-title {
-    font-size: 22px;
+    font-size: 28px;                  /* 标题适当放大 */
     font-weight: 700;
     color: var(--text-main);
 }
@@ -364,7 +365,7 @@ textarea {
 .sidebar-footer {
     padding: 12px;
     border-top: 1px solid var(--border);
-    margin-top: auto; /* 关键：推到最底部 */
+    margin-top: auto;                  /* 关键：推到最底部 */
     background: white;
 }
 
@@ -474,6 +475,9 @@ textarea {
 }
 
 .tab-item {
+    display: inline-flex;           /* 使用 inline-flex 使图标和文字水平排列 */
+    align-items: center;
+    gap: 6px;
     padding: 8px 16px;
     border-radius: 8px;
     cursor: pointer;
@@ -484,6 +488,12 @@ textarea {
     border: none;
     background: none;
     font-size: 14px;
+}
+
+.tab-item svg {
+    width: 18px;                    /* 所有二级分区的 SVG 图标缩小至 18px */
+    height: 18px;
+    flex-shrink: 0;
 }
 
 .tab-item:hover {
