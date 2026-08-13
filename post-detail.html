@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>必看 - 帖子详情</title>
+    <title>必看 - 详情</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/style.css" />
@@ -12,7 +12,7 @@
     <div class="app-container" style="display:block;">
         <main class="main-content" id="mainContent" style="max-width:800px; margin:0 auto; padding:20px; position:relative;">
             <button class="btn btn-secondary" id="backBtn">返回</button>
-            <div id="postDetailContainer" style="margin-top:16px; position:relative;"></div>
+            <div id="detailContainer" style="margin-top:16px; position:relative;"></div>
         </main>
     </div>
 
@@ -31,27 +31,45 @@
 
             let currentUser = null;
             const urlParams = new URLSearchParams(window.location.search);
-            const postId = urlParams.get('id');
+            const type = urlParams.get('type') || 'post';
+            const id = urlParams.get('id');
 
-            async function initPostDetail() {
+            // ---------- 初始化 ----------
+            async function init() {
                 if (!sdkReady) return showToast('Supabase 未初始化', 'error');
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) { window.location.href = 'index.html'; return; }
                 const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id).single();
                 if (!profile) return showToast('获取用户信息失败', 'error');
                 currentUser = profile;
+
                 if (currentUser.is_banned) {
                     document.body.insertAdjacentHTML('beforeend', `
                         <div class="banned-overlay"><div class="banned-logo">${comp.Icons.logo(150)}</div><div class="banned-text">你已被封禁</div></div>
                     `);
                 }
-                document.getElementById('backBtn').addEventListener('click', () => window.location.href = 'app.html');
-                await loadPost(postId);
+
+                document.getElementById('backBtn').addEventListener('click', goBack);
+
+                if (type === 'post') await loadPostDetail(id);
+                else if (type === 'topic') await loadTopicDetail(id);
+                else if (type === 'announcement') await loadAnnouncementDetail(id);
+                else if (type === 'user') await loadUserProfile(id);
+                else showToast('未知类型', 'error');
             }
 
-            async function loadPost(postId) {
+            function goBack() {
+                if (type === 'user') {
+                    window.location.href = 'app.html';
+                } else {
+                    window.location.href = 'app.html';
+                }
+            }
+
+            // ==================== 帖子详情 ====================
+            async function loadPostDetail(postId) {
                 if (!postId) return showToast('缺少帖子 ID', 'error');
-                const container = document.getElementById('postDetailContainer');
+                const container = document.getElementById('detailContainer');
                 container.innerHTML = '加载中...';
                 const { data: post, error } = await supabaseClient
                     .from('posts')
@@ -60,7 +78,6 @@
                     .single();
                 if (error || !post) return container.innerHTML = '<p>帖子不存在</p>';
 
-                // 记录历史
                 await supabaseClient.from('view_history').upsert({ user_id: currentUser.id, post_id: postId, viewed_at: new Date().toISOString() }, { onConflict: 'user_id,post_id' });
 
                 const [likeRes, favRes] = await Promise.all([
@@ -71,7 +88,6 @@
                 post.favorited_by_me = !!favRes.data;
                 post.is_owner = post.user_id === currentUser.id;
 
-                // 显示管理员 ID
                 if (currentUser.is_admin && post.public_id) {
                     const idTag = document.createElement('div');
                     idTag.style.cssText = 'position:absolute; top:10px; right:10px; background:var(--bg-light); padding:4px 8px; border-radius:6px; font-size:12px; color:var(--text-light); z-index:10;';
@@ -132,42 +148,35 @@
                     const action = target.dataset.action;
                     const commentId = target.dataset.commentId;
 
-                    if (action === 'like') {
-                        await toggleLike(postId);
-                    } else if (action === 'favorite') {
-                        await toggleFavorite(postId);
-                    } else if (action === 'share') {
-                        showShareModal(postId);
-                    } else if (action === 'report') {
-                        showReportModal('post', postId);
-                    } else if (action === 'edit') {
-                        showEditPostModal(postId);
-                    } else if (action === 'delete') {
+                    if (action === 'like') await toggleLike(postId);
+                    else if (action === 'favorite') await toggleFavorite(postId);
+                    else if (action === 'share') showShareModal(postId);
+                    else if (action === 'report') showReportModal('post', postId);
+                    else if (action === 'edit') showEditPostModal(postId);
+                    else if (action === 'delete') {
                         if (confirm('确认删除这条帖子吗？')) {
                             await supabaseClient.from('posts').delete().eq('id', postId);
-                            showToast('已删除','success');
+                            showToast('已删除', 'success');
                             window.location.href = 'app.html';
                         }
-                    } else if (action === 'like-comment' && commentId) {
-                        await toggleCommentLike(commentId);
-                    } else if (action === 'reply-comment' && commentId) {
+                    }
+                    else if (action === 'like-comment' && commentId) await toggleCommentLike(commentId);
+                    else if (action === 'reply-comment' && commentId) {
                         const commentInput = document.getElementById('commentInput');
                         commentInput.focus();
                         commentInput.dataset.parentId = commentId;
                         const { data: cmt } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
                         if (cmt) commentInput.dataset.replyToUserId = cmt.user_id;
-                    } else if (action === 'share-comment' && commentId) {
-                        await shareComment(commentId);
-                    } else if (action === 'report-comment' && commentId) {
-                        showReportModal('comment', commentId);
                     }
+                    else if (action === 'share-comment' && commentId) await shareComment(commentId);
+                    else if (action === 'report-comment' && commentId) showReportModal('comment', commentId);
                 });
 
                 document.getElementById('submitCommentBtn').addEventListener('click', async () => {
-                    if (currentUser.is_banned) return showToast('你已被封禁，无法评论','error');
+                    if (currentUser.is_banned) return showToast('你已被封禁，无法评论', 'error');
                     const input = document.getElementById('commentInput');
                     const content = input.value.trim();
-                    if (!content) return showToast('请输入评论内容','error');
+                    if (!content) return showToast('请输入评论内容', 'error');
                     const parentId = input.dataset.parentId || null;
                     const replyToUserId = input.dataset.replyToUserId || null;
                     const insertData = { post_id: postId, user_id: currentUser.id, content };
@@ -185,16 +194,14 @@
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                 if (existing.data) await supabaseClient.from('likes').delete().eq('id', existing.data.id);
                 else await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
-                loadPost(postId);
+                loadPostDetail(postId);
             }
-
             async function toggleFavorite(postId) {
                 const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                 if (existing.data) await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
                 else await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
-                loadPost(postId);
+                loadPostDetail(postId);
             }
-
             async function toggleCommentLike(commentId) {
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
                 if (existing.data) await supabaseClient.from('likes').delete().eq('id', existing.data.id);
@@ -207,31 +214,15 @@
                 supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id).then(async ({ data }) => {
                     const friends = data.map(d => d.following);
                     let friendOptions = '';
-                    if (friends.length) {
-                        friends.forEach(f => {
-                            friendOptions += `<button class="btn btn-secondary btn-sm" data-share-friend-id="${f.id}">${comp.getUserDisplayName(f)}</button>`;
-                        });
-                    } else {
-                        friendOptions = '<p>暂无互关好友</p>';
-                    }
-                    const content = `
-                        <p>选择发送给好友：</p>
-                        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${friendOptions}</div>
-                        <button class="btn btn-secondary" id="copyLinkBtn">复制链接</button>
-                    `;
+                    if (friends.length) friends.forEach(f => friendOptions += `<button class="btn btn-secondary btn-sm" data-share-friend-id="${f.id}">${comp.getUserDisplayName(f)}</button>`);
+                    else friendOptions = '<p>暂无互关好友</p>';
+                    const content = `<p>选择发送给好友：</p><div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${friendOptions}</div><button class="btn btn-secondary" id="copyLinkBtn">复制链接</button>`;
                     const modal = comp.openModal('分享', content);
-                    modal.querySelector('#copyLinkBtn').addEventListener('click', () => {
-                        const url = window.location.origin + '/post-detail.html?id=' + postId;
-                        navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success'));
-                    });
-                    modal.querySelectorAll('[data-share-friend-id]').forEach(btn => {
-                        btn.addEventListener('click', async () => {
-                            const receiverId = btn.dataset.shareFriendId;
-                            await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: receiverId, content: window.location.origin + '/post-detail.html?id=' + postId, is_read: false });
-                            modal.remove();
-                            showToast('已发送到私聊','success');
-                        });
-                    });
+                    modal.querySelector('#copyLinkBtn').addEventListener('click', () => navigator.clipboard.writeText(window.location.origin + '/post-detail.html?type=post&id=' + postId).then(() => showToast('链接已复制', 'success')));
+                    modal.querySelectorAll('[data-share-friend-id]').forEach(btn => btn.addEventListener('click', async () => {
+                        await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: btn.dataset.shareFriendId, content: window.location.origin + '/post-detail.html?type=post&id=' + postId, is_read: false });
+                        modal.remove(); showToast('已发送到私聊', 'success');
+                    }));
                 });
             }
 
@@ -243,13 +234,9 @@
                     const reason = modal.querySelector('#reportReason').value;
                     const desc = modal.querySelector('#reportDesc').value.trim();
                     let evidenceUrls = [];
-                    for (const file of modal.querySelector('#reportEvidence').files) {
-                        const uploaded = await uploadFile(file, 'reports', 'evidence');
-                        evidenceUrls.push(uploaded.url);
-                    }
+                    for (const file of modal.querySelector('#reportEvidence').files) { const uploaded = await uploadFile(file, 'reports', 'evidence'); evidenceUrls.push(uploaded.url); }
                     await supabaseClient.from('reports').insert({ reporter_id: currentUser.id, target_type: targetType, target_id: targetId, reason, description: desc, evidence_urls: evidenceUrls });
-                    modal.remove();
-                    showToast('举报已提交', 'success');
+                    modal.remove(); showToast('举报已提交', 'success');
                 });
             }
 
@@ -261,9 +248,7 @@
                 modal.querySelector('#saveEditBtn').addEventListener('click', async () => {
                     const newContent = modal.querySelector('#editPostContent').value;
                     await supabaseClient.from('posts').update({ content: newContent, is_edited: true, edited_at: new Date().toISOString() }).eq('id', postId);
-                    modal.remove();
-                    showToast('已更新', 'success');
-                    loadPost(postId);
+                    modal.remove(); showToast('已更新', 'success'); loadPostDetail(postId);
                 });
             }
 
@@ -271,31 +256,250 @@
                 const { data: comment } = await supabaseClient.from('comments').select('content, post_id').eq('id', commentId).single();
                 if (!comment) return;
                 const shareContent = comment.content || '';
-                const postLink = window.location.origin + '/post-detail.html?id=' + comment.post_id;
+                const postLink = window.location.origin + '/post-detail.html?type=post&id=' + comment.post_id;
                 const content = `<p>分享评论：</p><p style="background:var(--bg-light);padding:8px;border-radius:6px;">${shareContent}</p><button class="btn btn-secondary" id="copyCommentBtn">复制评论</button><button class="btn btn-secondary" id="copyPostLinkBtn">复制帖子链接</button><hr><p>发送到好友私聊：</p><div id="friendList"></div>`;
                 const modal = comp.openModal('分享评论', content);
-                modal.querySelector('#copyCommentBtn').addEventListener('click', () => navigator.clipboard.writeText(shareContent).then(() => showToast('评论已复制','success')));
-                modal.querySelector('#copyPostLinkBtn').addEventListener('click', () => navigator.clipboard.writeText(postLink).then(() => showToast('链接已复制','success')));
+                modal.querySelector('#copyCommentBtn').addEventListener('click', () => navigator.clipboard.writeText(shareContent).then(() => showToast('评论已复制', 'success')));
+                modal.querySelector('#copyPostLinkBtn').addEventListener('click', () => navigator.clipboard.writeText(postLink).then(() => showToast('链接已复制', 'success')));
                 const friendListDiv = modal.querySelector('#friendList');
                 const { data: follows } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id);
-                if (follows?.length) {
-                    follows.forEach(f => {
-                        const btn = document.createElement('button');
-                        btn.className = 'btn btn-secondary btn-sm';
-                        btn.textContent = comp.getUserDisplayName(f.following);
-                        btn.addEventListener('click', async () => {
-                            await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false });
-                            modal.remove();
-                            showToast('已发送到私聊','success');
-                        });
-                        friendListDiv.appendChild(btn);
-                    });
-                } else {
-                    friendListDiv.innerHTML = '<p>暂无好友</p>';
+                if (follows?.length) follows.forEach(f => {
+                    const btn = document.createElement('button'); btn.className = 'btn btn-secondary btn-sm'; btn.textContent = comp.getUserDisplayName(f.following);
+                    btn.addEventListener('click', async () => { await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false }); modal.remove(); showToast('已发送到私聊', 'success'); });
+                    friendListDiv.appendChild(btn);
+                }); else friendListDiv.innerHTML = '<p>暂无好友</p>';
+            }
+
+            // ==================== 话题详情 ====================
+            async function loadTopicDetail(topicId) {
+                if (!topicId) return showToast('缺少话题 ID', 'error');
+                const container = document.getElementById('detailContainer');
+                container.innerHTML = '加载中...';
+                const { data: topic, error } = await supabaseClient.from('topics').select('*').eq('id', topicId).single();
+                if (error || !topic) return container.innerHTML = '<p>话题不存在</p>';
+                container.innerHTML = `
+                    <h2>${topic.name}</h2>
+                    <p>${topic.description || ''}</p>
+                    ${currentUser.is_admin && topic.public_id ? `<div style="font-size:13px;color:var(--text-light);">ID: ${topic.public_id}</div>` : ''}
+                    <div class="post-actions" style="margin:16px 0;">
+                        <button class="action-btn" data-action="like-topic" data-topic-id="${topic.id}">${comp.Icons.heart} 点赞</button>
+                        <button class="action-btn" data-action="favorite-topic" data-topic-id="${topic.id}">${comp.Icons.bookmark} 收藏</button>
+                        <button class="action-btn" data-action="share-topic" data-topic-id="${topic.id}">${comp.Icons.share} 分享</button>
+                        <button class="action-btn" data-action="report-topic" data-topic-id="${topic.id}">${comp.Icons.flag} 举报</button>
+                    </div>
+                    <h3>讨论</h3>
+                    <div id="topicPosts"></div>
+                `;
+                // 话题互动按钮
+                container.addEventListener('click', (e) => {
+                    const btn = e.target.closest('[data-action]');
+                    if (!btn) return;
+                    if (btn.dataset.action === 'like-topic') showToast('话题点赞开发中', 'info');
+                    else if (btn.dataset.action === 'favorite-topic') showToast('话题收藏开发中', 'info');
+                    else if (btn.dataset.action === 'share-topic') showToast('话题分享开发中', 'info');
+                    else if (btn.dataset.action === 'report-topic') showReportModal('topic', topicId);
+                });
+                // 加载话题下帖子
+                const postsDiv = document.getElementById('topicPosts');
+                const { data: topicPosts, error: postsError } = await supabaseClient.from('topic_posts').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('topic_id', topicId).order('created_at', { ascending: false });
+                if (postsError || !topicPosts?.length) return postsDiv.innerHTML = '<p>暂无讨论</p>';
+                postsDiv.innerHTML = '';
+                const posts = topicPosts.map(tp => tp.post).sort((a,b) => (b.like_count - a.like_count) || (new Date(b.created_at) - new Date(a.created_at)));
+                for (const post of posts) {
+                    const [likeRes, favRes] = await Promise.all([
+                        supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
+                        supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle()
+                    ]);
+                    post.liked_by_me = !!likeRes.data;
+                    post.favorited_by_me = !!favRes.data;
+                    post.is_owner = post.user_id === currentUser.id;
+                    postsDiv.appendChild(comp.renderPostCard(post));
+                }
+                // 点击帖子卡片跳转帖子详情
+                postsDiv.addEventListener('click', (e) => {
+                    const card = e.target.closest('.post-card');
+                    if (card && !e.target.closest('[data-action]') && !e.target.closest('.media-item')) {
+                        const pid = card.querySelector('[data-post-id]')?.dataset.postId;
+                        if (pid) window.location.href = 'post-detail.html?type=post&id=' + pid;
+                    }
+                });
+            }
+
+            // ==================== 公告详情 ====================
+            async function loadAnnouncementDetail(announcementId) {
+                if (!announcementId) return showToast('缺少公告 ID', 'error');
+                const container = document.getElementById('detailContainer');
+                container.innerHTML = '加载中...';
+                const { data: ann, error } = await supabaseClient.from('announcements').select('*').eq('id', announcementId).single();
+                if (error || !ann) return container.innerHTML = '<p>公告不存在</p>';
+                container.innerHTML = `
+                    <h2>${ann.title}</h2>
+                    <div class="post-content">${ann.content || ''}</div>
+                    <div style="font-size:13px;color:var(--text-light); margin-bottom:16px;">${timeAgo(ann.created_at)}</div>
+                `;
+                if (ann.files?.length) {
+                    const filesDiv = document.createElement('div');
+                    ann.files.forEach(file => filesDiv.appendChild(comp.renderFileDetail(file)));
+                    container.appendChild(filesDiv);
+                }
+                if (ann.referenced_posts?.length) {
+                    const postsDiv = document.createElement('div');
+                    postsDiv.innerHTML = '<h3>引用帖子</h3>';
+                    for (const postId of ann.referenced_posts) {
+                        const { data: post } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('id', postId).single();
+                        if (post) postsDiv.appendChild(comp.renderPostCard(post));
+                    }
+                    container.appendChild(postsDiv);
+                }
+                if (ann.referenced_topics?.length) {
+                    const topicsDiv = document.createElement('div');
+                    topicsDiv.innerHTML = '<h3>引用话题</h3>';
+                    for (const topicId of ann.referenced_topics) {
+                        const { data: topic } = await supabaseClient.from('topics').select('*').eq('id', topicId).single();
+                        if (topic) topicsDiv.appendChild(comp.renderTopicCard(topic));
+                    }
+                    container.appendChild(topicsDiv);
                 }
             }
 
-            initPostDetail();
+            // ==================== 用户主页 ====================
+            async function loadUserProfile(userId) {
+                if (!userId) return showToast('缺少用户 ID', 'error');
+                const container = document.getElementById('detailContainer');
+                container.innerHTML = '加载中...';
+                const { data: profile, error } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+                if (error || !profile) return container.innerHTML = '<p>用户不存在</p>';
+                const [{ count: followingCount }, { count: followerCount }, { count: favCount }] = await Promise.all([
+                    supabaseClient.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', userId),
+                    supabaseClient.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', userId),
+                    supabaseClient.from('favorites').select('id', { count: 'exact', head: true }).eq('user_id', userId)
+                ]);
+                const { data: followData } = await supabaseClient.from('follows').select('id').eq('follower_id', currentUser.id).eq('following_id', userId).maybeSingle();
+                const isFollowing = !!followData;
+                const favPublic = profile.favorites_public !== false;
+                const followingPublic = profile.following_public !== false;
+
+                container.innerHTML = `
+                    <div style="position:relative; display:inline-block; float:right;">
+                        <button class="btn btn-secondary btn-sm" id="moreMenuBtn">${comp.Icons.more}</button>
+                    </div>
+                    <div class="profile-header" style="display:flex;align-items:center;gap:20px;margin:20px 0;">
+                        ${comp.getUserAvatarHTML(profile, 'avatar-lg')}
+                        <div>
+                            <h2>${comp.getUserDisplayName(profile)}</h2>
+                            <p>${comp.getUserHandle(profile)}</p>
+                            <p style="color:var(--text-secondary);">${profile.bio || '暂无简介'}</p>
+                            <p style="font-size:13px;color:var(--text-light);">注册于 ${new Date(profile.created_at).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:20px;margin-bottom:20px;">
+                        <span>关注 ${followingCount || 0}</span>
+                        <span>粉丝 ${followerCount || 0}</span>
+                        ${favPublic ? `<span>收藏 ${favCount || 0}</span>` : ''}
+                    </div>
+                    ${followingPublic ? `<button class="btn btn-secondary btn-sm" id="viewFollowingBtn">查看关注列表</button>` : ''}
+                    <div style="display:flex;gap:8px;margin-bottom:20px;">
+                        ${isFollowing ? `<button class="btn btn-secondary" id="unfollowBtn" style="min-width:80px;">取关</button>` : `<button class="btn btn-primary" id="followBtn">关注</button>`}
+                        <button class="btn btn-primary" id="friendRequestBtn">好友请求</button>
+                        ${favPublic ? `<button class="btn btn-secondary" id="viewFavBtn">查看收藏</button>` : `<button class="btn btn-secondary" disabled title="收藏未公开">${comp.Icons.lock || '🔒'} 收藏</button>`}
+                    </div>
+                    <div id="userContent"></div>
+                `;
+
+                // 三个点菜单
+                document.getElementById('moreMenuBtn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const menu = document.createElement('div');
+                    menu.className = 'more-menu';
+                    menu.innerHTML = `
+                        <button data-action="report-user" data-user-id="${profile.id}">举报</button>
+                        <button data-action="block-user" data-user-id="${profile.id}">拉黑</button>
+                        <button data-action="share-profile" data-user-id="${profile.id}">分享主页</button>
+                    `;
+                    document.body.appendChild(menu);
+                    document.addEventListener('click', function closeMenu(ev) {
+                        if (!menu.contains(ev.target) && ev.target !== document.getElementById('moreMenuBtn')) {
+                            menu.remove();
+                            document.removeEventListener('click', closeMenu);
+                        }
+                    });
+                });
+
+                const followBtn = document.getElementById('followBtn');
+                if (followBtn) followBtn.addEventListener('click', async () => {
+                    await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
+                    showToast('已关注', 'success');
+                    loadUserProfile(userId);
+                });
+                const unfollowBtn = document.getElementById('unfollowBtn');
+                if (unfollowBtn) unfollowBtn.addEventListener('click', async () => {
+                    await supabaseClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
+                    showToast('已取关', 'success');
+                    loadUserProfile(userId);
+                });
+                document.getElementById('friendRequestBtn').addEventListener('click', async () => {
+                    const existing = await supabaseClient.from('friend_requests').select('id').eq('sender_id', currentUser.id).eq('receiver_id', userId).maybeSingle();
+                    if (existing.data) return showToast('已发送好友请求', 'error');
+                    await supabaseClient.from('friend_requests').insert({ sender_id: currentUser.id, receiver_id: userId, status: 'pending' });
+                    showToast('好友请求已发送', 'success');
+                });
+
+                const viewFavBtn = document.getElementById('viewFavBtn');
+                if (viewFavBtn && favPublic) {
+                    viewFavBtn.addEventListener('click', async () => {
+                        const userContent = document.getElementById('userContent');
+                        const { data: favs } = await supabaseClient.from('favorites').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', userId).order('created_at', { ascending: false });
+                        if (!favs?.length) userContent.innerHTML = '<p>暂无公开收藏</p>';
+                        else {
+                            userContent.innerHTML = '';
+                            favs.forEach(f => { if (f.post) { f.post.is_owner = f.post.user_id === currentUser.id; userContent.appendChild(comp.renderPostCard(f.post)); } });
+                        }
+                    });
+                }
+
+                const viewFollowingBtn = document.getElementById('viewFollowingBtn');
+                if (viewFollowingBtn) viewFollowingBtn.addEventListener('click', async () => {
+                    const { data: followingList } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_banned)').eq('follower_id', userId).limit(50);
+                    if (!followingList?.length) return showToast('暂无关注列表', 'error');
+                    let listHtml = '<ul style="list-style:none;padding:0;">';
+                    followingList.forEach(item => {
+                        const u = item.following;
+                        listHtml += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">${comp.getUserAvatarHTML(u,'avatar-sm')}<span class="post-user-name">${comp.getUserDisplayName(u)}</span><span class="post-user-id">${comp.getUserHandle(u)}</span></li>`;
+                    });
+                    listHtml += '</ul>';
+                    comp.openModal('关注列表', listHtml);
+                });
+
+                // 分享主页
+                document.querySelector('[data-action="share-profile"]')?.addEventListener('click', () => {
+                    const url = window.location.origin + '/post-detail.html?type=user&id=' + userId;
+                    comp.openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`);
+                });
+                document.querySelector('[data-action="report-user"]')?.addEventListener('click', () => showReportModal('user', userId));
+                document.querySelector('[data-action="block-user"]')?.addEventListener('click', async () => {
+                    await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId });
+                    showToast('已拉黑', 'success');
+                    loadUserProfile(userId);
+                });
+            }
+
+            // 工具函数
+            function timeAgo(dateStr) {
+                if (!dateStr) return '';
+                const now = new Date();
+                const date = new Date(dateStr);
+                const seconds = Math.floor((now - date) / 1000);
+                if (seconds < 60) return '刚刚';
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return minutes + '分钟前';
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return hours + '小时前';
+                const days = Math.floor(hours / 24);
+                if (days < 30) return days + '天前';
+                return new Date(dateStr).toLocaleDateString();
+            }
+
+            init();
         })();
     </script>
 </body>
