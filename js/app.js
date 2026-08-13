@@ -12,15 +12,14 @@
     const { Icons, renderPostCard, renderCommentItem, renderNotificationItem, renderUserCard, renderTopicCard, renderFileDetail, getUserAvatarHTML, getUserDisplayName, getUserHandle, openModal, showToast } = comp;
 
     // ---------- 全局状态 ----------
-    let currentUser = null;         // profiles 表当前用户
-    let currentUserAuth = null;     // auth 用户
+    let currentUser = null;
+    let currentUserAuth = null;
     let currentRoute = ROUTES.EXPLORE;
-    let currentTab = EXPLORE_TABS.SQUARE; // 探索子标签
-    let currentTopicId = null;      // 当前查看的话题
-    let currentPostId = null;       // 当前查看的帖子详情
-    let notificationsUnread = 0;    // 未读通知数
+    let currentTab = EXPLORE_TABS.SQUARE;
+    let currentTopicId = null;
+    let currentPostId = null;
+    let notificationsUnread = 0;
 
-    // ---------- DOM 元素 ----------
     const appContainer = document.getElementById('app');
     const sidebarNav = document.getElementById('sidebarNav');
     const mainContent = document.getElementById('mainContent');
@@ -39,7 +38,6 @@
                 return;
             }
             currentUserAuth = session.user;
-            // 获取用户资料
             const { data: profile, error: profileError } = await supabaseClient
                 .from('profiles')
                 .select('*')
@@ -57,21 +55,15 @@
                 window.location.href = 'index.html';
                 return;
             }
-            // 更新在线状态
             await supabaseClient.from('profiles').update({ is_online: true, last_active_at: new Date().toISOString() }).eq('id', currentUser.id);
-            // 加载未读通知数
             await loadUnreadNotificationCount();
-            // 渲染侧边栏
             renderSidebar();
-            // 默认路由
             navigateTo(ROUTES.EXPLORE);
-            // 监听认证状态变化
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_OUT') {
                     window.location.href = 'index.html';
                 }
             });
-            // 全局事件委托
             setupGlobalEventDelegation();
         } catch (e) {
             console.error('初始化失败', e);
@@ -79,7 +71,6 @@
         }
     }
 
-    // ---------- 加载未读通知数 ----------
     async function loadUnreadNotificationCount() {
         if (!currentUser) return;
         const { count, error } = await supabaseClient
@@ -104,7 +95,6 @@
         }
     }
 
-    // ---------- 渲染侧边栏 ----------
     function renderSidebar() {
         if (!sidebarNav) return;
         const navItems = [
@@ -125,7 +115,6 @@
         html += '</ul>';
         sidebarNav.innerHTML = html;
 
-        // 处理底部用户信息，固定在侧边栏底部
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
         const oldFooter = sidebar.querySelector('.sidebar-footer');
@@ -152,7 +141,6 @@
         });
     }
 
-    // ---------- 路由导航 ----------
     function navigateTo(route) {
         currentRoute = route;
         document.querySelectorAll('.nav-item').forEach(el => {
@@ -214,7 +202,6 @@
         });
     }
 
-    // 加载帖子列表
     async function loadPosts(container, type) {
         container.innerHTML = '<p>加载中...</p>';
         let query = supabaseClient
@@ -260,7 +247,6 @@
         });
     }
 
-    // 渲染搜索
     function renderSearch(container) {
         container.innerHTML = `
             <div class="search-bar">
@@ -639,7 +625,9 @@
                 <div class="page-title">个人与设置</div>
             </div>
             <div class="profile-header" style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
-                ${getUserAvatarHTML(currentUser, 'avatar-lg')}
+                <div id="profileAvatarContainer" style="cursor: pointer; position: relative;" title="点击更换头像">
+                    ${getUserAvatarHTML(currentUser, 'avatar-lg')}
+                </div>
                 <div>
                     <h2>${getUserDisplayName(currentUser)}</h2>
                     <p>${getUserHandle(currentUser)}</p>
@@ -656,7 +644,33 @@
             </div>
             <div id="profileContent"></div>`;
         const contentDiv = document.getElementById('profileContent');
-        await loadSettings(contentDiv); // 默认加载个人资料
+        // 绑定头像点击上传
+        const avatarContainer = document.getElementById('profileAvatarContainer');
+        if (avatarContainer) {
+            avatarContainer.addEventListener('click', () => {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    try {
+                        showToast('头像上传中...', 'info');
+                        const uploaded = await uploadFile(file, 'avatars', `avatar/${currentUser.id}`);
+                        await supabaseClient.from('profiles').update({ avatar_url: uploaded.url }).eq('id', currentUser.id);
+                        currentUser.avatar_url = uploaded.url;
+                        renderSidebar();
+                        // 更新当前显示
+                        avatarContainer.innerHTML = getUserAvatarHTML(currentUser, 'avatar-lg');
+                        showToast('头像更新成功', 'success');
+                    } catch (err) {
+                        showToast('头像上传失败: ' + err.message, 'error');
+                    }
+                };
+                fileInput.click();
+            });
+        }
+        await loadSettings(contentDiv);
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
@@ -735,7 +749,6 @@
             <div class="form-group"><label>昵称</label><input type="text" id="editNickname" value="${currentUser.nickname}" /></div>
             <div class="form-group"><label>ID（用户名）</label><input type="text" id="editUsername" value="${currentUser.username}" /></div>
             <div class="form-group"><label>简介</label><textarea id="editBio">${currentUser.bio || ''}</textarea></div>
-            <div class="form-group"><label>头像</label><input type="file" id="editAvatar" accept="image/*" /></div>
             <button class="btn btn-primary" id="saveProfileBtn">保存</button>`;
         container.querySelector('#saveProfileBtn').addEventListener('click', async () => {
             const nickname = container.querySelector('#editNickname').value.trim();
@@ -746,16 +759,6 @@
                 return;
             }
             const updates = { nickname, username, bio };
-            const avatarFile = container.querySelector('#editAvatar').files[0];
-            if (avatarFile) {
-                try {
-                    const uploaded = await uploadFile(avatarFile, 'avatars', `avatar/${currentUser.id}`);
-                    updates.avatar_url = uploaded.url;
-                } catch (e) {
-                    showToast('头像上传失败: ' + e.message, 'error');
-                    return;
-                }
-            }
             const { error } = await supabaseClient.from('profiles').update(updates).eq('id', currentUser.id);
             if (error) {
                 showToast('保存失败: ' + error.message, 'error');
