@@ -571,7 +571,6 @@
         if (unfollowBtn) unfollowBtn.addEventListener('click', async () => { await supabaseClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId); showToast('已取关','success'); viewUserProfile(userId); });
 
         document.getElementById('friendRequestBtn').addEventListener('click', async () => {
-            // 检查是否已发送过请求
             const existing = await supabaseClient.from('friend_requests').select('id').eq('sender_id', currentUser.id).eq('receiver_id', userId).maybeSingle();
             if (existing.data) return showToast('已发送好友请求', 'error');
             await supabaseClient.from('friend_requests').insert({ sender_id: currentUser.id, receiver_id: userId, status: 'pending' });
@@ -589,11 +588,8 @@
                     favs.forEach(f => { if (f.post) { f.post.is_owner = f.post.user_id === currentUser.id; userContent.appendChild(renderPostCard(f.post)); } });
                 }
             });
-        } else if (!favPublic) {
-            // 锁图标已在按钮中显示
         }
 
-        // 查看关注列表
         const viewFollowingBtn = document.getElementById('viewFollowingBtn');
         if (viewFollowingBtn) viewFollowingBtn.addEventListener('click', async () => {
             const { data: followingList } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_banned)').eq('follower_id', userId).limit(50);
@@ -607,18 +603,15 @@
             openModal('关注列表', listHtml);
         });
 
-        // 分享主页
         document.querySelector('[data-action="share-profile"]')?.addEventListener('click', () => {
             const url = window.location.origin + '/#user-' + userId;
             openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`);
         });
 
-        // 举报用户
         document.querySelector('[data-action="report-user"]')?.addEventListener('click', () => {
             showReportModal('user', userId);
         });
 
-        // 拉黑用户
         document.querySelector('[data-action="block-user"]')?.addEventListener('click', async () => {
             await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId });
             showToast('已拉黑','success');
@@ -647,9 +640,26 @@
         });
     }
 
-    async function loadUserPosts(container) { /* ... 与之前相同 ... */ }
-    async function loadUserFavorites(container) { /* ... 与之前相同 ... */ }
-    async function loadUserHistory(container) { /* ... 与之前相同 ... */ }
+    async function loadUserPosts(container) {
+        const { data, error } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+        if (error || !data.length) return container.innerHTML = '<p>暂无帖子</p>';
+        container.innerHTML = '';
+        data.forEach(post => { post.is_owner = true; container.appendChild(renderPostCard(post)); });
+    }
+
+    async function loadUserFavorites(container) {
+        const { data, error } = await supabaseClient.from('favorites').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+        if (error || !data.length) return container.innerHTML = '<p>暂无收藏</p>';
+        container.innerHTML = '';
+        data.forEach(f => { if (f.post) { f.post.is_owner = f.post.user_id === currentUser.id; container.appendChild(renderPostCard(f.post)); } });
+    }
+
+    async function loadUserHistory(container) {
+        const { data, error } = await supabaseClient.from('view_history').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', currentUser.id).order('viewed_at', { ascending: false });
+        if (error || !data.length) return container.innerHTML = '<p>暂无历史记录</p>';
+        container.innerHTML = '';
+        data.forEach(h => { if (h.post) { h.post.is_owner = h.post.user_id === currentUser.id; container.appendChild(renderPostCard(h.post)); } });
+    }
 
     async function loadSettings(container) {
         let pendingAvatarUrl = null;
@@ -711,28 +721,248 @@
         });
     }
 
-    async function loadFeedback(container) { /* ... 与之前相同 ... */ }
-    async function getAdminId() { /* ... 与之前相同 ... */ }
+    async function loadFeedback(container) {
+        container.innerHTML = `<h3>反馈 Bug</h3><div class="form-group"><label>问题描述</label><textarea id="feedbackContent"></textarea></div><button class="btn btn-primary" id="submitFeedbackBtn">提交反馈</button>`;
+        container.querySelector('#submitFeedbackBtn').addEventListener('click', async () => {
+            if (currentUser.is_banned) return showToast('你已被封禁，无法提交反馈','error');
+            const content = container.querySelector('#feedbackContent').value.trim(); if(!content) return showToast('请输入问题描述','error');
+            const adminId = await getAdminId(); if(!adminId) return showToast('无法获取管理员信息','error');
+            await supabaseClient.from('notifications').insert({ user_id: adminId, type:'system', content:'用户反馈: '+content, actor_id: currentUser.id });
+            showToast('反馈已提交','success'); container.querySelector('#feedbackContent').value = '';
+        });
+    }
+
+    async function getAdminId() {
+        const { data } = await supabaseClient.from('profiles').select('id').eq('is_admin', true).single();
+        return data?.id || null;
+    }
 
     // ---------- 关于 ----------
-    async function renderAbout() { /* ... 与之前相同 ... */ }
+    async function renderAbout() {
+        mainContent.innerHTML = '<div class="page-header"><div class="page-title">关于</div></div><div id="aboutContent"></div>';
+        const { data, error } = await supabaseClient.from('about_page').select('*').order('updated_at', { ascending: false }).limit(1);
+        document.getElementById('aboutContent').innerHTML = (!error && data?.length) ? data[0].content : '<p>暂无关于信息</p>';
+    }
 
     // ---------- 管理员 ----------
-    async function renderAdmin() { /* ... 与之前相同 ... */ }
+    async function renderAdmin() {
+        mainContent.innerHTML = `<div class="page-header"><div class="page-title">管理面板</div></div><div class="tab-bar">
+            <button class="tab-item active" data-admin-tab="announcements">公告</button>
+            <button class="tab-item" data-admin-tab="reports">举报处理</button>
+            <button class="tab-item" data-admin-tab="topics">话题审核</button>
+            <button class="tab-item" data-admin-tab="recommend">推荐管理</button>
+            <button class="tab-item" data-admin-tab="about">关于编辑</button>
+            <button class="tab-item" data-admin-tab="user-operations">用户操作</button>
+        </div><div id="adminContent"></div>`;
+        const adminContent = document.getElementById('adminContent');
+        await loadAnnouncementsAdmin(adminContent);
+        document.querySelectorAll('.tab-item').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+                const tab = btn.dataset.adminTab; adminContent.innerHTML = '';
+                if (tab==='announcements') await loadAnnouncementsAdmin(adminContent);
+                else if (tab==='reports') await loadReportsAdmin(adminContent);
+                else if (tab==='topics') await loadTopicsAdmin(adminContent);
+                else if (tab==='recommend') await loadRecommendAdmin(adminContent);
+                else if (tab==='about') await loadAboutAdmin(adminContent);
+                else if (tab==='user-operations') await loadUserOperationsAdmin(adminContent);
+            });
+        });
+    }
 
-    // 管理员各函数保留，但公告发布需通知所有用户
-    async function showCreateAnnouncementModal(container) {
-        // ... 插入公告后，通知所有用户
-        const { data: users } = await supabaseClient.from('profiles').select('id');
-        if (users && users.length) {
-            const notifications = users.map(u => ({ user_id: u.id, type: 'admin_announcement', actor_id: currentUser.id, content: '管理员发布了公告：' + title, is_read: false }));
-            await supabaseClient.from('notifications').insert(notifications);
-        }
+    async function loadAnnouncementsAdmin(container) {
+        container.innerHTML = `<button class="btn btn-primary" id="createAnnouncementBtn">${Icons.plus} 创建公告</button><div id="announcementsList" style="margin-top:16px;"></div>`;
+        container.querySelector('#createAnnouncementBtn').addEventListener('click', () => showCreateAnnouncementModal(container));
+        await refreshAnnouncementsList(container.querySelector('#announcementsList'));
+    }
+    async function refreshAnnouncementsList(listDiv) {
+        listDiv.innerHTML = '加载中...';
+        const { data, error } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false });
+        if (error || !data.length) return listDiv.innerHTML = '<p>暂无公告</p>';
+        listDiv.innerHTML = ''; data.forEach(a => { const card=document.createElement('div'); card.className='announcement-card'; card.innerHTML=`<div class="announcement-title">${a.title}</div><div class="post-content">${a.content||''}</div><div style="font-size:13px;color:var(--text-light);">${timeAgo(a.created_at)}</div><button class="btn btn-secondary btn-sm" data-action="delete-announcement" data-id="${a.id}">删除</button>`; listDiv.appendChild(card); });
+    }
+    function showCreateAnnouncementModal(container) {
+        const content = `<div class="form-group"><label>标题</label><input type="text" id="announcementTitle"></div><div class="form-group"><label>内容</label><textarea id="announcementContent"></textarea></div><div class="form-group"><label>引用帖子ID（逗号分隔）</label><input type="text" id="announcementPosts"></div><div class="form-group"><label>引用话题ID（逗号分隔）</label><input type="text" id="announcementTopics"></div><div class="form-group"><label>上传文件</label><input type="file" id="announcementFiles" multiple></div><button class="btn btn-primary" id="submitAnnouncementBtn">发布公告</button>`;
+        const modal = openModal('创建公告', content);
+        modal.querySelector('#submitAnnouncementBtn').addEventListener('click', async () => {
+            const title = modal.querySelector('#announcementTitle').value.trim(); if(!title) return showToast('请输入标题','error');
+            const contentText = modal.querySelector('#announcementContent').value.trim();
+            const postIds = modal.querySelector('#announcementPosts').value.split(',').map(s=>s.trim()).filter(Boolean);
+            const topicIds = modal.querySelector('#announcementTopics').value.split(',').map(s=>s.trim()).filter(Boolean);
+            let filesData = []; for(const file of modal.querySelector('#announcementFiles').files){ const uploaded = await uploadFile(file,'announcements','announcements'); filesData.push(uploaded); }
+            await supabaseClient.from('announcements').insert({ admin_id: currentUser.id, title, content: contentText, files: filesData, referenced_posts: postIds, referenced_topics: topicIds });
+            // 通知所有用户
+            const { data: users } = await supabaseClient.from('profiles').select('id');
+            if (users && users.length) {
+                const notifications = users.map(u => ({ user_id: u.id, type: 'admin_announcement', actor_id: currentUser.id, content: '管理员发布了公告：' + title, is_read: false }));
+                await supabaseClient.from('notifications').insert(notifications);
+            }
+            modal.remove(); showToast('公告已发布','success'); await refreshAnnouncementsList(container.querySelector('#announcementsList'));
+        });
+    }
+
+    async function loadReportsAdmin(container) {
+        container.innerHTML = '加载中...';
+        const { data, error } = await supabaseClient.from('reports').select('*, reporter:reporter_id(id, username, nickname, avatar_url, is_banned)').eq('status','pending').order('created_at',{ascending:false});
+        if(error||!data.length) return container.innerHTML='<p>暂无待处理举报</p>';
+        container.innerHTML=''; data.forEach(r=>{const card=document.createElement('div');card.className='post-card';card.innerHTML=`<div><strong>举报类型：</strong>${r.reason}</div><div><strong>描述：</strong>${r.description||'无'}</div><div><strong>举报人：</strong>${getUserDisplayName(r.reporter)}</div><div style="font-size:13px;color:var(--text-light);">${timeAgo(r.created_at)}</div><div style="margin-top:8px;"><button class="btn btn-secondary btn-sm" data-action="dismiss-report" data-id="${r.id}">忽略</button><button class="btn btn-danger btn-sm" data-action="action-report" data-id="${r.id}" data-target-type="${r.target_type}" data-target-id="${r.target_id}">处理</button></div>`;container.appendChild(card);});
+    }
+    async function loadTopicsAdmin(container) {
+        container.innerHTML='加载中...';
+        const { data, error } = await supabaseClient.from('topics').select('*, creator:creator_id(id, username, nickname, avatar_url, is_banned)').eq('status','pending').order('created_at',{ascending:false});
+        if(error||!data.length) return container.innerHTML='<p>暂无待审核话题</p>';
+        container.innerHTML='';data.forEach(t=>{const card=document.createElement('div');card.className='topic-card';card.innerHTML=`<div class="topic-name">${t.name}</div><div class="topic-desc">${t.description||''}</div><div>创建者：${getUserDisplayName(t.creator)}</div><div style="margin-top:8px;"><button class="btn btn-primary btn-sm" data-action="approve-topic" data-id="${t.id}">批准</button><button class="btn btn-secondary btn-sm" data-action="reject-topic" data-id="${t.id}">拒绝</button></div>`;container.appendChild(card);});
+    }
+    async function loadRecommendAdmin(container) {
+        container.innerHTML=`<h3>推荐管理</h3><div class="form-group"><label>输入帖子或话题的 ID（自定义短 ID）</label><input type="text" id="recommendTargetId" placeholder="例如：abc12345"></div><button class="btn btn-primary" id="addRecommendBtn">推荐</button><div id="recommendList" style="margin-top:16px;"></div>`;
+        container.querySelector('#addRecommendBtn').addEventListener('click', async()=>{
+            const input=container.querySelector('#recommendTargetId').value.trim();if(!input)return showToast('请输入 ID','error');
+            const {data:postData,error:postError}=await supabaseClient.from('posts').select('id').eq('public_id',input).maybeSingle();
+            if(!postError&&postData){await supabaseClient.from('posts').update({is_recommended:true}).eq('id',postData.id);showToast('帖子推荐成功','success');container.querySelector('#recommendTargetId').value='';await refreshRecommendList(container.querySelector('#recommendList'));return;}
+            const {data:topicData,error:topicError}=await supabaseClient.from('topics').select('id').eq('public_id',input).maybeSingle();
+            if(!topicError&&topicData){await supabaseClient.from('topics').update({is_recommended:true}).eq('id',topicData.id);showToast('话题推荐成功','success');container.querySelector('#recommendTargetId').value='';await refreshRecommendList(container.querySelector('#recommendList'));return;}
+            showToast('未找到该 ID 对应的帖子或话题','error');
+        });
+        await refreshRecommendList(container.querySelector('#recommendList'));
+    }
+    async function refreshRecommendList(listDiv) {
+        listDiv.innerHTML='加载中...';
+        const [postsRes,topicsRes]=await Promise.all([
+            supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('is_recommended',true).order('created_at',{ascending:false}).limit(50),
+            supabaseClient.from('topics').select('*, creator:creator_id(id, username, nickname, avatar_url, is_banned)').eq('is_recommended',true).order('created_at',{ascending:false}).limit(50)
+        ]);
+        if(postsRes.error||topicsRes.error)return listDiv.innerHTML=`<p>加载失败: ${(postsRes.error||topicsRes.error).message}</p>`;
+        const posts=postsRes.data||[],topics=topicsRes.data||[];if(!posts.length&&!topics.length)return listDiv.innerHTML='<p>暂无推荐内容</p>';
+        listDiv.innerHTML='';
+        posts.forEach(post=>{post.is_owner=post.user_id===currentUser.id;const card=renderPostCard(post);const btn=document.createElement('button');btn.className='btn btn-secondary btn-sm';btn.textContent='取消推荐';btn.addEventListener('click',async()=>{await supabaseClient.from('posts').update({is_recommended:false}).eq('id',post.id);await refreshRecommendList(listDiv);});card.appendChild(btn);listDiv.appendChild(card);});
+        topics.forEach(topic=>{const card=renderTopicCard(topic,{showJoin:true});const btn=document.createElement('button');btn.className='btn btn-secondary btn-sm';btn.textContent='取消推荐';btn.addEventListener('click',async()=>{await supabaseClient.from('topics').update({is_recommended:false}).eq('id',topic.id);await refreshRecommendList(listDiv);});card.appendChild(btn);listDiv.appendChild(card);});
+    }
+    async function loadAboutAdmin(container) {
+        container.innerHTML=`<h3>编辑关于页面</h3><div class="form-group"><label>内容（支持 HTML）</label><textarea id="aboutEditor" style="min-height:300px;"></textarea></div><button class="btn btn-primary" id="saveAboutBtn">保存</button>`;
+        const {data}=await supabaseClient.from('about_page').select('*').order('updated_at',{ascending:false}).limit(1);if(data?.length)container.querySelector('#aboutEditor').value=data[0].content||'';
+        container.querySelector('#saveAboutBtn').addEventListener('click',async()=>{const content=container.querySelector('#aboutEditor').value;await supabaseClient.from('about_page').insert({admin_id:currentUser.id,content});showToast('已保存','success');});
+    }
+    async function loadUserOperationsAdmin(container) {
+        container.innerHTML = `<h3>用户操作</h3><div class="form-group"><label>目标用户 ID</label><input type="text" id="targetUserIdInput" placeholder="输入用户的 ID（用户名）"></div><div class="form-group"><label>选择操作（可多选，互斥操作不能同时选择）</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><label><input type="checkbox" id="opBan"> 封禁账号</label><label><input type="checkbox" id="opUnban"> 解封账号</label><label><input type="checkbox" id="opMute"> 禁言私聊</label><label><input type="checkbox" id="opUnmute"> 恢复私聊</label><label><input type="checkbox" id="opPostBan"> 禁止发帖/话题</label><label><input type="checkbox" id="opPostUnban"> 恢复发帖/话题</label></div></div><div class="form-group" id="durationGroup" style="display:none;"><label>持续时间（数字 + 单位）</label><div style="display:flex;gap:8px;"><input type="number" id="durationValue" min="1" placeholder="时长" style="width:120px;"><select id="durationUnit"><option value="minutes">分钟</option><option value="hours">小时</option><option value="days">天</option><option value="weeks">周</option><option value="months">月</option></select></div></div><div class="form-group"><label>通知文本</label><textarea id="operationText"></textarea></div><button class="btn btn-primary" id="submitUserOperationBtn">执行操作</button>`;
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        const durationGroup = container.querySelector('#durationGroup');
+        function updateDurationVisibility() { durationGroup.style.display = (container.querySelector('#opBan').checked || container.querySelector('#opMute').checked || container.querySelector('#opPostBan').checked) ? 'block' : 'none'; }
+        checkboxes.forEach(cb => cb.addEventListener('change', updateDurationVisibility));
+        container.querySelector('#submitUserOperationBtn').addEventListener('click', async () => {
+            const usernameInput = container.querySelector('#targetUserIdInput').value.trim();
+            if (!usernameInput) return showToast('请输入目标用户 ID', 'error');
+            const { data: targetProfile, error: lookupError } = await supabaseClient.from('profiles').select('id, username, nickname').eq('username', usernameInput).single();
+            if (lookupError || !targetProfile) return showToast('未找到该 ID 对应的用户', 'error');
+            const targetUserId = targetProfile.id;
+            const opBan = container.querySelector('#opBan').checked, opUnban = container.querySelector('#opUnban').checked, opMute = container.querySelector('#opMute').checked, opUnmute = container.querySelector('#opUnmute').checked, opPostBan = container.querySelector('#opPostBan').checked, opPostUnban = container.querySelector('#opPostUnban').checked;
+            if (opBan && opUnban) return showToast('不能同时选择封禁和解封', 'error');
+            if (opMute && opUnmute) return showToast('不能同时选择禁言和恢复私聊', 'error');
+            if (opPostBan && opPostUnban) return showToast('不能同时选择禁止发帖和恢复发帖', 'error');
+            if (!opBan && !opUnban && !opMute && !opUnmute && !opPostBan && !opPostUnban) return showToast('请至少选择一种操作', 'error');
+            const durationValue = parseInt(container.querySelector('#durationValue').value), durationUnit = container.querySelector('#durationUnit').value;
+            let durationMs = 0;
+            if (opBan || opMute || opPostBan) {
+                if (!durationValue || durationValue <= 0) return showToast('请设置有效的时间', 'error');
+                const unitMap = { minutes: 60*1000, hours: 3600*1000, days: 86400*1000, weeks: 7*86400*1000, months: 30*86400*1000 };
+                durationMs = durationValue * unitMap[durationUnit];
+            }
+            const updates = {};
+            if (opBan) { updates.is_banned = true; updates.banned_until = new Date(Date.now()+durationMs).toISOString(); }
+            else if (opUnban) { updates.is_banned = false; updates.banned_until = null; }
+            if (opMute) { updates.mute_until = new Date(Date.now()+durationMs).toISOString(); }
+            else if (opUnmute) { updates.mute_until = null; }
+            if (opPostBan) { updates.post_ban_until = new Date(Date.now()+durationMs).toISOString(); }
+            else if (opPostUnban) { updates.post_ban_until = null; }
+            const { error: updateError } = await supabaseClient.from('profiles').update(updates).eq('id', targetUserId);
+            if (updateError) return showToast('操作失败: ' + updateError.message, 'error');
+            let operationDesc = [];
+            if (opBan) operationDesc.push('账号已被封禁');
+            if (opUnban) operationDesc.push('账号已解封');
+            if (opMute) operationDesc.push('已被禁言私聊');
+            if (opUnmute) operationDesc.push('私聊已恢复');
+            if (opPostBan) operationDesc.push('已被禁止发帖/话题');
+            if (opPostUnban) operationDesc.push('发帖/话题权限已恢复');
+            let finalText = operationDesc.join('，');
+            const text = container.querySelector('#operationText').value.trim();
+            if (text) finalText += '，' + text;
+            if (durationMs > 0) finalText += '（时长：' + durationValue + ' ' + durationUnit + '）';
+            const { error: notifError } = await supabaseClient.from('notifications').insert({ user_id: targetUserId, type: 'admin_action', actor_id: currentUser.id, content: finalText, is_read: false });
+            showToast(notifError ? '操作成功但通知发送失败' : '操作成功', notifError ? 'error' : 'success');
+            container.querySelector('#operationText').value = '';
+            checkboxes.forEach(cb => cb.checked = false);
+            durationGroup.style.display = 'none';
+        });
     }
 
     // ---------- 帖子详情 ----------
-    async function openPostDetail(postId) { /* ... 与之前相同 ... */ }
-    async function loadComments(postId) { /* ... 与之前相同 ... */ }
+    async function openPostDetail(postId) {
+        if (!postId) return;
+        currentPostId = postId;
+        enterFullscreen();
+        await supabaseClient.from('view_history').upsert({ user_id: currentUser.id, post_id: postId, viewed_at: new Date().toISOString() }, { onConflict: 'user_id,post_id' });
+        const { data: post, error } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('id', postId).single();
+        if (error) { exitFullscreen(); return showToast('加载帖子失败','error'); }
+        const [likeRes, favRes] = await Promise.all([
+            supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
+            supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle()
+        ]);
+        post.liked_by_me = !!likeRes.data;
+        post.favorited_by_me = !!favRes.data;
+        post.is_owner = post.user_id === currentUser.id;
+        mainContent.innerHTML = `<button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button><div id="postDetailContainer" style="margin-top:16px;"></div>`;
+        document.querySelector('[data-action="back"]').addEventListener('click', () => { currentPostId = null; exitFullscreen(); navigateTo(ROUTES.EXPLORE); });
+        const detailContainer = document.getElementById('postDetailContainer');
+        detailContainer.appendChild(renderPostCard(post, { showActions: true, isDetail: true }));
+        if (currentUser.is_admin && post.public_id) {
+            const idTag = document.createElement('div');
+            idTag.style.cssText = 'position:absolute;top:10px;right:10px;background:var(--bg-light);padding:4px 8px;border-radius:6px;font-size:12px;color:var(--text-light);';
+            idTag.textContent = 'ID: ' + post.public_id;
+            detailContainer.style.position = 'relative';
+            detailContainer.appendChild(idTag);
+        }
+        if (post.media?.length) {
+            const mediaDiv = document.createElement('div');
+            mediaDiv.innerHTML = post.media.map(file => renderFileDetail(file)).join('');
+            detailContainer.appendChild(mediaDiv);
+        }
+        detailContainer.innerHTML += `<div class="comments-section"><h3>评论</h3><div id="commentsList"></div><div class="comment-form" style="margin-top:16px;"><textarea id="commentInput" placeholder="写下你的评论..." rows="3"></textarea><button class="btn btn-primary" id="submitCommentBtn" style="margin-top:8px;">${Icons.comment} 发表评论</button></div></div>`;
+        await loadComments(postId);
+        detailContainer.querySelector('#submitCommentBtn').addEventListener('click', async () => {
+            if (currentUser.is_banned) return showToast('你已被封禁，无法评论','error');
+            const content = detailContainer.querySelector('#commentInput').value.trim();
+            if (!content) return showToast('请输入评论内容','error');
+            const parentId = detailContainer.querySelector('#commentInput').dataset.parentId || null;
+            const replyToUserId = detailContainer.querySelector('#commentInput').dataset.replyToUserId || null;
+            const insertData = { post_id: postId, user_id: currentUser.id, content };
+            if (parentId) { insertData.parent_id = parentId; insertData.reply_to_user_id = replyToUserId; }
+            const { error } = await supabaseClient.from('comments').insert(insertData);
+            if (error) return showToast('评论失败: ' + error.message, 'error');
+            detailContainer.querySelector('#commentInput').value = '';
+            delete detailContainer.querySelector('#commentInput').dataset.parentId;
+            delete detailContainer.querySelector('#commentInput').dataset.replyToUserId;
+            await loadComments(postId);
+        });
+    }
+
+    async function loadComments(postId) {
+        const listDiv = document.getElementById('commentsList');
+        if (!listDiv) return;
+        listDiv.innerHTML = '加载中...';
+        const { data, error } = await supabaseClient.from('comments').select('*, profiles:user_id(id, username, nickname, avatar_url, is_banned), reply_to_user:reply_to_user_id(id, username, nickname, is_banned)').eq('post_id', postId).order('created_at', { ascending: true });
+        if (error || !data.length) return listDiv.innerHTML = '<p>暂无评论</p>';
+        listDiv.innerHTML = '';
+        const mainComments = data.filter(c => !c.parent_id);
+        const replies = data.filter(c => c.parent_id);
+        mainComments.forEach(comment => {
+            listDiv.appendChild(renderCommentItem(comment));
+            const commentReplies = replies.filter(r => r.parent_id === comment.id);
+            commentReplies.forEach(reply => {
+                const replyEl = renderCommentItem(reply, { isReply: true });
+                replyEl.style.marginLeft = '24px';
+                listDiv.appendChild(replyEl);
+            });
+        });
+    }
 
     // ---------- 话题详情 ----------
     async function openTopicDetail(topicId) {
@@ -786,7 +1016,6 @@
 
             if (currentUser.is_banned && action !== 'qq-appeal') return showToast('你已被封禁，无法进行此操作', 'error');
 
-            // 原有帖子动作
             if (action === 'like' && postId) { await toggleLike(postId, target); }
             else if (action === 'favorite' && postId) { await toggleFavorite(postId, target); }
             else if (action === 'share' && postId) { showShareModal(postId); }
@@ -798,15 +1027,22 @@
             else if (action === 'report-comment' && commentId) { showReportModal('comment', commentId); }
             else if (action === 'accept-friend' && requestId) {
                 await supabaseClient.from('friend_requests').update({ status: 'accepted' }).eq('id', requestId);
-                // 自动互相关注
                 const { data: reqData } = await supabaseClient.from('friend_requests').select('sender_id, receiver_id').eq('id', requestId).single();
                 if (reqData) {
                     await supabaseClient.from('follows').insert([{ follower_id: reqData.sender_id, following_id: reqData.receiver_id }, { follower_id: reqData.receiver_id, following_id: reqData.sender_id }]);
                 }
+                unreadFriendRequests = Math.max(0, unreadFriendRequests - 1);
+                updateAllBadges();
                 showToast('已接受','success');
                 if(currentRoute===ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL);
             }
-            else if (action === 'decline-friend' && requestId) { await supabaseClient.from('friend_requests').update({ status: 'declined' }).eq('id', requestId); showToast('已拒绝','success'); if(currentRoute===ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL); }
+            else if (action === 'decline-friend' && requestId) {
+                await supabaseClient.from('friend_requests').update({ status: 'declined' }).eq('id', requestId);
+                unreadFriendRequests = Math.max(0, unreadFriendRequests - 1);
+                updateAllBadges();
+                showToast('已拒绝','success');
+                if(currentRoute===ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL);
+            }
             else if (action === 'follow' && userId) { await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId }); showToast('已关注','success'); if(currentRoute===ROUTES.EXPLORE) renderExplore(); }
             else if (action === 'block' && userId) { await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId }); showToast('已拉黑','success'); }
             else if (action === 'dismiss-report' && id) { await supabaseClient.from('reports').update({ status:'dismissed', reviewed_by:currentUser.id, reviewed_at:new Date().toISOString() }).eq('id', id); showToast('已忽略','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
@@ -815,11 +1051,13 @@
             else if (action === 'reject-topic' && id) { await supabaseClient.from('topics').update({ status:'rejected' }).eq('id', id); showToast('已拒绝','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
             else if (action === 'delete-announcement' && id) { await supabaseClient.from('announcements').delete().eq('id', id); showToast('已删除','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
             else if (action === 'qq-appeal' && notificationId) { e.stopPropagation(); navigator.clipboard.writeText('976926251').then(() => { showToast('QQ群号已复制，请到群内 @管理员 申诉','success'); target.textContent='已提示'; target.disabled=true; }).catch(() => showToast('请手动搜索 QQ 群：976926251','error')); }
-            // 话题互动（示例）
             else if (action === 'like-topic' && topicId) { showToast('话题点赞功能开发中','info'); }
             else if (action === 'favorite-topic' && topicId) { showToast('话题收藏功能开发中','info'); }
             else if (action === 'share-topic' && topicId) { showToast('话题分享功能开发中','info'); }
             else if (action === 'report-topic' && topicId) { showReportModal('topic', topicId); }
+            else if (action === 'report-user' && userId) { showReportModal('user', userId); }
+            else if (action === 'block-user' && userId) { await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId }); showToast('已拉黑','success'); }
+            else if (action === 'share-profile' && userId) { const url = window.location.origin + '/#user-' + userId; openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`); }
         });
 
         document.addEventListener('click', (e) => {
@@ -846,9 +1084,7 @@
     async function toggleCommentLike(commentId, btn) { const existing=await supabaseClient.from('likes').select('id').eq('user_id',currentUser.id).eq('comment_id',commentId).maybeSingle(); if(existing.data) await supabaseClient.from('likes').delete().eq('id',existing.data.id); else await supabaseClient.from('likes').insert({user_id:currentUser.id,comment_id:commentId}); if(currentPostId) await loadComments(currentPostId); }
 
     // ---------- 弹窗 ----------
-    function showRepostModal(postId) { /* 已合并到分享，但保留以防 */ }
     function showShareModal(postId) {
-        // 获取互关好友
         supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id).then(async ({ data }) => {
             const friends = data.map(d => d.following);
             let friendOptions = '';
@@ -879,8 +1115,37 @@
             });
         });
     }
-    function showReportModal(targetType, targetId) { /* ... 与之前相同 ... */ }
-    async function showEditPostModal(postId) { /* ... 与之前相同 ... */ }
+    function showReportModal(targetType, targetId) {
+        const reasonOptions = ['血腥', '恶意病毒文件', '政治', '招嫖', '诈骗', '其他'];
+        const content = `<div class="form-group"><label>举报原因</label><select id="reportReason">${reasonOptions.map(r => `<option value="${r}">${r}</option>`).join('')}</select></div><div class="form-group"><label>详细描述</label><textarea id="reportDesc"></textarea></div><div class="form-group"><label>图片证据（可选）</label><input type="file" id="reportEvidence" accept="image/*" multiple></div><button class="btn btn-danger" id="submitReportBtn">提交举报</button>`;
+        const modal = openModal('举报', content);
+        modal.querySelector('#submitReportBtn').addEventListener('click', async () => {
+            const reason = modal.querySelector('#reportReason').value;
+            const desc = modal.querySelector('#reportDesc').value.trim();
+            let evidenceUrls = [];
+            for (const file of modal.querySelector('#reportEvidence').files) {
+                const uploaded = await uploadFile(file, 'reports', 'evidence');
+                evidenceUrls.push(uploaded.url);
+            }
+            await supabaseClient.from('reports').insert({ reporter_id: currentUser.id, target_type: targetType, target_id: targetId, reason, description: desc, evidence_urls: evidenceUrls });
+            modal.remove();
+            showToast('举报已提交', 'success');
+        });
+    }
+    async function showEditPostModal(postId) {
+        const { data: post } = await supabaseClient.from('posts').select('*').eq('id', postId).single();
+        if (!post) return;
+        const content = `<div class="form-group"><label>内容</label><textarea id="editPostContent">${post.content || ''}</textarea></div><button class="btn btn-primary" id="saveEditBtn">保存修改</button>`;
+        const modal = openModal('编辑帖子', content);
+        modal.querySelector('#saveEditBtn').addEventListener('click', async () => {
+            const newContent = modal.querySelector('#editPostContent').value;
+            await supabaseClient.from('posts').update({ content: newContent, is_edited: true, edited_at: new Date().toISOString() }).eq('id', postId);
+            modal.remove();
+            showToast('已更新', 'success');
+            if (currentPostId === postId) openPostDetail(postId);
+            else navigateTo(currentRoute);
+        });
+    }
 
     // ---------- 启动 ----------
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
