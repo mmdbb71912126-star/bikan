@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>必看 - 发帖</title>
+    <!-- 网站图标 -->
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <!-- 加载 Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 加载样式 -->
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <div class="app-container" style="display: block;">
+        <main class="main-content" id="mainContent" style="max-width: 800px; margin: 0 auto; padding: 30px 20px;">
+            <div class="page-header">
+                <div class="page-title">发帖</div>
+                <button class="btn btn-secondary" id="cancelPostBtn">取消</button>
+            </div>
+            <div class="form-group">
+                <label>内容（支持 Markdown）</label>
+                <textarea id="postContent" rows="10" placeholder="写点什么..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>标签（用空格分隔，可选）</label>
+                <input type="text" id="postTags" placeholder="例如：技术 生活" />
+            </div>
+            <div class="form-group">
+                <label>上传文件（图片、视频、音频、文件）</label>
+                <input type="file" id="postFiles" multiple />
+            </div>
+            <button class="btn btn-primary" id="submitPostBtn">发布</button>
+            <div id="postMessage" class="message"></div>
+        </main>
+    </div>
+
+    <!-- 加载 JS 文件 -->
+    <script src="js/config.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        // ============================================================
+        // post.html 独立发帖脚本
+        // 依赖：config.js, components.js
+        // ============================================================
+        (function() {
+            const cfg = window.BikanConfig;
+            const comp = window.BikanComponents;
+            const { supabaseClient, sdkReady, uploadFiles, showToast } = {
+                supabaseClient: cfg.supabaseClient,
+                sdkReady: cfg.sdkReady,
+                uploadFiles: cfg.uploadFiles,
+                showToast: comp.showToast
+            };
+
+            let currentUser = null;
+
+            async function initPostPage() {
+                if (!sdkReady) {
+                    showToast('Supabase 未初始化', 'error');
+                    return;
+                }
+                // 检查登录状态
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error || !session) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                if (profileError || !profile) {
+                    showToast('获取用户信息失败', 'error');
+                    return;
+                }
+                currentUser = profile;
+
+                // 如果被封禁，显示遮罩并禁止发帖
+                if (currentUser.is_banned) {
+                    document.body.innerHTML = `
+                        <div style="position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:none;z-index:9999;">
+                            <svg width="150" height="102" viewBox="0 0 1000 680" style="opacity:0.5;">
+                                <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="red" fill-rule="evenodd" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="484" y="273" width="32" height="100" rx="10" fill="red" />
+                                <rect x="488" y="383" width="24" height="24" rx="8" fill="red" />
+                            </svg>
+                            <div style="font-size:24px;color:red;opacity:0.5;font-weight:700;">你已被封禁</div>
+                        </div>
+                        <p style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:var(--text-light);">你已被封禁，无法发帖</p>
+                    `;
+                    return;
+                }
+
+                bindEvents();
+            }
+
+            function bindEvents() {
+                document.getElementById('cancelPostBtn').addEventListener('click', () => {
+                    window.location.href = 'app.html';
+                });
+
+                document.getElementById('submitPostBtn').addEventListener('click', async () => {
+                    const content = document.getElementById('postContent').value.trim();
+                    const tagsInput = document.getElementById('postTags').value.trim();
+                    const filesInput = document.getElementById('postFiles');
+                    const messageEl = document.getElementById('postMessage');
+
+                    if (!content && filesInput.files.length === 0) {
+                        showMessage('请填写内容或上传文件', 'error');
+                        return;
+                    }
+
+                    // 上传文件
+                    let media = [];
+                    if (filesInput.files.length > 0) {
+                        try {
+                            showToast('文件上传中...', 'info');
+                            media = await uploadFiles(filesInput.files, 'posts', 'posts');
+                        } catch (e) {
+                            showMessage('文件上传失败: ' + e.message, 'error');
+                            return;
+                        }
+                    }
+
+                    // 解析标签
+                    const tags = tagsInput ? tagsInput.split(/\s+/).map(t => t.startsWith('#') ? t.slice(1) : t) : [];
+
+                    // 生成 public_id
+                    let publicId = generatePublicId();
+                    let insertError;
+                    let postData;
+                    // 最多尝试 3 次，避免 public_id 冲突
+                    for (let attempt = 0; attempt < 3; attempt++) {
+                        const { data, error } = await supabaseClient
+                            .from('posts')
+                            .insert({
+                                user_id: currentUser.id,
+                                content,
+                                media,
+                                tags,
+                                public_id: publicId
+                            })
+                            .select()
+                            .single();
+                        if (error) {
+                            if (error.message.includes('duplicate key') && error.message.includes('public_id')) {
+                                publicId = generatePublicId();
+                                continue;
+                            }
+                            insertError = error;
+                            break;
+                        }
+                        postData = data;
+                        break;
+                    }
+
+                    if (insertError) {
+                        showMessage('发布失败: ' + insertError.message, 'error');
+                        return;
+                    }
+
+                    showMessage('发布成功，正在跳转...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'app.html';
+                    }, 1500);
+                });
+            }
+
+            function showMessage(text, type) {
+                const el = document.getElementById('postMessage');
+                el.textContent = text;
+                el.className = 'message ' + (type || 'error');
+            }
+
+            function generatePublicId() {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < 8; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            initPostPage();
+        })();
+    </script>
+</body>
+</html>
