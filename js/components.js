@@ -9,11 +9,10 @@ const BikanComponents = window.BikanComponents || {};
 
 // ============================================================
 // SVG 图标库（全部内联，无任何系统表情）
-// 所有图标函数返回 SVG 字符串
 // ============================================================
 
 const Icons = {
-    // 网站 logo（你提供的标志）
+    // 网站 logo
     logo: function(size = 36) {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size * 0.68}" viewBox="0 0 1000 680">
             <rect width="100%" height="100%" fill="none" />
@@ -63,6 +62,12 @@ const Icons = {
     trend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
     star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
     clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    // 被封禁用户的红色感叹号三角形
+    bannedUser: `<svg viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 L22 20 H2 Z" fill="none" />
+        <line x1="12" y1="8" x2="12" y2="14" stroke="red" />
+        <circle cx="12" cy="17" r="1" fill="red" stroke="none" />
+    </svg>`,
 };
 
 // 导出图标
@@ -78,13 +83,18 @@ function createElement(tag, className, innerHTML) {
     return el;
 }
 
-// 获取用户头像 HTML（返回 SVG 或 img）
+// 获取用户头像 HTML
 function getUserAvatarHTML(profile, size = 'avatar') {
     if (!profile) return '<div class="' + size + '"></div>';
+    // 如果用户被封禁，显示黑色背景红色感叹号三角形
+    if (profile.is_banned) {
+        return `<div class="${size}" style="background: black; display: flex; align-items: center; justify-content: center;">
+            ${Icons.bannedUser}
+        </div>`;
+    }
     if (profile.avatar_url) {
         return `<div class="${size}"><img src="${profile.avatar_url}" alt="avatar" onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;' + size + '&quot;></div>';"></div>`;
     }
-    // 默认使用用户首字母作为占位（不使用emoji）
     const initial = profile.nickname ? profile.nickname.charAt(0).toUpperCase() : 'U';
     return `<div class="${size}" style="background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--primary);">${initial}</div>`;
 }
@@ -92,6 +102,9 @@ function getUserAvatarHTML(profile, size = 'avatar') {
 // 获取用户显示名称（昵称优先，其次用户名）
 function getUserDisplayName(profile) {
     if (!profile) return '未知用户';
+    if (profile.is_banned) {
+        return `<span style="color: red;">该用户已被封禁</span>`;
+    }
     return profile.nickname || profile.username || '用户';
 }
 
@@ -112,13 +125,14 @@ function renderPostCard(post, options = {}) {
     const handle = getUserHandle(user);
     const timeStr = timeAgo(post.created_at);
     const editedBadge = post.is_edited ? '<span class="edited-badge">已编辑</span>' : '';
+    // 如果用户被封禁，在昵称后添加红色三角形感叹号
+    const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 16px;">⚠</span>` : '';
 
     let contentHTML = '';
     if (post.content) {
         contentHTML = `<div class="post-content">${post.content}</div>`;
     }
 
-    // 媒体渲染
     let mediaHTML = '';
     if (post.media && post.media.length > 0) {
         mediaHTML = '<div class="post-media-grid">';
@@ -143,7 +157,6 @@ function renderPostCard(post, options = {}) {
                     </div>
                 </div>`;
             } else {
-                // 文件类型
                 mediaHTML += `<div class="file-item" data-file-url="${file.url}" data-file-name="${file.name || ''}" data-file-size="${file.size || ''}">
                     <div class="file-icon">${Icons.file}</div>
                     <div class="file-info">
@@ -157,13 +170,11 @@ function renderPostCard(post, options = {}) {
         mediaHTML += '</div>';
     }
 
-    // 标签
     let tagsHTML = '';
     if (post.tags && post.tags.length > 0) {
         tagsHTML = '<div class="post-tags">' + post.tags.map(tag => `<span class="tag" data-tag="${tag}">#${tag}</span>`).join('') + '</div>';
     }
 
-    // 操作按钮
     let actionsHTML = '';
     if (showActions) {
         actionsHTML = `
@@ -197,7 +208,7 @@ function renderPostCard(post, options = {}) {
         <div class="post-header">
             ${avatarHTML}
             <div class="post-user-info">
-                <div class="post-user-name">${displayName} ${editedBadge}</div>
+                <div class="post-user-name">${displayName} ${bannedIndicator} ${editedBadge}</div>
                 <div class="post-user-id">${handle} · ${timeStr}</div>
             </div>
             <div class="post-more">
@@ -223,6 +234,7 @@ function renderCommentItem(comment, options = {}) {
     const handle = getUserHandle(user);
     const timeStr = timeAgo(comment.created_at);
     const replyTo = comment.reply_to_user ? (comment.reply_to_user.nickname || comment.reply_to_user.username) : '';
+    const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 14px;">⚠</span>` : '';
 
     let replyText = '';
     if (comment.parent_id && replyTo) {
@@ -232,7 +244,7 @@ function renderCommentItem(comment, options = {}) {
     const item = createElement('div', 'comment-item' + (isReply ? ' comment-reply' : ''), `
         <div class="comment-header">
             ${avatarHTML}
-            <span class="comment-user">${displayName}</span>
+            <span class="comment-user">${displayName} ${bannedIndicator}</span>
             <span class="post-user-id">${handle}</span>
             <span class="post-time">${timeStr}</span>
         </div>
@@ -289,7 +301,6 @@ function renderNotificationItem(notification) {
         case 'admin_action':
             text = notification.content || '管理员操作';
             isAdminAction = true;
-            // 管理员操作通知显示系统图标和“管理员”
             avatarHTML = `<div class="avatar-sm">${Icons.admin}</div>`;
             actorName = '管理员';
             break;
@@ -313,17 +324,18 @@ function renderNotificationItem(notification) {
     return item;
 }
 
-// 渲染用户卡片
+// 渲染用户卡片（用于搜索结果、关注列表等）
 function renderUserCard(user, options = {}) {
     const avatarHTML = getUserAvatarHTML(user, 'avatar');
     const displayName = getUserDisplayName(user);
     const handle = getUserHandle(user);
     const statusDot = user.is_online ? '<span style="color: var(--success); font-size: 12px;">● 在线</span>' : '<span style="color: var(--text-light); font-size: 12px;">○ 离线</span>';
+    const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 16px;">⚠</span>` : '';
 
     const card = createElement('div', 'user-card', `
         ${avatarHTML}
         <div class="user-card-info">
-            <div class="post-user-name">${displayName} ${statusDot}</div>
+            <div class="post-user-name">${displayName} ${bannedIndicator} ${statusDot}</div>
             <div class="post-user-id">${handle}</div>
             ${user.bio ? `<div style="font-size: 13px; color: var(--text-secondary);">${user.bio}</div>` : ''}
         </div>
@@ -341,6 +353,7 @@ function renderTopicCard(topic, options = {}) {
     const avatarHTML = getUserAvatarHTML(creator, 'avatar-sm');
     const displayName = getUserDisplayName(creator);
     const timeStr = timeAgo(topic.created_at);
+    const bannedIndicator = creator.is_banned ? ` <span style="color: red; font-size: 14px;">⚠</span>` : '';
 
     const card = createElement('div', 'topic-card', `
         <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -348,7 +361,7 @@ function renderTopicCard(topic, options = {}) {
                 <div class="topic-name">${topic.name}</div>
                 <div class="topic-desc">${topic.description || ''}</div>
                 <div class="topic-meta">
-                    <span>创建者：${displayName}</span>
+                    <span>创建者：${displayName} ${bannedIndicator}</span>
                     <span>${timeStr}</span>
                     <span>${topic.post_count || 0} 帖子</span>
                 </div>
@@ -440,8 +453,8 @@ BikanComponents.getUserHandle = getUserHandle;
 BikanComponents.openModal = openModal;
 BikanComponents.showToast = showToast;
 BikanComponents.createElement = createElement;
-BikanComponents.escapeHtml = escapeHtml; // 从 config 中引用
-BikanComponents.formatFileSize = formatFileSize; // 引用
+BikanComponents.escapeHtml = escapeHtml;
+BikanComponents.formatFileSize = formatFileSize;
 
 window.BikanComponents = BikanComponents;
 
