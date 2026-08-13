@@ -104,11 +104,6 @@ function getUserHandle(profile) {
 // ============================================================
 // 帖子卡片渲染
 // ============================================================
-/**
- * 渲染帖子卡片（不绑定事件，事件由外部委托处理）
- * @param {object} post - 帖子对象（需包含 user 信息，可由联表查询获得）
- * @param {object} options - { showActions: bool, isDetail: bool }
- */
 function renderPostCard(post, options = {}) {
     const { showActions = true, isDetail = false } = options;
     const user = post.profiles || post.user || {};
@@ -123,7 +118,6 @@ function renderPostCard(post, options = {}) {
         contentHTML = `<div class="post-content">${post.content}</div>`;
     }
 
-    // 媒体渲染
     let mediaHTML = '';
     if (post.media && post.media.length > 0) {
         mediaHTML = '<div class="post-media-grid">';
@@ -148,7 +142,6 @@ function renderPostCard(post, options = {}) {
                     </div>
                 </div>`;
             } else {
-                // 文件类型
                 mediaHTML += `<div class="file-item" data-file-url="${file.url}" data-file-name="${file.name || ''}" data-file-size="${file.size || ''}">
                     <div class="file-icon">${Icons.file}</div>
                     <div class="file-info">
@@ -162,13 +155,11 @@ function renderPostCard(post, options = {}) {
         mediaHTML += '</div>';
     }
 
-    // 标签
     let tagsHTML = '';
     if (post.tags && post.tags.length > 0) {
         tagsHTML = '<div class="post-tags">' + post.tags.map(tag => `<span class="tag" data-tag="${tag}">#${tag}</span>`).join('') + '</div>';
     }
 
-    // 操作按钮
     let actionsHTML = '';
     if (showActions) {
         actionsHTML = `
@@ -294,7 +285,7 @@ function renderNotificationItem(notification) {
         case 'admin_action':
             text = notification.content || '管理员操作';
             isAdminAction = true;
-            // 管理员操作通知不显示具体管理员头像和名字，使用系统图标
+            // 管理员操作通知显示系统图标和“管理员”
             avatarHTML = `<div class="avatar-sm">${Icons.admin}</div>`;
             actorName = '管理员';
             break;
@@ -318,7 +309,7 @@ function renderNotificationItem(notification) {
     return item;
 }
 
-// 渲染用户卡片（用于搜索结果、关注列表等）
+// 渲染用户卡片
 function renderUserCard(user, options = {}) {
     const avatarHTML = getUserAvatarHTML(user, 'avatar');
     const displayName = getUserDisplayName(user);
