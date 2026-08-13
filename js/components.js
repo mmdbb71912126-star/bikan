@@ -12,7 +12,6 @@ const BikanComponents = window.BikanComponents || {};
 // ============================================================
 
 const Icons = {
-    // 网站 logo
     logo: function(size = 36) {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size * 0.68}" viewBox="0 0 1000 680">
             <rect width="100%" height="100%" fill="none" />
@@ -61,17 +60,14 @@ const Icons = {
     trend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
     star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
     clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-    // 锁图标（收藏未公开）
     lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
-    // 被封禁用户的红色感叹号三角形
     bannedUser: `<svg viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 20 H2 Z" fill="none"/><line x1="12" y1="8" x2="12" y2="14" stroke="red"/><circle cx="12" cy="17" r="1" fill="red" stroke="none"/></svg>`,
 };
 
-// 导出图标
 BikanComponents.Icons = Icons;
 
 // ============================================================
-// 工具函数：创建元素辅助
+// 工具函数
 // ============================================================
 function createElement(tag, className, innerHTML) {
     const el = document.createElement(tag);
@@ -80,7 +76,6 @@ function createElement(tag, className, innerHTML) {
     return el;
 }
 
-// 获取用户头像 HTML
 function getUserAvatarHTML(profile, size = 'avatar') {
     if (!profile) return '<div class="' + size + '"></div>';
     if (profile.is_banned) {
@@ -93,21 +88,19 @@ function getUserAvatarHTML(profile, size = 'avatar') {
     return `<div class="${size}" style="background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--primary);">${initial}</div>`;
 }
 
-// 获取用户显示名称
 function getUserDisplayName(profile) {
     if (!profile) return '未知用户';
     if (profile.is_banned) return `<span style="color: red;">该用户已被封禁</span>`;
     return profile.nickname || profile.username || '用户';
 }
 
-// 获取用户 @ID
 function getUserHandle(profile) {
     if (!profile) return '@unknown';
     return '@' + (profile.username || profile.id);
 }
 
 // ============================================================
-// 帖子卡片渲染（操作按钮：分享合并转发）
+// 帖子卡片渲染
 // ============================================================
 function renderPostCard(post, options = {}) {
     const { showActions = true, isDetail = false } = options;
@@ -170,11 +163,13 @@ function renderPostCard(post, options = {}) {
     return card;
 }
 
-// 渲染评论项
+// ============================================================
+// 评论渲染（头像修正 + 添加分享按钮）
+// ============================================================
 function renderCommentItem(comment, options = {}) {
     const { isReply = false } = options;
     const user = comment.profiles || comment.user || {};
-    const avatarHTML = getUserAvatarHTML(user, 'avatar-sm');
+    const avatarHTML = getUserAvatarHTML(user, 'avatar-sm');  // 使用小头像
     const displayName = getUserDisplayName(user);
     const handle = getUserHandle(user);
     const timeStr = timeAgo(comment.created_at);
@@ -196,6 +191,7 @@ function renderCommentItem(comment, options = {}) {
         <div class="comment-actions">
             <button class="action-btn" data-comment-id="${comment.id}" data-action="like-comment">${comment.liked_by_me ? Icons.heartFilled : Icons.heart}<span>${comment.like_count || 0}</span></button>
             <button class="action-btn" data-comment-id="${comment.id}" data-action="reply-comment">${Icons.comment} 回复</button>
+            <button class="action-btn" data-comment-id="${comment.id}" data-action="share-comment">${Icons.share} 分享</button>
             <button class="action-btn" data-comment-id="${comment.id}" data-action="report-comment">${Icons.flag} 举报</button>
         </div>
     `);
@@ -203,7 +199,9 @@ function renderCommentItem(comment, options = {}) {
     return item;
 }
 
-// 渲染通知项（不显示头像）
+// ============================================================
+// 通知渲染（不显示头像）
+// ============================================================
 function renderNotificationItem(notification) {
     const timeStr = timeAgo(notification.created_at);
     let text = '';
@@ -237,7 +235,9 @@ function renderNotificationItem(notification) {
     return item;
 }
 
-// 渲染用户卡片
+// ============================================================
+// 用户卡片
+// ============================================================
 function renderUserCard(user, options = {}) {
     const avatarHTML = getUserAvatarHTML(user, 'avatar');
     const displayName = getUserDisplayName(user);
@@ -260,10 +260,11 @@ function renderUserCard(user, options = {}) {
     return card;
 }
 
-// 渲染话题卡片（不显示创建者头像）
+// ============================================================
+// 话题卡片（不显示头像）
+// ============================================================
 function renderTopicCard(topic, options = {}) {
     const timeStr = timeAgo(topic.created_at);
-
     const card = createElement('div', 'topic-card', `
         <div>
             <div class="topic-name">${topic.name}</div>
@@ -279,7 +280,9 @@ function renderTopicCard(topic, options = {}) {
     return card;
 }
 
-// 渲染文件项（详情页内使用）
+// ============================================================
+// 文件详情渲染
+// ============================================================
 function renderFileDetail(file) {
     if (!file) return '';
     if (file.type === 'image') return `<div style="margin: 10px 0;"><img src="${file.url}" alt="${file.name || ''}" style="max-width: 100%; border-radius: 8px;" /></div>`;
@@ -289,7 +292,7 @@ function renderFileDetail(file) {
 }
 
 // ============================================================
-// 弹窗管理
+// 弹窗与 Toast
 // ============================================================
 function openModal(title, contentHTML) {
     const overlay = createElement('div', 'modal-overlay');
@@ -306,7 +309,6 @@ function openModal(title, contentHTML) {
     return overlay;
 }
 
-// Toast 提示
 function showToast(message, type = 'info', duration = 3000) {
     const toast = createElement('div', 'toast', message);
     toast.style.position = 'fixed';
