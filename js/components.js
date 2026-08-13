@@ -120,7 +120,6 @@ function renderPostCard(post, options = {}) {
 
     let contentHTML = '';
     if (post.content) {
-        // 注意：这里简单处理，实际应用中应使用 Markdown 渲染，我们可在 app.js 中调用渲染函数
         contentHTML = `<div class="post-content">${post.content}</div>`;
     }
 
@@ -441,7 +440,7 @@ BikanComponents.getUserHandle = getUserHandle;
 BikanComponents.openModal = openModal;
 BikanComponents.showToast = showToast;
 BikanComponents.createElement = createElement;
-BikanComponents.escapeHtml = escapeHtml; // 从 config 中引用，确保存在
+BikanComponents.escapeHtml = escapeHtml; // 从 config 中引用
 BikanComponents.formatFileSize = formatFileSize; // 引用
 
 window.BikanComponents = BikanComponents;
