@@ -4,11 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 - 私信</title>
-    <!-- 网站图标 -->
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <!-- 加载 Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 加载样式 -->
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -16,6 +13,7 @@
         <main class="main-content" id="mainContent" style="max-width: 800px; margin: 0 auto; padding: 20px;">
             <button class="btn btn-secondary" id="backBtn">返回</button>
             <div id="chatHeader" style="margin: 16px 0; display: flex; align-items: center; gap: 12px;"></div>
+            <div id="typingIndicator" style="height: 20px; margin-bottom: 8px; font-size: 13px; color: var(--text-light);"></div>
             <div id="chatMessages" style="height: 60vh; overflow-y: auto; background: white; border-radius: 12px; padding: 16px; box-shadow: var(--shadow-sm);"></div>
             <div style="display: flex; gap: 8px; margin-top: 16px;">
                 <input type="text" id="chatInput" placeholder="输入消息..." style="flex:1;" />
@@ -27,7 +25,6 @@
         </main>
     </div>
 
-    <!-- 加载 JS 文件 -->
     <script src="js/config.js"></script>
     <script src="js/components.js"></script>
     <script>
@@ -43,6 +40,7 @@
 
             let currentUser = null;
             let otherUser = null;
+            let typingTimer = null;
             const urlParams = new URLSearchParams(window.location.search);
             const otherUserId = urlParams.get('userId');
 
@@ -52,7 +50,6 @@
                     return;
                 }
 
-                // 检查登录状态
                 const { data: { session }, error: authError } = await supabaseClient.auth.getSession();
                 if (authError || !session) {
                     window.location.href = 'index.html';
@@ -72,13 +69,11 @@
 
                 if (currentUser.is_banned) {
                     showToast('你已被封禁，无法私信', 'error');
-                    // 禁用输入和发送按钮
                     document.getElementById('chatInput').disabled = true;
                     document.getElementById('sendChatBtn').disabled = true;
                     document.getElementById('chatFileInput').disabled = true;
                 }
 
-                // 获取对方用户信息
                 if (!otherUserId) {
                     showToast('缺少用户 ID', 'error');
                     return;
@@ -105,21 +100,19 @@
                     </div>
                 `;
 
-                // 加载历史消息
                 await loadMessages();
+                setupRealtimeSubscription();
+                setupTypingIndicators();
 
-                // 绑定返回按钮
                 document.getElementById('backBtn').addEventListener('click', () => {
                     window.location.href = 'app.html';
                 });
 
-                // 绑定发送按钮
                 document.getElementById('sendChatBtn').addEventListener('click', sendTextMessage);
                 document.getElementById('chatInput').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') sendTextMessage();
                 });
 
-                // 绑定文件上传
                 document.getElementById('chatFileInput').addEventListener('change', async (e) => {
                     if (currentUser.is_banned) {
                         showToast('你已被封禁，无法发送文件', 'error');
@@ -139,6 +132,87 @@
                     e.target.value = '';
                     await loadMessages();
                 });
+
+                // 页面关闭前清除自己的打字状态
+                window.addEventListener('beforeunload', async () => {
+                    if (currentUser && otherUser) {
+                        await supabaseClient
+                            .from('profiles')
+                            .update({ typing_to: null })
+                            .eq('id', currentUser.id);
+                    }
+                });
+            }
+
+            function setupRealtimeSubscription() {
+                // 消息订阅
+                const messageChannel = supabaseClient
+                    .channel('chat-messages-' + currentUser.id + '-' + otherUser.id)
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+                        const newMsg = payload.new;
+                        if (
+                            (newMsg.sender_id === currentUser.id && newMsg.receiver_id === otherUser.id) ||
+                            (newMsg.sender_id === otherUser.id && newMsg.receiver_id === currentUser.id)
+                        ) {
+                            appendMessageToChat(newMsg);
+                        }
+                    })
+                    .subscribe();
+
+                // 打字状态订阅
+                const typingChannel = supabaseClient
+                    .channel('typing-' + currentUser.id + '-' + otherUser.id)
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+                        const updatedUser = payload.new;
+                        if (updatedUser.id === otherUser.id) {
+                            updateTypingIndicator(updatedUser.typing_to === currentUser.id);
+                        }
+                    })
+                    .subscribe();
+            }
+
+            function setupTypingIndicators() {
+                const chatInput = document.getElementById('chatInput');
+                // 输入时更新 typing_to
+                chatInput.addEventListener('input', () => {
+                    if (currentUser.is_banned) return;
+                    // 清除之前的定时器
+                    clearTimeout(typingTimer);
+                    // 设置新状态
+                    supabaseClient
+                        .from('profiles')
+                        .update({ typing_to: otherUser.id })
+                        .eq('id', currentUser.id)
+                        .then(() => {
+                            // 2秒后自动清除
+                            typingTimer = setTimeout(async () => {
+                                await supabaseClient
+                                    .from('profiles')
+                                    .update({ typing_to: null })
+                                    .eq('id', currentUser.id);
+                            }, 2000);
+                        });
+                });
+            }
+
+            function updateTypingIndicator(isTyping) {
+                const indicator = document.getElementById('typingIndicator');
+                indicator.textContent = isTyping ? '对方正在输入...' : '';
+            }
+
+            function appendMessageToChat(msg) {
+                const messagesContainer = document.getElementById('chatMessages');
+                const isMine = msg.sender_id === currentUser.id;
+                const bubble = document.createElement('div');
+                bubble.style.cssText = `text-align:${isMine ? 'right' : 'left'}; margin-bottom: 8px;`;
+                bubble.innerHTML = `
+                    <div style="display: inline-block; background: ${isMine ? 'var(--primary)' : 'var(--bg-light)'}; color: ${isMine ? 'white' : 'var(--text-main)'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
+                        ${msg.content || ''}
+                        ${msg.file_url ? `<div><a href="${msg.file_url}" target="_blank" style="color: ${isMine ? 'white' : 'var(--primary)'}; text-decoration: underline;">${msg.file_name || '文件'}</a></div>` : ''}
+                    </div>
+                `;
+                messagesContainer.appendChild(bubble);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
 
             async function loadMessages() {
@@ -158,20 +232,7 @@
                     return;
                 }
                 messagesContainer.innerHTML = '';
-                data.forEach(msg => {
-                    const isMine = msg.sender_id === currentUser.id;
-                    const bubble = document.createElement('div');
-                    bubble.style.cssText = `text-align:${isMine ? 'right' : 'left'}; margin-bottom: 8px;`;
-                    bubble.innerHTML = `
-                        <div style="display: inline-block; background: ${isMine ? 'var(--primary)' : 'var(--bg-light)'}; color: ${isMine ? 'white' : 'var(--text-main)'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
-                            ${msg.content || ''}
-                            ${msg.file_url ? `<div><a href="${msg.file_url}" target="_blank" style="color: ${isMine ? 'white' : 'var(--primary)'}; text-decoration: underline;">${msg.file_name || '文件'}</a></div>` : ''}
-                        </div>
-                    `;
-                    messagesContainer.appendChild(bubble);
-                });
-                // 滚动到底部
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                data.forEach(msg => appendMessageToChat(msg));
             }
 
             async function insertMessage(content, fileObj) {
@@ -201,6 +262,11 @@
                     await insertMessage(text, null);
                     input.value = '';
                     await loadMessages();
+                    // 清除自己的打字状态
+                    await supabaseClient
+                        .from('profiles')
+                        .update({ typing_to: null })
+                        .eq('id', currentUser.id);
                 } catch (err) {
                     showToast('发送失败: ' + err.message, 'error');
                 }
