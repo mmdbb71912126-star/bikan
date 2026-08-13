@@ -129,23 +129,24 @@
         html += '</ul>';
         sidebarNav.innerHTML = html;
 
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) return;
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) return;
+        // 更新静态 footer 信息（不用删除重建，直接更新内容）
         const userAvatarSmall = document.getElementById('userAvatarSmall');
-        const userDisplayName = document.getElementById('userDisplayName');
-        const userEmail = document.getElementById('userEmail');
+        const userDisplayNameEl = document.getElementById('userDisplayName');
+        const userEmailEl = document.getElementById('userEmail');
         if (userAvatarSmall) userAvatarSmall.innerHTML = getUserAvatarHTML(currentUser, 'avatar-sm');
-        if (userDisplayName) userDisplayName.textContent = getUserDisplayName(currentUser);
-        if (userEmail) userEmail.textContent = currentUserAuth ? currentUserAuth.email : getUserHandle(currentUser);
+        if (userDisplayNameEl) userDisplayNameEl.textContent = getUserDisplayName(currentUser);
+        if (userEmailEl) userEmailEl.textContent = currentUserAuth ? currentUserAuth.email : getUserHandle(currentUser);
 
-        document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await supabaseClient.from('profiles').update({ is_online: false }).eq('id', currentUser.id);
-            await supabaseClient.auth.signOut();
-            window.location.href = 'index.html';
-        });
+        // 绑定退出按钮
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.onclick = async (e) => {
+                e.stopPropagation();
+                await supabaseClient.from('profiles').update({ is_online: false }).eq('id', currentUser.id);
+                await supabaseClient.auth.signOut();
+                window.location.href = 'index.html';
+            };
+        }
 
         updateNavBadge();
     }
