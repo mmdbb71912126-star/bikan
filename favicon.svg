@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680">
   <path 
-    d="M 300 340 
-       C 460 165, 540 165, 700 340 
-       C 540 515, 460 515, 300 340 Z 
+    d="M 280 340 
+       C 430 150, 570 150, 720 340 
+       C 570 530, 430 530, 280 340 Z 
        
-       M 320 340 
-       C 470 235, 530 235, 680 340 
-       C 530 445, 470 445, 320 340 Z" 
+       M 300 340 
+       C 440 225, 560 225, 700 340 
+       C 560 455, 440 455, 300 340 Z" 
     fill="black" 
     fill-rule="evenodd" 
     stroke="#1a1a2e" 
-    stroke-width="2" 
+    stroke-width="4" 
     stroke-linecap="round" 
     stroke-linejoin="round" 
   />
-  <rect x="484" y="273" width="32" height="100" rx="10" fill="black" />
-  <rect x="488" y="383" width="24" height="24" rx="8" fill="black" />
+  <rect x="480" y="260" width="40" height="120" rx="12" fill="black" />
+  <rect x="484" y="380" width="32" height="32" rx="10" fill="black" />
 </svg>
