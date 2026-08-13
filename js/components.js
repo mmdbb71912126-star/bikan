@@ -21,7 +21,6 @@ const Icons = {
             <rect x="488" y="383" width="24" height="24" rx="8" fill="black" />
         </svg>`;
     },
-    // 导航图标
     home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>`,
     search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
     bell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
@@ -62,12 +61,10 @@ const Icons = {
     trend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
     star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
     clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    // 锁图标（收藏未公开）
+    lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
     // 被封禁用户的红色感叹号三角形
-    bannedUser: `<svg viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2 L22 20 H2 Z" fill="none" />
-        <line x1="12" y1="8" x2="12" y2="14" stroke="red" />
-        <circle cx="12" cy="17" r="1" fill="red" stroke="none" />
-    </svg>`,
+    bannedUser: `<svg viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 20 H2 Z" fill="none"/><line x1="12" y1="8" x2="12" y2="14" stroke="red"/><circle cx="12" cy="17" r="1" fill="red" stroke="none"/></svg>`,
 };
 
 // 导出图标
@@ -86,11 +83,8 @@ function createElement(tag, className, innerHTML) {
 // 获取用户头像 HTML
 function getUserAvatarHTML(profile, size = 'avatar') {
     if (!profile) return '<div class="' + size + '"></div>';
-    // 如果用户被封禁，显示黑色背景红色感叹号三角形
     if (profile.is_banned) {
-        return `<div class="${size}" style="background: black; display: flex; align-items: center; justify-content: center;">
-            ${Icons.bannedUser}
-        </div>`;
+        return `<div class="${size}" style="background: black; display: flex; align-items: center; justify-content: center;">${Icons.bannedUser}</div>`;
     }
     if (profile.avatar_url) {
         return `<div class="${size}"><img src="${profile.avatar_url}" alt="avatar" onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;' + size + '&quot;></div>';"></div>`;
@@ -99,12 +93,10 @@ function getUserAvatarHTML(profile, size = 'avatar') {
     return `<div class="${size}" style="background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--primary);">${initial}</div>`;
 }
 
-// 获取用户显示名称（昵称优先，其次用户名）
+// 获取用户显示名称
 function getUserDisplayName(profile) {
     if (!profile) return '未知用户';
-    if (profile.is_banned) {
-        return `<span style="color: red;">该用户已被封禁</span>`;
-    }
+    if (profile.is_banned) return `<span style="color: red;">该用户已被封禁</span>`;
     return profile.nickname || profile.username || '用户';
 }
 
@@ -115,7 +107,7 @@ function getUserHandle(profile) {
 }
 
 // ============================================================
-// 帖子卡片渲染
+// 帖子卡片渲染（操作按钮：分享合并转发）
 // ============================================================
 function renderPostCard(post, options = {}) {
     const { showActions = true, isDetail = false } = options;
@@ -125,82 +117,35 @@ function renderPostCard(post, options = {}) {
     const handle = getUserHandle(user);
     const timeStr = timeAgo(post.created_at);
     const editedBadge = post.is_edited ? '<span class="edited-badge">已编辑</span>' : '';
-    // 如果用户被封禁，在昵称后添加红色三角形感叹号
     const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 16px;">⚠</span>` : '';
 
     let contentHTML = '';
-    if (post.content) {
-        contentHTML = `<div class="post-content">${post.content}</div>`;
-    }
+    if (post.content) contentHTML = `<div class="post-content">${post.content}</div>`;
 
     let mediaHTML = '';
     if (post.media && post.media.length > 0) {
         mediaHTML = '<div class="post-media-grid">';
         post.media.forEach(file => {
-            if (file.type === 'image') {
-                mediaHTML += `<div class="media-item" data-file-url="${file.url}" data-file-type="image">
-                    <img src="${file.url}" alt="${file.name || ''}" loading="lazy" />
-                </div>`;
-            } else if (file.type === 'video') {
-                mediaHTML += `<div class="media-item video" data-file-url="${file.url}" data-file-type="video">
-                    <img src="${file.cover || ''}" alt="视频封面" onerror="this.style.display='none';" />
-                    <div class="play-icon">${Icons.play}</div>
-                </div>`;
-            } else if (file.type === 'audio') {
-                mediaHTML += `<div class="media-item audio" data-file-url="${file.url}" data-file-type="audio">
-                    <div style="padding: 12px; background: var(--bg-light);">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span>${Icons.audio}</span>
-                            <span style="font-size: 13px;">${file.name || '音频'}</span>
-                        </div>
-                        <div class="audio-progress"><div class="audio-progress-bar" style="width: 0%;"></div></div>
-                    </div>
-                </div>`;
-            } else {
-                mediaHTML += `<div class="file-item" data-file-url="${file.url}" data-file-name="${file.name || ''}" data-file-size="${file.size || ''}">
-                    <div class="file-icon">${Icons.file}</div>
-                    <div class="file-info">
-                        <div class="file-name">${file.name || '文件'}</div>
-                        <div class="file-size">${formatFileSize(file.size || 0)}</div>
-                    </div>
-                    ${isDetail ? `<button class="file-download-btn" data-download-url="${file.url}" data-download-name="${file.name || ''}">${Icons.download} 下载</button>` : ''}
-                </div>`;
-            }
+            if (file.type === 'image') mediaHTML += `<div class="media-item" data-file-url="${file.url}" data-file-type="image"><img src="${file.url}" alt="${file.name || ''}" loading="lazy" /></div>`;
+            else if (file.type === 'video') mediaHTML += `<div class="media-item video" data-file-url="${file.url}" data-file-type="video"><img src="${file.cover || ''}" alt="视频封面" onerror="this.style.display='none';" /><div class="play-icon">${Icons.play}</div></div>`;
+            else if (file.type === 'audio') mediaHTML += `<div class="media-item audio" data-file-url="${file.url}" data-file-type="audio"><div style="padding:12px;background:var(--bg-light);"><div style="display:flex;align-items:center;gap:8px;"><span>${Icons.audio}</span><span style="font-size:13px;">${file.name || '音频'}</span></div><div class="audio-progress"><div class="audio-progress-bar" style="width:0%;"></div></div></div></div>`;
+            else mediaHTML += `<div class="file-item" data-file-url="${file.url}" data-file-name="${file.name || ''}" data-file-size="${file.size || ''}"><div class="file-icon">${Icons.file}</div><div class="file-info"><div class="file-name">${file.name || '文件'}</div><div class="file-size">${formatFileSize(file.size || 0)}</div></div>${isDetail ? `<button class="file-download-btn" data-download-url="${file.url}" data-download-name="${file.name || ''}">${Icons.download} 下载</button>` : ''}</div>`;
         });
         mediaHTML += '</div>';
     }
 
     let tagsHTML = '';
-    if (post.tags && post.tags.length > 0) {
-        tagsHTML = '<div class="post-tags">' + post.tags.map(tag => `<span class="tag" data-tag="${tag}">#${tag}</span>`).join('') + '</div>';
-    }
+    if (post.tags && post.tags.length > 0) tagsHTML = '<div class="post-tags">' + post.tags.map(tag => `<span class="tag" data-tag="${tag}">#${tag}</span>`).join('') + '</div>';
 
     let actionsHTML = '';
     if (showActions) {
         actionsHTML = `
         <div class="post-actions">
-            <button class="action-btn like-btn" data-post-id="${post.id}" data-action="like">
-                ${post.liked_by_me ? Icons.heartFilled : Icons.heart}
-                <span class="count">${post.like_count || 0}</span>
-            </button>
-            <button class="action-btn comment-btn" data-post-id="${post.id}" data-action="comment">
-                ${Icons.comment}
-                <span class="count">${post.comment_count || 0}</span>
-            </button>
-            <button class="action-btn repost-btn" data-post-id="${post.id}" data-action="repost">
-                ${Icons.repost}
-                <span class="count">${post.repost_count || 0}</span>
-            </button>
-            <button class="action-btn favorite-btn" data-post-id="${post.id}" data-action="favorite">
-                ${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}
-                <span class="count">${post.favorite_count || 0}</span>
-            </button>
-            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share">
-                ${Icons.share}
-            </button>
-            <button class="action-btn report-btn" data-post-id="${post.id}" data-action="report">
-                ${Icons.flag}
-            </button>
+            <button class="action-btn like-btn" data-post-id="${post.id}" data-action="like">${post.liked_by_me ? Icons.heartFilled : Icons.heart}<span class="count">${post.like_count || 0}</span></button>
+            <button class="action-btn comment-btn" data-post-id="${post.id}" data-action="comment">${Icons.comment}<span class="count">${post.comment_count || 0}</span></button>
+            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share">${Icons.share}<span>分享</span></button>
+            <button class="action-btn favorite-btn" data-post-id="${post.id}" data-action="favorite">${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}<span class="count">${post.favorite_count || 0}</span></button>
+            <button class="action-btn report-btn" data-post-id="${post.id}" data-action="report">${Icons.flag}</button>
         </div>`;
     }
 
@@ -237,9 +182,7 @@ function renderCommentItem(comment, options = {}) {
     const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 14px;">⚠</span>` : '';
 
     let replyText = '';
-    if (comment.parent_id && replyTo) {
-        replyText = `<span class="comment-reply-to">回复了 @${replyTo} 的评论</span>`;
-    }
+    if (comment.parent_id && replyTo) replyText = `<span class="comment-reply-to">回复了 @${replyTo} 的评论</span>`;
 
     const item = createElement('div', 'comment-item' + (isReply ? ' comment-reply' : ''), `
         <div class="comment-header">
@@ -251,12 +194,8 @@ function renderCommentItem(comment, options = {}) {
         ${replyText ? `<div>${replyText}</div>` : ''}
         <div class="comment-content">${comment.content}</div>
         <div class="comment-actions">
-            <button class="action-btn" data-comment-id="${comment.id}" data-action="like-comment">
-                ${comment.liked_by_me ? Icons.heartFilled : Icons.heart}
-                <span>${comment.like_count || 0}</span>
-            </button>
+            <button class="action-btn" data-comment-id="${comment.id}" data-action="like-comment">${comment.liked_by_me ? Icons.heartFilled : Icons.heart}<span>${comment.like_count || 0}</span></button>
             <button class="action-btn" data-comment-id="${comment.id}" data-action="reply-comment">${Icons.comment} 回复</button>
-            <button class="action-btn" data-comment-id="${comment.id}" data-action="repost-comment">${Icons.repost} 转发</button>
             <button class="action-btn" data-comment-id="${comment.id}" data-action="report-comment">${Icons.flag} 举报</button>
         </div>
     `);
@@ -264,54 +203,28 @@ function renderCommentItem(comment, options = {}) {
     return item;
 }
 
-// 渲染通知项
+// 渲染通知项（不显示头像）
 function renderNotificationItem(notification) {
-    const actor = notification.actor || {};
-    let avatarHTML = getUserAvatarHTML(actor, 'avatar-sm');
-    let actorName = getUserDisplayName(actor);
     const timeStr = timeAgo(notification.created_at);
     let text = '';
     let isAdminAction = false;
 
     switch (notification.type) {
-        case 'like':
-            text = '赞了你的帖子';
-            break;
-        case 'comment':
-            text = '评论了你的帖子';
-            break;
-        case 'reply':
-            text = '回复了你的评论';
-            break;
-        case 'follow':
-            text = '关注了你';
-            break;
-        case 'repost':
-            text = '转发了你的帖子';
-            break;
-        case 'friend_request':
-            text = '向你发送了好友请求';
-            break;
-        case 'system':
-            text = notification.content || '系统通知';
-            break;
-        case 'admin_announcement':
-            text = '管理员发布了公告：' + (notification.content || '');
-            break;
-        case 'admin_action':
-            text = notification.content || '管理员操作';
-            isAdminAction = true;
-            avatarHTML = `<div class="avatar-sm">${Icons.admin}</div>`;
-            actorName = '管理员';
-            break;
-        default:
-            text = notification.content || '新通知';
+        case 'like': text = '赞了你的帖子'; break;
+        case 'comment': text = '评论了你的帖子'; break;
+        case 'reply': text = '回复了你的评论'; break;
+        case 'follow': text = '关注了你'; break;
+        case 'repost': text = '转发了你的帖子'; break;
+        case 'friend_request': text = '向你发送了好友请求'; break;
+        case 'system': text = notification.content || '系统通知'; break;
+        case 'admin_announcement': text = '管理员发布了公告：' + (notification.content || ''); break;
+        case 'admin_action': text = notification.content || '管理员操作'; isAdminAction = true; break;
+        default: text = notification.content || '新通知';
     }
 
     const item = createElement('div', 'notification-card', `
-        ${avatarHTML}
         <div class="notification-content">
-            <div class="notification-text"><strong>${actorName}</strong> ${text}</div>
+            <div class="notification-text">${text}</div>
             <div class="notification-time">${timeStr}</div>
             ${isAdminAction ? `<button class="btn btn-secondary btn-sm" data-action="qq-appeal" data-notification-id="${notification.id}">QQ群申诉</button>` : ''}
         </div>
@@ -324,7 +237,7 @@ function renderNotificationItem(notification) {
     return item;
 }
 
-// 渲染用户卡片（用于搜索结果、关注列表等）
+// 渲染用户卡片
 function renderUserCard(user, options = {}) {
     const avatarHTML = getUserAvatarHTML(user, 'avatar');
     const displayName = getUserDisplayName(user);
@@ -347,26 +260,18 @@ function renderUserCard(user, options = {}) {
     return card;
 }
 
-// 渲染话题卡片
+// 渲染话题卡片（不显示创建者头像）
 function renderTopicCard(topic, options = {}) {
-    const creator = topic.creator || {};
-    const avatarHTML = getUserAvatarHTML(creator, 'avatar-sm');
-    const displayName = getUserDisplayName(creator);
     const timeStr = timeAgo(topic.created_at);
-    const bannedIndicator = creator.is_banned ? ` <span style="color: red; font-size: 14px;">⚠</span>` : '';
 
     const card = createElement('div', 'topic-card', `
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-            <div>
-                <div class="topic-name">${topic.name}</div>
-                <div class="topic-desc">${topic.description || ''}</div>
-                <div class="topic-meta">
-                    <span>创建者：${displayName} ${bannedIndicator}</span>
-                    <span>${timeStr}</span>
-                    <span>${topic.post_count || 0} 帖子</span>
-                </div>
+        <div>
+            <div class="topic-name">${topic.name}</div>
+            <div class="topic-desc">${topic.description || ''}</div>
+            <div class="topic-meta">
+                <span>${timeStr}</span>
+                <span>${topic.post_count || 0} 帖子</span>
             </div>
-            ${avatarHTML}
         </div>
         ${options.showJoin ? `<button class="btn btn-primary" data-topic-id="${topic.id}" data-action="join-topic">参与讨论</button>` : ''}
     `);
@@ -377,22 +282,10 @@ function renderTopicCard(topic, options = {}) {
 // 渲染文件项（详情页内使用）
 function renderFileDetail(file) {
     if (!file) return '';
-    if (file.type === 'image') {
-        return `<div style="margin: 10px 0;"><img src="${file.url}" alt="${file.name || ''}" style="max-width: 100%; border-radius: 8px;" /></div>`;
-    } else if (file.type === 'video') {
-        return `<div style="margin: 10px 0;"><video controls src="${file.url}" style="max-width: 100%; border-radius: 8px;"></video></div>`;
-    } else if (file.type === 'audio') {
-        return `<div style="margin: 10px 0;"><audio controls src="${file.url}" style="width: 100%;"></audio></div>`;
-    } else {
-        return `<div class="file-item">
-            <div class="file-icon">${Icons.file}</div>
-            <div class="file-info">
-                <div class="file-name">${file.name || '文件'}</div>
-                <div class="file-size">${formatFileSize(file.size || 0)}</div>
-            </div>
-            <button class="file-download-btn" data-download-url="${file.url}" data-download-name="${file.name || ''}">${Icons.download} 下载</button>
-        </div>`;
-    }
+    if (file.type === 'image') return `<div style="margin: 10px 0;"><img src="${file.url}" alt="${file.name || ''}" style="max-width: 100%; border-radius: 8px;" /></div>`;
+    else if (file.type === 'video') return `<div style="margin: 10px 0;"><video controls src="${file.url}" style="max-width: 100%; border-radius: 8px;"></video></div>`;
+    else if (file.type === 'audio') return `<div style="margin: 10px 0;"><audio controls src="${file.url}" style="width: 100%;"></audio></div>`;
+    else return `<div class="file-item"><div class="file-icon">${Icons.file}</div><div class="file-info"><div class="file-name">${file.name || '文件'}</div><div class="file-size">${formatFileSize(file.size || 0)}</div></div><button class="file-download-btn" data-download-url="${file.url}" data-download-name="${file.name || ''}">${Icons.download} 下载</button></div>`;
 }
 
 // ============================================================
@@ -407,9 +300,7 @@ function openModal(title, contentHTML) {
         </div>
     `;
     overlay.addEventListener('click', function(e) {
-        if (e.target === overlay || e.target.hasAttribute('data-modal-close')) {
-            overlay.remove();
-        }
+        if (e.target === overlay || e.target.hasAttribute('data-modal-close')) overlay.remove();
     });
     document.body.appendChild(overlay);
     return overlay;
