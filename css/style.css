@@ -276,41 +276,59 @@ textarea {
 
 /* 侧边栏导航 */
 .sidebar {
-    width: 240px;                     /* 调整宽度，避免过宽挤压主内容 */
+    width: 240px;                     /* 调整宽度，保持协调 */
     background: white;
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     height: 100vh;
+    position: relative;
+    z-index: 10;
 }
 
-/* 侧边栏头部：改为上下布局，居中显示 */
 .sidebar-header {
-    padding: 24px 16px 16px;
+    padding: 20px 16px 16px;
     border-bottom: 1px solid var(--border);
     display: flex;
-    flex-direction: column;           /* 垂直排列 */
-    align-items: center;              /* 水平居中 */
-    gap: 8px;                         /* 图标和文字间距 */
+    flex-direction: column;           /* 上下布局 */
+    align-items: center;
+    gap: 8px;
     text-align: center;
+    position: relative;               /* 用于徽章定位 */
 }
 
 .sidebar-logo {
-    width: 160px;                     /* 图标尺寸，平衡协调 */
-    height: 109px;                    /* 160 * 680 / 1000 = 108.8，取整 */
+    width: 160px;
+    height: 109px;
     border-radius: 8px;
     flex-shrink: 0;
 }
 
 .sidebar-title {
-    font-size: 24px;                  /* 文字大小与图标匹配 */
+    font-size: 24px;
     font-weight: 700;
     color: var(--text-main);
     white-space: nowrap;
 }
 
-/* 导航菜单容器：占据剩余空间，可滚动 */
+/* 通知徽章 - 修复偏移：绝对定位在侧边栏头部右上角 */
+.nav-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--danger);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+    z-index: 5;
+}
+
+/* 导航菜单容器 */
 .sidebar nav#sidebarNav {
     flex: 1;
     overflow-y: auto;
@@ -353,19 +371,7 @@ textarea {
     flex-shrink: 0;
 }
 
-.nav-badge {
-    margin-left: auto;
-    background: var(--danger);
-    color: white;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 10px;
-    min-width: 20px;
-    text-align: center;
-}
-
-/* 侧边栏底部用户信息：固定在底部 */
+/* 侧边栏底部用户信息 */
 .sidebar-footer {
     padding: 12px;
     border-top: 1px solid var(--border);
@@ -451,6 +457,20 @@ textarea {
     background: var(--bg-light);
 }
 
+/* 全屏模式：隐藏侧边栏，主内容占满全屏 */
+body.fullscreen-app .sidebar {
+    display: none;
+}
+body.fullscreen-app .app-container {
+    display: block;
+}
+body.fullscreen-app .main-content {
+    width: 100%;
+    height: 100vh;
+    padding: 20px;
+}
+
+/* 页面头部 */
 .page-header {
     margin-bottom: 20px;
 }
@@ -1026,6 +1046,36 @@ textarea {
 .admin-stat-label {
     color: var(--text-secondary);
     font-size: 14px;
+}
+
+/* ---------- 浮动发帖按钮 ---------- */
+.floating-post-btn {
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 500;
+    transition: var(--transition);
+}
+
+.floating-post-btn:hover {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.floating-post-btn svg {
+    width: 24px;
+    height: 24px;
 }
 
 /* 响应式 */
