@@ -260,10 +260,12 @@ function renderCommentItem(comment, options = {}) {
 // 渲染通知项
 function renderNotificationItem(notification) {
     const actor = notification.actor || {};
-    const avatarHTML = getUserAvatarHTML(actor, 'avatar-sm');
+    let avatarHTML = getUserAvatarHTML(actor, 'avatar-sm');
+    let actorName = getUserDisplayName(actor);
     const timeStr = timeAgo(notification.created_at);
     let text = '';
     let isAdminAction = false;
+
     switch (notification.type) {
         case 'like':
             text = '赞了你的帖子';
@@ -292,6 +294,9 @@ function renderNotificationItem(notification) {
         case 'admin_action':
             text = notification.content || '管理员操作';
             isAdminAction = true;
+            // 管理员操作通知不显示具体管理员头像和名字，使用系统图标
+            avatarHTML = `<div class="avatar-sm">${Icons.admin}</div>`;
+            actorName = '管理员';
             break;
         default:
             text = notification.content || '新通知';
@@ -300,9 +305,9 @@ function renderNotificationItem(notification) {
     const item = createElement('div', 'notification-card', `
         ${avatarHTML}
         <div class="notification-content">
-            <div class="notification-text"><strong>${getUserDisplayName(actor)}</strong> ${text}</div>
+            <div class="notification-text"><strong>${actorName}</strong> ${text}</div>
             <div class="notification-time">${timeStr}</div>
-            ${isAdminAction ? `<button class="btn btn-secondary btn-sm" data-action="appeal" data-notification-id="${notification.id}">申诉</button>` : ''}
+            ${isAdminAction ? `<button class="btn btn-secondary btn-sm" data-action="qq-appeal" data-notification-id="${notification.id}">QQ群申诉</button>` : ''}
         </div>
         ${!notification.is_read ? '<span class="unread-dot"></span>' : ''}
     `);
