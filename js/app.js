@@ -128,10 +128,8 @@
         // 处理底部用户信息，固定在侧边栏底部
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
-        // 移除旧的 footer（如果存在）
         const oldFooter = sidebar.querySelector('.sidebar-footer');
         if (oldFooter) oldFooter.remove();
-        // 创建新的 footer
         const footer = document.createElement('div');
         footer.className = 'sidebar-footer';
         footer.innerHTML = `
@@ -146,7 +144,6 @@
         `;
         sidebar.appendChild(footer);
 
-        // 绑定退出按钮
         document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
             e.stopPropagation();
             await supabaseClient.from('profiles').update({ is_online: false }).eq('id', currentUser.id);
@@ -158,13 +155,10 @@
     // ---------- 路由导航 ----------
     function navigateTo(route) {
         currentRoute = route;
-        // 更新侧边栏高亮
         document.querySelectorAll('.nav-item').forEach(el => {
             el.classList.toggle('active', el.dataset.route === route);
         });
-        // 清空主内容
         mainContent.innerHTML = '';
-        // 根据路由渲染页面
         switch (route) {
             case ROUTES.EXPLORE:
                 renderExplore();
@@ -212,7 +206,6 @@
         } else if (currentTab === EXPLORE_TABS.SEARCH) {
             renderSearch(contentDiv);
         }
-        // 标签切换事件
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentTab = btn.dataset.tab;
@@ -655,25 +648,25 @@
                 </div>
             </div>
             <div class="tab-bar">
-                <button class="tab-item active" data-profile-tab="posts">我的帖子</button>
+                <button class="tab-item active" data-profile-tab="profile">个人资料</button>
+                <button class="tab-item" data-profile-tab="posts">我的帖子</button>
                 <button class="tab-item" data-profile-tab="favorites">收藏</button>
                 <button class="tab-item" data-profile-tab="history">历史</button>
-                <button class="tab-item" data-profile-tab="settings">设置</button>
                 <button class="tab-item" data-profile-tab="feedback">反馈</button>
             </div>
             <div id="profileContent"></div>`;
         const contentDiv = document.getElementById('profileContent');
-        await loadUserPosts(contentDiv);
+        await loadSettings(contentDiv); // 默认加载个人资料
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 contentDiv.innerHTML = '';
                 const tab = btn.dataset.profileTab;
-                if (tab === 'posts') await loadUserPosts(contentDiv);
+                if (tab === 'profile') await loadSettings(contentDiv);
+                else if (tab === 'posts') await loadUserPosts(contentDiv);
                 else if (tab === 'favorites') await loadUserFavorites(contentDiv);
                 else if (tab === 'history') await loadUserHistory(contentDiv);
-                else if (tab === 'settings') await loadSettings(contentDiv);
                 else if (tab === 'feedback') await loadFeedback(contentDiv);
             });
         });
@@ -738,7 +731,7 @@
 
     async function loadSettings(container) {
         container.innerHTML = `
-            <h3>修改资料</h3>
+            <h3>个人资料</h3>
             <div class="form-group"><label>昵称</label><input type="text" id="editNickname" value="${currentUser.nickname}" /></div>
             <div class="form-group"><label>ID（用户名）</label><input type="text" id="editUsername" value="${currentUser.username}" /></div>
             <div class="form-group"><label>简介</label><textarea id="editBio">${currentUser.bio || ''}</textarea></div>
