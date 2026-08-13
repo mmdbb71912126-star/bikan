@@ -293,7 +293,8 @@
     // ---------- 探索/发现 ----------
     async function renderExplore() {
         currentTab = currentTab || EXPLORE_TABS.SQUARE;
-        const tabHtml = `
+        mainContent.innerHTML = `
+            <div id="homeAnnouncement" style="margin-bottom:16px;"></div>
             <div class="tab-bar">
                 <button class="tab-item ${currentTab===EXPLORE_TABS.SQUARE?'active':''}" data-tab="${EXPLORE_TABS.SQUARE}">${Icons.refresh} 广场</button>
                 <button class="tab-item ${currentTab===EXPLORE_TABS.HOT?'active':''}" data-tab="${EXPLORE_TABS.HOT}">${Icons.trend} 热门</button>
@@ -301,7 +302,9 @@
                 <button class="tab-item ${currentTab===EXPLORE_TABS.SEARCH?'active':''}" data-tab="${EXPLORE_TABS.SEARCH}">${Icons.search} 搜索</button>
             </div>
             <div id="exploreContent"></div>`;
-        mainContent.innerHTML = tabHtml;
+
+        loadHomeAnnouncement();
+
         const contentDiv = document.getElementById('exploreContent');
         if (currentTab === EXPLORE_TABS.SQUARE) await loadPosts(contentDiv, 'square');
         else if (currentTab === EXPLORE_TABS.HOT) await loadPosts(contentDiv, 'hot');
@@ -311,6 +314,28 @@
             btn.addEventListener('click', () => { currentTab = btn.dataset.tab; renderExplore(); });
         });
         addFloatingPostButton();
+    }
+
+    async function loadHomeAnnouncement() {
+        const container = document.getElementById('homeAnnouncement');
+        if (!container) return;
+        container.innerHTML = '';
+        const { data, error } = await supabaseClient
+            .from('announcements')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1);
+        if (error || !data.length) return;
+        const ann = data[0];
+        const card = document.createElement('div');
+        card.className = 'announcement-card';
+        card.style.marginBottom = '12px';
+        card.innerHTML = `
+            <div class="announcement-title">${ann.title}</div>
+            <div class="post-content">${ann.content || ''}</div>
+            <div style="font-size:13px;color:var(--text-light);">${timeAgo(ann.created_at)}</div>
+        `;
+        container.appendChild(card);
     }
 
     function addFloatingPostButton() {
@@ -453,39 +478,24 @@
     }
 
     async function loadFriends(container) {
-    container.innerHTML = '加载中...';
-    const { data, error } = await supabaseClient
-        .from('follows')
-        .select('following:following_id(id, username, nickname, avatar_url, is_online, is_banned, bio)')
-        .eq('follower_id', currentUser.id);
-    if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
-    const friends = data.map(d => d.following);
-    if (!friends.length) return container.innerHTML = '<p>暂无好友，去关注一些人吧</p>';
-    container.innerHTML = '';
-    friends.forEach(f => {
-        const card = document.createElement('div');
-        card.className = 'user-card';
-        card.innerHTML = `
-            <div class="avatar" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">${getUserAvatarHTML(f, 'avatar')}</div>
-            <div class="user-card-info" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
-                <div class="post-user-name">${getUserDisplayName(f)}</div>
-                <div class="post-user-id">${getUserHandle(f)}</div>
-                ${f.bio ? `<div style="font-size:13px;color:var(--text-secondary);">${f.bio}</div>` : ''}
-            </div>
-            <div class="user-card-actions">
-                <button class="btn btn-secondary btn-sm chat-btn" data-action="chat" data-user-id="${f.id}">${Icons.message} <span>私聊</span></button>
-            </div>`;
-        // 绑定私聊按钮
-        card.querySelector('[data-action="chat"]').addEventListener('click', () => {
-            window.location.href = `chat.html?userId=${f.id}`;
+        container.innerHTML = '加载中...';
+        const { data, error } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_online, is_banned, bio)').eq('follower_id', currentUser.id);
+        if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
+        const friends = data.map(d => d.following);
+        if (!friends.length) return container.innerHTML = '<p>暂无好友，去关注一些人吧</p>';
+        container.innerHTML = '';
+        friends.forEach(f => {
+            const card = document.createElement('div'); card.className = 'user-card';
+            card.innerHTML = `<div class="avatar" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">${getUserAvatarHTML(f, 'avatar')}</div>
+                <div class="user-card-info" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
+                    <div class="post-user-name">${getUserDisplayName(f)}</div><div class="post-user-id">${getUserHandle(f)}</div>${f.bio?`<div style="font-size:13px;color:var(--text-secondary);">${f.bio}</div>`:''}
+                </div>
+                <div class="user-card-actions"><button class="btn btn-secondary btn-sm chat-btn" data-action="chat" data-user-id="${f.id}">${Icons.message} <span>私聊</span></button></div>`;
+            card.querySelector('[data-action="chat"]')?.addEventListener('click', () => window.location.href = `chat.html?userId=${f.id}`);
+            card.querySelectorAll('[data-action="view-profile"]').forEach(el => el.addEventListener('click', () => viewUserProfile(f.id)));
+            container.appendChild(card);
         });
-        // 绑定头像和信息点击
-        card.querySelectorAll('[data-action="view-profile"]').forEach(el => {
-            el.addEventListener('click', () => viewUserProfile(f.id));
-        });
-        container.appendChild(card);
-    });
-}
+    }
 
     async function loadFriendRequests(container) {
         container.innerHTML = '加载中...';
@@ -505,7 +515,6 @@
 
     async function loadNotifications(container) {
         container.innerHTML = '加载中...';
-        // 进入通知中心立即清除未读
         await supabaseClient.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
         notificationsUnread = 0;
         updateAllBadges();
@@ -559,15 +568,14 @@
             <div id="userContent"></div>
         `;
 
-        // 三个点菜单
         document.getElementById('moreMenuBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             const menu = document.createElement('div');
-            menu.style.cssText = 'position:absolute; right:0; top:30px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow-md); z-index:10;';
+            menu.className = 'more-menu';
             menu.innerHTML = `
-                <button class="btn btn-secondary btn-sm" data-action="report-user" data-user-id="${profile.id}" style="display:block; width:100%; text-align:left;">举报</button>
-                <button class="btn btn-secondary btn-sm" data-action="block-user" data-user-id="${profile.id}" style="display:block; width:100%; text-align:left;">拉黑</button>
-                <button class="btn btn-secondary btn-sm" data-action="share-profile" data-user-id="${profile.id}" style="display:block; width:100%; text-align:left;">分享主页</button>
+                <button data-action="report-user" data-user-id="${profile.id}">举报</button>
+                <button data-action="block-user" data-user-id="${profile.id}">拉黑</button>
+                <button data-action="share-profile" data-user-id="${profile.id}">分享主页</button>
             `;
             document.body.appendChild(menu);
             document.addEventListener('click', function closeMenu(ev) {
@@ -619,7 +627,7 @@
         });
 
         document.querySelector('[data-action="share-profile"]')?.addEventListener('click', () => {
-            const url = window.location.origin + '/#user-' + userId;
+            const url = window.location.origin + '/app.html#user-' + userId;
             openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`);
         });
 
@@ -700,7 +708,6 @@
             fileInput.click();
         });
 
-        // 公开设置立即生效
         container.querySelector('#editFavoritesPublic').addEventListener('change', async (e) => {
             const val = e.target.checked;
             await supabaseClient.from('profiles').update({ favorites_public: val }).eq('id', currentUser.id);
@@ -806,7 +813,6 @@
             const topicIds = modal.querySelector('#announcementTopics').value.split(',').map(s=>s.trim()).filter(Boolean);
             let filesData = []; for(const file of modal.querySelector('#announcementFiles').files){ const uploaded = await uploadFile(file,'announcements','announcements'); filesData.push(uploaded); }
             await supabaseClient.from('announcements').insert({ admin_id: currentUser.id, title, content: contentText, files: filesData, referenced_posts: postIds, referenced_topics: topicIds });
-            // 通知所有用户
             const { data: users } = await supabaseClient.from('profiles').select('id');
             if (users && users.length) {
                 const notifications = users.map(u => ({ user_id: u.id, type: 'admin_announcement', actor_id: currentUser.id, content: '管理员发布了公告：' + title, is_read: false }));
@@ -911,13 +917,14 @@
 
     // ---------- 帖子详情 ----------
     function openPostDetail(postId) {
-    window.location.href = 'post-detail.html?id=' + postId;
-}
+        window.location.href = 'post-detail.html?id=' + postId;
+    }
 
     // ---------- 话题详情 ----------
     function openTopicDetail(topicId) {
-    window.location.href = 'topic-detail.html?id=' + topicId;
-}
+        window.location.href = 'topic-detail.html?id=' + topicId;
+    }
+
     // ---------- 全局事件委托 ----------
     function setupGlobalEventDelegation() {
         document.addEventListener('click', async (e) => {
@@ -942,6 +949,7 @@
             else if (action === 'delete' && postId) { if (confirm('确认删除这条帖子吗？')) { await supabaseClient.from('posts').delete().eq('id', postId); showToast('已删除','success'); if(currentPostId===postId) currentPostId=null; exitFullscreen(); navigateTo(ROUTES.EXPLORE); } }
             else if (action === 'like-comment' && commentId) { await toggleCommentLike(commentId, target); }
             else if (action === 'reply-comment' && commentId) { const commentInput = document.getElementById('commentInput'); if (commentInput) { commentInput.focus(); commentInput.dataset.parentId = commentId; const { data } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single(); if (data) commentInput.dataset.replyToUserId = data.user_id; } }
+            else if (action === 'share-comment' && commentId) { await shareComment(commentId); }
             else if (action === 'report-comment' && commentId) { showReportModal('comment', commentId); }
             else if (action === 'accept-friend' && requestId) {
                 await supabaseClient.from('friend_requests').update({ status: 'accepted' }).eq('id', requestId);
@@ -975,7 +983,7 @@
             else if (action === 'report-topic' && topicId) { showReportModal('topic', topicId); }
             else if (action === 'report-user' && userId) { showReportModal('user', userId); }
             else if (action === 'block-user' && userId) { await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId }); showToast('已拉黑','success'); }
-            else if (action === 'share-profile' && userId) { const url = window.location.origin + '/#user-' + userId; openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`); }
+            else if (action === 'share-profile' && userId) { const url = window.location.origin + '/app.html#user-' + userId; openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`); }
         });
 
         document.addEventListener('click', (e) => {
@@ -1007,26 +1015,17 @@
             const friends = data.map(d => d.following);
             let friendOptions = '';
             if (friends.length) {
-                friends.forEach(f => {
-                    friendOptions += `<button class="btn btn-secondary btn-sm" data-share-friend-id="${f.id}">${getUserDisplayName(f)}</button>`;
-                });
+                friends.forEach(f => { friendOptions += `<button class="btn btn-secondary btn-sm" data-share-friend-id="${f.id}">${getUserDisplayName(f)}</button>`; });
             } else {
                 friendOptions = '<p>暂无互关好友</p>';
             }
-            const content = `
-                <p>选择发送给好友：</p>
-                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${friendOptions}</div>
-                <button class="btn btn-secondary" id="copyLinkBtn">复制链接</button>
-            `;
+            const content = `<p>选择发送给好友：</p><div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${friendOptions}</div><button class="btn btn-secondary" id="copyLinkBtn">复制链接</button>`;
             const modal = openModal('分享', content);
-            modal.querySelector('#copyLinkBtn').addEventListener('click', () => {
-                const url = window.location.origin + '/#post-' + postId;
-                navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success'));
-            });
+            modal.querySelector('#copyLinkBtn').addEventListener('click', () => { const url = window.location.origin + '/post-detail.html?id=' + postId; navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success')); });
             modal.querySelectorAll('[data-share-friend-id]').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const receiverId = btn.dataset.shareFriendId;
-                    await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: receiverId, content: window.location.origin + '/#post-' + postId, is_read: false });
+                    await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: receiverId, content: window.location.origin + '/post-detail.html?id=' + postId, is_read: false });
                     modal.remove();
                     showToast('已发送到私聊','success');
                 });
@@ -1041,13 +1040,9 @@
             const reason = modal.querySelector('#reportReason').value;
             const desc = modal.querySelector('#reportDesc').value.trim();
             let evidenceUrls = [];
-            for (const file of modal.querySelector('#reportEvidence').files) {
-                const uploaded = await uploadFile(file, 'reports', 'evidence');
-                evidenceUrls.push(uploaded.url);
-            }
+            for (const file of modal.querySelector('#reportEvidence').files) { const uploaded = await uploadFile(file, 'reports', 'evidence'); evidenceUrls.push(uploaded.url); }
             await supabaseClient.from('reports').insert({ reporter_id: currentUser.id, target_type: targetType, target_id: targetId, reason, description: desc, evidence_urls: evidenceUrls });
-            modal.remove();
-            showToast('举报已提交', 'success');
+            modal.remove(); showToast('举报已提交', 'success');
         });
     }
     async function showEditPostModal(postId) {
@@ -1058,10 +1053,8 @@
         modal.querySelector('#saveEditBtn').addEventListener('click', async () => {
             const newContent = modal.querySelector('#editPostContent').value;
             await supabaseClient.from('posts').update({ content: newContent, is_edited: true, edited_at: new Date().toISOString() }).eq('id', postId);
-            modal.remove();
-            showToast('已更新', 'success');
-            if (currentPostId === postId) openPostDetail(postId);
-            else navigateTo(currentRoute);
+            modal.remove(); showToast('已更新', 'success');
+            if (currentPostId === postId) openPostDetail(postId); else navigateTo(currentRoute);
         });
     }
 
