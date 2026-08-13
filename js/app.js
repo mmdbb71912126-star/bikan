@@ -368,7 +368,7 @@
         }
         if (users && users.length) {
             html += '<h3>用户</h3>';
-            users.forEach(u => html += renderUserCard(u, { showFollowBtn: u.id !== currentUser.id }).outerHTML);
+            users.forEach(u => html += renderUserCard(u, { showFollowBtn: u.id !== currentUser.id, showBlockBtn: false }).outerHTML);
         }
         if (topics && topics.length) {
             html += '<h3>话题</h3>';
@@ -435,11 +435,15 @@
 
     // ---------- 社交 ----------
     async function renderSocial() {
+        // 自动标记所有通知为已读，清除红点
+        await supabaseClient.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
+        notificationsUnread = 0;
+        updateNavBadge();
+
         mainContent.innerHTML = `
             <div class="tab-bar">
                 <button class="tab-item active" data-social-tab="friends">${Icons.friend} 好友</button>
                 <button class="tab-item" data-social-tab="requests">${Icons.user} 好友请求</button>
-                <button class="tab-item" data-social-tab="messages">${Icons.message} 私信</button>
                 <button class="tab-item" data-social-tab="notifications">${Icons.bell} 通知中心</button>
             </div>
             <div id="socialContent"></div>`;
@@ -453,7 +457,6 @@
                 contentDiv.innerHTML = '';
                 if (tab === 'friends') await loadFriends(contentDiv);
                 else if (tab === 'requests') await loadFriendRequests(contentDiv);
-                else if (tab === 'messages') await loadMessages(contentDiv);
                 else if (tab === 'notifications') await loadNotifications(contentDiv);
             });
         });
@@ -469,7 +472,30 @@
         const friends = data.map(d => d.following);
         if (!friends.length) return container.innerHTML = '<p>暂无好友，去关注一些人吧</p>';
         container.innerHTML = '';
-        friends.forEach(f => container.appendChild(renderUserCard(f, { showBlockBtn: true })));
+        friends.forEach(f => {
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            card.innerHTML = `
+                <div class="avatar" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
+                    ${getUserAvatarHTML(f, 'avatar').replace('avatar', 'avatar')}
+                </div>
+                <div class="user-card-info" style="cursor:pointer;" data-action="view-profile" data-user-id="${f.id}">
+                    <div class="post-user-name">${getUserDisplayName(f)}</div>
+                    <div class="post-user-id">${getUserHandle(f)}</div>
+                    ${f.bio ? `<div style="font-size:13px;color:var(--text-secondary);">${f.bio}</div>` : ''}
+                </div>
+                <div class="user-card-actions">
+                    <button class="btn btn-secondary btn-sm" data-action="chat" data-user-id="${f.id}">${Icons.message} 私聊</button>
+                </div>`;
+            card.querySelector('[data-action="chat"]').addEventListener('click', () => {
+                window.location.href = `chat.html?userId=${f.id}`;
+            });
+            // 头像和信息点击进入他人主页
+            card.querySelectorAll('[data-action="view-profile"]').forEach(el => {
+                el.addEventListener('click', () => viewUserProfile(f.id));
+            });
+            container.appendChild(card);
+        });
     }
 
     async function loadFriendRequests(container) {
@@ -486,8 +512,10 @@
             const card = document.createElement('div');
             card.className = 'user-card';
             card.innerHTML = `
-                ${getUserAvatarHTML(req.sender, 'avatar')}
-                <div class="user-card-info">
+                <div class="avatar" style="cursor:pointer;" data-action="view-profile" data-user-id="${req.sender.id}">
+                    ${getUserAvatarHTML(req.sender, 'avatar')}
+                </div>
+                <div class="user-card-info" style="cursor:pointer;" data-action="view-profile" data-user-id="${req.sender.id}">
                     <div class="post-user-name">${getUserDisplayName(req.sender)}</div>
                     <div class="post-user-id">${getUserHandle(req.sender)}</div>
                     <div style="font-size: 13px; color: var(--text-light);">${req.status}</div>
@@ -498,121 +526,11 @@
                         <button class="btn btn-secondary btn-sm" data-action="decline-friend" data-request-id="${req.id}">拒绝</button>
                     ` : ''}
                 </div>`;
+            card.querySelectorAll('[data-action="view-profile"]').forEach(el => {
+                el.addEventListener('click', () => viewUserProfile(req.sender.id));
+            });
             container.appendChild(card);
         });
-    }
-
-    async function loadMessages(container) {
-        container.innerHTML = '加载中...';
-        const { data, error } = await supabaseClient
-            .from('messages')
-            .select('id, sender_id, receiver_id, content, created_at, profiles_sender:sender_id(id, username, nickname, avatar_url, is_banned), profiles_receiver:receiver_id(id, username, nickname, avatar_url, is_banned)')
-            .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-            .order('created_at', { ascending: false })
-            .limit(100);
-        if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
-        const conversations = {};
-        data.forEach(msg => {
-            const other = msg.sender_id === currentUser.id ? msg.profiles_receiver : msg.profiles_sender;
-            if (!other) return;
-            const key = other.id;
-            if (!conversations[key]) conversations[key] = { user: other, lastMessage: msg };
-        });
-        const convList = Object.values(conversations);
-        if (!convList.length) return container.innerHTML = '<p>暂无私信</p>';
-        container.innerHTML = '';
-        convList.forEach(conv => {
-            const div = document.createElement('div');
-            div.className = 'user-card';
-            div.style.cursor = 'pointer';
-            div.innerHTML = `
-                ${getUserAvatarHTML(conv.user, 'avatar')}
-                <div class="user-card-info">
-                    <div class="post-user-name">${getUserDisplayName(conv.user)}</div>
-                    <div style="font-size: 13px; color: var(--text-secondary);">${conv.lastMessage.content || '[文件]'}</div>
-                </div>`;
-            div.addEventListener('click', () => openChatModal(conv.user));
-            container.appendChild(div);
-        });
-    }
-
-    async function openChatModal(otherUser) {
-        const messages = await loadChatMessages(otherUser.id);
-        const content = `
-            <div id="chatMessages" style="max-height: 300px; overflow-y: auto; margin-bottom: 12px;">
-                ${messages.map(m => {
-                    const isMine = m.sender_id === currentUser.id;
-                    return `<div style="text-align: ${isMine ? 'right' : 'left'}; margin-bottom: 8px;">
-                        <div style="display: inline-block; background: ${isMine ? 'var(--primary)' : 'var(--bg-light)'}; color: ${isMine ? 'white' : 'var(--text-main)'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
-                            ${m.content || ''}
-                            ${m.file_url ? `<div><a href="${m.file_url}" target="_blank">${Icons.file} ${m.file_name || '文件'}</a></div>` : ''}
-                        </div>
-                    </div>`;
-                }).join('')}
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="chatInput" placeholder="输入消息..." style="flex:1;" />
-                <button class="btn btn-primary" id="sendChatBtn">${Icons.send} 发送</button>
-            </div>
-            <div style="margin-top: 8px;">
-                <input type="file" id="chatFileInput" multiple />
-            </div>`;
-        const modal = openModal('与 ' + getUserDisplayName(otherUser) + ' 聊天', content);
-        modal.querySelector('#sendChatBtn').addEventListener('click', async () => {
-            if (currentUser.is_banned) return showToast('你已被封禁，无法发送消息', 'error');
-            const text = modal.querySelector('#chatInput').value.trim();
-            if (!text) return;
-            await sendMessage(otherUser.id, text, null);
-            modal.querySelector('#chatInput').value = '';
-            const newMsgs = await loadChatMessages(otherUser.id);
-            renderChatMessages(modal.querySelector('#chatMessages'), newMsgs);
-        });
-        modal.querySelector('#chatFileInput').addEventListener('change', async (e) => {
-            if (currentUser.is_banned) return showToast('你已被封禁，无法发送文件', 'error');
-            for (const file of e.target.files) {
-                const uploaded = await uploadFile(file, 'messages', `chat/${currentUser.id}`);
-                await sendMessage(otherUser.id, '', uploaded);
-            }
-            const newMsgs = await loadChatMessages(otherUser.id);
-            renderChatMessages(modal.querySelector('#chatMessages'), newMsgs);
-        });
-    }
-
-    function renderChatMessages(container, messages) {
-        container.innerHTML = messages.map(m => {
-            const isMine = m.sender_id === currentUser.id;
-            return `<div style="text-align: ${isMine ? 'right' : 'left'}; margin-bottom: 8px;">
-                <div style="display: inline-block; background: ${isMine ? 'var(--primary)' : 'var(--bg-light)'}; color: ${isMine ? 'white' : 'var(--text-main)'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
-                    ${m.content || ''}
-                    ${m.file_url ? `<div><a href="${m.file_url}" target="_blank">${Icons.file} ${m.file_name || '文件'}</a></div>` : ''}
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    async function loadChatMessages(otherUserId) {
-        const { data, error } = await supabaseClient
-            .from('messages')
-            .select('*')
-            .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUser.id})`)
-            .order('created_at', { ascending: true });
-        if (error) return [];
-        return data;
-    }
-
-    async function sendMessage(receiverId, content, fileObj) {
-        const payload = {
-            sender_id: currentUser.id,
-            receiver_id: receiverId,
-            content: content || null,
-        };
-        if (fileObj) {
-            payload.file_url = fileObj.url;
-            payload.file_name = fileObj.name;
-            payload.file_type = fileObj.type;
-        }
-        const { error } = await supabaseClient.from('messages').insert(payload);
-        if (error) throw error;
     }
 
     async function loadNotifications(container) {
@@ -630,6 +548,121 @@
         if (!data.length) return container.innerHTML = '<p>暂无通知</p>';
         container.innerHTML = '';
         data.forEach(n => container.appendChild(renderNotificationItem(n)));
+    }
+
+    // ---------- 他人主页 ----------
+    async function viewUserProfile(userId) {
+        if (userId === currentUser.id) {
+            navigateTo(ROUTES.PROFILE);
+            return;
+        }
+        enterFullscreen();
+        mainContent.innerHTML = '<p>加载用户信息...</p>';
+        // 获取用户信息
+        const { data: profile, error: profileError } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+        if (profileError || !profile) {
+            exitFullscreen();
+            return showToast('用户不存在', 'error');
+        }
+        // 统计关注数（该用户关注了多少人）
+        const { count: followingCount, error: followingError } = await supabaseClient
+            .from('follows')
+            .select('id', { count: 'exact', head: true })
+            .eq('follower_id', userId);
+        // 统计粉丝数（多少人关注了该用户）
+        const { count: followerCount, error: followerError } = await supabaseClient
+            .from('follows')
+            .select('id', { count: 'exact', head: true })
+            .eq('following_id', userId);
+        // 统计收藏数
+        const { count: favCount, error: favError } = await supabaseClient
+            .from('favorites')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId);
+        // 判断当前用户是否已关注他
+        const { data: followData } = await supabaseClient
+            .from('follows')
+            .select('id')
+            .eq('follower_id', currentUser.id)
+            .eq('following_id', userId)
+            .maybeSingle();
+        const isFollowing = !!followData;
+
+        const favPublic = profile.favorites_public !== false; // 默认 true
+
+        mainContent.innerHTML = `
+            <button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button>
+            <div class="profile-header" style="display:flex;align-items:center;gap:20px;margin:20px 0;">
+                ${getUserAvatarHTML(profile, 'avatar-lg')}
+                <div>
+                    <h2>${getUserDisplayName(profile)}</h2>
+                    <p>${getUserHandle(profile)}</p>
+                    <p style="color:var(--text-secondary);">${profile.bio || '暂无简介'}</p>
+                    <p style="font-size:13px;color:var(--text-light);">注册于 ${new Date(profile.created_at).toLocaleDateString()}</p>
+                </div>
+            </div>
+            <div style="display:flex;gap:20px;margin-bottom:20px;">
+                <span>关注 ${followingCount || 0}</span>
+                <span>粉丝 ${followerCount || 0}</span>
+                ${favPublic ? `<span>收藏 ${favCount || 0}</span>` : ''}
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:20px;">
+                ${isFollowing ? 
+                    `<button class="btn btn-secondary" id="unfollowBtn">取关</button>` :
+                    `<button class="btn btn-primary" id="followBtn">关注</button>`
+                }
+                <button class="btn btn-danger" id="blockBtn">拉黑</button>
+            </div>
+            ${favPublic ? `<div id="userFavs"></div>` : ''}
+        `;
+        // 绑定返回
+        document.querySelector('[data-action="back"]').addEventListener('click', () => {
+            exitFullscreen();
+            navigateTo(ROUTES.SOCIAL);
+        });
+        // 关注/取关
+        const followBtn = document.getElementById('followBtn');
+        if (followBtn) followBtn.addEventListener('click', async () => {
+            await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
+            showToast('已关注', 'success');
+            viewUserProfile(userId);
+        });
+        const unfollowBtn = document.getElementById('unfollowBtn');
+        if (unfollowBtn) unfollowBtn.addEventListener('click', async () => {
+            await supabaseClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
+            showToast('已取关', 'success');
+            viewUserProfile(userId);
+        });
+        // 拉黑
+        document.getElementById('blockBtn').addEventListener('click', async () => {
+            await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId });
+            showToast('已拉黑', 'success');
+            viewUserProfile(userId);
+        });
+        // 如果收藏公开，加载用户收藏的帖子
+        if (favPublic) {
+            const favsContainer = document.getElementById('userFavs');
+            const { data: favs, error: favsError } = await supabaseClient
+                .from('favorites')
+                .select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+            if (favsError || !favs.length) {
+                favsContainer.innerHTML = '<p>暂无公开收藏</p>';
+            } else {
+                favsContainer.innerHTML = '';
+                favs.forEach(f => {
+                    if (f.post) {
+                        f.post.is_owner = f.post.user_id === currentUser.id;
+                        favsContainer.appendChild(renderPostCard(f.post));
+                    }
+                });
+            }
+        }
     }
 
     // ---------- 个人与设置 ----------
@@ -714,6 +747,9 @@
             <div class="form-group"><label>ID</label><input type="text" id="editUsername" value="${currentUser.username}" /></div>
             <div class="form-group"><label>昵称</label><input type="text" id="editNickname" value="${currentUser.nickname}" /></div>
             <div class="form-group"><label>简介</label><textarea id="editBio">${currentUser.bio || ''}</textarea></div>
+            <div class="form-group">
+                <label><input type="checkbox" id="editFavoritesPublic" ${currentUser.favorites_public !== false ? 'checked' : ''} /> 公开我的收藏</label>
+            </div>
             <button class="btn btn-primary" id="saveProfileBtn">保存</button>`;
         const avatarContainer = container.querySelector('#settingsAvatar');
         avatarContainer.addEventListener('click', () => {
@@ -736,10 +772,11 @@
             const nickname = container.querySelector('#editNickname').value.trim();
             const username = container.querySelector('#editUsername').value.trim();
             const bio = container.querySelector('#editBio').value.trim();
+            const favoritesPublic = container.querySelector('#editFavoritesPublic').checked;
             if (!nickname || !username) return showToast('昵称和ID不能为空', 'error');
             if (!/^[a-z0-9_@.]+$/.test(username)) return showToast('ID 只能包含小写字母、数字、下划线、@ 和点', 'error');
             if (currentUser.updated_at && Date.now() - new Date(currentUser.updated_at).getTime() < 15*24*60*60*1000) return showToast('个人资料每15天只能修改一次', 'error');
-            const updates = { nickname, username, bio, updated_at: new Date().toISOString() };
+            const updates = { nickname, username, bio, favorites_public: favoritesPublic, updated_at: new Date().toISOString() };
             if (pendingAvatarUrl) updates.avatar_url = pendingAvatarUrl;
             const { error } = await supabaseClient.from('profiles').update(updates).eq('id', currentUser.id);
             if (error) return showToast('保存失败: ' + error.message, 'error');
@@ -1201,7 +1238,6 @@
                 if (postId) {
                     openPostDetail(postId);
                 } else {
-                    // 没有关联帖子时，弹窗显示通知全文
                     const content = notificationCard.querySelector('.notification-text')?.textContent || '通知';
                     openModal('通知详情', `<p>${content}</p>`);
                 }
