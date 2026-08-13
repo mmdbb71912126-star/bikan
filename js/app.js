@@ -12,14 +12,15 @@
     const { Icons, renderPostCard, renderCommentItem, renderNotificationItem, renderUserCard, renderTopicCard, renderFileDetail, getUserAvatarHTML, getUserDisplayName, getUserHandle, openModal, showToast } = comp;
 
     // ---------- 全局状态 ----------
-    let currentUser = null;
-    let currentUserAuth = null;
+    let currentUser = null;         // profiles 表当前用户
+    let currentUserAuth = null;     // auth 用户
     let currentRoute = ROUTES.EXPLORE;
-    let currentTab = EXPLORE_TABS.SQUARE;
-    let currentTopicId = null;
-    let currentPostId = null;
-    let notificationsUnread = 0;
+    let currentTab = EXPLORE_TABS.SQUARE; // 探索子标签
+    let currentTopicId = null;      // 当前查看的话题
+    let currentPostId = null;       // 当前查看的帖子详情
+    let notificationsUnread = 0;    // 未读通知数
 
+    // ---------- DOM 元素 ----------
     const appContainer = document.getElementById('app');
     const sidebarNav = document.getElementById('sidebarNav');
     const mainContent = document.getElementById('mainContent');
@@ -38,6 +39,7 @@
                 return;
             }
             currentUserAuth = session.user;
+            // 获取用户资料
             const { data: profile, error: profileError } = await supabaseClient
                 .from('profiles')
                 .select('*')
@@ -55,15 +57,21 @@
                 window.location.href = 'index.html';
                 return;
             }
+            // 更新在线状态
             await supabaseClient.from('profiles').update({ is_online: true, last_active_at: new Date().toISOString() }).eq('id', currentUser.id);
+            // 加载未读通知数
             await loadUnreadNotificationCount();
+            // 渲染侧边栏
             renderSidebar();
+            // 默认路由
             navigateTo(ROUTES.EXPLORE);
+            // 监听认证状态变化
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_OUT') {
                     window.location.href = 'index.html';
                 }
             });
+            // 全局事件委托
             setupGlobalEventDelegation();
         } catch (e) {
             console.error('初始化失败', e);
@@ -71,6 +79,7 @@
         }
     }
 
+    // ---------- 加载未读通知数 ----------
     async function loadUnreadNotificationCount() {
         if (!currentUser) return;
         const { count, error } = await supabaseClient
@@ -95,6 +104,7 @@
         }
     }
 
+    // ---------- 渲染侧边栏 ----------
     function renderSidebar() {
         if (!sidebarNav) return;
         const navItems = [
@@ -115,6 +125,7 @@
         html += '</ul>';
         sidebarNav.innerHTML = html;
 
+        // 处理底部用户信息，固定在侧边栏底部
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
         const oldFooter = sidebar.querySelector('.sidebar-footer');
@@ -141,6 +152,7 @@
         });
     }
 
+    // ---------- 路由导航 ----------
     function navigateTo(route) {
         currentRoute = route;
         document.querySelectorAll('.nav-item').forEach(el => {
@@ -202,6 +214,7 @@
         });
     }
 
+    // 加载帖子列表
     async function loadPosts(container, type) {
         container.innerHTML = '<p>加载中...</p>';
         let query = supabaseClient
@@ -247,6 +260,7 @@
         });
     }
 
+    // 渲染搜索
     function renderSearch(container) {
         container.innerHTML = `
             <div class="search-bar">
@@ -644,32 +658,7 @@
             </div>
             <div id="profileContent"></div>`;
         const contentDiv = document.getElementById('profileContent');
-        // 绑定头像点击上传
-        const avatarContainer = document.getElementById('profileAvatarContainer');
-        if (avatarContainer) {
-            avatarContainer.addEventListener('click', () => {
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'image/*';
-                fileInput.onchange = async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    try {
-                        showToast('头像上传中...', 'info');
-                        const uploaded = await uploadFile(file, 'avatars', `avatar/${currentUser.id}`);
-                        await supabaseClient.from('profiles').update({ avatar_url: uploaded.url }).eq('id', currentUser.id);
-                        currentUser.avatar_url = uploaded.url;
-                        renderSidebar();
-                        // 更新当前显示
-                        avatarContainer.innerHTML = getUserAvatarHTML(currentUser, 'avatar-lg');
-                        showToast('头像更新成功', 'success');
-                    } catch (err) {
-                        showToast('头像上传失败: ' + err.message, 'error');
-                    }
-                };
-                fileInput.click();
-            });
-        }
+        // 绑定头像点击上传（由 loadSettings 内部处理，这里不再重复绑定）
         await loadSettings(contentDiv);
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -743,30 +732,113 @@
         });
     }
 
+    // 个人资料编辑（包含头像点击上传、ID 格式验证、15天限制）
     async function loadSettings(container) {
+        let pendingAvatarUrl = null; // 暂存新上传的头像 URL，保存时才写入数据库
+
         container.innerHTML = `
             <h3>个人资料</h3>
-            <div class="form-group"><label>昵称</label><input type="text" id="editNickname" value="${currentUser.nickname}" /></div>
-            <div class="form-group"><label>ID（用户名）</label><input type="text" id="editUsername" value="${currentUser.username}" /></div>
-            <div class="form-group"><label>简介</label><textarea id="editBio">${currentUser.bio || ''}</textarea></div>
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+                <div id="settingsAvatar" style="cursor: pointer; position: relative;" title="点击更换头像">
+                    ${getUserAvatarHTML(currentUser, 'avatar-lg')}
+                </div>
+                <div>
+                    <p style="font-size: 14px; color: var(--text-secondary);">点击头像上传新图片</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>ID</label>
+                <input type="text" id="editUsername" value="${currentUser.username}" placeholder="仅小写字母、数字、_、@、." />
+            </div>
+            <div class="form-group">
+                <label>昵称</label>
+                <input type="text" id="editNickname" value="${currentUser.nickname}" />
+            </div>
+            <div class="form-group">
+                <label>简介</label>
+                <textarea id="editBio">${currentUser.bio || ''}</textarea>
+            </div>
             <button class="btn btn-primary" id="saveProfileBtn">保存</button>`;
+
+        // 绑定头像点击上传
+        const avatarContainer = container.querySelector('#settingsAvatar');
+        avatarContainer.addEventListener('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    showToast('头像上传中...', 'info');
+                    const uploaded = await uploadFile(file, 'avatars', `avatar/${currentUser.id}`);
+                    pendingAvatarUrl = uploaded.url;
+                    // 更新预览
+                    avatarContainer.innerHTML = `<div class="avatar-lg"><img src="${uploaded.url}" alt="avatar" /></div>`;
+                    showToast('头像已选择，点击保存后生效', 'success');
+                } catch (err) {
+                    showToast('头像上传失败: ' + err.message, 'error');
+                }
+            };
+            fileInput.click();
+        });
+
+        // 保存按钮
         container.querySelector('#saveProfileBtn').addEventListener('click', async () => {
             const nickname = container.querySelector('#editNickname').value.trim();
             const username = container.querySelector('#editUsername').value.trim();
             const bio = container.querySelector('#editBio').value.trim();
+
             if (!nickname || !username) {
                 showToast('昵称和ID不能为空', 'error');
                 return;
             }
-            const updates = { nickname, username, bio };
+
+            // ID 格式验证：仅小写字母、数字、_、@、.
+            const idRegex = /^[a-z0-9_@.]+$/;
+            if (!idRegex.test(username)) {
+                showToast('ID 只能包含小写字母、数字、下划线、@ 和点', 'error');
+                return;
+            }
+
+            // 15天修改限制
+            if (currentUser.updated_at) {
+                const lastUpdate = new Date(currentUser.updated_at).getTime();
+                const now = Date.now();
+                const fifteenDays = 15 * 24 * 60 * 60 * 1000;
+                if (now - lastUpdate < fifteenDays) {
+                    showToast('个人资料每15天只能修改一次', 'error');
+                    return;
+                }
+            }
+
+            const updates = {
+                nickname,
+                username,
+                bio,
+                updated_at: new Date().toISOString()
+            };
+            if (pendingAvatarUrl) {
+                updates.avatar_url = pendingAvatarUrl;
+            }
+
             const { error } = await supabaseClient.from('profiles').update(updates).eq('id', currentUser.id);
             if (error) {
-                showToast('保存失败: ' + error.message, 'error');
-            } else {
-                Object.assign(currentUser, updates);
-                showToast('保存成功', 'success');
-                renderSidebar();
+                if (error.message && error.message.includes('duplicate key')) {
+                    showToast('该 ID 已被占用，请更换', 'error');
+                } else {
+                    showToast('保存失败: ' + error.message, 'error');
+                }
+                return;
             }
+
+            // 更新当前用户信息
+            Object.assign(currentUser, updates);
+            pendingAvatarUrl = null;
+            showToast('保存成功', 'success');
+            renderSidebar();
+            // 重新渲染个人页面以显示最新资料
+            renderProfile();
         });
     }
 
