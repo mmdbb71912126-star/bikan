@@ -93,7 +93,6 @@
     }
 
     function updateNavBadge() {
-        // 红点显示在社交导航项上
         const socialNavItem = document.querySelector('.nav-item[data-route="social"]');
         if (!socialNavItem) return;
         let badge = socialNavItem.querySelector('.nav-badge');
@@ -131,7 +130,6 @@
         html += '</ul>';
         sidebarNav.innerHTML = html;
 
-        // 底部用户信息
         const sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;
         const oldFooter = sidebar.querySelector('.sidebar-footer');
@@ -157,7 +155,6 @@
             window.location.href = 'index.html';
         });
 
-        // 更新红点位置
         updateNavBadge();
     }
 
@@ -245,12 +242,12 @@
     function addFloatingPostButton() {
         const oldBtn = document.querySelector('.floating-post-btn');
         if (oldBtn) oldBtn.remove();
+        if (currentUser.is_banned) return; // 被封禁用户不显示发帖按钮
         const btn = document.createElement('button');
         btn.className = 'floating-post-btn';
         btn.title = '发帖';
         btn.innerHTML = Icons.plus;
         btn.addEventListener('click', () => {
-            // 跳转到发帖页面（单独文件）
             window.location.href = 'post.html';
         });
         document.body.appendChild(btn);
@@ -362,22 +359,22 @@
 
     function renderSearchResults(container, posts, users, topics, files) {
         let html = '';
-        if (posts?.length) {
+        if (posts && posts.length) {
             html += '<h3>帖子</h3>';
             posts.forEach(post => {
                 post.is_owner = post.user_id === currentUser.id;
                 html += renderPostCard(post).outerHTML;
             });
         }
-        if (users?.length) {
+        if (users && users.length) {
             html += '<h3>用户</h3>';
             users.forEach(u => html += renderUserCard(u, { showFollowBtn: u.id !== currentUser.id }).outerHTML);
         }
-        if (topics?.length) {
+        if (topics && topics.length) {
             html += '<h3>话题</h3>';
             topics.forEach(t => html += renderTopicCard(t).outerHTML);
         }
-        if (files?.length) {
+        if (files && files.length) {
             html += '<h3>文件</h3>';
             files.forEach(f => html += `<div class="file-item"><div class="file-icon">${Icons.file}</div><div class="file-info"><div class="file-name">${f.file_name}</div><div class="file-size">${formatFileSize(f.file_size)}</div></div></div>`);
         }
@@ -464,7 +461,10 @@
 
     async function loadFriends(container) {
         container.innerHTML = '加载中...';
-        const { data, error } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_online, is_banned, bio)').eq('follower_id', currentUser.id);
+        const { data, error } = await supabaseClient
+            .from('follows')
+            .select('following:following_id(id, username, nickname, avatar_url, is_online, is_banned, bio)')
+            .eq('follower_id', currentUser.id);
         if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
         const friends = data.map(d => d.following);
         if (!friends.length) return container.innerHTML = '<p>暂无好友，去关注一些人吧</p>';
@@ -474,21 +474,42 @@
 
     async function loadFriendRequests(container) {
         container.innerHTML = '加载中...';
-        const { data, error } = await supabaseClient.from('friend_requests').select('id, sender:sender_id(id, username, nickname, avatar_url, is_online, is_banned, bio), status').eq('receiver_id', currentUser.id).order('created_at', { ascending: false });
+        const { data, error } = await supabaseClient
+            .from('friend_requests')
+            .select('id, sender:sender_id(id, username, nickname, avatar_url, is_online, is_banned, bio), status')
+            .eq('receiver_id', currentUser.id)
+            .order('created_at', { ascending: false });
         if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
         if (!data.length) return container.innerHTML = '<p>暂无好友请求</p>';
         container.innerHTML = '';
         data.forEach(req => {
             const card = document.createElement('div');
             card.className = 'user-card';
-            card.innerHTML = `${getUserAvatarHTML(req.sender, 'avatar')}<div class="user-card-info"><div class="post-user-name">${getUserDisplayName(req.sender)}</div><div class="post-user-id">${getUserHandle(req.sender)}</div></div><div class="user-card-actions">${req.status === 'pending' ? `<button class="btn btn-primary btn-sm" data-action="accept-friend" data-request-id="${req.id}">接受</button><button class="btn btn-secondary btn-sm" data-action="decline-friend" data-request-id="${req.id}">拒绝</button>` : ''}</div>`;
+            card.innerHTML = `
+                ${getUserAvatarHTML(req.sender, 'avatar')}
+                <div class="user-card-info">
+                    <div class="post-user-name">${getUserDisplayName(req.sender)}</div>
+                    <div class="post-user-id">${getUserHandle(req.sender)}</div>
+                    <div style="font-size: 13px; color: var(--text-light);">${req.status}</div>
+                </div>
+                <div class="user-card-actions">
+                    ${req.status === 'pending' ? `
+                        <button class="btn btn-primary btn-sm" data-action="accept-friend" data-request-id="${req.id}">接受</button>
+                        <button class="btn btn-secondary btn-sm" data-action="decline-friend" data-request-id="${req.id}">拒绝</button>
+                    ` : ''}
+                </div>`;
             container.appendChild(card);
         });
     }
 
     async function loadMessages(container) {
         container.innerHTML = '加载中...';
-        const { data, error } = await supabaseClient.from('messages').select('id, sender_id, receiver_id, content, created_at, profiles_sender:sender_id(id, username, nickname, avatar_url, is_banned), profiles_receiver:receiver_id(id, username, nickname, avatar_url, is_banned)').or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`).order('created_at', { ascending: false }).limit(100);
+        const { data, error } = await supabaseClient
+            .from('messages')
+            .select('id, sender_id, receiver_id, content, created_at, profiles_sender:sender_id(id, username, nickname, avatar_url, is_banned), profiles_receiver:receiver_id(id, username, nickname, avatar_url, is_banned)')
+            .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+            .order('created_at', { ascending: false })
+            .limit(100);
         if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
         const conversations = {};
         data.forEach(msg => {
@@ -504,7 +525,12 @@
             const div = document.createElement('div');
             div.className = 'user-card';
             div.style.cursor = 'pointer';
-            div.innerHTML = `${getUserAvatarHTML(conv.user, 'avatar')}<div class="user-card-info"><div class="post-user-name">${getUserDisplayName(conv.user)}</div><div style="font-size: 13px; color: var(--text-secondary);">${conv.lastMessage.content || '[文件]'}</div></div>`;
+            div.innerHTML = `
+                ${getUserAvatarHTML(conv.user, 'avatar')}
+                <div class="user-card-info">
+                    <div class="post-user-name">${getUserDisplayName(conv.user)}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">${conv.lastMessage.content || '[文件]'}</div>
+                </div>`;
             div.addEventListener('click', () => openChatModal(conv.user));
             container.appendChild(div);
         });
@@ -512,11 +538,28 @@
 
     async function openChatModal(otherUser) {
         const messages = await loadChatMessages(otherUser.id);
-        const content = `<div id="chatMessages" style="max-height: 300px; overflow-y: auto; margin-bottom: 12px;">${messages.map(m => { const isMine = m.sender_id === currentUser.id; return `<div style="text-align:${isMine?'right':'left'};margin-bottom:8px;"><div style="display:inline-block;background:${isMine?'var(--primary)':'var(--bg-light)'};color:${isMine?'white':'var(--text-main)'};padding:8px 12px;border-radius:12px;max-width:80%;">${m.content||''}${m.file_url?`<div><a href="${m.file_url}" target="_blank">${Icons.file} ${m.file_name||'文件'}</a></div>`:''}</div></div>`; }).join('')}</div>
-        <div style="display:flex;gap:8px;"><input type="text" id="chatInput" placeholder="输入消息..." style="flex:1;"><button class="btn btn-primary" id="sendChatBtn">${Icons.send} 发送</button></div>
-        <div style="margin-top:8px;"><input type="file" id="chatFileInput" multiple /></div>`;
+        const content = `
+            <div id="chatMessages" style="max-height: 300px; overflow-y: auto; margin-bottom: 12px;">
+                ${messages.map(m => {
+                    const isMine = m.sender_id === currentUser.id;
+                    return `<div style="text-align: ${isMine ? 'right' : 'left'}; margin-bottom: 8px;">
+                        <div style="display: inline-block; background: ${isMine ? 'var(--primary)' : 'var(--bg-light)'}; color: ${isMine ? 'white' : 'var(--text-main)'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
+                            ${m.content || ''}
+                            ${m.file_url ? `<div><a href="${m.file_url}" target="_blank">${Icons.file} ${m.file_name || '文件'}</a></div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="chatInput" placeholder="输入消息..." style="flex:1;" />
+                <button class="btn btn-primary" id="sendChatBtn">${Icons.send} 发送</button>
+            </div>
+            <div style="margin-top: 8px;">
+                <input type="file" id="chatFileInput" multiple />
+            </div>`;
         const modal = openModal('与 ' + getUserDisplayName(otherUser) + ' 聊天', content);
         modal.querySelector('#sendChatBtn').addEventListener('click', async () => {
+            if (currentUser.is_banned) return showToast('你已被封禁，无法发送消息', 'error');
             const text = modal.querySelector('#chatInput').value.trim();
             if (!text) return;
             await sendMessage(otherUser.id, text, null);
@@ -525,6 +568,7 @@
             renderChatMessages(modal.querySelector('#chatMessages'), newMsgs);
         });
         modal.querySelector('#chatFileInput').addEventListener('change', async (e) => {
+            if (currentUser.is_banned) return showToast('你已被封禁，无法发送文件', 'error');
             for (const file of e.target.files) {
                 const uploaded = await uploadFile(file, 'messages', `chat/${currentUser.id}`);
                 await sendMessage(otherUser.id, '', uploaded);
@@ -537,26 +581,48 @@
     function renderChatMessages(container, messages) {
         container.innerHTML = messages.map(m => {
             const isMine = m.sender_id === currentUser.id;
-            return `<div style="text-align:${isMine?'right':'left'};margin-bottom:8px;"><div style="display:inline-block;background:${isMine?'var(--primary)':'var(--bg-light)'};color:${isMine?'white':'var(--text-main)'};padding:8px 12px;border-radius:12px;max-width:80%;">${m.content||''}${m.file_url?`<div><a href="${m.file_url}" target="_blank">${Icons.file} ${m.file_name||'文件'}</a></div>`:''}</div></div>`;
+            return `<div style="text-align: ${isMine ? 'right' : 'left'}; margin-bottom: 8px;">
+                <div style="display: inline-block; background: ${isMine ? 'var(--primary)' : 'var(--bg-light)'}; color: ${isMine ? 'white' : 'var(--text-main)'}; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-break: break-word;">
+                    ${m.content || ''}
+                    ${m.file_url ? `<div><a href="${m.file_url}" target="_blank">${Icons.file} ${m.file_name || '文件'}</a></div>` : ''}
+                </div>
+            </div>`;
         }).join('');
     }
 
     async function loadChatMessages(otherUserId) {
-        const { data, error } = await supabaseClient.from('messages').select('*').or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUser.id})`).order('created_at', { ascending: true });
+        const { data, error } = await supabaseClient
+            .from('messages')
+            .select('*')
+            .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUser.id})`)
+            .order('created_at', { ascending: true });
         if (error) return [];
         return data;
     }
 
     async function sendMessage(receiverId, content, fileObj) {
-        const payload = { sender_id: currentUser.id, receiver_id: receiverId, content: content || null };
-        if (fileObj) { payload.file_url = fileObj.url; payload.file_name = fileObj.name; payload.file_type = fileObj.type; }
+        const payload = {
+            sender_id: currentUser.id,
+            receiver_id: receiverId,
+            content: content || null,
+        };
+        if (fileObj) {
+            payload.file_url = fileObj.url;
+            payload.file_name = fileObj.name;
+            payload.file_type = fileObj.type;
+        }
         const { error } = await supabaseClient.from('messages').insert(payload);
         if (error) throw error;
     }
 
     async function loadNotifications(container) {
         container.innerHTML = '加载中...';
-        const { data, error } = await supabaseClient.from('notifications').select('*, actor:actor_id(id, username, nickname, avatar_url, is_banned)').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
+        const { data, error } = await supabaseClient
+            .from('notifications')
+            .select('*, actor:actor_id(id, username, nickname, avatar_url, is_banned)')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
         if (error) return container.innerHTML = `<p>加载失败: ${error.message}</p>`;
         await supabaseClient.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id).eq('is_read', false);
         notificationsUnread = 0;
@@ -605,21 +671,33 @@
     }
 
     async function loadUserPosts(container) {
-        const { data, error } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+        const { data, error } = await supabaseClient
+            .from('posts')
+            .select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
         if (error || !data.length) return container.innerHTML = '<p>暂无帖子</p>';
         container.innerHTML = '';
         data.forEach(post => { post.is_owner = true; container.appendChild(renderPostCard(post)); });
     }
 
     async function loadUserFavorites(container) {
-        const { data, error } = await supabaseClient.from('favorites').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+        const { data, error } = await supabaseClient
+            .from('favorites')
+            .select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
         if (error || !data.length) return container.innerHTML = '<p>暂无收藏</p>';
         container.innerHTML = '';
         data.forEach(f => { if (f.post) { f.post.is_owner = f.post.user_id === currentUser.id; container.appendChild(renderPostCard(f.post)); } });
     }
 
     async function loadUserHistory(container) {
-        const { data, error } = await supabaseClient.from('view_history').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', currentUser.id).order('viewed_at', { ascending: false });
+        const { data, error } = await supabaseClient
+            .from('view_history')
+            .select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))')
+            .eq('user_id', currentUser.id)
+            .order('viewed_at', { ascending: false });
         if (error || !data.length) return container.innerHTML = '<p>暂无历史记录</p>';
         container.innerHTML = '';
         data.forEach(h => { if (h.post) { h.post.is_owner = h.post.user_id === currentUser.id; container.appendChild(renderPostCard(h.post)); } });
@@ -639,6 +717,7 @@
             <button class="btn btn-primary" id="saveProfileBtn">保存</button>`;
         const avatarContainer = container.querySelector('#settingsAvatar');
         avatarContainer.addEventListener('click', () => {
+            if (currentUser.is_banned) return showToast('你已被封禁，无法修改资料', 'error');
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
@@ -653,6 +732,7 @@
             fileInput.click();
         });
         container.querySelector('#saveProfileBtn').addEventListener('click', async () => {
+            if (currentUser.is_banned) return showToast('你已被封禁，无法修改资料', 'error');
             const nickname = container.querySelector('#editNickname').value.trim();
             const username = container.querySelector('#editUsername').value.trim();
             const bio = container.querySelector('#editBio').value.trim();
@@ -671,8 +751,12 @@
     }
 
     async function loadFeedback(container) {
-        container.innerHTML = `<h3>反馈 Bug</h3><div class="form-group"><label>问题描述</label><textarea id="feedbackContent"></textarea></div><button class="btn btn-primary" id="submitFeedbackBtn">提交反馈</button>`;
+        container.innerHTML = `
+            <h3>反馈 Bug</h3>
+            <div class="form-group"><label>问题描述</label><textarea id="feedbackContent"></textarea></div>
+            <button class="btn btn-primary" id="submitFeedbackBtn">提交反馈</button>`;
         container.querySelector('#submitFeedbackBtn').addEventListener('click', async () => {
+            if (currentUser.is_banned) return showToast('你已被封禁，无法提交反馈', 'error');
             const content = container.querySelector('#feedbackContent').value.trim();
             if (!content) return showToast('请输入问题描述', 'error');
             const adminId = await getAdminId();
@@ -796,7 +880,6 @@
         container.querySelector('#addRecommendBtn').addEventListener('click', async () => {
             const input = container.querySelector('#recommendTargetId').value.trim();
             if (!input) return showToast('请输入 ID', 'error');
-            // 在 posts 中查找 public_id
             const { data: postData, error: postError } = await supabaseClient.from('posts').select('id').eq('public_id', input).maybeSingle();
             if (!postError && postData) {
                 await supabaseClient.from('posts').update({ is_recommended: true }).eq('id', postData.id);
@@ -1020,8 +1103,8 @@
             const id = target.dataset.id;
             const notificationId = target.dataset.notificationId;
 
-            // 封禁用户禁止操作（除了查看）
-            if (currentUser.is_banned && !['qq-appeal'].includes(action)) {
+            // 封禁用户禁止操作（除了 qq-appeal）
+            if (currentUser.is_banned && action !== 'qq-appeal') {
                 return showToast('你已被封禁，无法进行此操作', 'error');
             }
 
@@ -1110,6 +1193,16 @@
         });
 
         document.addEventListener('click', (e) => {
+            // 通知卡片点击打开详情
+            const notificationCard = e.target.closest('.notification-card');
+            if (notificationCard) {
+                const postId = notificationCard.dataset.postId;
+                if (postId) {
+                    openPostDetail(postId);
+                    return;
+                }
+            }
+
             const postCard = e.target.closest('.post-card');
             if (postCard && !e.target.closest('[data-action]') && !e.target.closest('.media-item')) {
                 const postId = postCard.querySelector('[data-post-id]')?.dataset.postId;
