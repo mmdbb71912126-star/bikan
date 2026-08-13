@@ -658,7 +658,6 @@
             </div>
             <div id="profileContent"></div>`;
         const contentDiv = document.getElementById('profileContent');
-        // 绑定头像点击上传（由 loadSettings 内部处理，这里不再重复绑定）
         await loadSettings(contentDiv);
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -899,6 +898,7 @@
                 <button class="tab-item" data-admin-tab="topics">话题审核</button>
                 <button class="tab-item" data-admin-tab="recommend">推荐管理</button>
                 <button class="tab-item" data-admin-tab="about">关于编辑</button>
+                <button class="tab-item" data-admin-tab="user-operations">用户操作</button>
             </div>
             <div id="adminContent"></div>`;
         const adminContent = document.getElementById('adminContent');
@@ -914,6 +914,7 @@
                 else if (tab === 'topics') await loadTopicsAdmin(adminContent);
                 else if (tab === 'recommend') await loadRecommendAdmin(adminContent);
                 else if (tab === 'about') await loadAboutAdmin(adminContent);
+                else if (tab === 'user-operations') await loadUserOperationsAdmin(adminContent);
             });
         });
     }
@@ -1090,6 +1091,162 @@
         });
     }
 
+    // ---------- 用户操作（管理员） ----------
+    async function loadUserOperationsAdmin(container) {
+        container.innerHTML = `
+            <h3>用户操作</h3>
+            <div class="form-group">
+                <label>目标用户 ID（UUID）</label>
+                <input type="text" id="targetUserId" placeholder="输入用户 UUID" />
+            </div>
+            <div class="form-group">
+                <label>选择操作（可多选，互斥操作不能同时选择）</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <label><input type="checkbox" id="opBan" /> 封禁账号</label>
+                    <label><input type="checkbox" id="opUnban" /> 解封账号</label>
+                    <label><input type="checkbox" id="opMute" /> 禁言私聊</label>
+                    <label><input type="checkbox" id="opUnmute" /> 恢复私聊</label>
+                    <label><input type="checkbox" id="opPostBan" /> 禁止发帖/话题</label>
+                    <label><input type="checkbox" id="opPostUnban" /> 恢复发帖/话题</label>
+                </div>
+            </div>
+            <div class="form-group" id="durationGroup" style="display: none;">
+                <label>持续时间（数字 + 单位）</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="durationValue" min="1" placeholder="时长" style="width: 120px;" />
+                    <select id="durationUnit">
+                        <option value="minutes">分钟</option>
+                        <option value="hours">小时</option>
+                        <option value="days">天</option>
+                        <option value="weeks">周</option>
+                        <option value="months">月</option>
+                    </select>
+                </div>
+                <small style="color: var(--text-light);">仅对封禁、禁言、禁止发帖有效，解封/恢复无需设置时间</small>
+            </div>
+            <div class="form-group">
+                <label>通知文本（将随操作一起发送给用户）</label>
+                <textarea id="operationText" placeholder="输入要发送给用户的通知内容"></textarea>
+            </div>
+            <button class="btn btn-primary" id="submitUserOperationBtn">执行操作</button>
+            <div id="operationResult" class="message"></div>`;
+
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        const durationGroup = container.querySelector('#durationGroup');
+        function updateDurationVisibility() {
+            const needsDuration = container.querySelector('#opBan').checked ||
+                                  container.querySelector('#opMute').checked ||
+                                  container.querySelector('#opPostBan').checked;
+            durationGroup.style.display = needsDuration ? 'block' : 'none';
+        }
+        checkboxes.forEach(cb => cb.addEventListener('change', updateDurationVisibility));
+
+        container.querySelector('#submitUserOperationBtn').addEventListener('click', async () => {
+            const userId = container.querySelector('#targetUserId').value.trim();
+            if (!userId) {
+                showToast('请输入目标用户 ID', 'error');
+                return;
+            }
+            const opBan = container.querySelector('#opBan').checked;
+            const opUnban = container.querySelector('#opUnban').checked;
+            const opMute = container.querySelector('#opMute').checked;
+            const opUnmute = container.querySelector('#opUnmute').checked;
+            const opPostBan = container.querySelector('#opPostBan').checked;
+            const opPostUnban = container.querySelector('#opPostUnban').checked;
+
+            // 互斥检查
+            if (opBan && opUnban) {
+                showToast('不能同时选择封禁和解封', 'error');
+                return;
+            }
+            if (opMute && opUnmute) {
+                showToast('不能同时选择禁言和恢复私聊', 'error');
+                return;
+            }
+            if (opPostBan && opPostUnban) {
+                showToast('不能同时选择禁止发帖和恢复发帖', 'error');
+                return;
+            }
+            if (!opBan && !opUnban && !opMute && !opUnmute && !opPostBan && !opPostUnban) {
+                showToast('请至少选择一种操作', 'error');
+                return;
+            }
+
+            const text = container.querySelector('#operationText').value.trim();
+            const durationValue = parseInt(container.querySelector('#durationValue').value);
+            const durationUnit = container.querySelector('#durationUnit').value;
+
+            let durationMs = 0;
+            if (opBan || opMute || opPostBan) {
+                if (!durationValue || durationValue <= 0) {
+                    showToast('请设置有效的时间', 'error');
+                    return;
+                }
+                const unitMap = { minutes: 60*1000, hours: 3600*1000, days: 86400*1000, weeks: 7*86400*1000, months: 30*86400*1000 };
+                durationMs = durationValue * unitMap[durationUnit];
+            }
+
+            const updates = {};
+            if (opBan) {
+                updates.is_banned = true;
+                updates.banned_until = new Date(Date.now() + durationMs).toISOString();
+            } else if (opUnban) {
+                updates.is_banned = false;
+                updates.banned_until = null;
+            }
+            if (opMute) {
+                updates.mute_until = new Date(Date.now() + durationMs).toISOString();
+            } else if (opUnmute) {
+                updates.mute_until = null;
+            }
+            if (opPostBan) {
+                updates.post_ban_until = new Date(Date.now() + durationMs).toISOString();
+            } else if (opPostUnban) {
+                updates.post_ban_until = null;
+            }
+
+            const { error: updateError } = await supabaseClient
+                .from('profiles')
+                .update(updates)
+                .eq('id', userId);
+            if (updateError) {
+                showToast('操作失败: ' + updateError.message, 'error');
+                return;
+            }
+
+            let operationDesc = [];
+            if (opBan) operationDesc.push('账号已被封禁');
+            if (opUnban) operationDesc.push('账号已解封');
+            if (opMute) operationDesc.push('已被禁言私聊');
+            if (opUnmute) operationDesc.push('私聊已恢复');
+            if (opPostBan) operationDesc.push('已被禁止发帖/话题');
+            if (opPostUnban) operationDesc.push('发帖/话题权限已恢复');
+            let finalText = operationDesc.join('，');
+            if (text) finalText += '，' + text;
+            if (durationMs > 0) {
+                finalText += '（时长：' + durationValue + ' ' + durationUnit + '）';
+            }
+
+            const { error: notifError } = await supabaseClient
+                .from('notifications')
+                .insert({
+                    user_id: userId,
+                    type: 'admin_action',
+                    actor_id: currentUser.id,
+                    content: finalText,
+                    is_read: false
+                });
+            if (notifError) {
+                showToast('操作成功但通知发送失败: ' + notifError.message, 'error');
+            } else {
+                showToast('操作成功', 'success');
+                container.querySelector('#operationText').value = '';
+                container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                durationGroup.style.display = 'none';
+            }
+        });
+    }
+
     // ---------- 帖子详情页 ----------
     async function openPostDetail(postId) {
         if (!postId) return;
@@ -1199,6 +1356,7 @@
             const userId = target.dataset.userId;
             const requestId = target.dataset.requestId;
             const id = target.dataset.id;
+            const notificationId = target.dataset.notificationId;
 
             if (action === 'like' && postId) {
                 await toggleLike(postId, target);
@@ -1282,6 +1440,8 @@
                 await supabaseClient.from('announcements').delete().eq('id', id);
                 showToast('已删除', 'success');
                 if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
+            } else if (action === 'appeal' && notificationId) {
+                showAppealModal(notificationId);
             }
         });
 
@@ -1320,6 +1480,42 @@
             const navItem = e.target.closest('.nav-item');
             if (navItem) {
                 navigateTo(navItem.dataset.route);
+            }
+        });
+    }
+
+    // ---------- 申诉弹窗 ----------
+    function showAppealModal(notificationId) {
+        const content = `
+            <div class="form-group">
+                <label>申诉理由</label>
+                <textarea id="appealText" placeholder="请输入申诉理由"></textarea>
+            </div>
+            <button class="btn btn-primary" id="submitAppealBtn">提交申诉</button>`;
+        const modal = openModal('申诉', content);
+        modal.querySelector('#submitAppealBtn').addEventListener('click', async () => {
+            const reason = modal.querySelector('#appealText').value.trim();
+            if (!reason) {
+                showToast('请输入申诉理由', 'error');
+                return;
+            }
+            const adminId = await getAdminId();
+            if (!adminId) {
+                showToast('无法获取管理员信息', 'error');
+                return;
+            }
+            const { error } = await supabaseClient.from('notifications').insert({
+                user_id: adminId,
+                type: 'system',
+                actor_id: currentUser.id,
+                content: '用户申诉：' + reason,
+                is_read: false
+            });
+            if (error) {
+                showToast('申诉提交失败: ' + error.message, 'error');
+            } else {
+                modal.remove();
+                showToast('申诉已提交', 'success');
             }
         });
     }
