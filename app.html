@@ -22,20 +22,7 @@
             </div>
 
             <nav id="sidebarNav"></nav>
-
-            <!-- 静态退出登录按钮区域，不依赖 app.js 生成 -->
-            <div class="sidebar-footer" id="sidebarFooter">
-                <div class="user-mini">
-                    <div class="avatar-sm" id="userAvatarSmall">U</div>
-                    <div class="user-mini-info">
-                        <div class="user-mini-name" id="userDisplayName">用户</div>
-                        <div class="user-mini-id" id="userEmail">user@example.com</div>
-                    </div>
-                    <button class="logout-btn" id="staticLogoutBtn" title="退出登录">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    </button>
-                </div>
-            </div>
+            <!-- 侧边栏底部不再显示用户信息和退出按钮，退出按钮在“个人与设置”页面内 -->
         </aside>
 
         <main class="main-content" id="mainContent"></main>
@@ -44,47 +31,5 @@
     <script src="js/config.js"></script>
     <script src="js/components.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/logout.js"></script>
-    <script>
-        // 内联处理静态退出按钮和用户信息展示
-        (function() {
-            const cfg = window.BikanConfig;
-            if (!cfg || !cfg.sdkReady) return;
-
-            const supabase = cfg.supabaseClient;
-
-            // 更新侧边栏底部用户信息
-            async function updateUserFooter() {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) return;
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                if (profile) {
-                    const avatarEl = document.getElementById('userAvatarSmall');
-                    const nameEl = document.getElementById('userDisplayName');
-                    const emailEl = document.getElementById('userEmail');
-                    if (avatarEl) avatarEl.innerHTML = window.BikanComponents.getUserAvatarHTML(profile, 'avatar-sm');
-                    if (nameEl) nameEl.textContent = profile.nickname || profile.username || '用户';
-                    if (emailEl) emailEl.textContent = session.user.email || (profile.username ? '@' + profile.username : '');
-                }
-            }
-
-            // 绑定退出按钮
-            document.getElementById('staticLogoutBtn')?.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    await supabase.from('profiles').update({ is_online: false }).eq('id', session.user.id);
-                }
-                await supabase.auth.signOut();
-                window.location.href = 'index.html';
-            });
-
-            updateUserFooter();
-        })();
-    </script>
 </body>
 </html>
