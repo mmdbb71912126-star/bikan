@@ -242,7 +242,7 @@
     function addFloatingPostButton() {
         const oldBtn = document.querySelector('.floating-post-btn');
         if (oldBtn) oldBtn.remove();
-        if (currentUser.is_banned) return; // 被封禁用户不显示发帖按钮
+        if (currentUser.is_banned) return;
         const btn = document.createElement('button');
         btn.className = 'floating-post-btn';
         btn.title = '发帖';
@@ -1184,6 +1184,7 @@
                 showToast('已删除', 'success');
                 if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
             } else if (action === 'qq-appeal' && notificationId) {
+                e.stopPropagation();
                 navigator.clipboard.writeText('976926251').then(() => {
                     showToast('QQ群号已复制，请到群内 @管理员 申诉', 'success');
                     target.textContent = '已提示';
@@ -1193,14 +1194,18 @@
         });
 
         document.addEventListener('click', (e) => {
-            // 通知卡片点击打开详情
+            // 通知卡片点击查看详情
             const notificationCard = e.target.closest('.notification-card');
             if (notificationCard) {
                 const postId = notificationCard.dataset.postId;
                 if (postId) {
                     openPostDetail(postId);
-                    return;
+                } else {
+                    // 没有关联帖子时，弹窗显示通知全文
+                    const content = notificationCard.querySelector('.notification-text')?.textContent || '通知';
+                    openModal('通知详情', `<p>${content}</p>`);
                 }
+                return;
             }
 
             const postCard = e.target.closest('.post-card');
