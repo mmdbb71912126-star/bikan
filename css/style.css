@@ -76,7 +76,7 @@ input, textarea, select {
     background: #94a3b8;
 }
 
-/* ---------- 登录/注册卡片（原有样式保留并微调） ---------- */
+/* ---------- 登录/注册卡片 ---------- */
 .card {
     background: white;
     border-radius: var(--radius-lg);
@@ -282,7 +282,7 @@ textarea {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    transition: width var(--transition);
+    height: 100vh;
 }
 
 .sidebar-header {
@@ -305,11 +305,17 @@ textarea {
     color: var(--text-main);
 }
 
+/* 导航菜单容器：占据剩余空间，可滚动 */
+.sidebar nav#sidebarNav {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
 .nav-list {
     list-style: none;
     padding: 10px 8px;
-    flex: 1;
-    overflow-y: auto;
 }
 
 .nav-item {
@@ -354,9 +360,12 @@ textarea {
     text-align: center;
 }
 
+/* 侧边栏底部用户信息：固定在底部 */
 .sidebar-footer {
     padding: 12px;
     border-top: 1px solid var(--border);
+    margin-top: auto; /* 关键：推到最底部 */
+    background: white;
 }
 
 .user-mini {
@@ -1021,6 +1030,11 @@ textarea {
     }
     .sidebar-header {
         display: none;
+    }
+    .sidebar nav#sidebarNav {
+        flex: none;
+        overflow-x: auto;
+        display: block;
     }
     .nav-list {
         display: flex;
