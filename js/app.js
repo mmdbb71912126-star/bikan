@@ -910,111 +910,14 @@
     }
 
     // ---------- 帖子详情 ----------
-    async function openPostDetail(postId) {
-        if (!postId) return;
-        currentPostId = postId;
-        enterFullscreen();
-        await supabaseClient.from('view_history').upsert({ user_id: currentUser.id, post_id: postId, viewed_at: new Date().toISOString() }, { onConflict: 'user_id,post_id' });
-        const { data: post, error } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('id', postId).single();
-        if (error) { exitFullscreen(); return showToast('加载帖子失败','error'); }
-        const [likeRes, favRes] = await Promise.all([
-            supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
-            supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle()
-        ]);
-        post.liked_by_me = !!likeRes.data;
-        post.favorited_by_me = !!favRes.data;
-        post.is_owner = post.user_id === currentUser.id;
-        mainContent.innerHTML = `<button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button><div id="postDetailContainer" style="margin-top:16px;"></div>`;
-        document.querySelector('[data-action="back"]').addEventListener('click', () => { currentPostId = null; exitFullscreen(); navigateTo(ROUTES.EXPLORE); });
-        const detailContainer = document.getElementById('postDetailContainer');
-        detailContainer.appendChild(renderPostCard(post, { showActions: true, isDetail: true }));
-        if (currentUser.is_admin && post.public_id) {
-            const idTag = document.createElement('div');
-            idTag.style.cssText = 'position:absolute;top:10px;right:10px;background:var(--bg-light);padding:4px 8px;border-radius:6px;font-size:12px;color:var(--text-light);';
-            idTag.textContent = 'ID: ' + post.public_id;
-            detailContainer.style.position = 'relative';
-            detailContainer.appendChild(idTag);
-        }
-        if (post.media?.length) {
-            const mediaDiv = document.createElement('div');
-            mediaDiv.innerHTML = post.media.map(file => renderFileDetail(file)).join('');
-            detailContainer.appendChild(mediaDiv);
-        }
-        detailContainer.innerHTML += `<div class="comments-section"><h3>评论</h3><div id="commentsList"></div><div class="comment-form" style="margin-top:16px;"><textarea id="commentInput" placeholder="写下你的评论..." rows="3"></textarea><button class="btn btn-primary" id="submitCommentBtn" style="margin-top:8px;">${Icons.comment} 发表评论</button></div></div>`;
-        await loadComments(postId);
-        detailContainer.querySelector('#submitCommentBtn').addEventListener('click', async () => {
-            if (currentUser.is_banned) return showToast('你已被封禁，无法评论','error');
-            const content = detailContainer.querySelector('#commentInput').value.trim();
-            if (!content) return showToast('请输入评论内容','error');
-            const parentId = detailContainer.querySelector('#commentInput').dataset.parentId || null;
-            const replyToUserId = detailContainer.querySelector('#commentInput').dataset.replyToUserId || null;
-            const insertData = { post_id: postId, user_id: currentUser.id, content };
-            if (parentId) { insertData.parent_id = parentId; insertData.reply_to_user_id = replyToUserId; }
-            const { error } = await supabaseClient.from('comments').insert(insertData);
-            if (error) return showToast('评论失败: ' + error.message, 'error');
-            detailContainer.querySelector('#commentInput').value = '';
-            delete detailContainer.querySelector('#commentInput').dataset.parentId;
-            delete detailContainer.querySelector('#commentInput').dataset.replyToUserId;
-            await loadComments(postId);
-        });
-    }
-
-    async function loadComments(postId) {
-        const listDiv = document.getElementById('commentsList');
-        if (!listDiv) return;
-        listDiv.innerHTML = '加载中...';
-        const { data, error } = await supabaseClient.from('comments').select('*, profiles:user_id(id, username, nickname, avatar_url, is_banned), reply_to_user:reply_to_user_id(id, username, nickname, is_banned)').eq('post_id', postId).order('created_at', { ascending: true });
-        if (error || !data.length) return listDiv.innerHTML = '<p>暂无评论</p>';
-        listDiv.innerHTML = '';
-        const mainComments = data.filter(c => !c.parent_id);
-        const replies = data.filter(c => c.parent_id);
-        mainComments.forEach(comment => {
-            listDiv.appendChild(renderCommentItem(comment));
-            const commentReplies = replies.filter(r => r.parent_id === comment.id);
-            commentReplies.forEach(reply => {
-                const replyEl = renderCommentItem(reply, { isReply: true });
-                replyEl.style.marginLeft = '24px';
-                listDiv.appendChild(replyEl);
-            });
-        });
-    }
+    function openPostDetail(postId) {
+    window.location.href = 'post-detail.html?id=' + postId;
+}
 
     // ---------- 话题详情 ----------
-    async function openTopicDetail(topicId) {
-        const { data: topic } = await supabaseClient.from('topics').select('*').eq('id', topicId).single();
-        if (!topic) return;
-        enterFullscreen();
-        mainContent.innerHTML = `
-            <button class="btn btn-secondary" data-action="back">${Icons.chevronLeft} 返回</button>
-            <div class="page-header" style="margin-top:16px;">
-                <div class="page-title">${topic.name}</div>
-                <div class="page-subtitle">${topic.description || ''}</div>
-                ${currentUser.is_admin && topic.public_id ? `<div style="font-size:13px;color:var(--text-light);">ID: ${topic.public_id}</div>` : ''}
-            </div>
-            <div class="post-actions" style="margin-bottom:16px;">
-                <button class="action-btn" data-topic-id="${topic.id}" data-action="like-topic">${Icons.heart} <span>0</span></button>
-                <button class="action-btn" data-topic-id="${topic.id}" data-action="comment-topic">${Icons.comment} <span>0</span></button>
-                <button class="action-btn" data-topic-id="${topic.id}" data-action="share-topic">${Icons.share} <span>分享</span></button>
-                <button class="action-btn" data-topic-id="${topic.id}" data-action="favorite-topic">${Icons.bookmark} <span>0</span></button>
-                <button class="action-btn" data-topic-id="${topic.id}" data-action="report-topic">${Icons.flag} 举报</button>
-            </div>
-            <div id="topicPosts"></div>`;
-        document.querySelector('[data-action="back"]').addEventListener('click', () => { exitFullscreen(); navigateTo(ROUTES.FORUM); });
-        const postsDiv = document.getElementById('topicPosts');
-        const { data: topicPosts, error } = await supabaseClient.from('topic_posts').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('topic_id', topicId).order('created_at', { ascending: false });
-        if (error || !topicPosts.length) return postsDiv.innerHTML = '<p>暂无讨论</p>';
-        postsDiv.innerHTML = '';
-        const posts = topicPosts.map(tp => tp.post).sort((a,b) => (b.like_count - a.like_count) || (new Date(b.created_at) - new Date(a.created_at)));
-        for (const post of posts) {
-            const [likeRes, favRes] = await Promise.all([
-                supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
-                supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle()
-            ]);
-            post.liked_by_me = !!likeRes.data; post.favorited_by_me = !!favRes.data; post.is_owner = post.user_id === currentUser.id;
-            postsDiv.appendChild(renderPostCard(post));
-        }
-    }
-
+    function openTopicDetail(topicId) {
+    window.location.href = 'topic-detail.html?id=' + topicId;
+}
     // ---------- 全局事件委托 ----------
     function setupGlobalEventDelegation() {
         document.addEventListener('click', async (e) => {
