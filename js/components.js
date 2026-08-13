@@ -118,6 +118,7 @@ function renderPostCard(post, options = {}) {
         contentHTML = `<div class="post-content">${post.content}</div>`;
     }
 
+    // 媒体渲染
     let mediaHTML = '';
     if (post.media && post.media.length > 0) {
         mediaHTML = '<div class="post-media-grid">';
@@ -142,6 +143,7 @@ function renderPostCard(post, options = {}) {
                     </div>
                 </div>`;
             } else {
+                // 文件类型
                 mediaHTML += `<div class="file-item" data-file-url="${file.url}" data-file-name="${file.name || ''}" data-file-size="${file.size || ''}">
                     <div class="file-icon">${Icons.file}</div>
                     <div class="file-info">
@@ -155,11 +157,13 @@ function renderPostCard(post, options = {}) {
         mediaHTML += '</div>';
     }
 
+    // 标签
     let tagsHTML = '';
     if (post.tags && post.tags.length > 0) {
         tagsHTML = '<div class="post-tags">' + post.tags.map(tag => `<span class="tag" data-tag="${tag}">#${tag}</span>`).join('') + '</div>';
     }
 
+    // 操作按钮
     let actionsHTML = '';
     if (showActions) {
         actionsHTML = `
