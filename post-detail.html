@@ -285,6 +285,7 @@
                 if (isTogglingLike) return;
                 isTogglingLike = true;
                 if (btn) btn.disabled = true;
+
                 try {
                     const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                     if (existing.data) {
@@ -292,24 +293,25 @@
                     } else {
                         await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
                     }
-                    // 重新查询最新计数
-                    const { data: freshPost } = await supabaseClient
-                        .from('posts')
-                        .select('like_count, favorite_count, comment_count')
-                        .eq('id', postId)
-                        .single();
-                    if (freshPost && btn) {
-                        const countSpan = btn.querySelector('.count');
-                        if (countSpan) countSpan.textContent = freshPost.like_count || 0;
-                        const { data: likeCheck } = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                        if (likeCheck) {
-                            btn.classList.add('liked');
-                            btn.innerHTML = `${comp.Icons.heartFilled}<span class="count">${freshPost.like_count || 0}</span>`;
+
+                    const [likeCheck, { data: freshPost }] = await Promise.all([
+                        supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
+                        supabaseClient.from('posts').select('like_count').eq('id', postId).single()
+                    ]);
+
+                    const newCount = freshPost?.like_count || 0;
+                    const isLiked = !!likeCheck.data;
+
+                    const allLikeBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="like"]`);
+                    allLikeBtns.forEach(button => {
+                        if (isLiked) {
+                            button.classList.add('liked');
+                            button.innerHTML = `${comp.Icons.heartFilled}<span class="count">${newCount}</span>`;
                         } else {
-                            btn.classList.remove('liked');
-                            btn.innerHTML = `${comp.Icons.heart}<span class="count">${freshPost.like_count || 0}</span>`;
+                            button.classList.remove('liked');
+                            button.innerHTML = `${comp.Icons.heart}<span class="count">${newCount}</span>`;
                         }
-                    }
+                    });
                 } finally {
                     isTogglingLike = false;
                     if (btn) btn.disabled = false;
