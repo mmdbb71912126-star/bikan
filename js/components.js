@@ -60,7 +60,6 @@
 
     // ---------- 弹窗 ----------
     function openModal(title, contentHTML) {
-        // 移除旧弹窗
         document.querySelector('.modal-overlay')?.remove();
 
         const overlay = document.createElement('div');
@@ -78,7 +77,6 @@
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        // 关闭事件
         const closeBtn = modal.querySelector('.modal-close');
         closeBtn.addEventListener('click', () => overlay.remove());
 
@@ -90,7 +88,6 @@
     }
 
     function showToast(message, type = 'info') {
-        // 移除旧 Toast
         document.querySelector('.toast')?.remove();
 
         const toast = document.createElement('div');
@@ -116,7 +113,6 @@
         `;
         document.body.appendChild(toast);
 
-        // 3.5秒后移除
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateX(-50%) translateY(20px)';
@@ -134,11 +130,9 @@
         card.className = 'post-card';
         card.dataset.postId = post.id;
 
-        // 头部：头像 + 用户信息 + 时间
         const header = document.createElement('div');
         header.className = 'post-header';
 
-        // 头像（可点击进入用户主页）
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'avatar';
         avatarDiv.dataset.userId = post.user_id;
@@ -157,7 +151,6 @@
         const name = document.createElement('div');
         name.className = 'post-user-name';
         name.textContent = getUserDisplayName(post.profiles);
-        // 点击用户名跳转主页
         name.dataset.userId = post.user_id;
         name.dataset.action = 'view-profile';
         name.style.cursor = 'pointer';
@@ -184,13 +177,11 @@
 
         card.appendChild(header);
 
-        // 内容
         const contentDiv = document.createElement('div');
         contentDiv.className = 'post-content';
         contentDiv.textContent = post.content || '';
         card.appendChild(contentDiv);
 
-        // 标签
         if (post.tags && post.tags.length) {
             const tagsDiv = document.createElement('div');
             tagsDiv.className = 'post-tags';
@@ -204,7 +195,6 @@
             card.appendChild(tagsDiv);
         }
 
-        // 媒体（如果有）
         if (post.media && post.media.length) {
             const mediaGrid = document.createElement('div');
             mediaGrid.className = 'post-media-grid';
@@ -244,7 +234,6 @@
             card.appendChild(mediaGrid);
         }
 
-        // 操作栏
         if (showActions) {
             const actions = document.createElement('div');
             actions.className = 'post-actions';
@@ -279,15 +268,15 @@
             favBtn.innerHTML = `${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}<span class="count">${post.favorite_count || 0}</span>`;
             actions.appendChild(favBtn);
 
-            // 转发
+            // 分享（不显示计数）
             const shareBtn = document.createElement('button');
             shareBtn.className = 'action-btn';
             shareBtn.dataset.action = 'share';
             shareBtn.dataset.postId = post.id;
-            shareBtn.innerHTML = `${Icons.share}<span class="count">${post.repost_count || 0}</span>`;
+            shareBtn.innerHTML = `${Icons.share}`;
             actions.appendChild(shareBtn);
 
-            // 更多操作（举报/编辑/删除）
+            // 更多操作
             if (post.is_owner) {
                 const editBtn = document.createElement('button');
                 editBtn.className = 'action-btn';
@@ -326,7 +315,6 @@
         const header = document.createElement('div');
         header.className = 'comment-header';
 
-        // 头像（可点击）
         const avatar = document.createElement('div');
         avatar.className = 'avatar-sm';
         avatar.dataset.userId = comment.user_id;
@@ -369,16 +357,13 @@
         const actions = document.createElement('div');
         actions.className = 'comment-actions';
 
-        // 点赞
         const likeBtn = document.createElement('button');
         likeBtn.className = 'action-btn';
         likeBtn.dataset.action = 'like-comment';
         likeBtn.dataset.commentId = comment.id;
-        // 简化：不显示点赞数，只显示图标
         likeBtn.innerHTML = Icons.heart;
         actions.appendChild(likeBtn);
 
-        // 回复
         const replyBtn = document.createElement('button');
         replyBtn.className = 'action-btn';
         replyBtn.dataset.action = 'reply-comment';
@@ -386,7 +371,6 @@
         replyBtn.textContent = '回复';
         actions.appendChild(replyBtn);
 
-        // 分享评论
         const shareBtn = document.createElement('button');
         shareBtn.className = 'action-btn';
         shareBtn.dataset.action = 'share-comment';
@@ -394,7 +378,6 @@
         shareBtn.textContent = '分享';
         actions.appendChild(shareBtn);
 
-        // 举报评论（如果是他人）
         if (!comment.is_owner) {
             const reportBtn = document.createElement('button');
             reportBtn.className = 'action-btn';
@@ -434,7 +417,6 @@
 
         const text = document.createElement('div');
         text.className = 'notification-text';
-        // 解析不同通知类型
         let displayText = notification.content || '';
         if (notification.type === 'like') {
             displayText = `${getUserDisplayName(notification.actor)} 点赞了你的帖子`;
@@ -468,14 +450,13 @@
         return item;
     }
 
-    // ---------- 渲染用户卡片（支持关注状态） ----------
+    // ---------- 渲染用户卡片 ----------
     function renderUserCard(user, options = {}) {
         const { showFollowBtn = false, isFollowing = false, showBlockBtn = false } = options;
 
         const card = document.createElement('div');
         card.className = 'user-card';
 
-        // 头像（可点击）
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'avatar';
         avatarDiv.dataset.userId = user.id;
