@@ -920,6 +920,7 @@
                 // 如果在其他路由（如搜索或用户主页），刷新整个当前路由
                 navigateTo(currentRoute);
             }
+            window.location.reload();
         } finally {
             isTogglingLike = false;
             if (btn) btn.disabled = false;
