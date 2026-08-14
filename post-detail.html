@@ -72,7 +72,7 @@
                 window.location.href = 'app.html';
             }
 
-            // ---------- 实时订阅 ----------
+            // ---------- 实时订阅（仅用于新评论和新讨论） ----------
             function setupRealtime() {
                 if (!supabaseClient || !id) return;
 
@@ -271,6 +271,7 @@
                     } else {
                         await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
                     }
+                    // 重新加载详情页，确保计数和按钮状态正确
                     await loadPostDetail(postId);
                 } finally {
                     isTogglingLike = false;
