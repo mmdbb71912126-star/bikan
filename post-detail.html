@@ -31,6 +31,8 @@
             };
 
             let currentUser = null;
+            let isTogglingLike = false;
+            let isTogglingFavorite = false;
             const urlParams = new URLSearchParams(window.location.search);
             const type = urlParams.get('type') || 'post';
             const id = urlParams.get('id');
@@ -142,7 +144,6 @@
                 post.favorited_by_me = !!favRes.data;
                 post.is_owner = post.user_id === currentUser.id;
 
-                // 清空容器
                 container.innerHTML = '';
 
                 if (currentUser.is_admin && post.public_id) {
@@ -281,36 +282,71 @@
             }
 
             async function toggleLike(postId, btn) {
-                const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                if (existing.data) {
-                    await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-                    if (btn) {
-                        btn.classList.remove('liked');
-                        btn.innerHTML = `${comp.Icons.heart}<span class="count">${Math.max(0, parseInt(btn.querySelector('.count')?.textContent) - 1)}</span>`;
+                if (isTogglingLike) return;
+                isTogglingLike = true;
+                if (btn) btn.disabled = true;
+                try {
+                    const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+                    if (existing.data) {
+                        await supabaseClient.from('likes').delete().eq('id', existing.data.id);
+                    } else {
+                        await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
                     }
-                } else {
-                    await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
-                    if (btn) {
-                        btn.classList.add('liked');
-                        btn.innerHTML = `${comp.Icons.heartFilled}<span class="count">${parseInt(btn.querySelector('.count')?.textContent) + 1}</span>`;
+                    // 重新查询最新计数
+                    const { data: freshPost } = await supabaseClient
+                        .from('posts')
+                        .select('like_count, favorite_count, comment_count')
+                        .eq('id', postId)
+                        .single();
+                    if (freshPost && btn) {
+                        const countSpan = btn.querySelector('.count');
+                        if (countSpan) countSpan.textContent = freshPost.like_count || 0;
+                        const { data: likeCheck } = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+                        if (likeCheck) {
+                            btn.classList.add('liked');
+                            btn.innerHTML = `${comp.Icons.heartFilled}<span class="count">${freshPost.like_count || 0}</span>`;
+                        } else {
+                            btn.classList.remove('liked');
+                            btn.innerHTML = `${comp.Icons.heart}<span class="count">${freshPost.like_count || 0}</span>`;
+                        }
                     }
+                } finally {
+                    isTogglingLike = false;
+                    if (btn) btn.disabled = false;
                 }
             }
 
             async function toggleFavorite(postId, btn) {
-                const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                if (existing.data) {
-                    await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
-                    if (btn) {
-                        btn.classList.remove('favorited');
-                        btn.innerHTML = `${comp.Icons.bookmark}<span class="count">${Math.max(0, parseInt(btn.querySelector('.count')?.textContent) - 1)}</span>`;
+                if (isTogglingFavorite) return;
+                isTogglingFavorite = true;
+                if (btn) btn.disabled = true;
+                try {
+                    const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+                    if (existing.data) {
+                        await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
+                    } else {
+                        await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
                     }
-                } else {
-                    await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
-                    if (btn) {
-                        btn.classList.add('favorited');
-                        btn.innerHTML = `${comp.Icons.bookmarkFilled}<span class="count">${parseInt(btn.querySelector('.count')?.textContent) + 1}</span>`;
+                    const { data: freshPost } = await supabaseClient
+                        .from('posts')
+                        .select('like_count, favorite_count, comment_count')
+                        .eq('id', postId)
+                        .single();
+                    if (freshPost && btn) {
+                        const countSpan = btn.querySelector('.count');
+                        if (countSpan) countSpan.textContent = freshPost.favorite_count || 0;
+                        const { data: favCheck } = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+                        if (favCheck) {
+                            btn.classList.add('favorited');
+                            btn.innerHTML = `${comp.Icons.bookmarkFilled}<span class="count">${freshPost.favorite_count || 0}</span>`;
+                        } else {
+                            btn.classList.remove('favorited');
+                            btn.innerHTML = `${comp.Icons.bookmark}<span class="count">${freshPost.favorite_count || 0}</span>`;
+                        }
                     }
+                } finally {
+                    isTogglingFavorite = false;
+                    if (btn) btn.disabled = false;
                 }
             }
 
@@ -318,16 +354,10 @@
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
                 if (existing.data) {
                     await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-                    if (btn) {
-                        btn.innerHTML = `${comp.Icons.heart}<span>${Math.max(0, parseInt(btn.querySelector('span')?.textContent) - 1)}</span>`;
-                    }
                 } else {
                     await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
-                    if (btn) {
-                        btn.innerHTML = `${comp.Icons.heartFilled}<span>${parseInt(btn.querySelector('span')?.textContent) + 1}</span>`;
-                    }
                 }
-                // 刷新评论列表确保状态持久
+                // 刷新评论列表
                 const postId = document.getElementById('commentsList')?.dataset.postId;
                 const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
                 if (postId) loadComments(postId, postAuthorId);
