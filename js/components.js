@@ -8,7 +8,7 @@
 const BikanComponents = window.BikanComponents || {};
 
 // ============================================================
-// SVG 图标库
+// SVG 图标库（全部内联，无任何系统表情）
 // ============================================================
 const Icons = {
     logo: function(size = 36) {
@@ -65,6 +65,9 @@ const Icons = {
 
 BikanComponents.Icons = Icons;
 
+// ============================================================
+// 工具函数
+// ============================================================
 function createElement(tag, className, innerHTML) {
     const el = document.createElement(tag);
     if (className) el.className = className;
@@ -95,6 +98,9 @@ function getUserHandle(profile) {
     return '@' + (profile.username || profile.id);
 }
 
+// ============================================================
+// 帖子卡片渲染（操作按钮：点赞/收藏状态正确显示）
+// ============================================================
 function renderPostCard(post, options = {}) {
     const { showActions = true, isDetail = false } = options;
     const user = post.profiles || post.user || {};
@@ -125,12 +131,24 @@ function renderPostCard(post, options = {}) {
 
     let actionsHTML = '';
     if (showActions) {
+        const likeClass = post.liked_by_me ? 'action-btn like-btn liked' : 'action-btn like-btn';
+        const favClass = post.favorited_by_me ? 'action-btn favorite-btn favorited' : 'action-btn favorite-btn';
         actionsHTML = `
         <div class="post-actions">
-            <button class="action-btn like-btn" data-post-id="${post.id}" data-action="like">${post.liked_by_me ? Icons.heartFilled : Icons.heart}<span class="count">${post.like_count || 0}</span></button>
-            <button class="action-btn comment-btn" data-post-id="${post.id}" data-action="comment">${Icons.comment}<span class="count">${post.comment_count || 0}</span></button>
-            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share">${Icons.share}<span>分享</span></button>
-            <button class="action-btn favorite-btn" data-post-id="${post.id}" data-action="favorite">${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}<span class="count">${post.favorite_count || 0}</span></button>
+            <button class="${likeClass}" data-post-id="${post.id}" data-action="like">
+                ${post.liked_by_me ? Icons.heartFilled : Icons.heart}
+                <span class="count">${post.like_count || 0}</span>
+            </button>
+            <button class="action-btn comment-btn" data-post-id="${post.id}" data-action="comment">
+                ${Icons.comment}<span class="count">${post.comment_count || 0}</span>
+            </button>
+            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share">
+                ${Icons.share}<span>分享</span>
+            </button>
+            <button class="${favClass}" data-post-id="${post.id}" data-action="favorite">
+                ${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}
+                <span class="count">${post.favorite_count || 0}</span>
+            </button>
             <button class="action-btn report-btn" data-post-id="${post.id}" data-action="report">${Icons.flag}</button>
         </div>`;
     }
@@ -156,7 +174,9 @@ function renderPostCard(post, options = {}) {
     return card;
 }
 
-// 评论渲染：二级回复不显示回复按钮
+// ============================================================
+// 评论渲染（头像修正 + 二级回复无回复按钮 + 分享）
+// ============================================================
 function renderCommentItem(comment, options = {}) {
     const { isReply = false } = options;
     const user = comment.profiles || comment.user || {};
@@ -170,7 +190,7 @@ function renderCommentItem(comment, options = {}) {
     let replyText = '';
     if (comment.parent_id && replyTo) replyText = `<span class="comment-reply-to">回复了 @${replyTo} 的评论</span>`;
 
-    // 只有一级评论有回复按钮，二级回复不显示回复按钮
+    // 只有一级评论有回复按钮
     const showReplyBtn = !comment.parent_id;
 
     const item = createElement('div', 'comment-item' + (isReply ? ' comment-reply' : ''), `
@@ -193,10 +213,14 @@ function renderCommentItem(comment, options = {}) {
     return item;
 }
 
+// ============================================================
+// 通知渲染（不显示头像）
+// ============================================================
 function renderNotificationItem(notification) {
     const timeStr = timeAgo(notification.created_at);
     let text = '';
     let isAdminAction = false;
+
     switch (notification.type) {
         case 'like': text = '赞了你的帖子'; break;
         case 'comment': text = '评论了你的帖子'; break;
@@ -209,6 +233,7 @@ function renderNotificationItem(notification) {
         case 'admin_action': text = notification.content || '管理员操作'; isAdminAction = true; break;
         default: text = notification.content || '新通知';
     }
+
     const item = createElement('div', 'notification-card', `
         <div class="notification-content">
             <div class="notification-text">${text}</div>
@@ -224,12 +249,16 @@ function renderNotificationItem(notification) {
     return item;
 }
 
+// ============================================================
+// 用户卡片
+// ============================================================
 function renderUserCard(user, options = {}) {
     const avatarHTML = getUserAvatarHTML(user, 'avatar');
     const displayName = getUserDisplayName(user);
     const handle = getUserHandle(user);
     const statusDot = user.is_online ? '<span style="color: var(--success); font-size: 12px;">● 在线</span>' : '<span style="color: var(--text-light); font-size: 12px;">○ 离线</span>';
     const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 16px;">⚠</span>` : '';
+
     const card = createElement('div', 'user-card', `
         ${avatarHTML}
         <div class="user-card-info">
@@ -245,6 +274,9 @@ function renderUserCard(user, options = {}) {
     return card;
 }
 
+// ============================================================
+// 话题卡片（不显示创建者头像）
+// ============================================================
 function renderTopicCard(topic, options = {}) {
     const timeStr = timeAgo(topic.created_at);
     const card = createElement('div', 'topic-card', `
@@ -262,6 +294,9 @@ function renderTopicCard(topic, options = {}) {
     return card;
 }
 
+// ============================================================
+// 文件详情渲染
+// ============================================================
 function renderFileDetail(file) {
     if (!file) return '';
     if (file.type === 'image') return `<div style="margin: 10px 0;"><img src="${file.url}" alt="${file.name || ''}" style="max-width: 100%; border-radius: 8px;" /></div>`;
@@ -270,6 +305,9 @@ function renderFileDetail(file) {
     else return `<div class="file-item"><div class="file-icon">${Icons.file}</div><div class="file-info"><div class="file-name">${file.name || '文件'}</div><div class="file-size">${formatFileSize(file.size || 0)}</div></div><button class="file-download-btn" data-download-url="${file.url}" data-download-name="${file.name || ''}">${Icons.download} 下载</button></div>`;
 }
 
+// ============================================================
+// 弹窗与 Toast
+// ============================================================
 function openModal(title, contentHTML) {
     const overlay = createElement('div', 'modal-overlay');
     overlay.innerHTML = `
@@ -306,6 +344,9 @@ function showToast(message, type = 'info', duration = 3000) {
     }, duration);
 }
 
+// ============================================================
+// 导出到全局
+// ============================================================
 BikanComponents.Icons = Icons;
 BikanComponents.renderPostCard = renderPostCard;
 BikanComponents.renderCommentItem = renderCommentItem;
