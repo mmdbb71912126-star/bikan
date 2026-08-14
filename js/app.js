@@ -18,9 +18,10 @@
     let currentTab = EXPLORE_TABS.SQUARE;
     let currentTopicId = null;
     let currentPostId = null;
-    let notificationsUnread = 0;      // 未读通知数
-    let unreadMessages = 0;           // 未读私信数
-    let unreadFriendRequests = 0;     // 待处理好友请求数
+    let notificationsUnread = 0;
+    let unreadMessages = 0;
+    let unreadFriendRequests = 0;
+    let realtimeChannels = [];
 
     const appContainer = document.getElementById('app');
     const sidebarNav = document.getElementById('sidebarNav');
@@ -52,7 +53,6 @@
                 return;
             }
             currentUser = profile;
-            console.log('[必看] 当前用户:', currentUser.username || currentUser.id);
 
             if (currentUser.is_banned) addBannedOverlay();
 
@@ -65,6 +65,13 @@
             });
             setupGlobalEventDelegation();
             setupRealtimeSubscriptions();
+
+            // 页面关闭前更新在线状态
+            window.addEventListener('beforeunload', async () => {
+                if (currentUser) {
+                    await supabaseClient.from('profiles').update({ is_online: false }).eq('id', currentUser.id);
+                }
+            });
         } catch (e) {
             console.error('初始化失败', e);
             showToast('初始化失败: ' + e.message, 'error');
@@ -82,38 +89,28 @@
     // ---------- 加载所有未读计数 ----------
     async function loadUnreadCounts() {
         if (!currentUser) return;
-        await Promise.all([
-            loadUnreadNotifications(),
-            loadUnreadMessages(),
-            loadUnreadFriendRequests()
-        ]);
+        await Promise.all([loadUnreadNotifications(), loadUnreadMessages(), loadUnreadFriendRequests()]);
         updateAllBadges();
     }
 
     async function loadUnreadNotifications() {
         const { count, error } = await supabaseClient
-            .from('notifications')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', currentUser.id)
-            .eq('is_read', false);
+            .from('notifications').select('id', { count: 'exact', head: true })
+            .eq('user_id', currentUser.id).eq('is_read', false);
         notificationsUnread = (!error && count !== null) ? count : 0;
     }
 
     async function loadUnreadMessages() {
         const { count, error } = await supabaseClient
-            .from('messages')
-            .select('id', { count: 'exact', head: true })
-            .eq('receiver_id', currentUser.id)
-            .eq('is_read', false);
+            .from('messages').select('id', { count: 'exact', head: true })
+            .eq('receiver_id', currentUser.id).eq('is_read', false);
         unreadMessages = (!error && count !== null) ? count : 0;
     }
 
     async function loadUnreadFriendRequests() {
         const { count, error } = await supabaseClient
-            .from('friend_requests')
-            .select('id', { count: 'exact', head: true })
-            .eq('receiver_id', currentUser.id)
-            .eq('status', 'pending');
+            .from('friend_requests').select('id', { count: 'exact', head: true })
+            .eq('receiver_id', currentUser.id).eq('status', 'pending');
         unreadFriendRequests = (!error && count !== null) ? count : 0;
     }
 
@@ -124,120 +121,157 @@
         updateNotificationBadge();
     }
 
-    // 侧边栏社交红点：通知+私信+好友请求
     function updateNavBadge() {
         const socialNavItem = document.querySelector('.nav-item[data-route="social"]');
         if (!socialNavItem) return;
         let badge = socialNavItem.querySelector('.nav-badge');
         const totalUnread = notificationsUnread + unreadMessages + unreadFriendRequests;
         if (totalUnread > 0) {
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'nav-badge';
-                socialNavItem.appendChild(badge);
-            }
+            if (!badge) { badge = document.createElement('span'); badge.className = 'nav-badge'; socialNavItem.appendChild(badge); }
             badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
             badge.classList.remove('hidden');
-        } else {
-            if (badge) badge.remove();
-        }
+        } else { if (badge) badge.remove(); }
     }
 
-    // 好友tab红点：仅未读私信
     function updateMessageBadge() {
         const friendsTab = document.querySelector('.tab-item[data-social-tab="friends"]');
         if (!friendsTab) return;
         let badge = friendsTab.querySelector('.nav-badge');
         if (unreadMessages > 0) {
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'nav-badge';
-                friendsTab.appendChild(badge);
-            }
+            if (!badge) { badge = document.createElement('span'); badge.className = 'nav-badge'; friendsTab.appendChild(badge); }
             badge.textContent = unreadMessages > 99 ? '99+' : unreadMessages;
             badge.classList.remove('hidden');
-        } else {
-            if (badge) badge.remove();
-        }
+        } else { if (badge) badge.remove(); }
     }
 
-    // 好友请求tab红点：待处理请求数
     function updateFriendRequestBadge() {
         const requestsTab = document.querySelector('.tab-item[data-social-tab="requests"]');
         if (!requestsTab) return;
         let badge = requestsTab.querySelector('.nav-badge');
         if (unreadFriendRequests > 0) {
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'nav-badge';
-                requestsTab.appendChild(badge);
-            }
+            if (!badge) { badge = document.createElement('span'); badge.className = 'nav-badge'; requestsTab.appendChild(badge); }
             badge.textContent = unreadFriendRequests > 99 ? '99+' : unreadFriendRequests;
             badge.classList.remove('hidden');
-        } else {
-            if (badge) badge.remove();
-        }
+        } else { if (badge) badge.remove(); }
     }
 
-    // 通知中心tab红点
     function updateNotificationBadge() {
         const notifTab = document.querySelector('.tab-item[data-social-tab="notifications"]');
         if (!notifTab) return;
         let badge = notifTab.querySelector('.nav-badge');
         if (notificationsUnread > 0) {
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'nav-badge';
-                notifTab.appendChild(badge);
-            }
+            if (!badge) { badge = document.createElement('span'); badge.className = 'nav-badge'; notifTab.appendChild(badge); }
             badge.textContent = notificationsUnread > 99 ? '99+' : notificationsUnread;
             badge.classList.remove('hidden');
-        } else {
-            if (badge) badge.remove();
-        }
+        } else { if (badge) badge.remove(); }
     }
 
     // ---------- 实时订阅 ----------
     function setupRealtimeSubscriptions() {
         if (!supabaseClient) return;
-        // 私信
-        supabaseClient
+
+        // 1. 私信
+        const msgChannel = supabaseClient
             .channel('private-messages-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
                 const newMsg = payload.new;
-                if (newMsg.receiver_id === currentUser.id) {
-                    unreadMessages++;
-                    updateAllBadges();
-                }
-            })
-            .subscribe();
+                if (newMsg.receiver_id === currentUser.id) { unreadMessages++; updateAllBadges(); }
+            }).subscribe();
+        realtimeChannels.push(msgChannel);
 
-        // 通知
-        supabaseClient
+        // 2. 通知
+        const notifChannel = supabaseClient
             .channel('notifications-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
                 const newNotif = payload.new;
-                if (newNotif.user_id === currentUser.id) {
-                    notificationsUnread++;
-                    updateAllBadges();
-                }
-            })
-            .subscribe();
+                if (newNotif.user_id === currentUser.id) { notificationsUnread++; updateAllBadges(); }
+            }).subscribe();
+        realtimeChannels.push(notifChannel);
 
-        // 好友请求
-        supabaseClient
+        // 3. 好友请求
+        const friendReqChannel = supabaseClient
             .channel('friend-requests-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friend_requests' }, (payload) => {
                 const newReq = payload.new;
-                if (newReq.receiver_id === currentUser.id) {
-                    unreadFriendRequests++;
-                    updateAllBadges();
+                if (newReq.receiver_id === currentUser.id) { unreadFriendRequests++; updateAllBadges(); }
+            }).subscribe();
+        realtimeChannels.push(friendReqChannel);
+
+        // 4. 帖子计数更新（点赞/评论/收藏数变化）
+        const postUpdateChannel = supabaseClient
+            .channel('posts-updates')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+                const updatedPost = payload.new;
+                if (currentRoute === ROUTES.EXPLORE) {
+                    updatePostCardCounts(updatedPost);
                 }
-            })
-            .subscribe();
+            }).subscribe();
+        realtimeChannels.push(postUpdateChannel);
+
+        // 5. 新评论实时显示（若在帖子详情页则忽略，由 post-detail.html 处理）
+        // 这里不做处理，避免重复，post-detail.html 自行订阅
+
+        // 6. 新公告实时显示在首页
+        const announcementChannel = supabaseClient
+            .channel('announcements-updates')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, (payload) => {
+                if (currentRoute === ROUTES.EXPLORE) loadHomeAnnouncement();
+            }).subscribe();
+        realtimeChannels.push(announcementChannel);
+
+        // 7. 用户在线状态和资料更新
+        const profileChannel = supabaseClient
+            .channel('profiles-updates')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+                const updatedProfile = payload.new;
+                // 更新侧边栏当前用户资料
+                if (updatedProfile.id === currentUser.id) {
+                    currentUser = { ...currentUser, ...updatedProfile };
+                    renderSidebar();
+                }
+                // 更新帖子卡片上的用户头像/昵称
+                updateUserInfoInPosts(updatedProfile);
+            }).subscribe();
+        realtimeChannels.push(profileChannel);
     }
 
-    // ---------- 渲染侧边栏（无底部用户信息）----------
+    // 更新帖子卡片上的计数
+    function updatePostCardCounts(updatedPost) {
+        const likeBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="like"]`);
+        const commentBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="comment"]`);
+        const favBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`);
+
+        likeBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = updatedPost.like_count || 0;
+        });
+        commentBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = updatedPost.comment_count || 0;
+        });
+        favBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = updatedPost.favorite_count || 0;
+        });
+    }
+
+    // 更新帖子卡片上的用户资料
+    function updateUserInfoInPosts(updatedProfile) {
+        const userNames = document.querySelectorAll(`[data-user-id="${updatedProfile.id}"] .post-user-name`);
+        userNames.forEach(el => {
+            if (updatedProfile.nickname) el.textContent = updatedProfile.nickname;
+        });
+        const userHandles = document.querySelectorAll(`[data-user-id="${updatedProfile.id}"] .post-user-id`);
+        userHandles.forEach(el => {
+            if (updatedProfile.username) el.textContent = '@' + updatedProfile.username;
+        });
+        const avatars = document.querySelectorAll(`[data-user-id="${updatedProfile.id}"] .avatar img, [data-user-id="${updatedProfile.id}"] .avatar-sm img`);
+        avatars.forEach(img => {
+            if (updatedProfile.avatar_url) img.src = updatedProfile.avatar_url;
+        });
+    }
+
+    // ---------- 渲染侧边栏 ----------
     function renderSidebar() {
         if (!sidebarNav) return;
         const navItems = [
@@ -256,11 +290,10 @@
         });
         html += '</ul>';
         sidebarNav.innerHTML = html;
-
         updateAllBadges();
     }
 
-    // ---------- 全屏控制（保留，但详情已独立）----------
+    // ---------- 全屏控制 ----------
     function enterFullscreen() { document.body.classList.add('fullscreen-app'); }
     function exitFullscreen() { document.body.classList.remove('fullscreen-app'); }
 
@@ -321,10 +354,7 @@
         if (!container) return;
         container.innerHTML = '';
         const { data, error } = await supabaseClient
-            .from('announcements')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .from('announcements').select('*').order('created_at', { ascending: false }).limit(1);
         if (error || !data.length) return;
         const ann = data[0];
         const card = document.createElement('div');
@@ -389,10 +419,7 @@
         if (!posts.length && !topics.length) { container.innerHTML = '<p>暂无推荐内容</p>'; return; }
         container.innerHTML = '';
         for (const post of posts) {
-            const [likeRes, favRes] = await Promise.all([
-                supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
-                supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle()
-            ]);
+            const [likeRes, favRes] = await Promise.all([...]);
             post.liked_by_me = !!likeRes.data; post.favorited_by_me = !!favRes.data; post.is_owner = post.user_id === currentUser.id;
             container.appendChild(renderPostCard(post));
         }
@@ -599,7 +626,6 @@
             fileInput.click();
         });
 
-        // 公开设置立即生效
         container.querySelector('#editFavoritesPublic').addEventListener('change', async (e) => {
             const val = e.target.checked;
             await supabaseClient.from('profiles').update({ favorites_public: val }).eq('id', currentUser.id);
@@ -838,7 +864,7 @@
             else if (action === 'share' && postId) { showShareModal(postId); }
             else if (action === 'report' && postId) { showReportModal('post', postId); }
             else if (action === 'edit' && postId) { showEditPostModal(postId); }
-            else if (action === 'delete' && postId) { if (confirm('确认删除这条帖子吗？')) { await supabaseClient.from('posts').delete().eq('id', postId); showToast('已删除','success'); if(currentPostId===postId) currentPostId=null; exitFullscreen(); navigateTo(ROUTES.EXPLORE); } }
+            else if (action === 'delete' && postId) { if (confirm('确认删除这条帖子吗？')) { await supabaseClient.from('posts').delete().eq('id', postId); showToast('已删除','success'); navigateTo(ROUTES.EXPLORE); } }
             else if (action === 'like-comment' && commentId) { await toggleCommentLike(commentId, target); }
             else if (action === 'reply-comment' && commentId) { const commentInput = document.getElementById('commentInput'); if (commentInput) { commentInput.focus(); commentInput.dataset.parentId = commentId; const { data } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single(); if (data) commentInput.dataset.replyToUserId = data.user_id; } }
             else if (action === 'share-comment' && commentId) { await shareComment(commentId); }
@@ -861,7 +887,7 @@
                 showToast('已拒绝','success');
                 if(currentRoute===ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL);
             }
-            else if (action === 'follow' && userId) { await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId }); showToast('已关注','success'); if(currentRoute===ROUTES.EXPLORE) renderExplore(); }
+            else if (action === 'follow' && userId) { await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId }); showToast('已关注','success'); }
             else if (action === 'block' && userId) { await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId }); showToast('已拉黑','success'); }
             else if (action === 'dismiss-report' && id) { await supabaseClient.from('reports').update({ status:'dismissed', reviewed_by:currentUser.id, reviewed_at:new Date().toISOString() }).eq('id', id); showToast('已忽略','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
             else if (action === 'action-report' && id) { const targetType = target.dataset.targetType, targetId = target.dataset.targetId; if(targetType==='post') await supabaseClient.from('posts').delete().eq('id', targetId); else if(targetType==='comment') await supabaseClient.from('comments').delete().eq('id', targetId); else if(targetType==='user') await supabaseClient.from('profiles').update({ is_banned: true }).eq('id', targetId); else if(targetType==='topic') await supabaseClient.from('topics').update({ status:'closed' }).eq('id', targetId); await supabaseClient.from('reports').update({ status:'action_taken', reviewed_by:currentUser.id, reviewed_at:new Date().toISOString() }).eq('id', id); showToast('已处理','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
@@ -870,10 +896,6 @@
             else if (action === 'delete-announcement' && id) { await supabaseClient.from('announcements').delete().eq('id', id); showToast('已删除','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
             else if (action === 'qq-appeal' && notificationId) { e.stopPropagation(); navigator.clipboard.writeText('976926251').then(() => { showToast('QQ群号已复制，请到群内 @管理员 申诉','success'); target.textContent='已提示'; target.disabled=true; }).catch(() => showToast('请手动搜索 QQ 群：976926251','error')); }
             else if (action === 'join-topic' && topicId) { openTopicDetail(topicId); }
-            else if (action === 'like-topic' && topicId) { showToast('话题点赞功能开发中','info'); }
-            else if (action === 'favorite-topic' && topicId) { showToast('话题收藏功能开发中','info'); }
-            else if (action === 'share-topic' && topicId) { showToast('话题分享功能开发中','info'); }
-            else if (action === 'report-topic' && topicId) { showReportModal('topic', topicId); }
         });
 
         document.addEventListener('click', (e) => {
@@ -895,9 +917,21 @@
     }
 
     // ---------- 点赞/收藏切换 ----------
-    async function toggleLike(postId, btn) { const existing=await supabaseClient.from('likes').select('id').eq('user_id',currentUser.id).eq('post_id',postId).maybeSingle(); if(existing.data) await supabaseClient.from('likes').delete().eq('id',existing.data.id); else await supabaseClient.from('likes').insert({user_id:currentUser.id,post_id:postId}); navigateTo(currentRoute); }
-    async function toggleFavorite(postId, btn) { const existing=await supabaseClient.from('favorites').select('id').eq('user_id',currentUser.id).eq('post_id',postId).maybeSingle(); if(existing.data) await supabaseClient.from('favorites').delete().eq('id',existing.data.id); else await supabaseClient.from('favorites').insert({user_id:currentUser.id,post_id:postId,is_public:true}); navigateTo(currentRoute); }
-    async function toggleCommentLike(commentId, btn) { const existing=await supabaseClient.from('likes').select('id').eq('user_id',currentUser.id).eq('comment_id',commentId).maybeSingle(); if(existing.data) await supabaseClient.from('likes').delete().eq('id',existing.data.id); else await supabaseClient.from('likes').insert({user_id:currentUser.id,comment_id:commentId}); if(currentPostId) await loadComments(currentPostId); }
+    async function toggleLike(postId, btn) {
+        const existing=await supabaseClient.from('likes').select('id').eq('user_id',currentUser.id).eq('post_id',postId).maybeSingle();
+        if(existing.data) await supabaseClient.from('likes').delete().eq('id',existing.data.id);
+        else await supabaseClient.from('likes').insert({user_id:currentUser.id,post_id:postId});
+    }
+    async function toggleFavorite(postId, btn) {
+        const existing=await supabaseClient.from('favorites').select('id').eq('user_id',currentUser.id).eq('post_id',postId).maybeSingle();
+        if(existing.data) await supabaseClient.from('favorites').delete().eq('id',existing.data.id);
+        else await supabaseClient.from('favorites').insert({user_id:currentUser.id,post_id:postId,is_public:true});
+    }
+    async function toggleCommentLike(commentId, btn) {
+        const existing=await supabaseClient.from('likes').select('id').eq('user_id',currentUser.id).eq('comment_id',commentId).maybeSingle();
+        if(existing.data) await supabaseClient.from('likes').delete().eq('id',existing.data.id);
+        else await supabaseClient.from('likes').insert({user_id:currentUser.id,comment_id:commentId});
+    }
 
     // ---------- 弹窗 ----------
     function showShareModal(postId) {
@@ -941,11 +975,9 @@
             const newContent = modal.querySelector('#editPostContent').value;
             await supabaseClient.from('posts').update({ content: newContent, is_edited: true, edited_at: new Date().toISOString() }).eq('id', postId);
             modal.remove(); showToast('已更新', 'success');
-            if (currentPostId === postId) openPostDetail(postId); else navigateTo(currentRoute);
         });
     }
 
-    // 分享评论函数（从 post-detail.html 复制）
     async function shareComment(commentId) {
         const { data: comment } = await supabaseClient.from('comments').select('content, post_id').eq('id', commentId).single();
         if (!comment) return;
