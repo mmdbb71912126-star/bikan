@@ -984,47 +984,147 @@
         }
     }
 
-    // ---------- 弹窗（防重叠 + 全局锁） ----------
+    // ============================================================
+    // 新分享界面（好友列表 + 卡片发送 + 复制ID）
+    // ============================================================
     function showShareModal(postId) {
+        // 防重叠锁
         if (window._modalLock) return;
         window._modalLock = true;
 
+        // 移除旧弹窗
         document.querySelector('.modal-overlay')?.remove();
 
-        supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id).then(async ({ data }) => {
-            const friends = data.map(d => d.following);
-            let friendOptions = '';
-            if (friends.length) friends.forEach(f => friendOptions += `<button class="btn btn-secondary btn-sm" data-share-friend-id="${f.id}">${getUserDisplayName(f)}</button>`);
-            else friendOptions = '<p>暂无互关好友</p>';
-            const content = `<p>选择发送给好友：</p><div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${friendOptions}</div><button class="btn btn-secondary" id="copyLinkBtn">复制链接</button>`;
-            const modal = openModal('分享', content);
-
-            const observer = new MutationObserver(() => {
-                if (!document.body.contains(modal)) {
+        // 先获取帖子完整数据（用于卡片）
+        supabaseClient
+            .from('posts')
+            .select('*, profiles:user_id(id, username, nickname, avatar_url)')
+            .eq('id', postId)
+            .single()
+            .then(async ({ data: post }) => {
+                if (!post) {
+                    showToast('帖子不存在', 'error');
                     window._modalLock = false;
-                    observer.disconnect();
+                    return;
                 }
-            });
-            observer.observe(modal.parentElement, { childList: true, subtree: true });
 
-            modal.querySelector('#copyLinkBtn').addEventListener('click', () => {
-                const url = window.location.origin + '/post-detail.html?type=post&id=' + postId;
-                navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success'));
-            });
-            modal.querySelectorAll('[data-share-friend-id]').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const receiverId = btn.dataset.shareFriendId;
-                    await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: receiverId, content: window.location.origin + '/post-detail.html?type=post&id=' + postId, is_read: false });
-                    modal.remove();
-                    window._modalLock = false;
-                    showToast('已发送到私聊','success');
+                // 获取当前用户关注的人（作为好友列表）
+                const { data: follows } = await supabaseClient
+                    .from('follows')
+                    .select('following:following_id(id, username, nickname, avatar_url)')
+                    .eq('follower_id', currentUser.id);
+
+                let friendListHtml = '';
+                if (follows && follows.length > 0) {
+                    friendListHtml = follows.map(f => {
+                        const friend = f.following;
+                        return `
+                            <div class="share-friend-item" data-user-id="${friend.id}">
+                                <div class="share-friend-avatar">${getUserAvatarHTML(friend, 'avatar-sm')}</div>
+                                <div class="share-friend-info">
+                                    <div class="share-friend-name">${getUserDisplayName(friend)}</div>
+                                    <div class="share-friend-id">${getUserHandle(friend)}</div>
+                                </div>
+                                <button class="share-send-btn" data-user-id="${friend.id}">
+                                    ${Icons.send}
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    friendListHtml = '<div class="share-empty">暂无互关好友</div>';
+                }
+
+                // 构造弹窗内容
+                const content = `
+                    <div class="share-modal">
+                        <div class="share-modal-title">分享帖子</div>
+                        <div class="share-friend-list">
+                            ${friendListHtml}
+                        </div>
+                        <div class="share-bottom">
+                            <div class="share-id-row">
+                                <input type="text" id="sharePostIdInput" value="${post.public_id || post.id}" readonly />
+                                <button class="btn btn-secondary" id="copyPostIdBtn">复制</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const modal = openModal('分享', content);
+
+                // 监听弹窗关闭释放锁
+                const observer = new MutationObserver(() => {
+                    if (!document.body.contains(modal)) {
+                        window._modalLock = false;
+                        observer.disconnect();
+                    }
                 });
+                observer.observe(modal.parentElement, { childList: true, subtree: true });
+
+                // ---------- 发送卡片给好友 ----------
+                modal.querySelectorAll('.share-send-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const receiverId = btn.dataset.userId;
+
+                        // 构造帖子卡片数据（JSON）
+                        const cardData = {
+                            type: 'post_card',
+                            post_id: post.id,
+                            content: post.content || '',
+                            author: {
+                                id: post.profiles.id,
+                                username: post.profiles.username,
+                                nickname: post.profiles.nickname,
+                                avatar_url: post.profiles.avatar_url
+                            },
+                            media: post.media || [],
+                            created_at: post.created_at
+                        };
+
+                        // 发送消息（存为 JSON 字符串）
+                        const { error } = await supabaseClient
+                            .from('messages')
+                            .insert({
+                                sender_id: currentUser.id,
+                                receiver_id: receiverId,
+                                content: JSON.stringify(cardData),
+                                is_read: false
+                            });
+
+                        if (error) {
+                            showToast('发送失败: ' + error.message, 'error');
+                        } else {
+                            showToast('已发送帖子卡片', 'success');
+                            modal.remove();
+                            window._modalLock = false;
+                        }
+                    });
+                });
+
+                // ---------- 复制帖子 ID ----------
+                modal.querySelector('#copyPostIdBtn').addEventListener('click', () => {
+                    const input = modal.querySelector('#sharePostIdInput');
+                    input.select();
+                    navigator.clipboard.writeText(input.value).then(() => {
+                        showToast('已复制帖子 ID', 'success');
+                    }).catch(() => {
+                        // 降级方案
+                        document.execCommand('copy');
+                        showToast('已复制帖子 ID', 'success');
+                    });
+                });
+
+            })
+            .catch((err) => {
+                console.error('加载帖子数据失败', err);
+                showToast('加载失败，请重试', 'error');
+                window._modalLock = false;
             });
-        }).catch(() => {
-            window._modalLock = false;
-        });
     }
 
+    // ---------- 举报/编辑/分享评论（带锁） ----------
     function showReportModal(targetType, targetId) {
         if (window._modalLock) return;
         window._modalLock = true;
