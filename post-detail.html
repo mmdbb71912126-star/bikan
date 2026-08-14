@@ -57,10 +57,56 @@
                 else if (type === 'announcement') await loadAnnouncementDetail(id);
                 else if (type === 'user') await loadUserProfile(id);
                 else showToast('未知类型', 'error');
+
+                setupRealtime();
             }
 
             function goBack() {
                 window.location.href = 'app.html';
+            }
+
+            // ---------- 实时订阅 ----------
+            function setupRealtime() {
+                if (!supabaseClient || !id) return;
+
+                // 帖子计数更新（点赞/评论/收藏数）
+                const postChannel = supabaseClient
+                    .channel('post-detail-updates-' + id)
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+                        if (type === 'post' && payload.new.id === id) {
+                            updatePostCounts(payload.new);
+                        }
+                    })
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
+                        if (type === 'post' && payload.new.post_id === id) {
+                            const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
+                            if (postAuthorId) loadComments(id, postAuthorId);
+                        }
+                    })
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'topic_posts' }, (payload) => {
+                        if (type === 'topic' && payload.new.topic_id === id) {
+                            loadTopicPosts(id);
+                        }
+                    })
+                    .subscribe();
+            }
+
+            function updatePostCounts(updatedPost) {
+                const likeBtn = document.querySelector(`[data-post-id="${updatedPost.id}"][data-action="like"]`);
+                if (likeBtn) {
+                    const count = likeBtn.querySelector('.count');
+                    if (count) count.textContent = updatedPost.like_count || 0;
+                }
+                const commentBtn = document.querySelector(`[data-post-id="${updatedPost.id}"][data-action="comment"]`);
+                if (commentBtn) {
+                    const count = commentBtn.querySelector('.count');
+                    if (count) count.textContent = updatedPost.comment_count || 0;
+                }
+                const favBtn = document.querySelector(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`);
+                if (favBtn) {
+                    const count = favBtn.querySelector('.count');
+                    if (count) count.textContent = updatedPost.favorite_count || 0;
+                }
             }
 
             // ==================== 帖子详情 ====================
