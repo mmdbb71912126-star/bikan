@@ -7,7 +7,7 @@
 (function() {
     console.log('[必看] app.js 开始加载');
 
-    // ---------- 内置工具函数 ----------
+    // ---------- 内置工具函数（防止外部缺失） ----------
     function timeAgo(dateStr) {
         if (!dateStr) return '';
         const now = new Date();
@@ -91,6 +91,12 @@
             });
             setupGlobalEventDelegation();
             setupRealtimeSubscriptions();
+
+            window.addEventListener('beforeunload', async () => {
+                if (currentUser) {
+                    await supabaseClient.from('profiles').update({ is_online: false }).eq('id', currentUser.id);
+                }
+            });
         } catch (e) {
             console.error('初始化失败', e);
             showToast('初始化失败: ' + e.message, 'error');
@@ -105,7 +111,7 @@
         document.body.appendChild(overlay);
     }
 
-    // ---------- 加载未读计数 ----------
+    // ---------- 加载所有未读计数 ----------
     async function loadUnreadCounts() {
         if (!currentUser) return;
         await Promise.all([loadUnreadNotifications(), loadUnreadMessages(), loadUnreadFriendRequests()]);
@@ -185,10 +191,11 @@
         } else { if (badge) badge.remove(); }
     }
 
-    // ---------- 实时订阅 ----------
+    // ---------- 实时订阅（仅用于消息、通知等，不再用于帖子计数以避免冲突） ----------
     function setupRealtimeSubscriptions() {
         if (!supabaseClient) return;
 
+        // 私信
         const msgChannel = supabaseClient
             .channel('private-messages-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
@@ -197,6 +204,7 @@
             }).subscribe();
         realtimeChannels.push(msgChannel);
 
+        // 通知
         const notifChannel = supabaseClient
             .channel('notifications-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
@@ -205,6 +213,7 @@
             }).subscribe();
         realtimeChannels.push(notifChannel);
 
+        // 好友请求
         const friendReqChannel = supabaseClient
             .channel('friend-requests-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friend_requests' }, (payload) => {
@@ -213,16 +222,8 @@
             }).subscribe();
         realtimeChannels.push(friendReqChannel);
 
-        const postUpdateChannel = supabaseClient
-            .channel('posts-updates')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
-                const updatedPost = payload.new;
-                if (currentRoute === ROUTES.EXPLORE) {
-                    updatePostCardCounts(updatedPost);
-                }
-            }).subscribe();
-        realtimeChannels.push(postUpdateChannel);
-
+        // 注意：不再订阅 posts 的 UPDATE，以免覆盖手动更新
+        // 新公告
         const announcementChannel = supabaseClient
             .channel('announcements-updates')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, (payload) => {
@@ -230,6 +231,7 @@
             }).subscribe();
         realtimeChannels.push(announcementChannel);
 
+        // 用户资料更新
         const profileChannel = supabaseClient
             .channel('profiles-updates')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
@@ -241,25 +243,6 @@
                 updateUserInfoInPosts(updatedProfile);
             }).subscribe();
         realtimeChannels.push(profileChannel);
-    }
-
-    function updatePostCardCounts(updatedPost) {
-        const likeBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="like"]`);
-        const commentBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="comment"]`);
-        const favBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`);
-
-        likeBtns.forEach(btn => {
-            const count = btn.querySelector('.count');
-            if (count) count.textContent = updatedPost.like_count || 0;
-        });
-        commentBtns.forEach(btn => {
-            const count = btn.querySelector('.count');
-            if (count) count.textContent = updatedPost.comment_count || 0;
-        });
-        favBtns.forEach(btn => {
-            const count = btn.querySelector('.count');
-            if (count) count.textContent = updatedPost.favorite_count || 0;
-        });
     }
 
     function updateUserInfoInPosts(updatedProfile) {
@@ -919,12 +902,11 @@
         sidebarNav.addEventListener('click', (e) => { const navItem = e.target.closest('.nav-item'); if(navItem){ exitFullscreen(); navigateTo(navItem.dataset.route); } });
     }
 
-    // ---------- 点赞/收藏切换（带锁和重新查询）----------
+    // ---------- 点赞/收藏切换（操作后重新加载当前视图）----------
     async function toggleLike(postId, btn) {
         if (isTogglingLike) return;
         isTogglingLike = true;
         if (btn) btn.disabled = true;
-
         try {
             const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
             if (existing.data) {
@@ -932,42 +914,21 @@
             } else {
                 await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
             }
-
-            // 重新查询最新点赞状态和计数
-            const [likeCheck, { data: freshPost }] = await Promise.all([
-                supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
-                supabaseClient.from('posts').select('like_count').eq('id', postId).single()
-            ]);
-
-            const newCount = freshPost?.like_count || 0;
-            const isLiked = !!likeCheck.data;
-
-        // 更新页面上所有该帖子的点赞按钮
-            const allLikeBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="like"]`);
-            allLikeBtns.forEach(button => {
-                if (isLiked) {
-                    button.classList.add('liked');
-                    button.innerHTML = `${Icons.heartFilled}<span class="count">${newCount}</span>`;
-                } else {
-                    button.classList.remove('liked');
-                    button.innerHTML = `${Icons.heart}<span class="count">${newCount}</span>`;
-                }
-            });
-
-        } catch (err) {
-            console.error('点赞操作失败:', err);
-            showToast('点赞失败，请重试', 'error');
+            // 重新加载当前视图，确保计数正确
+            if (currentRoute === ROUTES.EXPLORE) {
+                renderExplore();
+            }
+            // 如果在其他页面（例如搜索、个人主页），也根据需要刷新
         } finally {
             isTogglingLike = false;
             if (btn) btn.disabled = false;
         }
     }
-    
+
     async function toggleFavorite(postId, btn) {
         if (isTogglingFavorite) return;
         isTogglingFavorite = true;
         if (btn) btn.disabled = true;
-
         try {
             const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
             if (existing.data) {
@@ -975,29 +936,9 @@
             } else {
                 await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
             }
-
-            const [favCheck, { data: freshPost }] = await Promise.all([
-                supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
-                supabaseClient.from('posts').select('favorite_count').eq('id', postId).single()
-            ]);
-
-            const newCount = freshPost?.favorite_count || 0;
-            const isFav = !!favCheck.data;
-
-            const allFavBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="favorite"]`);
-            allFavBtns.forEach(button => {
-                if (isFav) {
-                    button.classList.add('favorited');
-                    button.innerHTML = `${Icons.bookmarkFilled}<span class="count">${newCount}</span>`;
-                } else {
-                    button.classList.remove('favorited');
-                    button.innerHTML = `${Icons.bookmark}<span class="count">${newCount}</span>`;
-                }
-            });
-
-        } catch (err) {
-            console.error('收藏操作失败:', err);
-            showToast('收藏失败，请重试', 'error');
+            if (currentRoute === ROUTES.EXPLORE) {
+                renderExplore();
+            }
         } finally {
             isTogglingFavorite = false;
             if (btn) btn.disabled = false;
@@ -1011,7 +952,7 @@
         } else {
             await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
         }
-        // 刷新评论列表
+        // 评论点赞后刷新评论列表
         const postId = document.getElementById('commentsList')?.dataset.postId;
         const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
         if (postId) loadComments(postId, postAuthorId);
