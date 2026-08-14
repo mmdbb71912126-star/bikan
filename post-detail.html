@@ -79,9 +79,6 @@
                 if (type === 'post') {
                     supabaseClient
                         .channel('post-detail-realtime-' + id)
-                        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
-                            if (payload.new.id === id) updatePostCounts(payload.new);
-                        })
                         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
                             if (payload.new.post_id === id) {
                                 const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
@@ -98,24 +95,6 @@
                             if (payload.new.topic_id === id) loadTopicPosts(id);
                         })
                         .subscribe();
-                }
-            }
-
-            function updatePostCounts(updatedPost) {
-                const likeBtn = document.querySelector(`[data-post-id="${updatedPost.id}"][data-action="like"]`);
-                if (likeBtn) {
-                    const count = likeBtn.querySelector('.count');
-                    if (count) count.textContent = updatedPost.like_count || 0;
-                }
-                const commentBtn = document.querySelector(`[data-post-id="${updatedPost.id}"][data-action="comment"]`);
-                if (commentBtn) {
-                    const count = commentBtn.querySelector('.count');
-                    if (count) count.textContent = updatedPost.comment_count || 0;
-                }
-                const favBtn = document.querySelector(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`);
-                if (favBtn) {
-                    const count = favBtn.querySelector('.count');
-                    if (count) count.textContent = updatedPost.favorite_count || 0;
                 }
             }
 
@@ -285,7 +264,6 @@
                 if (isTogglingLike) return;
                 isTogglingLike = true;
                 if (btn) btn.disabled = true;
-
                 try {
                     const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                     if (existing.data) {
@@ -293,28 +271,10 @@
                     } else {
                         await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
                     }
-
-                    const [likeCheck, { data: freshPost }] = await Promise.all([
-                        supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
-                        supabaseClient.from('posts').select('like_count').eq('id', postId).single()
-                    ]);
-
-                    const newCount = freshPost?.like_count || 0;
-                    const isLiked = !!likeCheck.data;
-
-                    const allLikeBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="like"]`);
-                    allLikeBtns.forEach(button => {
-                        if (isLiked) {
-                            button.classList.add('liked');
-                            button.innerHTML = `${comp.Icons.heartFilled}<span class="count">${newCount}</span>`;
-                        } else {
-                            button.classList.remove('liked');
-                            button.innerHTML = `${comp.Icons.heart}<span class="count">${newCount}</span>`;
-                        }
-                    });
+                    // 重新加载详情页，确保计数和状态正确
+                    await loadPostDetail(postId);
                 } finally {
                     isTogglingLike = false;
-                    if (btn) btn.disabled = false;
                 }
             }
 
@@ -329,26 +289,9 @@
                     } else {
                         await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
                     }
-                    const { data: freshPost } = await supabaseClient
-                        .from('posts')
-                        .select('like_count, favorite_count, comment_count')
-                        .eq('id', postId)
-                        .single();
-                    if (freshPost && btn) {
-                        const countSpan = btn.querySelector('.count');
-                        if (countSpan) countSpan.textContent = freshPost.favorite_count || 0;
-                        const { data: favCheck } = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                        if (favCheck) {
-                            btn.classList.add('favorited');
-                            btn.innerHTML = `${comp.Icons.bookmarkFilled}<span class="count">${freshPost.favorite_count || 0}</span>`;
-                        } else {
-                            btn.classList.remove('favorited');
-                            btn.innerHTML = `${comp.Icons.bookmark}<span class="count">${freshPost.favorite_count || 0}</span>`;
-                        }
-                    }
+                    await loadPostDetail(postId);
                 } finally {
                     isTogglingFavorite = false;
-                    if (btn) btn.disabled = false;
                 }
             }
 
@@ -359,7 +302,6 @@
                 } else {
                     await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
                 }
-                // 刷新评论列表
                 const postId = document.getElementById('commentsList')?.dataset.postId;
                 const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
                 if (postId) loadComments(postId, postAuthorId);
