@@ -1,367 +1,649 @@
 // ============================================================
 // js/components.js
-// 必看 - 通用 UI 组件与 SVG 图标库
+// 必看 - 通用 UI 组件（卡片、头像、图标、弹窗等）
 // 依赖：config.js（需先加载）
 // ============================================================
 
-// ---------- 确保全局对象存在 ----------
-const BikanComponents = window.BikanComponents || {};
+(function() {
+    const cfg = window.BikanConfig;
+    const { supabaseClient } = cfg;
 
-// ============================================================
-// SVG 图标库（全部内联，无任何系统表情）
-// ============================================================
-const Icons = {
-    logo: function(size = 36) {
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size * 0.68}" viewBox="0 0 1000 680">
-            <rect width="100%" height="100%" fill="none" />
-            <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="black" fill-rule="evenodd" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="484" y="273" width="32" height="100" rx="10" fill="black" />
-            <rect x="488" y="383" width="24" height="24" rx="8" fill="black" />
-        </svg>`;
-    },
-    home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>`,
-    search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
-    bell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
-    user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-    settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
-    plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
-    heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-    heartFilled: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-    comment: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
-    repost: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
-    bookmark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`,
-    bookmarkFilled: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`,
-    share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
-    flag: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
-    edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
-    trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
-    close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
-    logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
-    upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
-    image: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
-    video: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
-    audio: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
-    file: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
-    download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
-    play: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
-    pause: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
-    chevronLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
-    chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`,
-    check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
-    more: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>`,
-    send: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
-    friend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-    block: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
-    message: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
-    eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
-    refresh: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
-    admin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`,
-    trend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
-    star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-    clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-    lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
-    bannedUser: `<svg viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 20 H2 Z" fill="none"/><line x1="12" y1="8" x2="12" y2="14" stroke="red"/><circle cx="12" cy="17" r="1" fill="red" stroke="none"/></svg>`,
-};
+    // ---------- SVG 图标库 ----------
+    const Icons = {
+        home: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>`,
+        comment: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`,
+        friend: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
+        user: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+        star: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+        admin: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>`,
+        refresh: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>`,
+        trend: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+        search: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>`,
+        heart: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+        heartFilled: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+        bookmark: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`,
+        bookmarkFilled: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`,
+        share: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+        flag: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+        trash: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>`,
+        edit: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+        plus: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+        send: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>`,
+        message: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`,
+        bell: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>`,
+        logout: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+        file: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`,
+        chevronLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
+        logo: (size = 160) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size * 0.68}" viewBox="0 0 1000 680"><path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="black" fill-rule="evenodd" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="484" y="273" width="32" height="100" rx="10" fill="black" /><rect x="488" y="383" width="24" height="24" rx="8" fill="black" /></svg>`,
+        more: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>`,
+        lock: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`,
+    };
 
-BikanComponents.Icons = Icons;
-
-// ============================================================
-// 工具函数
-// ============================================================
-function createElement(tag, className, innerHTML) {
-    const el = document.createElement(tag);
-    if (className) el.className = className;
-    if (innerHTML !== undefined) el.innerHTML = innerHTML;
-    return el;
-}
-
-function getUserAvatarHTML(profile, size = 'avatar') {
-    if (!profile) return '<div class="' + size + '"></div>';
-    if (profile.is_banned) {
-        return `<div class="${size}" style="background: black; display: flex; align-items: center; justify-content: center;">${Icons.bannedUser}</div>`;
-    }
-    if (profile.avatar_url) {
-        return `<div class="${size}"><img src="${profile.avatar_url}" alt="avatar" onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;' + size + '&quot;></div>';"></div>`;
-    }
-    const initial = profile.nickname ? profile.nickname.charAt(0).toUpperCase() : 'U';
-    return `<div class="${size}" style="background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--primary);">${initial}</div>`;
-}
-
-function getUserDisplayName(profile) {
-    if (!profile) return '未知用户';
-    if (profile.is_banned) return `<span style="color: red;">该用户已被封禁</span>`;
-    return profile.nickname || profile.username || '用户';
-}
-
-function getUserHandle(profile) {
-    if (!profile) return '@unknown';
-    return '@' + (profile.username || profile.id);
-}
-
-// ============================================================
-// 帖子卡片渲染（收藏和分享按钮位置互换）
-// ============================================================
-function renderPostCard(post, options = {}) {
-    const { showActions = true, isDetail = false } = options;
-    const user = post.profiles || post.user || {};
-    const avatarHTML = getUserAvatarHTML(user, 'avatar');
-    const displayName = getUserDisplayName(user);
-    const handle = getUserHandle(user);
-    const timeStr = timeAgo(post.created_at);
-    const editedBadge = post.is_edited ? '<span class="edited-badge">已编辑</span>' : '';
-    const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 16px;">⚠</span>` : '';
-
-    let contentHTML = '';
-    if (post.content) contentHTML = `<div class="post-content">${post.content}</div>`;
-
-    let mediaHTML = '';
-    if (post.media && post.media.length > 0) {
-        mediaHTML = '<div class="post-media-grid">';
-        post.media.forEach(file => {
-            if (file.type === 'image') mediaHTML += `<div class="media-item" data-file-url="${file.url}" data-file-type="image"><img src="${file.url}" alt="${file.name || ''}" loading="lazy" /></div>`;
-            else if (file.type === 'video') mediaHTML += `<div class="media-item video" data-file-url="${file.url}" data-file-type="video"><img src="${file.cover || ''}" alt="视频封面" onerror="this.style.display='none';" /><div class="play-icon">${Icons.play}</div></div>`;
-            else if (file.type === 'audio') mediaHTML += `<div class="media-item audio" data-file-url="${file.url}" data-file-type="audio"><div style="padding:12px;background:var(--bg-light);"><div style="display:flex;align-items:center;gap:8px;"><span>${Icons.audio}</span><span style="font-size:13px;">${file.name || '音频'}</span></div><div class="audio-progress"><div class="audio-progress-bar" style="width:0%;"></div></div></div></div>`;
-            else mediaHTML += `<div class="file-item" data-file-url="${file.url}" data-file-name="${file.name || ''}" data-file-size="${file.size || ''}"><div class="file-icon">${Icons.file}</div><div class="file-info"><div class="file-name">${file.name || '文件'}</div><div class="file-size">${formatFileSize(file.size || 0)}</div></div>${isDetail ? `<button class="file-download-btn" data-download-url="${file.url}" data-download-name="${file.name || ''}">${Icons.download} 下载</button>` : ''}</div>`;
-        });
-        mediaHTML += '</div>';
+    // ---------- 工具函数 ----------
+    function getUserDisplayName(user) {
+        if (!user) return '未知用户';
+        return user.nickname || user.username || '用户';
     }
 
-    let tagsHTML = '';
-    if (post.tags && post.tags.length > 0) tagsHTML = '<div class="post-tags">' + post.tags.map(tag => `<span class="tag" data-tag="${tag}">#${tag}</span>`).join('') + '</div>';
-
-    let actionsHTML = '';
-    if (showActions) {
-        const likeClass = post.liked_by_me ? 'action-btn like-btn liked' : 'action-btn like-btn';
-        const favClass = post.favorited_by_me ? 'action-btn favorite-btn favorited' : 'action-btn favorite-btn';
-        actionsHTML = `
-        <div class="post-actions">
-            <button class="${likeClass}" data-post-id="${post.id}" data-action="like">
-                ${post.liked_by_me ? Icons.heartFilled : Icons.heart}
-                <span class="count">${post.like_count || 0}</span>
-            </button>
-            <button class="action-btn comment-btn" data-post-id="${post.id}" data-action="comment">
-                ${Icons.comment}<span class="count">${post.comment_count || 0}</span>
-            </button>
-            <button class="${favClass}" data-post-id="${post.id}" data-action="favorite">
-                ${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}
-                <span class="count">${post.favorite_count || 0}</span>
-            </button>
-            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share" title="分享">
-                ${Icons.share}
-            </button>
-            <button class="action-btn report-btn" data-post-id="${post.id}" data-action="report">${Icons.flag}</button>
-        </div>`;
+    function getUserHandle(user) {
+        if (!user) return '@unknown';
+        return '@' + (user.username || 'unknown');
     }
 
-    const card = createElement('div', 'post-card', `
-        <div class="post-header">
-            ${avatarHTML}
-            <div class="post-user-info">
-                <div class="post-user-name">${displayName} ${bannedIndicator} ${editedBadge}</div>
-                <div class="post-user-id">${handle} · ${timeStr}</div>
-            </div>
-            <div class="post-more">
-                ${post.is_owner ? `<button class="action-btn" data-post-id="${post.id}" data-action="edit">${Icons.edit}</button>` : ''}
-                ${post.is_owner ? `<button class="action-btn" data-post-id="${post.id}" data-action="delete">${Icons.trash}</button>` : ''}
-            </div>
-        </div>
-        ${contentHTML}
-        ${mediaHTML}
-        ${tagsHTML}
-        ${actionsHTML}
-    `);
-
-    return card;
-}
-
-// ============================================================
-// 评论渲染
-// ============================================================
-function renderCommentItem(comment, options = {}) {
-    const { isReply = false } = options;
-    const user = comment.profiles || comment.user || {};
-    const avatarHTML = getUserAvatarHTML(user, 'avatar-sm');
-    const displayName = getUserDisplayName(user);
-    const handle = getUserHandle(user);
-    const timeStr = timeAgo(comment.created_at);
-    const replyTo = comment.reply_to_user ? (comment.reply_to_user.nickname || comment.reply_to_user.username) : '';
-    const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 14px;">⚠</span>` : '';
-
-    let replyText = '';
-    if (comment.parent_id && replyTo) replyText = `<span class="comment-reply-to">回复了 @${replyTo} 的评论</span>`;
-
-    const showReplyBtn = !comment.parent_id;
-
-    const item = createElement('div', 'comment-item' + (isReply ? ' comment-reply' : ''), `
-        <div class="comment-header">
-            ${avatarHTML}
-            <span class="comment-user">${displayName} ${bannedIndicator}</span>
-            <span class="post-user-id">${handle}</span>
-            <span class="post-time">${timeStr}</span>
-        </div>
-        ${replyText ? `<div>${replyText}</div>` : ''}
-        <div class="comment-content">${comment.content}</div>
-        <div class="comment-actions">
-            <button class="action-btn" data-comment-id="${comment.id}" data-action="like-comment">${comment.liked_by_me ? Icons.heartFilled : Icons.heart}<span>${comment.like_count || 0}</span></button>
-            ${showReplyBtn ? `<button class="action-btn" data-comment-id="${comment.id}" data-action="reply-comment">${Icons.comment} 回复</button>` : ''}
-            <button class="action-btn" data-comment-id="${comment.id}" data-action="share-comment" title="分享">${Icons.share}</button>
-            <button class="action-btn" data-comment-id="${comment.id}" data-action="report-comment">${Icons.flag} 举报</button>
-        </div>
-    `);
-
-    return item;
-}
-
-// ============================================================
-// 通知渲染
-// ============================================================
-function renderNotificationItem(notification) {
-    const timeStr = timeAgo(notification.created_at);
-    let text = '';
-    let isAdminAction = false;
-
-    switch (notification.type) {
-        case 'like': text = '赞了你的帖子'; break;
-        case 'comment': text = '评论了你的帖子'; break;
-        case 'reply': text = '回复了你的评论'; break;
-        case 'follow': text = '关注了你'; break;
-        case 'repost': text = '转发了你的帖子'; break;
-        case 'friend_request': text = '向你发送了好友请求'; break;
-        case 'system': text = notification.content || '系统通知'; break;
-        case 'admin_announcement': text = '管理员发布了公告：' + (notification.content || ''); break;
-        case 'admin_action': text = notification.content || '管理员操作'; isAdminAction = true; break;
-        default: text = notification.content || '新通知';
+    function getUserAvatarHTML(user, size = 'avatar') {
+        if (!user) {
+            return `<div class="${size}"><img src="https://ui-avatars.com/api/?name=U&background=667eea&color=fff&size=64" alt="avatar" /></div>`;
+        }
+        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=667eea&color=fff&size=64`;
+        return `<div class="${size}" data-user-id="${user.id}" data-action="view-profile" style="cursor:pointer;"><img src="${avatarUrl}" alt="${user.username}" /></div>`;
     }
 
-    const item = createElement('div', 'notification-card', `
-        <div class="notification-content">
-            <div class="notification-text">${text}</div>
-            <div class="notification-time">${timeStr}</div>
-            ${isAdminAction ? `<button class="btn btn-secondary btn-sm" data-action="qq-appeal" data-notification-id="${notification.id}">QQ群申诉</button>` : ''}
-        </div>
-        ${!notification.is_read ? '<span class="unread-dot"></span>' : ''}
-    `);
-    if (notification.post_id) {
-        item.setAttribute('data-post-id', notification.post_id);
-        item.style.cursor = 'pointer';
-    }
-    return item;
-}
+    // ---------- 弹窗 ----------
+    function openModal(title, contentHTML) {
+        // 移除旧弹窗
+        document.querySelector('.modal-overlay')?.remove();
 
-// ============================================================
-// 用户卡片
-// ============================================================
-function renderUserCard(user, options = {}) {
-    const avatarHTML = getUserAvatarHTML(user, 'avatar');
-    const displayName = getUserDisplayName(user);
-    const handle = getUserHandle(user);
-    const statusDot = user.is_online ? '<span style="color: var(--success); font-size: 12px;">● 在线</span>' : '<span style="color: var(--text-light); font-size: 12px;">○ 离线</span>';
-    const bannedIndicator = user.is_banned ? ` <span style="color: red; font-size: 16px;">⚠</span>` : '';
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
 
-    const card = createElement('div', 'user-card', `
-        ${avatarHTML}
-        <div class="user-card-info">
-            <div class="post-user-name">${displayName} ${bannedIndicator} ${statusDot}</div>
-            <div class="post-user-id">${handle}</div>
-            ${user.bio ? `<div style="font-size: 13px; color: var(--text-secondary);">${user.bio}</div>` : ''}
-        </div>
-        <div class="user-card-actions">
-            ${options.showFollowBtn ? `<button class="btn btn-secondary" data-user-id="${user.id}" data-action="follow">关注</button>` : ''}
-            ${options.showBlockBtn ? `<button class="btn btn-secondary" data-user-id="${user.id}" data-action="block">拉黑</button>` : ''}
-        </div>
-    `);
-    return card;
-}
+        const modal = document.createElement('div');
+        modal.className = 'modal';
 
-// ============================================================
-// 话题卡片
-// ============================================================
-function renderTopicCard(topic, options = {}) {
-    const timeStr = timeAgo(topic.created_at);
-    const card = createElement('div', 'topic-card', `
-        <div>
-            <div class="topic-name">${topic.name}</div>
-            <div class="topic-desc">${topic.description || ''}</div>
-            <div class="topic-meta">
-                <span>${timeStr}</span>
-                <span>${topic.post_count || 0} 帖子</span>
-            </div>
-        </div>
-        ${options.showJoin ? `<button class="btn btn-primary" data-topic-id="${topic.id}" data-action="join-topic">参与讨论</button>` : ''}
-    `);
-    card.setAttribute('data-topic-id', topic.id);
-    return card;
-}
-
-// ============================================================
-// 文件详情渲染
-// ============================================================
-function renderFileDetail(file) {
-    if (!file) return '';
-    if (file.type === 'image') return `<div style="margin: 10px 0;"><img src="${file.url}" alt="${file.name || ''}" style="max-width: 100%; border-radius: 8px;" /></div>`;
-    else if (file.type === 'video') return `<div style="margin: 10px 0;"><video controls src="${file.url}" style="max-width: 100%; border-radius: 8px;"></video></div>`;
-    else if (file.type === 'audio') return `<div style="margin: 10px 0;"><audio controls src="${file.url}" style="width: 100%;"></audio></div>`;
-    else return `<div class="file-item"><div class="file-icon">${Icons.file}</div><div class="file-info"><div class="file-name">${file.name || '文件'}</div><div class="file-size">${formatFileSize(file.size || 0)}</div></div><button class="file-download-btn" data-download-url="${file.url}" data-download-name="${file.name || ''}">${Icons.download} 下载</button></div>`;
-}
-
-// ============================================================
-// 弹窗与 Toast
-// ============================================================
-function openModal(title, contentHTML) {
-    const overlay = createElement('div', 'modal-overlay');
-    overlay.innerHTML = `
-        <div class="modal">
-            <div class="modal-title">${title} <button class="modal-close" data-modal-close>${Icons.close}</button></div>
+        modal.innerHTML = `
+            <button class="modal-close">&times;</button>
+            <div class="modal-title">${title}</div>
             <div class="modal-body">${contentHTML}</div>
-        </div>
-    `;
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay || e.target.hasAttribute('data-modal-close')) overlay.remove();
-    });
-    document.body.appendChild(overlay);
-    return overlay;
-}
+        `;
 
-function showToast(message, type = 'info', duration = 3000) {
-    const toast = createElement('div', 'toast', message);
-    toast.style.position = 'fixed';
-    toast.style.bottom = '30px';
-    toast.style.left = '50%';
-    toast.style.transform = 'translateX(-50%)';
-    toast.style.background = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : 'var(--text-main)';
-    toast.style.color = 'white';
-    toast.style.padding = '12px 24px';
-    toast.style.borderRadius = '8px';
-    toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-    toast.style.zIndex = '9999';
-    toast.style.fontSize = '14px';
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s';
-        setTimeout(() => toast.remove(), 300);
-    }, duration);
-}
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
 
-// ============================================================
-// 导出到全局
-// ============================================================
-BikanComponents.Icons = Icons;
-BikanComponents.renderPostCard = renderPostCard;
-BikanComponents.renderCommentItem = renderCommentItem;
-BikanComponents.renderNotificationItem = renderNotificationItem;
-BikanComponents.renderUserCard = renderUserCard;
-BikanComponents.renderTopicCard = renderTopicCard;
-BikanComponents.renderFileDetail = renderFileDetail;
-BikanComponents.getUserAvatarHTML = getUserAvatarHTML;
-BikanComponents.getUserDisplayName = getUserDisplayName;
-BikanComponents.getUserHandle = getUserHandle;
-BikanComponents.openModal = openModal;
-BikanComponents.showToast = showToast;
-BikanComponents.createElement = createElement;
-BikanComponents.escapeHtml = escapeHtml;
-BikanComponents.formatFileSize = formatFileSize;
+        // 关闭事件
+        const closeBtn = modal.querySelector('.modal-close');
+        closeBtn.addEventListener('click', () => overlay.remove());
 
-window.BikanComponents = BikanComponents;
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
 
-console.log('[必看] components.js 加载完成');
+        return modal;
+    }
+
+    function showToast(message, type = 'info') {
+        // 移除旧 Toast
+        document.querySelector('.toast')?.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--primary)'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            z-index: 9999;
+            font-size: 14px;
+            font-weight: 500;
+            max-width: 90%;
+            text-align: center;
+            animation: fadeInUp 0.3s ease;
+            border: none;
+        `;
+        document.body.appendChild(toast);
+
+        // 3.5秒后移除
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(20px)';
+            toast.style.transition = 'opacity 0.3s, transform 0.3s';
+            setTimeout(() => toast.remove(), 400);
+        }, 3500);
+    }
+
+    // ---------- 渲染帖子卡片 ----------
+    function renderPostCard(post, options = {}) {
+        if (!post) return document.createElement('div');
+        const { showActions = true, isDetail = false } = options;
+
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        card.dataset.postId = post.id;
+
+        // 头部：头像 + 用户信息 + 时间
+        const header = document.createElement('div');
+        header.className = 'post-header';
+
+        // 头像（可点击进入用户主页）
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar';
+        avatarDiv.dataset.userId = post.user_id;
+        avatarDiv.dataset.action = 'view-profile';
+        avatarDiv.style.cursor = 'pointer';
+        const avatarImg = document.createElement('img');
+        const avatarUrl = post.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.profiles?.username || 'U')}&background=667eea&color=fff&size=64`;
+        avatarImg.src = avatarUrl;
+        avatarImg.alt = post.profiles?.username || 'avatar';
+        avatarDiv.appendChild(avatarImg);
+        header.appendChild(avatarDiv);
+
+        const info = document.createElement('div');
+        info.className = 'post-user-info';
+
+        const name = document.createElement('div');
+        name.className = 'post-user-name';
+        name.textContent = getUserDisplayName(post.profiles);
+        // 点击用户名跳转主页
+        name.dataset.userId = post.user_id;
+        name.dataset.action = 'view-profile';
+        name.style.cursor = 'pointer';
+        info.appendChild(name);
+
+        const handle = document.createElement('div');
+        handle.className = 'post-user-id';
+        handle.textContent = getUserHandle(post.profiles);
+        info.appendChild(handle);
+
+        header.appendChild(info);
+
+        const time = document.createElement('div');
+        time.className = 'post-time';
+        const date = new Date(post.created_at);
+        time.textContent = date.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        if (post.is_edited) {
+            const editedBadge = document.createElement('span');
+            editedBadge.className = 'edited-badge';
+            editedBadge.textContent = '已编辑';
+            time.appendChild(editedBadge);
+        }
+        header.appendChild(time);
+
+        card.appendChild(header);
+
+        // 内容
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'post-content';
+        contentDiv.textContent = post.content || '';
+        card.appendChild(contentDiv);
+
+        // 标签
+        if (post.tags && post.tags.length) {
+            const tagsDiv = document.createElement('div');
+            tagsDiv.className = 'post-tags';
+            post.tags.forEach(tag => {
+                const tagEl = document.createElement('span');
+                tagEl.className = 'tag';
+                tagEl.dataset.tag = tag;
+                tagEl.textContent = '#' + tag;
+                tagsDiv.appendChild(tagEl);
+            });
+            card.appendChild(tagsDiv);
+        }
+
+        // 媒体（如果有）
+        if (post.media && post.media.length) {
+            const mediaGrid = document.createElement('div');
+            mediaGrid.className = 'post-media-grid';
+            post.media.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'media-item';
+                item.dataset.fileUrl = file.url;
+                item.dataset.fileType = file.type || 'file';
+                if (file.type && file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = file.url;
+                    img.alt = 'image';
+                    item.appendChild(img);
+                } else if (file.type && file.type.startsWith('video/')) {
+                    item.classList.add('video');
+                    const video = document.createElement('video');
+                    video.src = file.url;
+                    video.controls = true;
+                    video.preload = 'metadata';
+                    video.style.maxWidth = '100%';
+                    item.appendChild(video);
+                } else if (file.type && file.type.startsWith('audio/')) {
+                    const audio = document.createElement('audio');
+                    audio.src = file.url;
+                    audio.controls = true;
+                    audio.preload = 'metadata';
+                    audio.style.maxWidth = '100%';
+                    item.appendChild(audio);
+                } else {
+                    const icon = document.createElement('div');
+                    icon.className = 'file-icon';
+                    icon.innerHTML = Icons.file;
+                    item.appendChild(icon);
+                }
+                mediaGrid.appendChild(item);
+            });
+            card.appendChild(mediaGrid);
+        }
+
+        // 操作栏
+        if (showActions) {
+            const actions = document.createElement('div');
+            actions.className = 'post-actions';
+
+            // 点赞
+            const likeBtn = document.createElement('button');
+            likeBtn.className = `action-btn ${post.liked_by_me ? 'liked' : ''}`;
+            likeBtn.dataset.action = 'like';
+            likeBtn.dataset.postId = post.id;
+            likeBtn.innerHTML = `${post.liked_by_me ? Icons.heartFilled : Icons.heart}<span class="count">${post.like_count || 0}</span>`;
+            actions.appendChild(likeBtn);
+
+            // 评论
+            const commentBtn = document.createElement('button');
+            commentBtn.className = 'action-btn';
+            commentBtn.dataset.action = 'comment';
+            commentBtn.dataset.postId = post.id;
+            commentBtn.innerHTML = `${Icons.comment}<span class="count">${post.comment_count || 0}</span>`;
+            if (!isDetail) {
+                commentBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.location.href = 'post-detail.html?type=post&id=' + post.id;
+                });
+            }
+            actions.appendChild(commentBtn);
+
+            // 收藏
+            const favBtn = document.createElement('button');
+            favBtn.className = `action-btn ${post.favorited_by_me ? 'favorited' : ''}`;
+            favBtn.dataset.action = 'favorite';
+            favBtn.dataset.postId = post.id;
+            favBtn.innerHTML = `${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}<span class="count">${post.favorite_count || 0}</span>`;
+            actions.appendChild(favBtn);
+
+            // 转发
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'action-btn';
+            shareBtn.dataset.action = 'share';
+            shareBtn.dataset.postId = post.id;
+            shareBtn.innerHTML = `${Icons.share}<span class="count">${post.repost_count || 0}</span>`;
+            actions.appendChild(shareBtn);
+
+            // 更多操作（举报/编辑/删除）
+            if (post.is_owner) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'action-btn';
+                editBtn.dataset.action = 'edit';
+                editBtn.dataset.postId = post.id;
+                editBtn.innerHTML = Icons.edit;
+                actions.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'action-btn';
+                deleteBtn.dataset.action = 'delete';
+                deleteBtn.dataset.postId = post.id;
+                deleteBtn.innerHTML = Icons.trash;
+                actions.appendChild(deleteBtn);
+            } else {
+                const reportBtn = document.createElement('button');
+                reportBtn.className = 'action-btn';
+                reportBtn.dataset.action = 'report';
+                reportBtn.dataset.postId = post.id;
+                reportBtn.innerHTML = Icons.flag;
+                actions.appendChild(reportBtn);
+            }
+
+            card.appendChild(actions);
+        }
+
+        return card;
+    }
+
+    // ---------- 渲染评论项 ----------
+    function renderCommentItem(comment, options = {}) {
+        const { isReply = false } = options;
+        const item = document.createElement('div');
+        item.className = 'comment-item';
+
+        const header = document.createElement('div');
+        header.className = 'comment-header';
+
+        // 头像（可点击）
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar-sm';
+        avatar.dataset.userId = comment.user_id;
+        avatar.dataset.action = 'view-profile';
+        avatar.style.cursor = 'pointer';
+        const avatarImg = document.createElement('img');
+        const avatarUrl = comment.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.profiles?.username || 'U')}&background=667eea&color=fff&size=32`;
+        avatarImg.src = avatarUrl;
+        avatarImg.alt = comment.profiles?.username || 'avatar';
+        avatar.appendChild(avatarImg);
+        header.appendChild(avatar);
+
+        const userInfo = document.createElement('span');
+        userInfo.className = 'comment-user';
+        userInfo.textContent = getUserDisplayName(comment.profiles);
+        userInfo.dataset.userId = comment.user_id;
+        userInfo.dataset.action = 'view-profile';
+        userInfo.style.cursor = 'pointer';
+        header.appendChild(userInfo);
+
+        if (comment.reply_to_user) {
+            const replyTo = document.createElement('span');
+            replyTo.className = 'comment-reply-to';
+            replyTo.textContent = '→ ' + getUserDisplayName(comment.reply_to_user);
+            header.appendChild(replyTo);
+        }
+
+        const time = document.createElement('span');
+        time.style.cssText = 'font-size:12px;color:var(--text-light);margin-left:auto;';
+        time.textContent = new Date(comment.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        header.appendChild(time);
+
+        item.appendChild(header);
+
+        const content = document.createElement('div');
+        content.className = 'comment-content';
+        content.textContent = comment.content || '';
+        item.appendChild(content);
+
+        const actions = document.createElement('div');
+        actions.className = 'comment-actions';
+
+        // 点赞
+        const likeBtn = document.createElement('button');
+        likeBtn.className = 'action-btn';
+        likeBtn.dataset.action = 'like-comment';
+        likeBtn.dataset.commentId = comment.id;
+        // 简化：不显示点赞数，只显示图标
+        likeBtn.innerHTML = Icons.heart;
+        actions.appendChild(likeBtn);
+
+        // 回复
+        const replyBtn = document.createElement('button');
+        replyBtn.className = 'action-btn';
+        replyBtn.dataset.action = 'reply-comment';
+        replyBtn.dataset.commentId = comment.id;
+        replyBtn.textContent = '回复';
+        actions.appendChild(replyBtn);
+
+        // 分享评论
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'action-btn';
+        shareBtn.dataset.action = 'share-comment';
+        shareBtn.dataset.commentId = comment.id;
+        shareBtn.textContent = '分享';
+        actions.appendChild(shareBtn);
+
+        // 举报评论（如果是他人）
+        if (!comment.is_owner) {
+            const reportBtn = document.createElement('button');
+            reportBtn.className = 'action-btn';
+            reportBtn.dataset.action = 'report-comment';
+            reportBtn.dataset.commentId = comment.id;
+            reportBtn.textContent = '举报';
+            actions.appendChild(reportBtn);
+        }
+
+        item.appendChild(actions);
+
+        return item;
+    }
+
+    // ---------- 渲染通知 ----------
+    function renderNotificationItem(notification) {
+        const item = document.createElement('div');
+        item.className = 'notification-card';
+        if (!notification.is_read) {
+            item.style.borderLeft = '4px solid var(--primary)';
+        }
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar-sm';
+        avatarDiv.dataset.userId = notification.actor_id;
+        avatarDiv.dataset.action = 'view-profile';
+        avatarDiv.style.cursor = 'pointer';
+        const avatarImg = document.createElement('img');
+        const avatarUrl = notification.actor?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.actor?.username || 'U')}&background=667eea&color=fff&size=32`;
+        avatarImg.src = avatarUrl;
+        avatarImg.alt = 'actor';
+        avatarDiv.appendChild(avatarImg);
+        item.appendChild(avatarDiv);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'notification-content';
+
+        const text = document.createElement('div');
+        text.className = 'notification-text';
+        // 解析不同通知类型
+        let displayText = notification.content || '';
+        if (notification.type === 'like') {
+            displayText = `${getUserDisplayName(notification.actor)} 点赞了你的帖子`;
+        } else if (notification.type === 'comment') {
+            displayText = `${getUserDisplayName(notification.actor)} 评论了你的帖子`;
+        } else if (notification.type === 'follow') {
+            displayText = `${getUserDisplayName(notification.actor)} 关注了你`;
+        } else if (notification.type === 'friend_request') {
+            displayText = `${getUserDisplayName(notification.actor)} 向你发送了好友请求`;
+        } else if (notification.type === 'admin_action') {
+            displayText = `管理员: ${notification.content}`;
+        } else if (notification.type === 'system') {
+            displayText = notification.content;
+        }
+        text.textContent = displayText;
+        contentDiv.appendChild(text);
+
+        const time = document.createElement('div');
+        time.className = 'notification-time';
+        time.textContent = new Date(notification.created_at).toLocaleString();
+        contentDiv.appendChild(time);
+
+        item.appendChild(contentDiv);
+
+        if (!notification.is_read) {
+            const dot = document.createElement('div');
+            dot.className = 'unread-dot';
+            item.appendChild(dot);
+        }
+
+        return item;
+    }
+
+    // ---------- 渲染用户卡片（支持关注状态） ----------
+    function renderUserCard(user, options = {}) {
+        const { showFollowBtn = false, isFollowing = false, showBlockBtn = false } = options;
+
+        const card = document.createElement('div');
+        card.className = 'user-card';
+
+        // 头像（可点击）
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar';
+        avatarDiv.dataset.userId = user.id;
+        avatarDiv.dataset.action = 'view-profile';
+        avatarDiv.style.cursor = 'pointer';
+        const avatarImg = document.createElement('img');
+        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=667eea&color=fff&size=64`;
+        avatarImg.src = avatarUrl;
+        avatarImg.alt = user.username || 'avatar';
+        avatarDiv.appendChild(avatarImg);
+        card.appendChild(avatarDiv);
+
+        const info = document.createElement('div');
+        info.className = 'user-card-info';
+        info.dataset.userId = user.id;
+        info.dataset.action = 'view-profile';
+        info.style.cursor = 'pointer';
+
+        const name = document.createElement('div');
+        name.className = 'post-user-name';
+        name.textContent = getUserDisplayName(user);
+        info.appendChild(name);
+
+        const handle = document.createElement('div');
+        handle.className = 'post-user-id';
+        handle.textContent = getUserHandle(user);
+        info.appendChild(handle);
+
+        if (user.bio) {
+            const bio = document.createElement('div');
+            bio.style.cssText = 'font-size:13px;color:var(--text-secondary);margin-top:4px;';
+            bio.textContent = user.bio;
+            info.appendChild(bio);
+        }
+
+        card.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'user-card-actions';
+
+        if (showFollowBtn) {
+            const followBtn = document.createElement('button');
+            followBtn.className = `btn ${isFollowing ? 'btn-secondary' : 'btn-primary'} btn-sm`;
+            followBtn.dataset.action = isFollowing ? 'unfollow' : 'follow';
+            followBtn.dataset.userId = user.id;
+            followBtn.textContent = isFollowing ? '已关注' : '关注';
+            actions.appendChild(followBtn);
+        }
+
+        if (showBlockBtn) {
+            const blockBtn = document.createElement('button');
+            blockBtn.className = 'btn btn-secondary btn-sm';
+            blockBtn.dataset.action = 'block';
+            blockBtn.dataset.userId = user.id;
+            blockBtn.textContent = '拉黑';
+            actions.appendChild(blockBtn);
+        }
+
+        card.appendChild(actions);
+
+        return card;
+    }
+
+    // ---------- 渲染话题卡片 ----------
+    function renderTopicCard(topic, options = {}) {
+        const { showJoin = false } = options;
+
+        const card = document.createElement('div');
+        card.className = 'topic-card';
+
+        const name = document.createElement('div');
+        name.className = 'topic-name';
+        name.textContent = topic.name;
+        card.appendChild(name);
+
+        if (topic.description) {
+            const desc = document.createElement('div');
+            desc.className = 'topic-desc';
+            desc.textContent = topic.description;
+            card.appendChild(desc);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'topic-meta';
+        const creator = document.createElement('span');
+        creator.textContent = '创建者: ' + getUserDisplayName(topic.creator);
+        meta.appendChild(creator);
+
+        const time = document.createElement('span');
+        time.textContent = new Date(topic.created_at).toLocaleDateString();
+        meta.appendChild(time);
+
+        card.appendChild(meta);
+
+        if (showJoin) {
+            const joinBtn = document.createElement('button');
+            joinBtn.className = 'btn btn-primary btn-sm';
+            joinBtn.dataset.action = 'join-topic';
+            joinBtn.dataset.topicId = topic.id;
+            joinBtn.textContent = '加入讨论';
+            card.appendChild(joinBtn);
+        }
+
+        return card;
+    }
+
+    // ---------- 渲染文件详情 ----------
+    function renderFileDetail(file) {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+
+        const icon = document.createElement('div');
+        icon.className = 'file-icon';
+        icon.innerHTML = Icons.file;
+        div.appendChild(icon);
+
+        const info = document.createElement('div');
+        info.className = 'file-info';
+
+        const name = document.createElement('div');
+        name.className = 'file-name';
+        name.textContent = file.file_name || '文件';
+        info.appendChild(name);
+
+        if (file.file_size) {
+            const size = document.createElement('div');
+            size.className = 'file-size';
+            size.textContent = formatFileSize(file.file_size);
+            info.appendChild(size);
+        }
+
+        div.appendChild(info);
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'file-download-btn';
+        downloadBtn.textContent = '下载';
+        downloadBtn.addEventListener('click', () => {
+            window.open(file.url, '_blank');
+        });
+        div.appendChild(downloadBtn);
+
+        return div;
+    }
+
+    // ---------- 辅助函数 ----------
+    function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // ---------- 导出 ----------
+    window.BikanComponents = {
+        Icons,
+        getUserDisplayName,
+        getUserHandle,
+        getUserAvatarHTML,
+        openModal,
+        showToast,
+        renderPostCard,
+        renderCommentItem,
+        renderNotificationItem,
+        renderUserCard,
+        renderTopicCard,
+        renderFileDetail,
+        formatFileSize,
+    };
+
+})();
