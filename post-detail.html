@@ -7,6 +7,35 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+        /* 弹窗列表头像强制缩小 */
+        .modal .avatar-sm {
+            width: 32px !important;
+            height: 32px !important;
+        }
+        .modal .avatar-sm img {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        /* 统计数字中的链接样式 */
+        .stat-link {
+            cursor: pointer;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+        .stat-link:hover {
+            color: var(--primary);
+        }
+        .stat-link.disabled {
+            cursor: default;
+            color: var(--text-light);
+        }
+        .stat-link.disabled:hover {
+            color: var(--text-light);
+        }
+    </style>
 </head>
 <body>
     <div class="app-container" style="display:block;">
@@ -66,7 +95,6 @@
                 }
 
                 setupRealtime();
-                // 全局事件：处理头像点击跳转
                 setupGlobalEvents();
             }
 
@@ -102,7 +130,6 @@
                         })
                         .subscribe();
 
-                    // 帖子计数实时更新
                     supabaseClient
                         .channel('post-detail-counts-' + id)
                         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
@@ -662,7 +689,7 @@
                 }
             }
 
-            // ==================== 用户主页（新布局） ====================
+            // ==================== 用户主页（新逻辑） ====================
             async function loadUserProfile(userId) {
                 if (!userId) return showToast('缺少用户 ID', 'error');
                 const container = document.getElementById('detailContainer');
@@ -683,12 +710,13 @@
                 const { data: followData } = await supabaseClient.from('follows').select('id').eq('follower_id', currentUser.id).eq('following_id', userId).maybeSingle();
                 const isFollowing = !!followData;
 
-                // 是否互关（对方也关注了我）
+                // 是否互关
                 const { data: reverseFollow } = await supabaseClient.from('follows').select('id').eq('follower_id', userId).eq('following_id', currentUser.id).maybeSingle();
                 const isMutual = isFollowing && !!reverseFollow;
 
-                const favPublic = profile.favorites_public !== false;
-                const followingPublic = profile.following_public !== false;
+                // 隐私控制：关注/粉丝默认不公开，收藏默认公开
+                const favPublic = profile.favorites_public !== false;      // 默认公开
+                const followingPublic = profile.following_public === true; // 默认不公开
 
                 // 生成 HTML
                 container.innerHTML = `
@@ -705,23 +733,32 @@
                         </div>
                     </div>
 
-                    <!-- 关注 / 粉丝 / 收藏（可点击） -->
+                    <!-- 统计数字（关注/粉丝/收藏） -->
                     <div style="display:flex; gap:24px; margin-bottom:20px; flex-wrap:wrap;">
-                        <span class="stat-link" data-action="view-following" data-user-id="${profile.id}" style="cursor:pointer; color:var(--text-main);">
+                        <span class="stat-link ${followingPublic ? '' : 'disabled'}" 
+                              data-action="${followingPublic ? 'view-following' : ''}" 
+                              data-user-id="${profile.id}"
+                              style="${followingPublic ? 'cursor:pointer;color:var(--text-main);' : 'cursor:default;color:var(--text-light);'}">
                             关注 <strong>${followingCount || 0}</strong>
                         </span>
-                        <span class="stat-link" data-action="view-followers" data-user-id="${profile.id}" style="cursor:pointer; color:var(--text-main);">
+                        <span class="stat-link ${followingPublic ? '' : 'disabled'}" 
+                              data-action="${followingPublic ? 'view-followers' : ''}" 
+                              data-user-id="${profile.id}"
+                              style="${followingPublic ? 'cursor:pointer;color:var(--text-main);' : 'cursor:default;color:var(--text-light);'}">
                             粉丝 <strong>${followerCount || 0}</strong>
                         </span>
-                        ${favPublic ? `<span class="stat-link" data-action="view-favorites" data-user-id="${profile.id}" style="cursor:pointer; color:var(--text-main);">收藏 <strong>${favCount || 0}</strong></span>` : `<span style="color:var(--text-light);">收藏 ${favCount || 0} (未公开)</span>`}
+                        <span class="stat-link ${favPublic ? '' : 'disabled'}" 
+                              data-action="${favPublic ? 'view-favorites' : ''}" 
+                              data-user-id="${profile.id}"
+                              style="${favPublic ? 'cursor:pointer;color:var(--text-main);' : 'cursor:default;color:var(--text-light);'}">
+                            收藏 <strong>${favCount || 0}</strong>
+                        </span>
                     </div>
 
-                    <!-- 操作按钮 -->
+                    <!-- 操作按钮（只保留关注/取关、好友请求，移除查看收藏按钮） -->
                     <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
                         ${isFollowing ? `<button class="btn btn-secondary" id="unfollowBtn" style="min-width:80px;">取关</button>` : `<button class="btn btn-primary" id="followBtn">关注</button>`}
                         ${!isMutual ? `<button class="btn btn-primary" id="friendRequestBtn">好友请求</button>` : `<button class="btn btn-secondary" disabled style="opacity:0.6;">已互关</button>`}
-                        ${favPublic ? `<button class="btn btn-secondary" id="viewFavBtn">查看收藏</button>` : `<button class="btn btn-secondary" disabled title="收藏未公开">${comp.Icons.lock} 收藏</button>`}
-                        ${followingPublic ? `<button class="btn btn-secondary" id="viewFollowingBtn">查看关注</button>` : ''}
                     </div>
 
                     <div id="userContent"></div>
@@ -772,41 +809,13 @@
                     });
                 }
 
-                // 查看收藏（仅当公开）
-                const viewFavBtn = document.getElementById('viewFavBtn');
-                if (viewFavBtn && favPublic) {
-                    viewFavBtn.addEventListener('click', async () => {
-                        const userContent = document.getElementById('userContent');
-                        const { data: favs } = await supabaseClient.from('favorites').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', userId).order('created_at', { ascending: false });
-                        if (!favs?.length) userContent.innerHTML = '<p>暂无公开收藏</p>';
-                        else {
-                            userContent.innerHTML = '';
-                            favs.forEach(f => { if (f.post) { f.post.is_owner = f.post.user_id === currentUser.id; userContent.appendChild(comp.renderPostCard(f.post)); } });
-                        }
-                    });
-                }
-
-                // 查看关注列表（公开或自己）
-                const viewFollowingBtn = document.getElementById('viewFollowingBtn');
-                if (viewFollowingBtn) {
-                    viewFollowingBtn.addEventListener('click', async () => {
-                        const { data: followingList } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_banned)').eq('follower_id', userId).limit(50);
-                        if (!followingList?.length) return showToast('暂无关注列表', 'error');
-                        let listHtml = '<ul style="list-style:none;padding:0;">';
-                        followingList.forEach(item => {
-                            const u = item.following;
-                            listHtml += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">${comp.getUserAvatarHTML(u,'avatar-sm')}<span class="post-user-name">${comp.getUserDisplayName(u)}</span><span class="post-user-id">${comp.getUserHandle(u)}</span></li>`;
-                        });
-                        listHtml += '</ul>';
-                        comp.openModal('关注列表', listHtml);
-                    });
-                }
-
-                // 点击统计数字查看列表
+                // 点击统计数字查看列表（仅当对应公开）
                 container.querySelectorAll('.stat-link').forEach(el => {
                     el.addEventListener('click', async (e) => {
                         const action = el.dataset.action;
+                        if (!action) return; // 不可点击
                         if (action === 'view-following') {
+                            if (!followingPublic) return showToast('该用户未公开关注列表', 'error');
                             const { data: list } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url, is_banned)').eq('follower_id', userId).limit(50);
                             if (!list?.length) return showToast('暂无关注', 'error');
                             let html = '<ul style="list-style:none;padding:0;">';
@@ -817,6 +826,7 @@
                             html += '</ul>';
                             comp.openModal('关注列表', html);
                         } else if (action === 'view-followers') {
+                            if (!followingPublic) return showToast('该用户未公开粉丝列表', 'error');
                             const { data: list } = await supabaseClient.from('follows').select('follower:follower_id(id, username, nickname, avatar_url, is_banned)').eq('following_id', userId).limit(50);
                             if (!list?.length) return showToast('暂无粉丝', 'error');
                             let html = '<ul style="list-style:none;padding:0;">';
@@ -827,7 +837,7 @@
                             html += '</ul>';
                             comp.openModal('粉丝列表', html);
                         } else if (action === 'view-favorites') {
-                            if (!favPublic) return showToast('该用户收藏未公开', 'error');
+                            if (!favPublic) return showToast('该用户未公开收藏列表', 'error');
                             const { data: favs } = await supabaseClient.from('favorites').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('user_id', userId).order('created_at', { ascending: false });
                             if (!favs?.length) return showToast('暂无公开收藏', 'error');
                             const container2 = document.createElement('div');
