@@ -7,7 +7,7 @@
 (function() {
     console.log('[必看] app.js 开始加载');
 
-    // ---------- 内置工具函数（防止外部缺失） ----------
+    // ---------- 内置工具函数 ----------
     function timeAgo(dateStr) {
         if (!dateStr) return '';
         const now = new Date();
@@ -79,6 +79,7 @@
                 return;
             }
             currentUser = profile;
+            console.log('[必看] 当前用户:', currentUser.username || currentUser.id);
 
             if (currentUser.is_banned) addBannedOverlay();
 
@@ -91,12 +92,6 @@
             });
             setupGlobalEventDelegation();
             setupRealtimeSubscriptions();
-
-            window.addEventListener('beforeunload', async () => {
-                if (currentUser) {
-                    await supabaseClient.from('profiles').update({ is_online: false }).eq('id', currentUser.id);
-                }
-            });
         } catch (e) {
             console.error('初始化失败', e);
             showToast('初始化失败: ' + e.message, 'error');
@@ -111,7 +106,7 @@
         document.body.appendChild(overlay);
     }
 
-    // ---------- 加载所有未读计数 ----------
+    // ---------- 加载未读计数 ----------
     async function loadUnreadCounts() {
         if (!currentUser) return;
         await Promise.all([loadUnreadNotifications(), loadUnreadMessages(), loadUnreadFriendRequests()]);
@@ -191,7 +186,7 @@
         } else { if (badge) badge.remove(); }
     }
 
-    // ---------- 实时订阅（仅用于消息、通知等，不再用于帖子计数以避免冲突） ----------
+    // ---------- 实时订阅 ----------
     function setupRealtimeSubscriptions() {
         if (!supabaseClient) return;
 
@@ -222,7 +217,17 @@
             }).subscribe();
         realtimeChannels.push(friendReqChannel);
 
-        // 注意：不再订阅 posts 的 UPDATE，以免覆盖手动更新
+        // 帖子计数更新（只更新数字，不影响按钮状态）
+        const postUpdateChannel = supabaseClient
+            .channel('posts-counts-updates')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+                const updatedPost = payload.new;
+                if (currentRoute === ROUTES.EXPLORE) {
+                    updatePostCardCounts(updatedPost);
+                }
+            }).subscribe();
+        realtimeChannels.push(postUpdateChannel);
+
         // 新公告
         const announcementChannel = supabaseClient
             .channel('announcements-updates')
@@ -243,6 +248,25 @@
                 updateUserInfoInPosts(updatedProfile);
             }).subscribe();
         realtimeChannels.push(profileChannel);
+    }
+
+    function updatePostCardCounts(updatedPost) {
+        const likeBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="like"]`);
+        const commentBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="comment"]`);
+        const favBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`);
+
+        likeBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = updatedPost.like_count || 0;
+        });
+        commentBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = updatedPost.comment_count || 0;
+        });
+        favBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = updatedPost.favorite_count || 0;
+        });
     }
 
     function updateUserInfoInPosts(updatedProfile) {
@@ -902,7 +926,35 @@
         sidebarNav.addEventListener('click', (e) => { const navItem = e.target.closest('.nav-item'); if(navItem){ exitFullscreen(); navigateTo(navItem.dataset.route); } });
     }
 
-    // ---------- 点赞/收藏切换（操作后重新加载当前视图）----------
+    // ---------- 刷新帖子计数函数 ----------
+    async function refreshPostCounts(postId) {
+        const { data: post, error } = await supabaseClient
+            .from('posts')
+            .select('like_count, comment_count, favorite_count')
+            .eq('id', postId)
+            .single();
+        if (error || !post) return;
+
+        const likeBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="like"]`);
+        likeBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = post.like_count || 0;
+        });
+
+        const commentBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="comment"]`);
+        commentBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = post.comment_count || 0;
+        });
+
+        const favBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="favorite"]`);
+        favBtns.forEach(btn => {
+            const count = btn.querySelector('.count');
+            if (count) count.textContent = post.favorite_count || 0;
+        });
+    }
+
+    // ---------- 点赞/收藏切换 ----------
     async function toggleLike(postId, btn) {
         if (isTogglingLike) return;
         isTogglingLike = true;
@@ -914,11 +966,19 @@
             } else {
                 await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
             }
-            // 重新加载当前视图，确保计数正确
-            if (currentRoute === ROUTES.EXPLORE) {
-                renderExplore();
-            }
-            // 如果在其他页面（例如搜索、个人主页），也根据需要刷新
+            await refreshPostCounts(postId);
+            // 更新按钮状态
+            const likeCheck = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+            const likeBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="like"]`);
+            likeBtns.forEach(button => {
+                if (likeCheck.data) {
+                    button.classList.add('liked');
+                    button.innerHTML = `${Icons.heartFilled}<span class="count">${button.querySelector('.count')?.textContent || 0}</span>`;
+                } else {
+                    button.classList.remove('liked');
+                    button.innerHTML = `${Icons.heart}<span class="count">${button.querySelector('.count')?.textContent || 0}</span>`;
+                }
+            });
         } finally {
             isTogglingLike = false;
             if (btn) btn.disabled = false;
@@ -936,9 +996,18 @@
             } else {
                 await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
             }
-            if (currentRoute === ROUTES.EXPLORE) {
-                renderExplore();
-            }
+            await refreshPostCounts(postId);
+            const favCheck = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+            const favBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="favorite"]`);
+            favBtns.forEach(button => {
+                if (favCheck.data) {
+                    button.classList.add('favorited');
+                    button.innerHTML = `${Icons.bookmarkFilled}<span class="count">${button.querySelector('.count')?.textContent || 0}</span>`;
+                } else {
+                    button.classList.remove('favorited');
+                    button.innerHTML = `${Icons.bookmark}<span class="count">${button.querySelector('.count')?.textContent || 0}</span>`;
+                }
+            });
         } finally {
             isTogglingFavorite = false;
             if (btn) btn.disabled = false;
@@ -952,10 +1021,15 @@
         } else {
             await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
         }
-        // 评论点赞后刷新评论列表
+        // 刷新评论列表（如果存在）
         const postId = document.getElementById('commentsList')?.dataset.postId;
         const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
-        if (postId) loadComments(postId, postAuthorId);
+        if (postId) {
+            // 避免递归调用，详情页自己处理
+            if (typeof loadComments === 'function') {
+                loadComments(postId, postAuthorId);
+            }
+        }
     }
 
     // ---------- 弹窗 ----------
