@@ -311,18 +311,15 @@ body.fullscreen-app .main-content { width: 100%; height: 100vh; padding: 20px; }
 .action-btn svg { width: 18px; height: 18px; }
 .action-btn .count { display: inline-block; min-width: 20px; text-align: center; }
 
-/* ===== 评论区滚动修复 ===== */
+/* ===== 评论区 - 无独立滚动，随页面滚动 ===== */
 .comments-section {
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid var(--border);
-    max-height: 500px;
-    overflow-y: auto;
 }
 
 #commentsList {
-    max-height: 400px;
-    overflow-y: auto;
+    /* 不设置 max-height 和 overflow，让内容自然撑开 */
 }
 
 /* 评论项 */
