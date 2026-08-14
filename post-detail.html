@@ -123,24 +123,26 @@
                     .order('created_at', { ascending: true });
                 if (error || !data.length) return listDiv.innerHTML = '<p>暂无评论</p>';
                 listDiv.innerHTML = '';
+                listDiv.dataset.postId = postId;
+                listDiv.dataset.postAuthorId = postAuthorId;
+
                 const mainComments = data.filter(c => !c.parent_id);
                 const replies = data.filter(c => c.parent_id);
                 mainComments.forEach(comment => {
-                    listDiv.appendChild(renderCommentWithDelete(comment, postAuthorId, false));
+                    listDiv.appendChild(renderCommentWithDelete(comment, false));
                     const commentReplies = replies.filter(r => r.parent_id === comment.id);
                     commentReplies.forEach(reply => {
-                        const replyEl = renderCommentWithDelete(reply, postAuthorId, true);
+                        const replyEl = renderCommentWithDelete(reply, true);
                         replyEl.style.marginLeft = '24px';
                         listDiv.appendChild(replyEl);
                     });
                 });
-                listDiv.dataset.postId = postId;
-                listDiv.dataset.postAuthorId = postAuthorId;
             }
 
-            function renderCommentWithDelete(comment, postAuthorId, isReply) {
+            function renderCommentWithDelete(comment, isReply) {
                 const commentEl = comp.renderCommentItem(comment, { isReply });
-                const canDelete = comment.user_id === currentUser.id || postAuthorId === currentUser.id;
+                const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
+                const canDelete = comment.user_id === currentUser.id || (postAuthorId && postAuthorId === currentUser.id);
                 if (canDelete) {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'action-btn';
@@ -317,7 +319,6 @@
                     <div id="topicPosts"></div>
                 `;
 
-                // 话题互动按钮
                 container.addEventListener('click', (e) => {
                     const btn = e.target.closest('[data-action]');
                     if (!btn) return;
@@ -327,7 +328,6 @@
                     else if (btn.dataset.action === 'report-topic') showReportModal('topic', topicId);
                 });
 
-                // 发布讨论
                 document.getElementById('submitTopicPostBtn').addEventListener('click', async () => {
                     if (currentUser.is_banned) return showToast('你已被封禁，无法发布', 'error');
                     const content = document.getElementById('topicPostContent').value.trim();
