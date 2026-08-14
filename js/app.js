@@ -7,6 +7,9 @@
 (function() {
     console.log('[必看] app.js 开始加载');
 
+    // ---------- 全局弹窗锁 ----------
+    window._modalLock = false;
+
     // ---------- 内置工具函数 ----------
     function timeAgo(dateStr) {
         if (!dateStr) return '';
@@ -225,26 +228,20 @@
         realtimeChannels.push(friendReqChannel);
 
         // ============================================================
-        // 重新启用帖子计数实时更新（只改数字，不改状态）
+        // 帖子计数实时更新（只改数字，不改状态）
         // ============================================================
         const postUpdateChannel = supabaseClient
             .channel('posts-counts-updates')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
                 const updatedPost = payload.new;
-
-                // 1. 更新所有点赞按钮的数字（不改变 liked 类）
                 document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="like"]`).forEach(btn => {
                     const countSpan = btn.querySelector('.count');
                     if (countSpan) countSpan.textContent = updatedPost.like_count || 0;
                 });
-
-                // 2. 更新所有收藏按钮的数字（不改变 favorited 类）
                 document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`).forEach(btn => {
                     const countSpan = btn.querySelector('.count');
                     if (countSpan) countSpan.textContent = updatedPost.favorite_count || 0;
                 });
-
-                // 3. 更新所有评论按钮的数字
                 document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="comment"]`).forEach(btn => {
                     const countSpan = btn.querySelector('.count');
                     if (countSpan) countSpan.textContent = updatedPost.comment_count || 0;
@@ -987,9 +984,11 @@
         }
     }
 
-    // ---------- 弹窗（每次打开前移除已有弹窗） ----------
+    // ---------- 弹窗（防重叠 + 全局锁） ----------
     function showShareModal(postId) {
-        // 移除已有弹窗，防止重叠
+        if (window._modalLock) return;
+        window._modalLock = true;
+
         document.querySelector('.modal-overlay')?.remove();
 
         supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id).then(async ({ data }) => {
@@ -999,69 +998,131 @@
             else friendOptions = '<p>暂无互关好友</p>';
             const content = `<p>选择发送给好友：</p><div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${friendOptions}</div><button class="btn btn-secondary" id="copyLinkBtn">复制链接</button>`;
             const modal = openModal('分享', content);
-            modal.querySelector('#copyLinkBtn').addEventListener('click', () => { const url = window.location.origin + '/post-detail.html?type=post&id=' + postId; navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success')); });
+
+            const observer = new MutationObserver(() => {
+                if (!document.body.contains(modal)) {
+                    window._modalLock = false;
+                    observer.disconnect();
+                }
+            });
+            observer.observe(modal.parentElement, { childList: true, subtree: true });
+
+            modal.querySelector('#copyLinkBtn').addEventListener('click', () => {
+                const url = window.location.origin + '/post-detail.html?type=post&id=' + postId;
+                navigator.clipboard.writeText(url).then(() => showToast('链接已复制','success'));
+            });
             modal.querySelectorAll('[data-share-friend-id]').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const receiverId = btn.dataset.shareFriendId;
                     await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: receiverId, content: window.location.origin + '/post-detail.html?type=post&id=' + postId, is_read: false });
                     modal.remove();
+                    window._modalLock = false;
                     showToast('已发送到私聊','success');
                 });
             });
+        }).catch(() => {
+            window._modalLock = false;
         });
     }
 
     function showReportModal(targetType, targetId) {
-        // 移除已有弹窗
+        if (window._modalLock) return;
+        window._modalLock = true;
+
         document.querySelector('.modal-overlay')?.remove();
 
         const reasonOptions = ['血腥', '恶意病毒文件', '政治', '招嫖', '诈骗', '其他'];
         const content = `<div class="form-group"><label>举报原因</label><select id="reportReason">${reasonOptions.map(r => `<option value="${r}">${r}</option>`).join('')}</select></div><div class="form-group"><label>详细描述</label><textarea id="reportDesc"></textarea></div><div class="form-group"><label>图片证据（可选）</label><input type="file" id="reportEvidence" accept="image/*" multiple></div><button class="btn btn-danger" id="submitReportBtn">提交举报</button>`;
         const modal = openModal('举报', content);
+
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(modal)) {
+                window._modalLock = false;
+                observer.disconnect();
+            }
+        });
+        observer.observe(modal.parentElement, { childList: true, subtree: true });
+
         modal.querySelector('#submitReportBtn').addEventListener('click', async () => {
             const reason = modal.querySelector('#reportReason').value;
             const desc = modal.querySelector('#reportDesc').value.trim();
             let evidenceUrls = [];
-            for (const file of modal.querySelector('#reportEvidence').files) { const uploaded = await uploadFile(file, 'reports', 'evidence'); evidenceUrls.push(uploaded.url); }
+            for (const file of modal.querySelector('#reportEvidence').files) {
+                const uploaded = await uploadFile(file, 'reports', 'evidence');
+                evidenceUrls.push(uploaded.url);
+            }
             await supabaseClient.from('reports').insert({ reporter_id: currentUser.id, target_type: targetType, target_id: targetId, reason, description: desc, evidence_urls: evidenceUrls });
-            modal.remove(); showToast('举报已提交', 'success');
+            modal.remove();
+            window._modalLock = false;
+            showToast('举报已提交', 'success');
         });
     }
 
     async function showEditPostModal(postId) {
-        // 移除已有弹窗
+        if (window._modalLock) return;
+        window._modalLock = true;
+
         document.querySelector('.modal-overlay')?.remove();
 
         const { data: post } = await supabaseClient.from('posts').select('*').eq('id', postId).single();
-        if (!post) return;
+        if (!post) { window._modalLock = false; return; }
         const content = `<div class="form-group"><label>内容</label><textarea id="editPostContent">${post.content || ''}</textarea></div><button class="btn btn-primary" id="saveEditBtn">保存修改</button>`;
         const modal = openModal('编辑帖子', content);
+
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(modal)) {
+                window._modalLock = false;
+                observer.disconnect();
+            }
+        });
+        observer.observe(modal.parentElement, { childList: true, subtree: true });
+
         modal.querySelector('#saveEditBtn').addEventListener('click', async () => {
             const newContent = modal.querySelector('#editPostContent').value;
             await supabaseClient.from('posts').update({ content: newContent, is_edited: true, edited_at: new Date().toISOString() }).eq('id', postId);
-            modal.remove(); showToast('已更新', 'success');
+            modal.remove();
+            window._modalLock = false;
+            showToast('已更新', 'success');
         });
     }
 
     async function shareComment(commentId) {
-        // 移除已有弹窗
+        if (window._modalLock) return;
+        window._modalLock = true;
+
         document.querySelector('.modal-overlay')?.remove();
 
         const { data: comment } = await supabaseClient.from('comments').select('content, post_id').eq('id', commentId).single();
-        if (!comment) return;
+        if (!comment) { window._modalLock = false; return; }
         const shareContent = comment.content || '';
         const postLink = window.location.origin + '/post-detail.html?type=post&id=' + comment.post_id;
         const content = `<p>分享评论：</p><p style="background:var(--bg-light);padding:8px;border-radius:6px;">${shareContent}</p><button class="btn btn-secondary" id="copyCommentBtn">复制评论</button><button class="btn btn-secondary" id="copyPostLinkBtn">复制帖子链接</button><hr><p>发送到好友私聊：</p><div id="friendList"></div>`;
         const modal = openModal('分享评论', content);
-        modal.querySelector('#copyCommentBtn').addEventListener('click', () => navigator.clipboard.writeText(shareContent).then(() => showToast('评论已复制','success')));
-        modal.querySelector('#copyPostLinkBtn').addEventListener('click', () => navigator.clipboard.writeText(postLink).then(() => showToast('链接已复制','success')));
+
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(modal)) {
+                window._modalLock = false;
+                observer.disconnect();
+            }
+        });
+        observer.observe(modal.parentElement, { childList: true, subtree: true });
+
+        modal.querySelector('#copyCommentBtn').addEventListener('click', () => navigator.clipboard.writeText(shareContent).then(() => showToast('评论已复制', 'success')));
+        modal.querySelector('#copyPostLinkBtn').addEventListener('click', () => navigator.clipboard.writeText(postLink).then(() => showToast('链接已复制', 'success')));
+
         const friendListDiv = modal.querySelector('#friendList');
         const { data: follows } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id);
         if (follows?.length) follows.forEach(f => {
             const btn = document.createElement('button'); btn.className = 'btn btn-secondary btn-sm'; btn.textContent = getUserDisplayName(f.following);
-            btn.addEventListener('click', async () => { await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false }); modal.remove(); showToast('已发送到私聊','success'); });
+            btn.addEventListener('click', async () => {
+                await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false });
+                modal.remove();
+                window._modalLock = false;
+                showToast('已发送到私聊','success');
+            });
             friendListDiv.appendChild(btn);
-        }); else friendListDiv.innerHTML = '<p>暂无好友</p>';
+        });
+        else friendListDiv.innerHTML = '<p>暂无好友</p>';
     }
 
     // ---------- 启动 ----------
