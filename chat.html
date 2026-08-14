@@ -53,6 +53,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            cursor: pointer;
         }
         .chat-header .chat-user-info .avatar-sm img {
             width: 100%;
@@ -153,6 +154,7 @@
             height: 20px;
             border-radius: 50%;
             overflow: hidden;
+            cursor: pointer;
         }
         .chat-message .post-card .post-card-author .avatar-xs img {
             width: 100%;
@@ -272,7 +274,7 @@
                 </svg>
             </button>
             <div class="chat-user-info" id="chatUserInfo">
-                <div class="avatar-sm">
+                <div class="avatar-sm" data-action="view-profile" data-user-id="{{otherUserId}}" style="cursor:pointer;">
                     <img src="" alt="avatar" id="chatUserAvatar" />
                 </div>
                 <div>
@@ -396,8 +398,28 @@
                     fileBtn.addEventListener('click', () => fileInput.click());
                     fileInput.addEventListener('change', handleFileUpload);
 
+                    // 头部头像点击跳转
+                    const headerAvatar = document.querySelector('.chat-header .chat-user-info .avatar-sm');
+                    if (headerAvatar) {
+                        headerAvatar.dataset.userId = otherUserId;
+                        headerAvatar.addEventListener('click', () => {
+                            window.location.href = 'post-detail.html?type=user&id=' + otherUserId;
+                        });
+                    }
+
                     // 滚动到最新消息
                     scrollToBottom();
+
+                    // 全局事件：头像点击跳转
+                    document.addEventListener('click', (e) => {
+                        const target = e.target.closest('[data-action="view-profile"]');
+                        if (target) {
+                            const userId = target.dataset.userId;
+                            if (userId) {
+                                window.location.href = 'post-detail.html?type=user&id=' + userId;
+                            }
+                        }
+                    });
 
                 } catch (e) {
                     console.error('初始化失败', e);
@@ -492,11 +514,11 @@
                         window.location.href = 'post-detail.html?type=post&id=' + parsed.post_id;
                     });
 
-                    // 作者信息
+                    // 作者信息（头像可点击）
                     const authorDiv = document.createElement('div');
                     authorDiv.className = 'post-card-author';
                     authorDiv.innerHTML = `
-                        <div class="avatar-xs"><img src="${parsed.author.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(parsed.author.username) + '&background=667eea&color=fff&size=32'}" alt="avatar" /></div>
+                        <div class="avatar-xs" data-action="view-profile" data-user-id="${parsed.author.id}" style="cursor:pointer;"><img src="${parsed.author.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(parsed.author.username) + '&background=667eea&color=fff&size=32'}" alt="avatar" /></div>
                         <span>${getUserDisplayName(parsed.author)}</span>
                         <span style="font-size:12px;color:var(--text-light);">${new Date(parsed.created_at).toLocaleString()}</span>
                     `;
@@ -640,16 +662,12 @@
                     .channel('chat-' + currentUser.id + '-' + otherUserId)
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
                         const newMsg = payload.new;
-                        // 只接收与当前对话相关的消息
                         if ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === otherUserId) ||
                             (newMsg.sender_id === otherUserId && newMsg.receiver_id === currentUser.id)) {
-                            // 检查是否已存在（防止重复）
                             if (!chatMessages.some(m => m.id === newMsg.id)) {
                                 chatMessages.push(newMsg);
                                 chatMessagesDiv.appendChild(createMessageElement(newMsg));
                                 scrollToBottom();
-
-                                // 标记为已读
                                 if (newMsg.receiver_id === currentUser.id) {
                                     supabaseClient
                                         .from('messages')
