@@ -7,6 +7,32 @@
 (function() {
     console.log('[必看] app.js 开始加载');
 
+    // ---------- 内置工具函数（防止外部缺失） ----------
+    function timeAgo(dateStr) {
+        if (!dateStr) return '';
+        const now = new Date();
+        const date = new Date(dateStr);
+        const seconds = Math.floor((now - date) / 1000);
+        if (seconds < 60) return '刚刚';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + '分钟前';
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + '小时前';
+        const days = Math.floor(hours / 24);
+        if (days < 30) return days + '天前';
+        const months = Math.floor(days / 30);
+        if (months < 12) return months + '个月前';
+        return new Date(dateStr).toLocaleDateString();
+    }
+
+    function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
     const cfg = window.BikanConfig;
     const comp = window.BikanComponents;
     const { supabaseClient, sdkReady, ROUTES, EXPLORE_TABS, FILE_TYPES } = cfg;
@@ -53,6 +79,7 @@
                 return;
             }
             currentUser = profile;
+            console.log('[必看] 当前用户:', currentUser.username || currentUser.id);
 
             if (currentUser.is_banned) addBannedOverlay();
 
@@ -65,13 +92,6 @@
             });
             setupGlobalEventDelegation();
             setupRealtimeSubscriptions();
-
-            // 页面关闭前更新在线状态
-            window.addEventListener('beforeunload', async () => {
-                if (currentUser) {
-                    await supabaseClient.from('profiles').update({ is_online: false }).eq('id', currentUser.id);
-                }
-            });
         } catch (e) {
             console.error('初始化失败', e);
             showToast('初始化失败: ' + e.message, 'error');
@@ -170,7 +190,7 @@
     function setupRealtimeSubscriptions() {
         if (!supabaseClient) return;
 
-        // 1. 私信
+        // 私信
         const msgChannel = supabaseClient
             .channel('private-messages-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
@@ -179,7 +199,7 @@
             }).subscribe();
         realtimeChannels.push(msgChannel);
 
-        // 2. 通知
+        // 通知
         const notifChannel = supabaseClient
             .channel('notifications-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
@@ -188,7 +208,7 @@
             }).subscribe();
         realtimeChannels.push(notifChannel);
 
-        // 3. 好友请求
+        // 好友请求
         const friendReqChannel = supabaseClient
             .channel('friend-requests-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friend_requests' }, (payload) => {
@@ -197,7 +217,7 @@
             }).subscribe();
         realtimeChannels.push(friendReqChannel);
 
-        // 4. 帖子计数更新（点赞/评论/收藏数变化）
+        // 帖子计数更新
         const postUpdateChannel = supabaseClient
             .channel('posts-updates')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
@@ -208,10 +228,7 @@
             }).subscribe();
         realtimeChannels.push(postUpdateChannel);
 
-        // 5. 新评论实时显示（若在帖子详情页则忽略，由 post-detail.html 处理）
-        // 这里不做处理，避免重复，post-detail.html 自行订阅
-
-        // 6. 新公告实时显示在首页
+        // 新公告
         const announcementChannel = supabaseClient
             .channel('announcements-updates')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, (payload) => {
@@ -219,23 +236,20 @@
             }).subscribe();
         realtimeChannels.push(announcementChannel);
 
-        // 7. 用户在线状态和资料更新
+        // 用户资料更新
         const profileChannel = supabaseClient
             .channel('profiles-updates')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
                 const updatedProfile = payload.new;
-                // 更新侧边栏当前用户资料
                 if (updatedProfile.id === currentUser.id) {
                     currentUser = { ...currentUser, ...updatedProfile };
                     renderSidebar();
                 }
-                // 更新帖子卡片上的用户头像/昵称
                 updateUserInfoInPosts(updatedProfile);
             }).subscribe();
         realtimeChannels.push(profileChannel);
     }
 
-    // 更新帖子卡片上的计数
     function updatePostCardCounts(updatedPost) {
         const likeBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="like"]`);
         const commentBtns = document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="comment"]`);
@@ -255,7 +269,6 @@
         });
     }
 
-    // 更新帖子卡片上的用户资料
     function updateUserInfoInPosts(updatedProfile) {
         const userNames = document.querySelectorAll(`[data-user-id="${updatedProfile.id}"] .post-user-name`);
         userNames.forEach(el => {
@@ -419,7 +432,10 @@
         if (!posts.length && !topics.length) { container.innerHTML = '<p>暂无推荐内容</p>'; return; }
         container.innerHTML = '';
         for (const post of posts) {
-            const [likeRes, favRes] = await Promise.all([...]);
+            const [likeRes, favRes] = await Promise.all([
+                supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
+                supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle()
+            ]);
             post.liked_by_me = !!likeRes.data; post.favorited_by_me = !!favRes.data; post.is_owner = post.user_id === currentUser.id;
             container.appendChild(renderPostCard(post));
         }
@@ -555,12 +571,12 @@
         data.forEach(n => container.appendChild(renderNotificationItem(n)));
     }
 
-    // ---------- 他人主页（跳转到独立页面）----------
+    // ---------- 他人主页（跳转）----------
     function viewUserProfile(userId) {
         window.location.href = 'post-detail.html?type=user&id=' + userId;
     }
 
-    // ---------- 个人与设置（退出按钮只在个人资料tab）----------
+    // ---------- 个人与设置 ----------
     async function renderProfile() {
         mainContent.innerHTML = `<div class="page-header"><div class="page-title">个人与设置</div></div>
             <div class="profile-header" style="display:flex;align-items:center;gap:20px;margin-bottom:20px;">${getUserAvatarHTML(currentUser,'avatar-lg')}<div><h2>${getUserDisplayName(currentUser)}</h2><p>${getUserHandle(currentUser)}</p><p style="color:var(--text-secondary);">${currentUser.bio||'暂无简介'}</p><p style="font-size:13px;color:var(--text-light);">注册于 ${new Date(currentUser.created_at).toLocaleDateString()}</p></div></div>
