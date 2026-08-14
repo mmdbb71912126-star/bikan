@@ -271,7 +271,6 @@
                     } else {
                         await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
                     }
-                    // 重新加载详情页，确保计数和状态正确
                     await loadPostDetail(postId);
                 } finally {
                     isTogglingLike = false;
