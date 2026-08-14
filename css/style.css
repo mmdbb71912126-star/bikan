@@ -309,6 +309,7 @@ body.fullscreen-app .main-content { width: 100%; height: 100vh; padding: 20px; }
 .action-btn.liked { color: var(--danger); }
 .action-btn.favorited { color: var(--warning); }
 .action-btn svg { width: 18px; height: 18px; }
+.action-btn .count { display: inline-block; min-width: 20px; text-align: center; }
 
 /* 评论 */
 .comments-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
@@ -347,11 +348,7 @@ body.fullscreen-app .main-content { width: 100%; height: 100vh; padding: 20px; }
 .user-card-actions { display: flex; gap: 6px; }
 
 /* 私聊按钮对齐 */
-.chat-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px;
-}
+.chat-btn { display: inline-flex !important; align-items: center !important; gap: 6px; }
 .chat-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
 
 /* 话题卡片 */
@@ -410,12 +407,7 @@ body.fullscreen-app .main-content { width: 100%; height: 100vh; padding: 20px; }
 .banned-overlay .banned-text { font-size: 24px; color: red; opacity: 0.5; font-weight: 700; }
 
 /* 锁图标 */
-.lock-icon {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--text-light);
-}
+.lock-icon { display: inline-flex; align-items: center; gap: 4px; color: var(--text-light); }
 
 /* 三个点菜单 */
 .more-menu {
