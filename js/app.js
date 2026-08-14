@@ -7,7 +7,7 @@
 (function() {
     console.log('[必看] app.js 开始加载');
 
-    // ---------- 内置工具函数（防止外部缺失） ----------
+    // ---------- 内置工具函数 ----------
     function timeAgo(dateStr) {
         if (!dateStr) return '';
         const now = new Date();
@@ -42,11 +42,11 @@
     let currentUserAuth = null;
     let currentRoute = ROUTES.EXPLORE;
     let currentTab = EXPLORE_TABS.SQUARE;
-    let currentTopicId = null;
-    let currentPostId = null;
     let notificationsUnread = 0;
     let unreadMessages = 0;
     let unreadFriendRequests = 0;
+    let isTogglingLike = false;
+    let isTogglingFavorite = false;
     let realtimeChannels = [];
 
     const appContainer = document.getElementById('app');
@@ -79,7 +79,6 @@
                 return;
             }
             currentUser = profile;
-            console.log('[必看] 当前用户:', currentUser.username || currentUser.id);
 
             if (currentUser.is_banned) addBannedOverlay();
 
@@ -106,7 +105,7 @@
         document.body.appendChild(overlay);
     }
 
-    // ---------- 加载所有未读计数 ----------
+    // ---------- 加载未读计数 ----------
     async function loadUnreadCounts() {
         if (!currentUser) return;
         await Promise.all([loadUnreadNotifications(), loadUnreadMessages(), loadUnreadFriendRequests()]);
@@ -190,7 +189,6 @@
     function setupRealtimeSubscriptions() {
         if (!supabaseClient) return;
 
-        // 私信
         const msgChannel = supabaseClient
             .channel('private-messages-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
@@ -199,7 +197,6 @@
             }).subscribe();
         realtimeChannels.push(msgChannel);
 
-        // 通知
         const notifChannel = supabaseClient
             .channel('notifications-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
@@ -208,7 +205,6 @@
             }).subscribe();
         realtimeChannels.push(notifChannel);
 
-        // 好友请求
         const friendReqChannel = supabaseClient
             .channel('friend-requests-' + currentUser.id)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friend_requests' }, (payload) => {
@@ -217,7 +213,6 @@
             }).subscribe();
         realtimeChannels.push(friendReqChannel);
 
-        // 帖子计数更新
         const postUpdateChannel = supabaseClient
             .channel('posts-updates')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
@@ -228,7 +223,6 @@
             }).subscribe();
         realtimeChannels.push(postUpdateChannel);
 
-        // 新公告
         const announcementChannel = supabaseClient
             .channel('announcements-updates')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, (payload) => {
@@ -236,7 +230,6 @@
             }).subscribe();
         realtimeChannels.push(announcementChannel);
 
-        // 用户资料更新
         const profileChannel = supabaseClient
             .channel('profiles-updates')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
@@ -271,17 +264,11 @@
 
     function updateUserInfoInPosts(updatedProfile) {
         const userNames = document.querySelectorAll(`[data-user-id="${updatedProfile.id}"] .post-user-name`);
-        userNames.forEach(el => {
-            if (updatedProfile.nickname) el.textContent = updatedProfile.nickname;
-        });
+        userNames.forEach(el => { if (updatedProfile.nickname) el.textContent = updatedProfile.nickname; });
         const userHandles = document.querySelectorAll(`[data-user-id="${updatedProfile.id}"] .post-user-id`);
-        userHandles.forEach(el => {
-            if (updatedProfile.username) el.textContent = '@' + updatedProfile.username;
-        });
+        userHandles.forEach(el => { if (updatedProfile.username) el.textContent = '@' + updatedProfile.username; });
         const avatars = document.querySelectorAll(`[data-user-id="${updatedProfile.id}"] .avatar img, [data-user-id="${updatedProfile.id}"] .avatar-sm img`);
-        avatars.forEach(img => {
-            if (updatedProfile.avatar_url) img.src = updatedProfile.avatar_url;
-        });
+        avatars.forEach(img => { if (updatedProfile.avatar_url) img.src = updatedProfile.avatar_url; });
     }
 
     // ---------- 渲染侧边栏 ----------
@@ -932,54 +919,75 @@
         sidebarNav.addEventListener('click', (e) => { const navItem = e.target.closest('.nav-item'); if(navItem){ exitFullscreen(); navigateTo(navItem.dataset.route); } });
     }
 
-    // ---------- 点赞/收藏切换（更新按钮UI）----------
+    // ---------- 点赞/收藏切换（带锁和重新查询）----------
     async function toggleLike(postId, btn) {
-        const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-        if (existing.data) {
-            await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-            if (btn) {
-                btn.classList.remove('liked');
+        if (isTogglingLike) return;
+        isTogglingLike = true;
+        if (btn) btn.disabled = true;
+        try {
+            const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+            if (existing.data) {
+                await supabaseClient.from('likes').delete().eq('id', existing.data.id);
+            } else {
+                await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
+            }
+            // 重新查询最新计数
+            const { data: freshPost } = await supabaseClient
+                .from('posts')
+                .select('like_count, favorite_count, comment_count')
+                .eq('id', postId)
+                .single();
+            if (freshPost && btn) {
                 const countSpan = btn.querySelector('.count');
-                if (countSpan) {
-                    const newCount = Math.max(0, parseInt(countSpan.textContent) - 1);
-                    btn.innerHTML = `${Icons.heart}<span class="count">${newCount}</span>`;
+                if (countSpan) countSpan.textContent = freshPost.like_count || 0;
+                // 更新按钮状态
+                const { data: likeCheck } = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+                if (likeCheck) {
+                    btn.classList.add('liked');
+                    btn.innerHTML = `${Icons.heartFilled}<span class="count">${freshPost.like_count || 0}</span>`;
+                } else {
+                    btn.classList.remove('liked');
+                    btn.innerHTML = `${Icons.heart}<span class="count">${freshPost.like_count || 0}</span>`;
                 }
             }
-        } else {
-            await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
-            if (btn) {
-                btn.classList.add('liked');
-                const countSpan = btn.querySelector('.count');
-                if (countSpan) {
-                    const newCount = parseInt(countSpan.textContent) + 1;
-                    btn.innerHTML = `${Icons.heartFilled}<span class="count">${newCount}</span>`;
-                }
-            }
+        } finally {
+            isTogglingLike = false;
+            if (btn) btn.disabled = false;
         }
     }
 
     async function toggleFavorite(postId, btn) {
-        const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-        if (existing.data) {
-            await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
-            if (btn) {
-                btn.classList.remove('favorited');
+        if (isTogglingFavorite) return;
+        isTogglingFavorite = true;
+        if (btn) btn.disabled = true;
+        try {
+            const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+            if (existing.data) {
+                await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
+            } else {
+                await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
+            }
+            // 重新查询最新计数
+            const { data: freshPost } = await supabaseClient
+                .from('posts')
+                .select('like_count, favorite_count, comment_count')
+                .eq('id', postId)
+                .single();
+            if (freshPost && btn) {
                 const countSpan = btn.querySelector('.count');
-                if (countSpan) {
-                    const newCount = Math.max(0, parseInt(countSpan.textContent) - 1);
-                    btn.innerHTML = `${Icons.bookmark}<span class="count">${newCount}</span>`;
+                if (countSpan) countSpan.textContent = freshPost.favorite_count || 0;
+                const { data: favCheck } = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
+                if (favCheck) {
+                    btn.classList.add('favorited');
+                    btn.innerHTML = `${Icons.bookmarkFilled}<span class="count">${freshPost.favorite_count || 0}</span>`;
+                } else {
+                    btn.classList.remove('favorited');
+                    btn.innerHTML = `${Icons.bookmark}<span class="count">${freshPost.favorite_count || 0}</span>`;
                 }
             }
-        } else {
-            await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
-            if (btn) {
-                btn.classList.add('favorited');
-                const countSpan = btn.querySelector('.count');
-                if (countSpan) {
-                    const newCount = parseInt(countSpan.textContent) + 1;
-                    btn.innerHTML = `${Icons.bookmarkFilled}<span class="count">${newCount}</span>`;
-                }
-            }
+        } finally {
+            isTogglingFavorite = false;
+            if (btn) btn.disabled = false;
         }
     }
 
@@ -987,23 +995,13 @@
         const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
         if (existing.data) {
             await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-            if (btn) {
-                const countSpan = btn.querySelector('span');
-                if (countSpan) {
-                    const newCount = Math.max(0, parseInt(countSpan.textContent) - 1);
-                    btn.innerHTML = `${Icons.heart}<span>${newCount}</span>`;
-                }
-            }
         } else {
             await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
-            if (btn) {
-                const countSpan = btn.querySelector('span');
-                if (countSpan) {
-                    const newCount = parseInt(countSpan.textContent) + 1;
-                    btn.innerHTML = `${Icons.heartFilled}<span>${newCount}</span>`;
-                }
-            }
         }
+        // 刷新评论列表
+        const postId = document.getElementById('commentsList')?.dataset.postId;
+        const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
+        if (postId) loadComments(postId, postAuthorId);
     }
 
     // ---------- 弹窗 ----------
