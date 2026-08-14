@@ -99,7 +99,7 @@ function getUserHandle(profile) {
 }
 
 // ============================================================
-// 帖子卡片渲染（操作按钮：点赞/收藏状态正确显示）
+// 帖子卡片渲染（分享按钮只显示图标，不显示文字）
 // ============================================================
 function renderPostCard(post, options = {}) {
     const { showActions = true, isDetail = false } = options;
@@ -142,8 +142,8 @@ function renderPostCard(post, options = {}) {
             <button class="action-btn comment-btn" data-post-id="${post.id}" data-action="comment">
                 ${Icons.comment}<span class="count">${post.comment_count || 0}</span>
             </button>
-            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share">
-                ${Icons.share}<span>分享</span>
+            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share" title="分享">
+                ${Icons.share}
             </button>
             <button class="${favClass}" data-post-id="${post.id}" data-action="favorite">
                 ${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}
@@ -175,7 +175,7 @@ function renderPostCard(post, options = {}) {
 }
 
 // ============================================================
-// 评论渲染（头像修正 + 二级回复无回复按钮 + 分享）
+// 评论渲染（分享按钮只显示图标）
 // ============================================================
 function renderCommentItem(comment, options = {}) {
     const { isReply = false } = options;
@@ -190,7 +190,6 @@ function renderCommentItem(comment, options = {}) {
     let replyText = '';
     if (comment.parent_id && replyTo) replyText = `<span class="comment-reply-to">回复了 @${replyTo} 的评论</span>`;
 
-    // 只有一级评论有回复按钮
     const showReplyBtn = !comment.parent_id;
 
     const item = createElement('div', 'comment-item' + (isReply ? ' comment-reply' : ''), `
@@ -205,7 +204,7 @@ function renderCommentItem(comment, options = {}) {
         <div class="comment-actions">
             <button class="action-btn" data-comment-id="${comment.id}" data-action="like-comment">${comment.liked_by_me ? Icons.heartFilled : Icons.heart}<span>${comment.like_count || 0}</span></button>
             ${showReplyBtn ? `<button class="action-btn" data-comment-id="${comment.id}" data-action="reply-comment">${Icons.comment} 回复</button>` : ''}
-            <button class="action-btn" data-comment-id="${comment.id}" data-action="share-comment">${Icons.share} 分享</button>
+            <button class="action-btn" data-comment-id="${comment.id}" data-action="share-comment" title="分享">${Icons.share}</button>
             <button class="action-btn" data-comment-id="${comment.id}" data-action="report-comment">${Icons.flag} 举报</button>
         </div>
     `);
