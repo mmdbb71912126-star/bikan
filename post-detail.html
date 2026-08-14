@@ -72,7 +72,7 @@
                 window.location.href = 'app.html';
             }
 
-            // ---------- 实时订阅（仅用于新评论和新讨论） ----------
+            // ---------- 实时订阅（包含帖子计数更新） ----------
             function setupRealtime() {
                 if (!supabaseClient || !id) return;
 
@@ -84,6 +84,35 @@
                                 const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
                                 if (postAuthorId) loadComments(id, postAuthorId);
                             }
+                        })
+                        .subscribe();
+
+                    // ============================================================
+                    // 订阅帖子计数更新（实时同步点赞/收藏/评论数）
+                    // ============================================================
+                    supabaseClient
+                        .channel('post-detail-counts-' + id)
+                        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+                            const updatedPost = payload.new;
+                            if (updatedPost.id !== id) return;
+
+                            // 更新点赞按钮数字
+                            document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="like"]`).forEach(btn => {
+                                const countSpan = btn.querySelector('.count');
+                                if (countSpan) countSpan.textContent = updatedPost.like_count || 0;
+                            });
+
+                            // 更新收藏按钮数字
+                            document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`).forEach(btn => {
+                                const countSpan = btn.querySelector('.count');
+                                if (countSpan) countSpan.textContent = updatedPost.favorite_count || 0;
+                            });
+
+                            // 更新评论按钮数字
+                            document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="comment"]`).forEach(btn => {
+                                const countSpan = btn.querySelector('.count');
+                                if (countSpan) countSpan.textContent = updatedPost.comment_count || 0;
+                            });
                         })
                         .subscribe();
                 }
@@ -271,7 +300,6 @@
                     } else {
                         await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
                     }
-                    // 重新加载详情页，确保计数和按钮状态正确
                     await loadPostDetail(postId);
                 } finally {
                     isTogglingLike = false;
@@ -308,6 +336,7 @@
             }
 
             function showShareModal(postId) {
+                document.querySelector('.modal-overlay')?.remove();
                 supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id).then(async ({ data }) => {
                     const friends = data.map(d => d.following);
                     let friendOptions = '';
@@ -324,6 +353,7 @@
             }
 
             function showReportModal(targetType, targetId) {
+                document.querySelector('.modal-overlay')?.remove();
                 const reasonOptions = ['血腥', '恶意病毒文件', '政治', '招嫖', '诈骗', '其他'];
                 const content = `<div class="form-group"><label>举报原因</label><select id="reportReason">${reasonOptions.map(r => `<option value="${r}">${r}</option>`).join('')}</select></div><div class="form-group"><label>详细描述</label><textarea id="reportDesc"></textarea></div><div class="form-group"><label>图片证据（可选）</label><input type="file" id="reportEvidence" accept="image/*" multiple></div><button class="btn btn-danger" id="submitReportBtn">提交举报</button>`;
                 const modal = comp.openModal('举报', content);
@@ -338,6 +368,7 @@
             }
 
             async function showEditPostModal(postId) {
+                document.querySelector('.modal-overlay')?.remove();
                 const { data: post } = await supabaseClient.from('posts').select('*').eq('id', postId).single();
                 if (!post) return;
                 const content = `<div class="form-group"><label>内容</label><textarea id="editPostContent">${post.content || ''}</textarea></div><button class="btn btn-primary" id="saveEditBtn">保存修改</button>`;
@@ -351,6 +382,7 @@
             }
 
             async function shareComment(commentId) {
+                document.querySelector('.modal-overlay')?.remove();
                 const { data: comment } = await supabaseClient.from('comments').select('content, post_id').eq('id', commentId).single();
                 if (!comment) return;
                 const shareContent = comment.content || '';
