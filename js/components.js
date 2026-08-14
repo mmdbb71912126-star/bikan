@@ -99,7 +99,7 @@ function getUserHandle(profile) {
 }
 
 // ============================================================
-// 帖子卡片渲染（分享按钮只显示图标，不显示文字）
+// 帖子卡片渲染（收藏和分享按钮位置互换）
 // ============================================================
 function renderPostCard(post, options = {}) {
     const { showActions = true, isDetail = false } = options;
@@ -142,12 +142,12 @@ function renderPostCard(post, options = {}) {
             <button class="action-btn comment-btn" data-post-id="${post.id}" data-action="comment">
                 ${Icons.comment}<span class="count">${post.comment_count || 0}</span>
             </button>
-            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share" title="分享">
-                ${Icons.share}
-            </button>
             <button class="${favClass}" data-post-id="${post.id}" data-action="favorite">
                 ${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}
                 <span class="count">${post.favorite_count || 0}</span>
+            </button>
+            <button class="action-btn share-btn" data-post-id="${post.id}" data-action="share" title="分享">
+                ${Icons.share}
             </button>
             <button class="action-btn report-btn" data-post-id="${post.id}" data-action="report">${Icons.flag}</button>
         </div>`;
@@ -175,7 +175,7 @@ function renderPostCard(post, options = {}) {
 }
 
 // ============================================================
-// 评论渲染（分享按钮只显示图标）
+// 评论渲染
 // ============================================================
 function renderCommentItem(comment, options = {}) {
     const { isReply = false } = options;
@@ -213,7 +213,7 @@ function renderCommentItem(comment, options = {}) {
 }
 
 // ============================================================
-// 通知渲染（不显示头像）
+// 通知渲染
 // ============================================================
 function renderNotificationItem(notification) {
     const timeStr = timeAgo(notification.created_at);
@@ -274,7 +274,7 @@ function renderUserCard(user, options = {}) {
 }
 
 // ============================================================
-// 话题卡片（不显示创建者头像）
+// 话题卡片
 // ============================================================
 function renderTopicCard(topic, options = {}) {
     const timeStr = timeAgo(topic.created_at);
