@@ -52,11 +52,16 @@
 
                 document.getElementById('backBtn').addEventListener('click', goBack);
 
-                if (type === 'post') await loadPostDetail(id);
-                else if (type === 'topic') await loadTopicDetail(id);
-                else if (type === 'announcement') await loadAnnouncementDetail(id);
-                else if (type === 'user') await loadUserProfile(id);
-                else showToast('未知类型', 'error');
+                try {
+                    if (type === 'post') await loadPostDetail(id);
+                    else if (type === 'topic') await loadTopicDetail(id);
+                    else if (type === 'announcement') await loadAnnouncementDetail(id);
+                    else if (type === 'user') await loadUserProfile(id);
+                    else showToast('未知类型', 'error');
+                } catch (e) {
+                    console.error('详情加载失败', e);
+                    document.getElementById('detailContainer').innerHTML = '<p>加载失败：' + e.message + '</p>';
+                }
 
                 setupRealtime();
             }
@@ -69,26 +74,31 @@
             function setupRealtime() {
                 if (!supabaseClient || !id) return;
 
-                // 帖子计数更新（点赞/评论/收藏数）
-                const postChannel = supabaseClient
-                    .channel('post-detail-updates-' + id)
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
-                        if (type === 'post' && payload.new.id === id) {
-                            updatePostCounts(payload.new);
-                        }
-                    })
-                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
-                        if (type === 'post' && payload.new.post_id === id) {
-                            const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
-                            if (postAuthorId) loadComments(id, postAuthorId);
-                        }
-                    })
-                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'topic_posts' }, (payload) => {
-                        if (type === 'topic' && payload.new.topic_id === id) {
-                            loadTopicPosts(id);
-                        }
-                    })
-                    .subscribe();
+                // 帖子详情：监听帖子更新（计数）和新评论
+                if (type === 'post') {
+                    supabaseClient
+                        .channel('post-detail-realtime-' + id)
+                        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+                            if (payload.new.id === id) updatePostCounts(payload.new);
+                        })
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
+                            if (payload.new.post_id === id) {
+                                const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
+                                if (postAuthorId) loadComments(id, postAuthorId);
+                            }
+                        })
+                        .subscribe();
+                }
+
+                // 话题详情：监听新讨论
+                if (type === 'topic') {
+                    supabaseClient
+                        .channel('topic-detail-realtime-' + id)
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'topic_posts' }, (payload) => {
+                            if (payload.new.topic_id === id) loadTopicPosts(id);
+                        })
+                        .subscribe();
+                }
             }
 
             function updatePostCounts(updatedPost) {
@@ -119,7 +129,10 @@
                     .select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)')
                     .eq('id', postId)
                     .single();
-                if (error || !post) return container.innerHTML = '<p>帖子不存在</p>';
+                if (error || !post) {
+                    container.innerHTML = '<p>帖子不存在</p>';
+                    return;
+                }
 
                 await supabaseClient.from('view_history').upsert({ user_id: currentUser.id, post_id: postId, viewed_at: new Date().toISOString() }, { onConflict: 'user_id,post_id' });
 
@@ -130,6 +143,9 @@
                 post.liked_by_me = !!likeRes.data;
                 post.favorited_by_me = !!favRes.data;
                 post.is_owner = post.user_id === currentUser.id;
+
+                // 清空容器
+                container.innerHTML = '';
 
                 if (currentUser.is_admin && post.public_id) {
                     const idTag = document.createElement('div');
@@ -161,13 +177,21 @@
 
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
+                if (!listDiv) return;
                 listDiv.innerHTML = '加载中...';
                 const { data, error } = await supabaseClient
                     .from('comments')
                     .select('*, profiles:user_id(id, username, nickname, avatar_url, is_banned), reply_to_user:reply_to_user_id(id, username, nickname, is_banned)')
                     .eq('post_id', postId)
                     .order('created_at', { ascending: true });
-                if (error || !data.length) return listDiv.innerHTML = '<p>暂无评论</p>';
+                if (error) {
+                    listDiv.innerHTML = '<p>加载评论失败</p>';
+                    return;
+                }
+                if (!data.length) {
+                    listDiv.innerHTML = '<p>暂无评论</p>';
+                    return;
+                }
                 listDiv.innerHTML = '';
                 listDiv.dataset.postId = postId;
                 listDiv.dataset.postAuthorId = postAuthorId;
@@ -262,41 +286,19 @@
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                 if (existing.data) {
                     await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-                    const likeBtn = document.querySelector(`[data-post-id="${postId}"][data-action="like"]`);
-                    if (likeBtn) {
-                        likeBtn.classList.remove('liked');
-                        const countSpan = likeBtn.querySelector('.count');
-                        if (countSpan) countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
-                    }
                 } else {
                     await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
-                    const likeBtn = document.querySelector(`[data-post-id="${postId}"][data-action="like"]`);
-                    if (likeBtn) {
-                        likeBtn.classList.add('liked');
-                        const countSpan = likeBtn.querySelector('.count');
-                        if (countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;
-                    }
                 }
+                // 实时更新会由订阅处理，但为了保险，手动刷新一次？不，订阅会自动更新。但如果没有订阅，需要手动更新。
+                // 我们直接重新加载帖子数据，但避免重渲染整个评论区
             }
 
             async function toggleFavorite(postId) {
                 const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                 if (existing.data) {
                     await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
-                    const favBtn = document.querySelector(`[data-post-id="${postId}"][data-action="favorite"]`);
-                    if (favBtn) {
-                        favBtn.classList.remove('favorited');
-                        const countSpan = favBtn.querySelector('.count');
-                        if (countSpan) countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
-                    }
                 } else {
                     await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
-                    const favBtn = document.querySelector(`[data-post-id="${postId}"][data-action="favorite"]`);
-                    if (favBtn) {
-                        favBtn.classList.add('favorited');
-                        const countSpan = favBtn.querySelector('.count');
-                        if (countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;
-                    }
                 }
             }
 
@@ -304,17 +306,13 @@
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
                 if (existing.data) {
                     await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-                    const likeBtn = document.querySelector(`[data-comment-id="${commentId}"][data-action="like-comment"]`);
-                    if (likeBtn) {
-                        likeBtn.innerHTML = `${comp.Icons.heart}<span>${Math.max(0, parseInt(likeBtn.querySelector('span')?.textContent) - 1)}</span>`;
-                    }
                 } else {
                     await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
-                    const likeBtn = document.querySelector(`[data-comment-id="${commentId}"][data-action="like-comment"]`);
-                    if (likeBtn) {
-                        likeBtn.innerHTML = `${comp.Icons.heartFilled}<span>${parseInt(likeBtn.querySelector('span')?.textContent) + 1}</span>`;
-                    }
                 }
+                // 刷新评论列表以更新图标
+                const postId = document.getElementById('commentsList')?.dataset.postId;
+                const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
+                if (postId) loadComments(postId, postAuthorId);
             }
 
             function showShareModal(postId) {
@@ -355,7 +353,8 @@
                 modal.querySelector('#saveEditBtn').addEventListener('click', async () => {
                     const newContent = modal.querySelector('#editPostContent').value;
                     await supabaseClient.from('posts').update({ content: newContent, is_edited: true, edited_at: new Date().toISOString() }).eq('id', postId);
-                    modal.remove(); showToast('已更新', 'success'); loadPostDetail(postId);
+                    modal.remove(); showToast('已更新', 'success');
+                    loadPostDetail(postId);
                 });
             }
 
