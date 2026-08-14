@@ -100,7 +100,7 @@ function getUserHandle(profile) {
 }
 
 // ============================================================
-// 帖子卡片渲染
+// 帖子卡片渲染（操作按钮：分享合并转发）
 // ============================================================
 function renderPostCard(post, options = {}) {
     const { showActions = true, isDetail = false } = options;
@@ -164,12 +164,12 @@ function renderPostCard(post, options = {}) {
 }
 
 // ============================================================
-// 评论渲染（头像修正 + 添加分享按钮）
+// 评论渲染（头像修正 + 分享按钮）
 // ============================================================
 function renderCommentItem(comment, options = {}) {
     const { isReply = false } = options;
     const user = comment.profiles || comment.user || {};
-    const avatarHTML = getUserAvatarHTML(user, 'avatar-sm');  // 使用小头像
+    const avatarHTML = getUserAvatarHTML(user, 'avatar-sm');  // 小头像
     const displayName = getUserDisplayName(user);
     const handle = getUserHandle(user);
     const timeStr = timeAgo(comment.created_at);
