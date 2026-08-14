@@ -193,7 +193,7 @@
         } else { if (badge) badge.remove(); }
     }
 
-    // ---------- 实时订阅（仅用于消息、通知等，不订阅帖子计数以避免冲突） ----------
+    // ---------- 实时订阅（包含帖子计数实时更新） ----------
     function setupRealtimeSubscriptions() {
         if (!supabaseClient) return;
 
@@ -223,6 +223,35 @@
                 if (newReq.receiver_id === currentUser.id) { unreadFriendRequests++; updateAllBadges(); }
             }).subscribe();
         realtimeChannels.push(friendReqChannel);
+
+        // ============================================================
+        // 重新启用帖子计数实时更新（只改数字，不改状态）
+        // ============================================================
+        const postUpdateChannel = supabaseClient
+            .channel('posts-counts-updates')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+                const updatedPost = payload.new;
+
+                // 1. 更新所有点赞按钮的数字（不改变 liked 类）
+                document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="like"]`).forEach(btn => {
+                    const countSpan = btn.querySelector('.count');
+                    if (countSpan) countSpan.textContent = updatedPost.like_count || 0;
+                });
+
+                // 2. 更新所有收藏按钮的数字（不改变 favorited 类）
+                document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="favorite"]`).forEach(btn => {
+                    const countSpan = btn.querySelector('.count');
+                    if (countSpan) countSpan.textContent = updatedPost.favorite_count || 0;
+                });
+
+                // 3. 更新所有评论按钮的数字
+                document.querySelectorAll(`[data-post-id="${updatedPost.id}"][data-action="comment"]`).forEach(btn => {
+                    const countSpan = btn.querySelector('.count');
+                    if (countSpan) countSpan.textContent = updatedPost.comment_count || 0;
+                });
+            })
+            .subscribe();
+        realtimeChannels.push(postUpdateChannel);
 
         // 新公告
         const announcementChannel = supabaseClient
@@ -903,7 +932,7 @@
         sidebarNav.addEventListener('click', (e) => { const navItem = e.target.closest('.nav-item'); if(navItem){ exitFullscreen(); navigateTo(navItem.dataset.route); } });
     }
 
-    // ---------- 点赞/收藏/评论点赞操作（操作后强制刷新页面，确保计数准确）----------
+    // ---------- 点赞/收藏/评论点赞（操作后强制刷新） ----------
     async function toggleLike(postId, btn) {
         if (isTogglingLike) return;
         isTogglingLike = true;
@@ -915,7 +944,6 @@
             } else {
                 await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
             }
-            // 强制刷新页面以从数据库获取最新计数
             window.location.reload();
         } finally {
             isTogglingLike = false;
@@ -959,8 +987,11 @@
         }
     }
 
-    // ---------- 弹窗 ----------
+    // ---------- 弹窗（每次打开前移除已有弹窗） ----------
     function showShareModal(postId) {
+        // 移除已有弹窗，防止重叠
+        document.querySelector('.modal-overlay')?.remove();
+
         supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id).then(async ({ data }) => {
             const friends = data.map(d => d.following);
             let friendOptions = '';
@@ -979,7 +1010,11 @@
             });
         });
     }
+
     function showReportModal(targetType, targetId) {
+        // 移除已有弹窗
+        document.querySelector('.modal-overlay')?.remove();
+
         const reasonOptions = ['血腥', '恶意病毒文件', '政治', '招嫖', '诈骗', '其他'];
         const content = `<div class="form-group"><label>举报原因</label><select id="reportReason">${reasonOptions.map(r => `<option value="${r}">${r}</option>`).join('')}</select></div><div class="form-group"><label>详细描述</label><textarea id="reportDesc"></textarea></div><div class="form-group"><label>图片证据（可选）</label><input type="file" id="reportEvidence" accept="image/*" multiple></div><button class="btn btn-danger" id="submitReportBtn">提交举报</button>`;
         const modal = openModal('举报', content);
@@ -992,7 +1027,11 @@
             modal.remove(); showToast('举报已提交', 'success');
         });
     }
+
     async function showEditPostModal(postId) {
+        // 移除已有弹窗
+        document.querySelector('.modal-overlay')?.remove();
+
         const { data: post } = await supabaseClient.from('posts').select('*').eq('id', postId).single();
         if (!post) return;
         const content = `<div class="form-group"><label>内容</label><textarea id="editPostContent">${post.content || ''}</textarea></div><button class="btn btn-primary" id="saveEditBtn">保存修改</button>`;
@@ -1005,6 +1044,9 @@
     }
 
     async function shareComment(commentId) {
+        // 移除已有弹窗
+        document.querySelector('.modal-overlay')?.remove();
+
         const { data: comment } = await supabaseClient.from('comments').select('content, post_id').eq('id', commentId).single();
         if (!comment) return;
         const shareContent = comment.content || '';
