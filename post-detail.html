@@ -22,10 +22,11 @@
         (function() {
             const cfg = window.BikanConfig;
             const comp = window.BikanComponents;
-            const { supabaseClient, sdkReady, uploadFile, showToast } = {
+            const { supabaseClient, sdkReady, uploadFile, uploadFiles, showToast } = {
                 supabaseClient: cfg.supabaseClient,
                 sdkReady: cfg.sdkReady,
                 uploadFile: cfg.uploadFile,
+                uploadFiles: cfg.uploadFiles,
                 showToast: comp.showToast
             };
 
@@ -59,11 +60,7 @@
             }
 
             function goBack() {
-                if (type === 'user') {
-                    window.location.href = 'app.html';
-                } else {
-                    window.location.href = 'app.html';
-                }
+                window.location.href = 'app.html';
             }
 
             // ==================== 帖子详情 ====================
@@ -112,11 +109,11 @@
                     </div>`;
                 container.appendChild(commentsSection);
 
-                await loadComments(postId);
-                bindPostActions(postId, container);
+                await loadComments(postId, post.user_id);
+                bindPostActions(postId, post.user_id, container);
             }
 
-            async function loadComments(postId) {
+            async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
                 listDiv.innerHTML = '加载中...';
                 const { data, error } = await supabaseClient
@@ -129,18 +126,34 @@
                 const mainComments = data.filter(c => !c.parent_id);
                 const replies = data.filter(c => c.parent_id);
                 mainComments.forEach(comment => {
-                    listDiv.appendChild(comp.renderCommentItem(comment));
+                    listDiv.appendChild(renderCommentWithDelete(comment, postAuthorId, false));
                     const commentReplies = replies.filter(r => r.parent_id === comment.id);
                     commentReplies.forEach(reply => {
-                        const replyEl = comp.renderCommentItem(reply, { isReply: true });
+                        const replyEl = renderCommentWithDelete(reply, postAuthorId, true);
                         replyEl.style.marginLeft = '24px';
                         listDiv.appendChild(replyEl);
                     });
                 });
                 listDiv.dataset.postId = postId;
+                listDiv.dataset.postAuthorId = postAuthorId;
             }
 
-            function bindPostActions(postId, container) {
+            function renderCommentWithDelete(comment, postAuthorId, isReply) {
+                const commentEl = comp.renderCommentItem(comment, { isReply });
+                const canDelete = comment.user_id === currentUser.id || postAuthorId === currentUser.id;
+                if (canDelete) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'action-btn';
+                    deleteBtn.dataset.action = 'delete-comment';
+                    deleteBtn.dataset.commentId = comment.id;
+                    deleteBtn.innerHTML = `${comp.Icons.trash} 删除`;
+                    const actionsDiv = commentEl.querySelector('.comment-actions');
+                    if (actionsDiv) actionsDiv.appendChild(deleteBtn);
+                }
+                return commentEl;
+            }
+
+            function bindPostActions(postId, postAuthorId, container) {
                 container.addEventListener('click', async (e) => {
                     const target = e.target.closest('[data-action]');
                     if (!target) return;
@@ -170,6 +183,13 @@
                     }
                     else if (action === 'share-comment' && commentId) await shareComment(commentId);
                     else if (action === 'report-comment' && commentId) showReportModal('comment', commentId);
+                    else if (action === 'delete-comment' && commentId) {
+                        if (confirm('确认删除这条评论吗？')) {
+                            await supabaseClient.from('comments').delete().eq('id', commentId);
+                            showToast('评论已删除', 'success');
+                            await loadComments(postId, postAuthorId);
+                        }
+                    }
                 });
 
                 document.getElementById('submitCommentBtn').addEventListener('click', async () => {
@@ -186,7 +206,7 @@
                     input.value = '';
                     delete input.dataset.parentId;
                     delete input.dataset.replyToUserId;
-                    await loadComments(postId);
+                    await loadComments(postId, postAuthorId);
                 });
             }
 
@@ -207,7 +227,8 @@
                 if (existing.data) await supabaseClient.from('likes').delete().eq('id', existing.data.id);
                 else await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
                 const postId = document.getElementById('commentsList').dataset.postId;
-                if (postId) loadComments(postId);
+                const postAuthorId = document.getElementById('commentsList').dataset.postAuthorId;
+                if (postId) loadComments(postId, postAuthorId);
             }
 
             function showShareModal(postId) {
@@ -287,9 +308,15 @@
                         <button class="action-btn" data-action="share-topic" data-topic-id="${topic.id}">${comp.Icons.share} 分享</button>
                         <button class="action-btn" data-action="report-topic" data-topic-id="${topic.id}">${comp.Icons.flag} 举报</button>
                     </div>
+                    <div id="topicComposer" style="margin:16px 0;">
+                        <textarea id="topicPostContent" placeholder="发布讨论..." rows="3"></textarea>
+                        <input type="file" id="topicPostFiles" multiple style="margin-top:8px;" />
+                        <button class="btn btn-primary" id="submitTopicPostBtn" style="margin-top:8px;">发布讨论</button>
+                    </div>
                     <h3>讨论</h3>
                     <div id="topicPosts"></div>
                 `;
+
                 // 话题互动按钮
                 container.addEventListener('click', (e) => {
                     const btn = e.target.closest('[data-action]');
@@ -299,10 +326,46 @@
                     else if (btn.dataset.action === 'share-topic') showToast('话题分享开发中', 'info');
                     else if (btn.dataset.action === 'report-topic') showReportModal('topic', topicId);
                 });
-                // 加载话题下帖子
+
+                // 发布讨论
+                document.getElementById('submitTopicPostBtn').addEventListener('click', async () => {
+                    if (currentUser.is_banned) return showToast('你已被封禁，无法发布', 'error');
+                    const content = document.getElementById('topicPostContent').value.trim();
+                    const filesInput = document.getElementById('topicPostFiles');
+                    if (!content && filesInput.files.length === 0) return showToast('请输入内容或选择文件', 'error');
+                    let media = [];
+                    if (filesInput.files.length > 0) {
+                        try {
+                            media = await uploadFiles(filesInput.files, 'posts', 'posts');
+                        } catch (err) {
+                            return showToast('文件上传失败: ' + err.message, 'error');
+                        }
+                    }
+                    const publicId = generatePublicId();
+                    const { data: newPost, error: postError } = await supabaseClient
+                        .from('posts')
+                        .insert({ user_id: currentUser.id, content, media, public_id: publicId })
+                        .select()
+                        .single();
+                    if (postError) return showToast('发布失败: ' + postError.message, 'error');
+                    const { error: linkError } = await supabaseClient
+                        .from('topic_posts')
+                        .insert({ topic_id: topicId, post_id: newPost.id });
+                    if (linkError) return showToast('关联话题失败: ' + linkError.message, 'error');
+                    showToast('讨论已发布', 'success');
+                    document.getElementById('topicPostContent').value = '';
+                    filesInput.value = '';
+                    await loadTopicPosts(topicId);
+                });
+
+                await loadTopicPosts(topicId);
+            }
+
+            async function loadTopicPosts(topicId) {
                 const postsDiv = document.getElementById('topicPosts');
-                const { data: topicPosts, error: postsError } = await supabaseClient.from('topic_posts').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('topic_id', topicId).order('created_at', { ascending: false });
-                if (postsError || !topicPosts?.length) return postsDiv.innerHTML = '<p>暂无讨论</p>';
+                postsDiv.innerHTML = '加载中...';
+                const { data: topicPosts, error } = await supabaseClient.from('topic_posts').select('post:post_id(*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned))').eq('topic_id', topicId).order('created_at', { ascending: false });
+                if (error || !topicPosts?.length) return postsDiv.innerHTML = '<p>暂无讨论</p>';
                 postsDiv.innerHTML = '';
                 const posts = topicPosts.map(tp => tp.post).sort((a,b) => (b.like_count - a.like_count) || (new Date(b.created_at) - new Date(a.created_at)));
                 for (const post of posts) {
@@ -315,7 +378,6 @@
                     post.is_owner = post.user_id === currentUser.id;
                     postsDiv.appendChild(comp.renderPostCard(post));
                 }
-                // 点击帖子卡片跳转帖子详情
                 postsDiv.addEventListener('click', (e) => {
                     const card = e.target.closest('.post-card');
                     if (card && !e.target.closest('[data-action]') && !e.target.closest('.media-item')) {
@@ -406,7 +468,6 @@
                     <div id="userContent"></div>
                 `;
 
-                // 三个点菜单
                 document.getElementById('moreMenuBtn').addEventListener('click', (e) => {
                     e.stopPropagation();
                     const menu = document.createElement('div');
@@ -470,7 +531,6 @@
                     comp.openModal('关注列表', listHtml);
                 });
 
-                // 分享主页
                 document.querySelector('[data-action="share-profile"]')?.addEventListener('click', () => {
                     const url = window.location.origin + '/post-detail.html?type=user&id=' + userId;
                     comp.openModal('分享主页', `<p>复制链接：</p><input type="text" value="${url}" readonly style="width:100%;margin-bottom:12px;" onclick="this.select();document.execCommand('copy');showToast('已复制','success');">`);
@@ -483,7 +543,13 @@
                 });
             }
 
-            // 工具函数
+            function generatePublicId() {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < 8; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+                return result;
+            }
+
             function timeAgo(dateStr) {
                 if (!dateStr) return '';
                 const now = new Date();
