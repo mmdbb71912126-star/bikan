@@ -47,6 +47,7 @@
     let unreadFriendRequests = 0;
     let isTogglingLike = false;
     let isTogglingFavorite = false;
+    let isTogglingCommentLike = false;
     let realtimeChannels = [];
 
     const appContainer = document.getElementById('app');
@@ -79,6 +80,7 @@
                 return;
             }
             currentUser = profile;
+            console.log('[必看] 当前用户:', currentUser.username || currentUser.id);
 
             if (currentUser.is_banned) addBannedOverlay();
 
@@ -111,7 +113,7 @@
         document.body.appendChild(overlay);
     }
 
-    // ---------- 加载未读计数 ----------
+    // ---------- 加载所有未读计数 ----------
     async function loadUnreadCounts() {
         if (!currentUser) return;
         await Promise.all([loadUnreadNotifications(), loadUnreadMessages(), loadUnreadFriendRequests()]);
@@ -191,7 +193,7 @@
         } else { if (badge) badge.remove(); }
     }
 
-    // ---------- 实时订阅（仅用于消息、通知、好友请求等，不订阅帖子计数） ----------
+    // ---------- 实时订阅（仅用于消息、通知等，不订阅帖子计数以避免冲突） ----------
     function setupRealtimeSubscriptions() {
         if (!supabaseClient) return;
 
@@ -901,7 +903,7 @@
         sidebarNav.addEventListener('click', (e) => { const navItem = e.target.closest('.nav-item'); if(navItem){ exitFullscreen(); navigateTo(navItem.dataset.route); } });
     }
 
-    // ---------- 点赞/收藏切换（操作后强制刷新当前视图）----------
+    // ---------- 点赞/收藏/评论点赞操作（操作后强制刷新页面，确保计数准确）----------
     async function toggleLike(postId, btn) {
         if (isTogglingLike) return;
         isTogglingLike = true;
@@ -913,13 +915,7 @@
             } else {
                 await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
             }
-            // 强制重新加载当前视图，确保计数与数据库一致
-            if (currentRoute === ROUTES.EXPLORE) {
-                renderExplore();
-            } else {
-                // 如果在其他路由（如搜索或用户主页），刷新整个当前路由
-                navigateTo(currentRoute);
-            }
+            // 强制刷新页面以从数据库获取最新计数
             window.location.reload();
         } finally {
             isTogglingLike = false;
@@ -938,11 +934,7 @@
             } else {
                 await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
             }
-            if (currentRoute === ROUTES.EXPLORE) {
-                renderExplore();
-            } else {
-                navigateTo(currentRoute);
-            }
+            window.location.reload();
         } finally {
             isTogglingFavorite = false;
             if (btn) btn.disabled = false;
@@ -950,17 +942,20 @@
     }
 
     async function toggleCommentLike(commentId, btn) {
-        const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
-        if (existing.data) {
-            await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-        } else {
-            await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
-        }
-        // 重新加载当前视图以确保评论计数更新
-        if (currentRoute === ROUTES.EXPLORE) {
-            renderExplore();
-        } else {
-            navigateTo(currentRoute);
+        if (isTogglingCommentLike) return;
+        isTogglingCommentLike = true;
+        if (btn) btn.disabled = true;
+        try {
+            const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
+            if (existing.data) {
+                await supabaseClient.from('likes').delete().eq('id', existing.data.id);
+            } else {
+                await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
+            }
+            window.location.reload();
+        } finally {
+            isTogglingCommentLike = false;
+            if (btn) btn.disabled = false;
         }
     }
 
