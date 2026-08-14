@@ -33,6 +33,32 @@
         .stat-link.disabled:hover {
             color: var(--text-light);
         }
+        /* 用户主页标签 */
+        .profile-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+        .profile-tab {
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: var(--transition);
+        }
+        .profile-tab:hover {
+            color: var(--text-main);
+        }
+        .profile-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .profile-content {
+            min-height: 100px;
+        }
     </style>
 </head>
 <body>
@@ -684,7 +710,7 @@
                 }
             }
 
-            // ==================== 用户主页（自己/他人） ====================
+            // ==================== 用户主页（含帖子/话题列表） ====================
             async function loadUserProfile(userId) {
                 if (!userId) return showToast('缺少用户 ID', 'error');
                 const container = document.getElementById('detailContainer');
@@ -759,13 +785,11 @@
                 `;
 
                 if (isOwnProfile) {
-                    // 自己的主页：私聊 + 编辑资料
                     html += `
                         <button class="btn btn-primary" id="chatBtn">私聊</button>
                         <button class="btn btn-secondary" id="editProfileBtn">编辑资料</button>
                     `;
                 } else {
-                    // 他人主页：关注/取关 + 好友请求 + 私聊
                     if (isFollowing) {
                         html += `<button class="btn btn-secondary" id="unfollowBtn" style="min-width:80px;">取关</button>`;
                     } else {
@@ -781,19 +805,24 @@
 
                 html += `
                     </div>
-                    <div id="userContent"></div>
+
+                    <!-- 帖子/话题标签 -->
+                    <div class="profile-tabs">
+                        <span class="profile-tab active" data-tab="posts">帖子</span>
+                        <span class="profile-tab" data-tab="topics">话题</span>
+                    </div>
+                    <div id="profileContent" class="profile-content">
+                        <div class="loading">加载中...</div>
+                    </div>
                 `;
 
                 container.innerHTML = html;
 
                 // ---------- 事件绑定 ----------
                 // 私聊按钮
-                const chatBtn = document.getElementById('chatBtn');
-                if (chatBtn) {
-                    chatBtn.addEventListener('click', () => {
-                        window.location.href = 'chat.html?userId=' + userId;
-                    });
-                }
+                document.getElementById('chatBtn').addEventListener('click', () => {
+                    window.location.href = 'chat.html?userId=' + userId;
+                });
 
                 // 更多菜单
                 document.getElementById('moreMenuBtn').addEventListener('click', (e) => {
@@ -899,6 +928,81 @@
                     showToast('已拉黑', 'success');
                     loadUserProfile(userId);
                 });
+
+                // ===== 加载帖子/话题列表 =====
+                const contentDiv = document.getElementById('profileContent');
+                let currentTab = 'posts';
+
+                async function loadUserPosts() {
+                    contentDiv.innerHTML = '加载帖子...';
+                    const { data: posts, error } = await supabaseClient
+                        .from('posts')
+                        .select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)')
+                        .eq('user_id', userId)
+                        .order('created_at', { ascending: false });
+                    if (error) {
+                        contentDiv.innerHTML = '<p>加载失败</p>';
+                        return;
+                    }
+                    if (!posts || posts.length === 0) {
+                        contentDiv.innerHTML = '<p>该用户暂无帖子</p>';
+                        return;
+                    }
+                    contentDiv.innerHTML = '';
+                    for (const post of posts) {
+                        const [likeRes, favRes] = await Promise.all([
+                            supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
+                            supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle()
+                        ]);
+                        post.liked_by_me = !!likeRes.data;
+                        post.favorited_by_me = !!favRes.data;
+                        post.is_owner = post.user_id === currentUser.id;
+                        contentDiv.appendChild(comp.renderPostCard(post));
+                    }
+                }
+
+                async function loadUserTopics() {
+                    contentDiv.innerHTML = '加载话题...';
+                    const { data: topics, error } = await supabaseClient
+                        .from('topics')
+                        .select('*, creator:creator_id(id, username, nickname, avatar_url)')
+                        .eq('creator_id', userId)
+                        .eq('status', 'approved')
+                        .order('created_at', { ascending: false });
+                    if (error) {
+                        contentDiv.innerHTML = '<p>加载失败</p>';
+                        return;
+                    }
+                    if (!topics || topics.length === 0) {
+                        contentDiv.innerHTML = '<p>该用户暂无话题</p>';
+                        return;
+                    }
+                    contentDiv.innerHTML = '';
+                    topics.forEach(topic => {
+                        contentDiv.appendChild(comp.renderTopicCard(topic, { showJoin: true }));
+                    });
+                }
+
+                // 标签切换
+                const tabs = container.querySelectorAll('.profile-tab');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        const tabName = tab.dataset.tab;
+                        currentTab = tabName;
+                        if (tabName === 'posts') {
+                            loadUserPosts();
+                        } else {
+                            loadUserTopics();
+                        }
+                    });
+                });
+
+                // 默认加载帖子
+                loadUserPosts();
+
+                // 分享主页/举报/拉黑/设置（继续绑定，但已完成）
             }
 
             function generatePublicId() {
