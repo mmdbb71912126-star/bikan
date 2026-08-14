@@ -924,6 +924,7 @@
         if (isTogglingLike) return;
         isTogglingLike = true;
         if (btn) btn.disabled = true;
+
         try {
             const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
             if (existing.data) {
@@ -931,35 +932,42 @@
             } else {
                 await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
             }
-            // 重新查询最新计数
-            const { data: freshPost } = await supabaseClient
-                .from('posts')
-                .select('like_count, favorite_count, comment_count')
-                .eq('id', postId)
-                .single();
-            if (freshPost && btn) {
-                const countSpan = btn.querySelector('.count');
-                if (countSpan) countSpan.textContent = freshPost.like_count || 0;
-                // 更新按钮状态
-                const { data: likeCheck } = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                if (likeCheck) {
-                    btn.classList.add('liked');
-                    btn.innerHTML = `${Icons.heartFilled}<span class="count">${freshPost.like_count || 0}</span>`;
+
+            // 重新查询最新点赞状态和计数
+            const [likeCheck, { data: freshPost }] = await Promise.all([
+                supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
+                supabaseClient.from('posts').select('like_count').eq('id', postId).single()
+            ]);
+
+            const newCount = freshPost?.like_count || 0;
+            const isLiked = !!likeCheck.data;
+
+        // 更新页面上所有该帖子的点赞按钮
+            const allLikeBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="like"]`);
+            allLikeBtns.forEach(button => {
+                if (isLiked) {
+                    button.classList.add('liked');
+                    button.innerHTML = `${Icons.heartFilled}<span class="count">${newCount}</span>`;
                 } else {
-                    btn.classList.remove('liked');
-                    btn.innerHTML = `${Icons.heart}<span class="count">${freshPost.like_count || 0}</span>`;
+                    button.classList.remove('liked');
+                    button.innerHTML = `${Icons.heart}<span class="count">${newCount}</span>`;
                 }
-            }
+            });
+
+        } catch (err) {
+            console.error('点赞操作失败:', err);
+            showToast('点赞失败，请重试', 'error');
         } finally {
             isTogglingLike = false;
             if (btn) btn.disabled = false;
         }
     }
-
+    
     async function toggleFavorite(postId, btn) {
         if (isTogglingFavorite) return;
         isTogglingFavorite = true;
         if (btn) btn.disabled = true;
+
         try {
             const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
             if (existing.data) {
@@ -967,24 +975,29 @@
             } else {
                 await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
             }
-            // 重新查询最新计数
-            const { data: freshPost } = await supabaseClient
-                .from('posts')
-                .select('like_count, favorite_count, comment_count')
-                .eq('id', postId)
-                .single();
-            if (freshPost && btn) {
-                const countSpan = btn.querySelector('.count');
-                if (countSpan) countSpan.textContent = freshPost.favorite_count || 0;
-                const { data: favCheck } = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                if (favCheck) {
-                    btn.classList.add('favorited');
-                    btn.innerHTML = `${Icons.bookmarkFilled}<span class="count">${freshPost.favorite_count || 0}</span>`;
+
+            const [favCheck, { data: freshPost }] = await Promise.all([
+                supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle(),
+                supabaseClient.from('posts').select('favorite_count').eq('id', postId).single()
+            ]);
+
+            const newCount = freshPost?.favorite_count || 0;
+            const isFav = !!favCheck.data;
+
+            const allFavBtns = document.querySelectorAll(`[data-post-id="${postId}"][data-action="favorite"]`);
+            allFavBtns.forEach(button => {
+                if (isFav) {
+                    button.classList.add('favorited');
+                    button.innerHTML = `${Icons.bookmarkFilled}<span class="count">${newCount}</span>`;
                 } else {
-                    btn.classList.remove('favorited');
-                    btn.innerHTML = `${Icons.bookmark}<span class="count">${freshPost.favorite_count || 0}</span>`;
+                    button.classList.remove('favorited');
+                    button.innerHTML = `${Icons.bookmark}<span class="count">${newCount}</span>`;
                 }
-            }
+            });
+
+        } catch (err) {
+            console.error('收藏操作失败:', err);
+            showToast('收藏失败，请重试', 'error');
         } finally {
             isTogglingFavorite = false;
             if (btn) btn.disabled = false;
