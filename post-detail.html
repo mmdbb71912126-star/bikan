@@ -33,7 +33,6 @@
         .stat-link.disabled:hover {
             color: var(--text-light);
         }
-        /* 用户主页标签 */
         .profile-tabs {
             display: flex;
             gap: 0;
@@ -58,6 +57,11 @@
         }
         .profile-content {
             min-height: 100px;
+        }
+        .loading {
+            text-align: center;
+            color: var(--text-light);
+            padding: 20px;
         }
     </style>
 </head>
@@ -710,14 +714,17 @@
                 }
             }
 
-            // ==================== 用户主页（含帖子/话题列表） ====================
+            // ==================== 用户主页（含帖子/话题列表，修复加载） ====================
             async function loadUserProfile(userId) {
                 if (!userId) return showToast('缺少用户 ID', 'error');
                 const container = document.getElementById('detailContainer');
                 container.innerHTML = '加载中...';
 
                 const { data: profile, error } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
-                if (error || !profile) return container.innerHTML = '<p>用户不存在</p>';
+                if (error || !profile) {
+                    container.innerHTML = '<p>用户不存在</p>';
+                    return;
+                }
 
                 const isOwnProfile = userId === currentUser.id;
 
@@ -931,56 +938,78 @@
 
                 // ===== 加载帖子/话题列表 =====
                 const contentDiv = document.getElementById('profileContent');
-                let currentTab = 'posts';
 
+                // 加载用户帖子
                 async function loadUserPosts() {
-                    contentDiv.innerHTML = '加载帖子...';
-                    const { data: posts, error } = await supabaseClient
-                        .from('posts')
-                        .select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)')
-                        .eq('user_id', userId)
-                        .order('created_at', { ascending: false });
-                    if (error) {
-                        contentDiv.innerHTML = '<p>加载失败</p>';
-                        return;
-                    }
-                    if (!posts || posts.length === 0) {
-                        contentDiv.innerHTML = '<p>该用户暂无帖子</p>';
-                        return;
-                    }
-                    contentDiv.innerHTML = '';
-                    for (const post of posts) {
-                        const [likeRes, favRes] = await Promise.all([
-                            supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
-                            supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle()
+                    contentDiv.innerHTML = '<div class="loading">加载帖子...</div>';
+                    try {
+                        const { data: posts, error } = await supabaseClient
+                            .from('posts')
+                            .select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)')
+                            .eq('user_id', userId)
+                            .order('created_at', { ascending: false });
+
+                        if (error) {
+                            console.error('加载帖子错误:', error);
+                            contentDiv.innerHTML = `<p>加载失败：${error.message}</p>`;
+                            return;
+                        }
+                        if (!posts || posts.length === 0) {
+                            contentDiv.innerHTML = '<p>该用户暂无帖子</p>';
+                            return;
+                        }
+
+                        // 批量查询点赞/收藏状态
+                        const postIds = posts.map(p => p.id);
+                        const [likesRes, favsRes] = await Promise.all([
+                            supabaseClient.from('likes').select('post_id').eq('user_id', currentUser.id).in('post_id', postIds),
+                            supabaseClient.from('favorites').select('post_id').eq('user_id', currentUser.id).in('post_id', postIds)
                         ]);
-                        post.liked_by_me = !!likeRes.data;
-                        post.favorited_by_me = !!favRes.data;
-                        post.is_owner = post.user_id === currentUser.id;
-                        contentDiv.appendChild(comp.renderPostCard(post));
+
+                        const likedSet = new Set(likesRes.data?.map(l => l.post_id) || []);
+                        const favSet = new Set(favsRes.data?.map(f => f.post_id) || []);
+
+                        contentDiv.innerHTML = '';
+                        posts.forEach(post => {
+                            post.liked_by_me = likedSet.has(post.id);
+                            post.favorited_by_me = favSet.has(post.id);
+                            post.is_owner = post.user_id === currentUser.id;
+                            contentDiv.appendChild(comp.renderPostCard(post));
+                        });
+                    } catch (e) {
+                        console.error('加载帖子异常:', e);
+                        contentDiv.innerHTML = `<p>加载失败：${e.message}</p>`;
                     }
                 }
 
+                // 加载用户话题
                 async function loadUserTopics() {
-                    contentDiv.innerHTML = '加载话题...';
-                    const { data: topics, error } = await supabaseClient
-                        .from('topics')
-                        .select('*, creator:creator_id(id, username, nickname, avatar_url)')
-                        .eq('creator_id', userId)
-                        .eq('status', 'approved')
-                        .order('created_at', { ascending: false });
-                    if (error) {
-                        contentDiv.innerHTML = '<p>加载失败</p>';
-                        return;
+                    contentDiv.innerHTML = '<div class="loading">加载话题...</div>';
+                    try {
+                        const { data: topics, error } = await supabaseClient
+                            .from('topics')
+                            .select('*, creator:creator_id(id, username, nickname, avatar_url)')
+                            .eq('creator_id', userId)
+                            .eq('status', 'approved')
+                            .order('created_at', { ascending: false });
+
+                        if (error) {
+                            console.error('加载话题错误:', error);
+                            contentDiv.innerHTML = `<p>加载失败：${error.message}</p>`;
+                            return;
+                        }
+                        if (!topics || topics.length === 0) {
+                            contentDiv.innerHTML = '<p>该用户暂无话题</p>';
+                            return;
+                        }
+                        contentDiv.innerHTML = '';
+                        topics.forEach(topic => {
+                            contentDiv.appendChild(comp.renderTopicCard(topic, { showJoin: true }));
+                        });
+                    } catch (e) {
+                        console.error('加载话题异常:', e);
+                        contentDiv.innerHTML = `<p>加载失败：${e.message}</p>`;
                     }
-                    if (!topics || topics.length === 0) {
-                        contentDiv.innerHTML = '<p>该用户暂无话题</p>';
-                        return;
-                    }
-                    contentDiv.innerHTML = '';
-                    topics.forEach(topic => {
-                        contentDiv.appendChild(comp.renderTopicCard(topic, { showJoin: true }));
-                    });
                 }
 
                 // 标签切换
@@ -990,7 +1019,6 @@
                         tabs.forEach(t => t.classList.remove('active'));
                         tab.classList.add('active');
                         const tabName = tab.dataset.tab;
-                        currentTab = tabName;
                         if (tabName === 'posts') {
                             loadUserPosts();
                         } else {
@@ -1001,8 +1029,6 @@
 
                 // 默认加载帖子
                 loadUserPosts();
-
-                // 分享主页/举报/拉黑/设置（继续绑定，但已完成）
             }
 
             function generatePublicId() {
