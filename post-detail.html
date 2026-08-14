@@ -214,23 +214,61 @@
 
             async function toggleLike(postId) {
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                if (existing.data) await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-                else await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
-                loadPostDetail(postId);
+                if (existing.data) {
+                    await supabaseClient.from('likes').delete().eq('id', existing.data.id);
+                    const likeBtn = document.querySelector(`[data-post-id="${postId}"][data-action="like"]`);
+                    if (likeBtn) {
+                        likeBtn.classList.remove('liked');
+                        const countSpan = likeBtn.querySelector('.count');
+                        if (countSpan) countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
+                    }
+                } else {
+                    await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
+                    const likeBtn = document.querySelector(`[data-post-id="${postId}"][data-action="like"]`);
+                    if (likeBtn) {
+                        likeBtn.classList.add('liked');
+                        const countSpan = likeBtn.querySelector('.count');
+                        if (countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                    }
+                }
             }
+
             async function toggleFavorite(postId) {
                 const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
-                if (existing.data) await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
-                else await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
-                loadPostDetail(postId);
+                if (existing.data) {
+                    await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
+                    const favBtn = document.querySelector(`[data-post-id="${postId}"][data-action="favorite"]`);
+                    if (favBtn) {
+                        favBtn.classList.remove('favorited');
+                        const countSpan = favBtn.querySelector('.count');
+                        if (countSpan) countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
+                    }
+                } else {
+                    await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
+                    const favBtn = document.querySelector(`[data-post-id="${postId}"][data-action="favorite"]`);
+                    if (favBtn) {
+                        favBtn.classList.add('favorited');
+                        const countSpan = favBtn.querySelector('.count');
+                        if (countSpan) countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                    }
+                }
             }
+
             async function toggleCommentLike(commentId) {
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
-                if (existing.data) await supabaseClient.from('likes').delete().eq('id', existing.data.id);
-                else await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
-                const postId = document.getElementById('commentsList').dataset.postId;
-                const postAuthorId = document.getElementById('commentsList').dataset.postAuthorId;
-                if (postId) loadComments(postId, postAuthorId);
+                if (existing.data) {
+                    await supabaseClient.from('likes').delete().eq('id', existing.data.id);
+                    const likeBtn = document.querySelector(`[data-comment-id="${commentId}"][data-action="like-comment"]`);
+                    if (likeBtn) {
+                        likeBtn.innerHTML = `${comp.Icons.heart}<span>${Math.max(0, parseInt(likeBtn.querySelector('span')?.textContent) - 1)}</span>`;
+                    }
+                } else {
+                    await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
+                    const likeBtn = document.querySelector(`[data-comment-id="${commentId}"][data-action="like-comment"]`);
+                    if (likeBtn) {
+                        likeBtn.innerHTML = `${comp.Icons.heartFilled}<span>${parseInt(likeBtn.querySelector('span')?.textContent) + 1}</span>`;
+                    }
+                }
             }
 
             function showShareModal(postId) {
