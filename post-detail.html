@@ -74,7 +74,6 @@
             function setupRealtime() {
                 if (!supabaseClient || !id) return;
 
-                // 帖子详情：监听帖子更新（计数）和新评论
                 if (type === 'post') {
                     supabaseClient
                         .channel('post-detail-realtime-' + id)
@@ -90,7 +89,6 @@
                         .subscribe();
                 }
 
-                // 话题详情：监听新讨论
                 if (type === 'topic') {
                     supabaseClient
                         .channel('topic-detail-realtime-' + id)
@@ -233,8 +231,8 @@
                     const action = target.dataset.action;
                     const commentId = target.dataset.commentId;
 
-                    if (action === 'like') await toggleLike(postId);
-                    else if (action === 'favorite') await toggleFavorite(postId);
+                    if (action === 'like') await toggleLike(postId, target);
+                    else if (action === 'favorite') await toggleFavorite(postId, target);
                     else if (action === 'share') showShareModal(postId);
                     else if (action === 'report') showReportModal('post', postId);
                     else if (action === 'edit') showEditPostModal(postId);
@@ -245,7 +243,7 @@
                             window.location.href = 'app.html';
                         }
                     }
-                    else if (action === 'like-comment' && commentId) await toggleCommentLike(commentId);
+                    else if (action === 'like-comment' && commentId) await toggleCommentLike(commentId, target);
                     else if (action === 'reply-comment' && commentId) {
                         const commentInput = document.getElementById('commentInput');
                         commentInput.focus();
@@ -282,34 +280,54 @@
                 });
             }
 
-            async function toggleLike(postId) {
+            async function toggleLike(postId, btn) {
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                 if (existing.data) {
                     await supabaseClient.from('likes').delete().eq('id', existing.data.id);
+                    if (btn) {
+                        btn.classList.remove('liked');
+                        btn.innerHTML = `${comp.Icons.heart}<span class="count">${Math.max(0, parseInt(btn.querySelector('.count')?.textContent) - 1)}</span>`;
+                    }
                 } else {
                     await supabaseClient.from('likes').insert({ user_id: currentUser.id, post_id: postId });
+                    if (btn) {
+                        btn.classList.add('liked');
+                        btn.innerHTML = `${comp.Icons.heartFilled}<span class="count">${parseInt(btn.querySelector('.count')?.textContent) + 1}</span>`;
+                    }
                 }
-                // 实时更新会由订阅处理，但为了保险，手动刷新一次？不，订阅会自动更新。但如果没有订阅，需要手动更新。
-                // 我们直接重新加载帖子数据，但避免重渲染整个评论区
             }
 
-            async function toggleFavorite(postId) {
+            async function toggleFavorite(postId, btn) {
                 const existing = await supabaseClient.from('favorites').select('id').eq('user_id', currentUser.id).eq('post_id', postId).maybeSingle();
                 if (existing.data) {
                     await supabaseClient.from('favorites').delete().eq('id', existing.data.id);
+                    if (btn) {
+                        btn.classList.remove('favorited');
+                        btn.innerHTML = `${comp.Icons.bookmark}<span class="count">${Math.max(0, parseInt(btn.querySelector('.count')?.textContent) - 1)}</span>`;
+                    }
                 } else {
                     await supabaseClient.from('favorites').insert({ user_id: currentUser.id, post_id: postId, is_public: true });
+                    if (btn) {
+                        btn.classList.add('favorited');
+                        btn.innerHTML = `${comp.Icons.bookmarkFilled}<span class="count">${parseInt(btn.querySelector('.count')?.textContent) + 1}</span>`;
+                    }
                 }
             }
 
-            async function toggleCommentLike(commentId) {
+            async function toggleCommentLike(commentId, btn) {
                 const existing = await supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('comment_id', commentId).maybeSingle();
                 if (existing.data) {
                     await supabaseClient.from('likes').delete().eq('id', existing.data.id);
+                    if (btn) {
+                        btn.innerHTML = `${comp.Icons.heart}<span>${Math.max(0, parseInt(btn.querySelector('span')?.textContent) - 1)}</span>`;
+                    }
                 } else {
                     await supabaseClient.from('likes').insert({ user_id: currentUser.id, comment_id: commentId });
+                    if (btn) {
+                        btn.innerHTML = `${comp.Icons.heartFilled}<span>${parseInt(btn.querySelector('span')?.textContent) + 1}</span>`;
+                    }
                 }
-                // 刷新评论列表以更新图标
+                // 刷新评论列表确保状态持久
                 const postId = document.getElementById('commentsList')?.dataset.postId;
                 const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
                 if (postId) loadComments(postId, postAuthorId);
