@@ -9,91 +9,492 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 样式块与之前相同，此处省略 ===== */
-        /* 你直接使用之前版本的样式即可，此处为了完整保留，但实际使用时可复用之前的 style 块 */
-        /* 由于内容太长，这里用简写，但你实际替换时请保留完整的样式（与之前一致） */
-        * { margin:0; padding:0; box-sizing:border-box; }
-        html, body { height:100%; overflow:hidden; }
-        .post-container { display:flex; flex-direction:column; height:100vh; background:white; position:relative; }
-        .post-toolbar { display:flex; align-items:center; gap:2px; padding:4px 8px; min-height:44px; background:white; border-bottom:1px solid var(--border); flex-shrink:0; z-index:10; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-        .post-toolbar::-webkit-scrollbar { height:4px; }
-        .post-toolbar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-        .post-toolbar .toolbar-btn { background:none; border:none; padding:4px 6px; border-radius:4px; cursor:pointer; color:var(--text-secondary); transition:var(--transition); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .post-toolbar .toolbar-btn:hover { background:var(--bg-hover); color:var(--text-main); }
-        .post-toolbar .toolbar-btn.active { background:var(--primary-light); color:var(--primary); }
-        .post-toolbar .toolbar-btn svg { width:20px; height:20px; }
-        .post-toolbar .toolbar-spacer { flex:1; min-width:8px; }
-        .post-toolbar .char-count { font-size:13px; color:var(--text-light); font-weight:400; min-width:30px; text-align:right; flex-shrink:0; }
-        .post-content-area { flex:1; overflow-y:auto; padding:12px 20px 8px; background:white; display:flex; flex-direction:column; position:relative; }
-        .post-content-area #postContent { width:100%; border:none !important; outline:none !important; box-shadow:none !important; resize:none; font-size:18px; line-height:1.7; font-family:inherit; color:var(--text-main); background:transparent; padding:0; min-height:120px; flex-shrink:0; }
-        .post-content-area #postContent:focus { border:none !important; outline:none !important; box-shadow:none !important; }
-        .post-content-area #postContent::placeholder { color:var(--text-light); font-size:18px; }
-        .post-content-area #preview { display:none; width:100%; font-size:17px; line-height:1.8; color:var(--text-main); padding:0; min-height:120px; overflow-y:auto; }
-        .post-content-area #preview.show { display:block; }
-        .post-content-area #preview h1, .post-content-area #preview h2, .post-content-area #preview h3 { margin:16px 0 8px; font-weight:600; }
-        .post-content-area #preview h1 { font-size:26px; }
-        .post-content-area #preview h2 { font-size:22px; }
-        .post-content-area #preview h3 { font-size:18px; }
-        .post-content-area #preview p { margin:0 0 12px; }
-        .post-content-area #preview ul, .post-content-area #preview ol { padding-left:24px; margin:8px 0 12px; }
-        .post-content-area #preview blockquote { border-left:4px solid var(--primary); padding-left:16px; margin:8px 0 12px; color:var(--text-secondary); }
-        .post-content-area #preview code { background:var(--bg-light); padding:2px 6px; border-radius:4px; font-size:0.9em; font-family:monospace; }
-        .post-content-area #preview pre { background:var(--bg-light); padding:12px; border-radius:8px; overflow-x:auto; margin:8px 0 12px; }
-        .post-content-area #preview pre code { background:transparent; padding:0; }
-        .post-content-area #preview a { color:var(--primary); text-decoration:underline; }
-        .post-content-area #preview table { border-collapse:collapse; width:100%; margin:8px 0 12px; }
-        .post-content-area #preview th, .post-content-area #preview td { border:1px solid var(--border); padding:6px 10px; text-align:left; }
-        .post-content-area #preview th { background:var(--bg-light); }
-        .post-content-area #preview .media-placeholder { display:inline-block; padding:4px 12px; background:var(--primary-light); color:var(--primary); border-radius:4px; cursor:pointer; font-size:14px; border:1px dashed var(--primary); transition:var(--transition); }
-        .post-content-area #preview .media-placeholder:hover { background:var(--primary); color:white; }
-        .post-actions { display:flex; justify-content:flex-end; gap:12px; padding:8px 0 12px; flex-shrink:0; border-top:1px solid var(--border); }
-        .post-actions .btn { padding:8px 24px; border-radius:20px; font-size:15px; font-weight:600; border:none; cursor:pointer; transition:var(--transition); min-width:72px; text-align:center; }
-        .post-actions .btn-cancel { background:var(--bg-light); color:var(--text-secondary); }
-        .post-actions .btn-cancel:hover { background:#e2e8f0; }
-        .post-actions .btn-publish { background:var(--primary); color:white; }
-        .post-actions .btn-publish:hover { background:var(--primary-dark); transform:translateY(-1px); box-shadow:var(--shadow-md); }
-        .post-actions .btn-publish:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-        .file-library { border-top:1px solid var(--border); padding:8px 16px; background:var(--bg-light); flex-shrink:0; max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
-        .file-library .file-library-header { display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--text-secondary); font-weight:500; padding:2px 0; }
-        .file-library .file-library-header .add-file-btn { background:none; border:none; cursor:pointer; color:var(--primary); display:flex; align-items:center; gap:4px; font-size:13px; font-weight:500; padding:2px 8px; border-radius:4px; transition:var(--transition); }
-        .file-library .file-library-header .add-file-btn:hover { background:var(--primary-light); }
-        .file-library .file-library-header .add-file-btn svg { width:18px; height:18px; }
-        .file-library .file-item { display:flex; align-items:center; gap:8px; background:white; padding:4px 10px; border-radius:6px; border:1px solid var(--border); cursor:grab; transition:var(--transition); }
-        .file-library .file-item:hover { border-color:var(--primary); box-shadow:var(--shadow-sm); }
-        .file-library .file-item:active { cursor:grabbing; }
-        .file-library .file-item .file-icon { width:28px; height:28px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); }
-        .file-library .file-item .file-icon svg { width:20px; height:20px; }
-        .file-library .file-item .file-info { flex:1; min-width:0; font-size:13px; }
-        .file-library .file-item .file-info .file-name { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .file-library .file-item .file-info .file-size { color:var(--text-light); font-size:12px; }
-        .file-library .file-item .file-delete { background:none; border:none; color:var(--text-light); cursor:pointer; padding:2px 4px; border-radius:4px; transition:var(--transition); }
-        .file-library .file-item .file-delete:hover { color:var(--danger); background:#fee2e2; }
-        .file-library .file-item .file-delete svg { width:16px; height:16px; }
-        .file-library .empty-library { text-align:center; color:var(--text-light); font-size:13px; padding:12px 0; }
-        .confirm-modal .modal { max-width:400px; }
-        .confirm-modal .modal-body { font-size:15px; color:var(--text-secondary); text-align:center; padding:8px 0 16px; }
-        .confirm-modal .modal-footer { display:flex; gap:12px; justify-content:center; margin-top:8px; }
-        .confirm-modal .modal-footer .btn { padding:8px 24px; border-radius:20px; font-size:14px; font-weight:500; border:none; cursor:pointer; transition:var(--transition); }
-        .confirm-modal .modal-footer .btn-secondary { background:var(--bg-light); color:var(--text-secondary); }
-        .confirm-modal .modal-footer .btn-secondary:hover { background:#e2e8f0; }
-        .confirm-modal .modal-footer .btn-danger { background:var(--danger); color:white; }
-        .confirm-modal .modal-footer .btn-danger:hover { background:var(--danger-dark); }
-        .confirm-modal .modal-footer .btn-primary { background:var(--primary); color:white; }
-        .confirm-modal .modal-footer .btn-primary:hover { background:var(--primary-dark); }
-        .syntax-panel .modal { max-width:520px; }
-        .syntax-panel .modal-body { max-height:400px; overflow-y:auto; }
-        .syntax-panel .syntax-item { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); }
-        .syntax-panel .syntax-item:last-child { border-bottom:none; }
-        .syntax-panel .syntax-item .syntax-code { font-family:monospace; background:var(--bg-light); padding:2px 8px; border-radius:4px; font-size:14px; color:var(--text-main); }
-        .syntax-panel .syntax-item .syntax-desc { font-size:13px; color:var(--text-secondary); flex:1; margin:0 8px; }
-        .syntax-panel .syntax-item .syntax-add-btn { background:none; border:none; color:var(--primary); cursor:pointer; padding:2px 8px; border-radius:4px; font-size:18px; font-weight:600; transition:var(--transition); }
-        .syntax-panel .syntax-item .syntax-add-btn:hover { background:var(--primary-light); }
-        @media (max-width:640px) { .post-toolbar { padding:2px 6px; min-height:36px; gap:1px; } .post-toolbar .toolbar-btn { padding:2px 4px; } .post-toolbar .toolbar-btn svg { width:16px; height:16px; } .post-content-area { padding:8px 12px 4px; } .post-content-area #postContent { font-size:16px; min-height:80px; } .post-content-area #postContent::placeholder { font-size:16px; } .post-content-area #preview { font-size:15px; } .post-actions .btn { padding:6px 16px; font-size:14px; min-width:56px; } .file-library { padding:4px 8px; max-height:140px; } .file-library .file-item { padding:2px 6px; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+        .post-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: white;
+            position: relative;
+        }
+        .post-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 8px;
+            min-height: 44px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            z-index: 10;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+        }
+        .post-toolbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .post-toolbar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+        .post-toolbar .toolbar-btn {
+            background: none;
+            border: none;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .post-toolbar .toolbar-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-main);
+        }
+        .post-toolbar .toolbar-btn.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .post-toolbar .toolbar-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        .post-toolbar .toolbar-spacer {
+            flex: 1;
+            min-width: 8px;
+        }
+        .post-toolbar .char-count {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 400;
+            min-width: 30px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .post-content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 20px 8px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .post-content-area #postContent {
+            width: 100%;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            resize: none;
+            font-size: 18px;
+            line-height: 1.7;
+            font-family: inherit;
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            min-height: 120px;
+            flex-shrink: 0;
+        }
+        .post-content-area #postContent:focus {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        .post-content-area #postContent::placeholder {
+            color: var(--text-light);
+            font-size: 18px;
+        }
+        .post-content-area #preview {
+            display: none;
+            width: 100%;
+            font-size: 17px;
+            line-height: 1.8;
+            color: var(--text-main);
+            padding: 0;
+            min-height: 120px;
+            overflow-y: auto;
+        }
+        .post-content-area #preview.show {
+            display: block;
+        }
+        .post-content-area #preview h1,
+        .post-content-area #preview h2,
+        .post-content-area #preview h3 {
+            margin: 16px 0 8px;
+            font-weight: 600;
+        }
+        .post-content-area #preview h1 {
+            font-size: 26px;
+        }
+        .post-content-area #preview h2 {
+            font-size: 22px;
+        }
+        .post-content-area #preview h3 {
+            font-size: 18px;
+        }
+        .post-content-area #preview p {
+            margin: 0 0 12px;
+        }
+        .post-content-area #preview ul,
+        .post-content-area #preview ol {
+            padding-left: 24px;
+            margin: 8px 0 12px;
+        }
+        .post-content-area #preview blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 16px;
+            margin: 8px 0 12px;
+            color: var(--text-secondary);
+        }
+        .post-content-area #preview code {
+            background: var(--bg-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: monospace;
+        }
+        .post-content-area #preview pre {
+            background: var(--bg-light);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0 12px;
+        }
+        .post-content-area #preview pre code {
+            background: transparent;
+            padding: 0;
+        }
+        .post-content-area #preview a {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        .post-content-area #preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0 12px;
+        }
+        .post-content-area #preview th,
+        .post-content-area #preview td {
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            text-align: left;
+        }
+        .post-content-area #preview th {
+            background: var(--bg-light);
+        }
+        .post-content-area #preview .media-placeholder {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            border: 1px dashed var(--primary);
+            transition: var(--transition);
+        }
+        .post-content-area #preview .media-placeholder:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .post-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 8px 0 12px;
+            flex-shrink: 0;
+            border-top: 1px solid var(--border);
+        }
+        .post-actions .btn {
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 72px;
+            text-align: center;
+        }
+        .post-actions .btn-cancel {
+            background: var(--bg-light);
+            color: var(--text-secondary);
+        }
+        .post-actions .btn-cancel:hover {
+            background: #e2e8f0;
+        }
+        .post-actions .btn-publish {
+            background: var(--primary);
+            color: white;
+        }
+        .post-actions .btn-publish:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        .post-actions .btn-publish:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .file-library {
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            background: var(--bg-light);
+            flex-shrink: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .file-library .file-library-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 2px 0;
+        }
+        .file-library .file-library-header .add-file-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .file-library .file-library-header .add-file-btn:hover {
+            background: var(--primary-light);
+        }
+        .file-library .file-library-header .add-file-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        .file-library .file-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            cursor: grab;
+            transition: var(--transition);
+        }
+        .file-library .file-item:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .file-library .file-item:active {
+            cursor: grabbing;
+        }
+        .file-library .file-item .file-icon {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        .file-library .file-item .file-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+        .file-library .file-item .file-info {
+            flex: 1;
+            min-width: 0;
+            font-size: 13px;
+        }
+        .file-library .file-item .file-info .file-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-library .file-item .file-info .file-size {
+            color: var(--text-light);
+            font-size: 12px;
+        }
+        .file-library .file-item .file-delete {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .file-library .file-item .file-delete:hover {
+            color: var(--danger);
+            background: #fee2e2;
+        }
+        .file-library .file-item .file-delete svg {
+            width: 16px;
+            height: 16px;
+        }
+        .file-library .empty-library {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 13px;
+            padding: 12px 0;
+        }
+        .confirm-modal .modal {
+            max-width: 400px;
+        }
+        .confirm-modal .modal-body {
+            font-size: 15px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 8px 0 16px;
+        }
+        .confirm-modal .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .confirm-modal .modal-footer .btn {
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .confirm-modal .modal-footer .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-secondary);
+        }
+        .confirm-modal .modal-footer .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .confirm-modal .modal-footer .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        .confirm-modal .modal-footer .btn-danger:hover {
+            background: var(--danger-dark);
+        }
+        .confirm-modal .modal-footer .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .confirm-modal .modal-footer .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        .syntax-panel .modal {
+            max-width: 520px;
+        }
+        .syntax-panel .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .syntax-panel .syntax-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .syntax-panel .syntax-item:last-child {
+            border-bottom: none;
+        }
+        .syntax-panel .syntax-item .syntax-code {
+            font-family: monospace;
+            background: var(--bg-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+        .syntax-panel .syntax-item .syntax-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex: 1;
+            margin: 0 8px;
+        }
+        .syntax-panel .syntax-item .syntax-add-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .syntax-panel .syntax-item .syntax-add-btn:hover {
+            background: var(--primary-light);
+        }
+        @media (max-width: 640px) {
+            .post-toolbar {
+                padding: 2px 6px;
+                min-height: 36px;
+                gap: 1px;
+            }
+            .post-toolbar .toolbar-btn {
+                padding: 2px 4px;
+            }
+            .post-toolbar .toolbar-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+            .post-content-area {
+                padding: 8px 12px 4px;
+            }
+            .post-content-area #postContent {
+                font-size: 16px;
+                min-height: 80px;
+            }
+            .post-content-area #postContent::placeholder {
+                font-size: 16px;
+            }
+            .post-content-area #preview {
+                font-size: 15px;
+            }
+            .post-actions .btn {
+                padding: 6px 16px;
+                font-size: 14px;
+                min-width: 56px;
+            }
+            .file-library {
+                padding: 4px 8px;
+                max-height: 140px;
+            }
+            .file-library .file-item {
+                padding: 2px 6px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="post-container">
-        <!-- 工具栏（省略，与之前相同，包含所有语法按钮） -->
+        <!-- 顶部工具栏 -->
         <div class="post-toolbar" id="toolbar">
             <button class="toolbar-btn" data-syntax="# " title="标题"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M12 4v16M4 12h8"/></svg></button>
             <button class="toolbar-btn" data-syntax="**粗体文本**" title="粗体"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg></button>
@@ -118,19 +519,19 @@
             <span class="char-count" id="charCount">0</span>
         </div>
 
-        <!-- ===== 内容区 ===== -->
+        <!-- 内容区 -->
         <div class="post-content-area" id="contentArea">
             <textarea id="postContent" placeholder="支持 Markdown 语法..." autofocus></textarea>
             <div id="preview"></div>
         </div>
 
-        <!-- ===== 底部操作栏 ===== -->
+        <!-- 底部操作栏 -->
         <div class="post-actions">
             <button class="btn btn-cancel" id="cancelBtn">取消</button>
             <button class="btn btn-publish" id="publishBtn">发布</button>
         </div>
 
-        <!-- ===== 文件库 ===== -->
+        <!-- 文件库 -->
         <div class="file-library" id="fileLibrary">
             <div class="file-library-header">
                 <span>文件库</span>
@@ -180,9 +581,7 @@
 
             let previewMode = false;
 
-            // ============================================================
-            // 初始化
-            // ============================================================
+            // ===== 初始化 =====
             async function init() {
                 if (!sdkReady) {
                     showToast('Supabase 未初始化', 'error');
@@ -273,9 +672,7 @@
                 }
             }
 
-            // ============================================================
-            // 文件库
-            // ============================================================
+            // ===== 文件库 =====
             async function loadFileLibrary() {
                 try {
                     const { data, error } = await supabaseClient
@@ -422,109 +819,30 @@
                     return;
                 }
                 try {
-                    // 先解析自定义媒体语法，转换为 HTML 后再用 marked 渲染？
-                    // 但 marked 会转义 HTML，所以需要先替换为占位符，再用 marked 解析，最后再替换占位符为实际 HTML。
-                    // 我们采用两阶段：先将自定义媒体替换为特殊的占位符，标记后替换。
-
-                    let html = raw;
-
-                    // 定义替换函数：提取尺寸信息
-                    function replaceMedia(match, type, id, size) {
-                        // 尺寸格式：宽x高
-                        let style = '';
-                        if (size) {
-                            const parts = size.split('x');
-                            if (parts.length === 2) {
-                                const w = parseInt(parts[0]);
-                                const h = parseInt(parts[1]);
-                                if (!isNaN(w) && !isNaN(h)) {
-                                    style = ` style="width:${w}px;height:${h}px;max-width:100%;"`;
-                                }
-                            } else if (size.endsWith('%')) {
-                                style = ` style="width:${size};max-width:100%;"`;
-                            }
-                        }
-                        // 生成占位符，包含原始信息
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${size || ''}" style="display:inline-block;padding:4px 12px;background:var(--primary-light);color:var(--primary);border-radius:4px;cursor:pointer;font-size:14px;border:1px dashed var(--primary);">${type === 'img' ? '🖼️' : type === 'video' ? '🎬' : type === 'audio' ? '🎵' : '📄'} 点击添加 ${type} ${size ? '('+size+')' : ''}</span>`;
-                    }
-
-                    // 替换所有自定义媒体（支持尺寸）
-                    html = html.replace(/\[img\]([^\]]+?)(?:=([^\]]*?))?\[\/img\]/g, (match, id, size) => {
-                        return replaceMedia(match, 'img', id, size);
-                    });
-                    html = html.replace(/\[video\]([^\]]+?)(?:=([^\]]*?))?\[\/video\]/g, (match, id, size) => {
-                        return replaceMedia(match, 'video', id, size);
-                    });
-                    html = html.replace(/\[audio\]([^\]]+?)(?:=([^\]]*?))?\[\/audio\]/g, (match, id, size) => {
-                        return replaceMedia(match, 'audio', id, size);
-                    });
-                    html = html.replace(/\[file\]([^\]]+?)(?:=([^\]]*?))?\[\/file\]/g, (match, id, size) => {
-                        return replaceMedia(match, 'file', id, size);
-                    });
-
-                    // 然后使用 marked 解析（它会转义普通 HTML，但我们的占位符是纯文本，会被保留）
-                    // 但 marked 会解析 Markdown 语法，所以占位符中的 HTML 属性不会被解析，我们后面再替换
-                    // 更安全：先用 marked 解析，再替换占位符
-                    let parsed = marked.parse(html);
-
-                    // 此时占位符还是 <span> 标签，但 marked 会保留，但需要确保它们不被转义
-                    // 我们可以用 DOMParser 或直接字符串替换，但更简单的方法是用 Regex 替换占位符。
-
-                    // 重新将占位符渲染为实际的 HTML
-                    // 但是 marked 会转义 < 和 >，所以我们需要先将占位符替换为特殊的标记，在 marked 解析后再替换回来
-                    // 改用更简单的方式：不先替换为 HTML，而是先转义特殊标记
-                    // 为了简洁，我们使用更可靠的方法：先处理自定义语法为 HTML 后再用 marked 解析（但 marked 会转义）
-                    // 所以我们需要在 marked 解析后，再对结果进行替换
-                    // 这里采用另一种方法：先用 marked 解析原始内容（不含自定义语法），然后对结果进行替换，但这样无法保留 Markdown 混合
-                    // 因为用户可能在 Markdown 中插入自定义语法，所以我们需要先对自定义语法进行转义，然后解析 Markdown，再还原
-
-                    // 这里我们直接使用原始方案：先处理自定义语法为 HTML 片段，然后让 marked 处理 Markdown，但 marked 会转义 HTML，所以不行。
-                    // 改用自定义渲染：先用 marked 解析，然后对结果进行字符串替换，但自定义语法在解析过程中会被转义。
-
-                    // 更健壮的方式：在 marked 解析之前，将自定义语法替换为临时标记，然后解析 Markdown，最后将标记替换为 HTML。
-                    // 但由于时间，我们采用简单方式：如果预览模式，直接显示 raw 内容（但显然不行）。
-                    // 我们采用之前的方法：使用 marked 并禁用 HTML 转义？但 marked 默认会转义。
-
-                    // 为了节省时间，我将采用另一种方式：不依赖 marked 解析自定义语法，而使用 marked 的 renderer 自定义，但 markdown 本身不包含这些语法，所以我们需要先预处理。
-
-                    // 这里我们使用简单替换方式：在 marked 解析之前，将自定义语法替换为临时文本，解析后再替换回来
+                    // 使用临时标记法
                     const mediaMap = {};
                     let counter = 0;
                     const tempContent = raw.replace(/\[(img|video|audio|file)\]([^\]]+?)(?:=([^\]]*?))?\[\/\1\]/g, (match, type, id, size) => {
                         const key = '---MEDIA_' + (counter++) + '---';
-                        mediaMap[key] = { type, id, size };
+                        mediaMap[key] = { type, id, size: size || '' };
                         return key;
                     });
 
                     let finalHtml = marked.parse(tempContent);
-                    // 替换回媒体
+
+                    // 替换回媒体占位符
                     for (const key in mediaMap) {
                         const { type, id, size } = mediaMap[key];
-                        let style = '';
-                        if (size) {
-                            const parts = size.split('x');
-                            if (parts.length === 2) {
-                                const w = parseInt(parts[0]);
-                                const h = parseInt(parts[1]);
-                                if (!isNaN(w) && !isNaN(h)) {
-                                    style = ` style="width:${w}px;height:${h}px;max-width:100%;"`;
-                                }
-                            } else if (size.endsWith('%')) {
-                                style = ` style="width:${size};max-width:100%;"`;
-                            }
-                        }
-                        let mediaHtml = '';
-                        // 暂时我们只替换占位符，点击选择文件逻辑在预览中通过点击事件处理
-                        // 在预览模式中显示可点击占位符，实际渲染在帖子详情页由后端渲染
-                        // 预览中我们只显示文本提示，而不是实际媒体。
-                        // 为了预览效果，我们可以显示媒体类型和大小。
-                        mediaHtml = `<span class="media-placeholder" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${size || ''}" style="display:inline-block;padding:4px 12px;background:var(--primary-light);color:var(--primary);border-radius:4px;cursor:pointer;font-size:14px;border:1px dashed var(--primary);">${type === 'img' ? '🖼️' : type === 'video' ? '🎬' : type === 'audio' ? '🎵' : '📄'} ${type} ${size ? '('+size+')' : ''}</span>`;
+                        const sizeDisplay = size ? ' (' + size + ')' : '';
+                        const label = type === 'img' ? '🖼️' : type === 'video' ? '🎬' : type === 'audio' ? '🎵' : '📄';
+                        const mediaHtml =
+                            `<span class="media-placeholder" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${size}" style="display:inline-block;padding:4px 12px;background:var(--primary-light);color:var(--primary);border-radius:4px;cursor:pointer;font-size:14px;border:1px dashed var(--primary);">${label} ${type}${sizeDisplay}</span>`;
                         finalHtml = finalHtml.replace(key, mediaHtml);
                     }
 
                     previewDiv.innerHTML = finalHtml;
 
-                    // 绑定点击事件（选择文件替换）
+                    // 点击占位符选择文件
                     previewDiv.querySelectorAll('.media-placeholder').forEach(el => {
                         el.addEventListener('click', () => {
                             const fileId = el.dataset.fileId;
@@ -545,9 +863,7 @@
                 }
             }
 
-            // ============================================================
-            // 选择文件替换占位符（支持尺寸）
-            // ============================================================
+            // ===== 选择文件替换占位符 =====
             function showFilePickerForMedia(el, originalId, type, size) {
                 if (!fileList.length) {
                     showToast('文件库为空，请先上传文件', 'error');
@@ -577,9 +893,8 @@
                     const newId = select.value;
                     const file = fileList.find(f => f.id === newId);
                     if (file) {
-                        // 替换 textarea 中的旧语法，保持尺寸
-                        const oldSyntax = `[${type}]${originalId}${size ? '='+size : ''}[/${type}]`;
-                        const newSyntax = `[${type}]${newId}${size ? '='+size : ''}[/${type}]`;
+                        const oldSyntax = `[${type}]${originalId}${size ? '=' + size : ''}[/${type}]`;
+                        const newSyntax = `[${type}]${newId}${size ? '=' + size : ''}[/${type}]`;
                         textarea.value = textarea.value.replace(oldSyntax, newSyntax);
                         onInput();
                         modal.closest('.modal-overlay').remove();
@@ -589,9 +904,7 @@
                 });
             }
 
-            // ============================================================
-            // 预览区拖拽支持（支持尺寸保留）
-            // ============================================================
+            // ===== 预览区拖拽 =====
             function setupPreviewDropZone() {
                 previewDiv.addEventListener('dragover', (e) => {
                     e.preventDefault();
@@ -608,8 +921,8 @@
                                 const type = target.dataset.type;
                                 const size = target.dataset.size || '';
                                 if (originalId) {
-                                    const oldSyntax = `[${type}]${originalId}${size ? '='+size : ''}[/${type}]`;
-                                    const newSyntax = `[${type}]${fileInfo.id}${size ? '='+size : ''}[/${type}]`;
+                                    const oldSyntax = `[${type}]${originalId}${size ? '=' + size : ''}[/${type}]`;
+                                    const newSyntax = `[${type}]${fileInfo.id}${size ? '=' + size : ''}[/${type}]`;
                                     textarea.value = textarea.value.replace(oldSyntax, newSyntax);
                                     onInput();
                                     showToast('文件已关联', 'success');
@@ -648,9 +961,7 @@
                 markChange();
             }
 
-            // ============================================================
-            // 调整高度
-            // ============================================================
+            // ===== 高度调整 =====
             function adjustTextareaHeight() {
                 textarea.style.height = 'auto';
                 const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight || 44;
@@ -688,9 +999,7 @@
                 charCount.textContent = textarea.value.length;
             }
 
-            // ============================================================
-            // 切换预览
-            // ============================================================
+            // ===== 切换预览 =====
             function togglePreview() {
                 previewMode = !previewMode;
                 if (previewMode) {
@@ -699,7 +1008,6 @@
                     renderPreview();
                     previewBtn.classList.add('active');
                     previewDiv.style.minHeight = textarea.style.height || '120px';
-                    // 确保预览区可滚动
                     previewDiv.style.overflowY = 'auto';
                 } else {
                     textarea.style.display = 'block';
@@ -710,9 +1018,7 @@
                 }
             }
 
-            // ============================================================
-            // 话题标签校验
-            // ============================================================
+            // ===== 话题标签校验 =====
             function validateTopicTags(content) {
                 const lines = content.split('\n');
                 const lastLine = lines[lines.length - 1] || '';
@@ -732,9 +1038,7 @@
                 return { valid: true };
             }
 
-            // ============================================================
-            // 发布/更新
-            // ============================================================
+            // ===== 发布/更新 =====
             async function doPublish() {
                 const content = textarea.value;
                 const trimmed = content.trim();
@@ -802,9 +1106,7 @@
                 }
             }
 
-            // ============================================================
-            // 二次确认弹窗
-            // ============================================================
+            // ===== 二次确认弹窗 =====
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
                     <div class="confirm-modal">
@@ -842,9 +1144,7 @@
                 return result;
             }
 
-            // ============================================================
-            // 事件绑定
-            // ============================================================
+            // ===== 事件绑定 =====
             function bindEvents() {
                 textarea.addEventListener('input', onInput);
                 window.addEventListener('resize', onResize);
@@ -960,9 +1260,7 @@
                 setupPreviewDropZone();
             }
 
-            // ============================================================
-            // 启动
-            // ============================================================
+            // ===== 启动 =====
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
