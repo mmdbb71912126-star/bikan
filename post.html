@@ -6,7 +6,7 @@
     <title>必看 - 发帖</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- marked.js CDN -->
+    <!-- 引入 marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
@@ -54,32 +54,27 @@
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             font-size: 13px;
-            white-space: nowrap;
+            font-weight: 500;
         }
         .post-toolbar .toolbar-btn:hover {
             background: var(--bg-hover);
             color: var(--text-main);
         }
+        .post-toolbar .toolbar-btn.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
         .post-toolbar .toolbar-btn svg {
             width: 18px;
             height: 18px;
         }
-        .post-toolbar .toolbar-btn.active {
-            color: var(--primary);
-            background: var(--primary-light);
-        }
         .post-toolbar .toolbar-spacer {
             flex: 1;
         }
-        .post-toolbar .toolbar-label {
-            font-size: 12px;
-            color: var(--text-light);
-            padding: 0 4px;
-        }
 
-        /* ===== 内容区 ===== */
+        /* ===== 内容区（可滚动） ===== */
         .post-content-area {
             flex: 1;
             overflow-y: auto;
@@ -87,6 +82,7 @@
             background: white;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         /* ===== 输入框（强制无边框） ===== */
@@ -115,87 +111,89 @@
             font-size: 18px;
         }
 
-        /* ===== Markdown 预览 ===== */
-        .post-content-area .markdown-preview {
+        /* ===== 预览区域 ===== */
+        .post-content-area #preview {
             display: none;
             width: 100%;
-            min-height: 180px;
             font-size: 17px;
             line-height: 1.8;
             color: var(--text-main);
             padding: 0;
-            flex-shrink: 0;
+            min-height: 180px;
             overflow-y: auto;
         }
-        .post-content-area .markdown-preview.active {
+        .post-content-area #preview.show {
             display: block;
         }
-        .post-content-area .markdown-preview h1,
-        .post-content-area .markdown-preview h2,
-        .post-content-area .markdown-preview h3,
-        .post-content-area .markdown-preview h4 {
-            margin-top: 16px;
-            margin-bottom: 8px;
-            font-weight: 700;
+        .post-content-area #preview h1,
+        .post-content-area #preview h2,
+        .post-content-area #preview h3 {
+            margin: 16px 0 8px;
+            font-weight: 600;
         }
-        .post-content-area .markdown-preview h1 {
-            font-size: 28px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 6px;
+        .post-content-area #preview h1 {
+            font-size: 26px;
         }
-        .post-content-area .markdown-preview h2 {
-            font-size: 24px;
+        .post-content-area #preview h2 {
+            font-size: 22px;
         }
-        .post-content-area .markdown-preview h3 {
-            font-size: 20px;
-        }
-        .post-content-area .markdown-preview h4 {
+        .post-content-area #preview h3 {
             font-size: 18px;
         }
-        .post-content-area .markdown-preview p {
-            margin-bottom: 12px;
+        .post-content-area #preview p {
+            margin: 0 0 12px;
         }
-        .post-content-area .markdown-preview ul,
-        .post-content-area .markdown-preview ol {
-            padding-left: 28px;
-            margin-bottom: 12px;
+        .post-content-area #preview ul,
+        .post-content-area #preview ol {
+            padding-left: 24px;
+            margin: 8px 0 12px;
         }
-        .post-content-area .markdown-preview li {
-            margin-bottom: 4px;
-        }
-        .post-content-area .markdown-preview blockquote {
+        .post-content-area #preview blockquote {
             border-left: 4px solid var(--primary);
             padding-left: 16px;
-            margin: 12px 0;
+            margin: 8px 0 12px;
             color: var(--text-secondary);
         }
-        .post-content-area .markdown-preview code {
+        .post-content-area #preview code {
             background: var(--bg-light);
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.9em;
             font-family: monospace;
         }
-        .post-content-area .markdown-preview pre {
+        .post-content-area #preview pre {
             background: var(--bg-light);
-            padding: 12px 16px;
+            padding: 12px;
             border-radius: 8px;
             overflow-x: auto;
-            font-size: 14px;
-            margin: 12px 0;
+            margin: 8px 0 12px;
         }
-        .post-content-area .markdown-preview pre code {
+        .post-content-area #preview pre code {
             background: transparent;
             padding: 0;
         }
-        .post-content-area .markdown-preview a {
+        .post-content-area #preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .post-content-area #preview a {
             color: var(--primary);
             text-decoration: underline;
         }
-        .post-content-area .markdown-preview img {
-            max-width: 100%;
-            border-radius: var(--radius);
-            margin: 8px 0;
+        .post-content-area #preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0 12px;
+        }
+        .post-content-area #preview th,
+        .post-content-area #preview td {
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            text-align: left;
+        }
+        .post-content-area #preview th {
+            background: var(--bg-light);
         }
 
         /* ===== 分界线 ===== */
@@ -205,7 +203,7 @@
             flex-shrink: 0;
         }
 
-        /* ===== 底部按钮 ===== */
+        /* ===== 底部按钮区域 ===== */
         .post-actions {
             display: flex;
             justify-content: flex-end;
@@ -299,32 +297,29 @@
         }
         .help-modal .modal-body {
             font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.8;
+            line-height: 1.7;
+            color: var(--text-main);
+        }
+        .help-modal .modal-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+        }
+        .help-modal .modal-body th,
+        .help-modal .modal-body td {
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            text-align: left;
+        }
+        .help-modal .modal-body th {
+            background: var(--bg-light);
         }
         .help-modal .modal-body code {
             background: var(--bg-light);
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
             font-family: monospace;
-            font-size: 13px;
-        }
-        .help-modal .modal-body .help-row {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            padding: 6px 0;
-        }
-        .help-modal .modal-body .help-row:last-child {
-            border-bottom: none;
-        }
-        .help-modal .modal-body .help-syntax {
-            width: 120px;
-            font-weight: 500;
-            color: var(--text-main);
-            flex-shrink: 0;
-        }
-        .help-modal .modal-body .help-desc {
-            color: var(--text-secondary);
         }
 
         /* ===== 响应式 ===== */
@@ -352,9 +347,8 @@
             .post-content-area #postContent::placeholder {
                 font-size: 16px;
             }
-            .post-content-area .markdown-preview {
+            .post-content-area #preview {
                 font-size: 15px;
-                min-height: 140px;
             }
             .post-actions .btn {
                 padding: 8px 20px;
@@ -364,10 +358,6 @@
             .post-divider {
                 margin: 8px 0 10px;
             }
-            .help-modal .modal-body .help-syntax {
-                width: 80px;
-                font-size: 13px;
-            }
         }
     </style>
 </head>
@@ -375,29 +365,38 @@
     <div class="post-container">
         <!-- ===== 顶部工具栏 ===== -->
         <div class="post-toolbar" id="toolbar">
-            <!-- 预览切换按钮 -->
-            <button class="toolbar-btn" id="previewToggle" title="切换 Markdown 预览">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                <span id="previewLabel">预览</span>
+            <!-- Markdown 帮助按钮 -->
+            <button class="toolbar-btn" id="helpBtn" title="Markdown 语法帮助">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                Markdown 帮助
             </button>
 
-            <!-- 帮助按钮 -->
-            <button class="toolbar-btn" id="helpBtn" title="Markdown 使用帮助">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                帮助
+            <!-- 预览切换按钮 -->
+            <button class="toolbar-btn" id="previewBtn" title="预览 Markdown">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span id="previewBtnText">预览</span>
             </button>
 
             <span class="toolbar-spacer"></span>
-            <span class="toolbar-label">Markdown 已启用</span>
+
+            <!-- 字符计数（可选） -->
+            <span style="font-size:12px;color:var(--text-light);" id="charCount">0</span>
         </div>
 
         <!-- ===== 内容区 ===== -->
         <div class="post-content-area" id="contentArea">
             <!-- 输入框 -->
-            <textarea id="postContent" placeholder="写点什么... 支持 Markdown 语法" autofocus></textarea>
+            <textarea id="postContent" placeholder="支持 Markdown 语法..." autofocus></textarea>
 
-            <!-- Markdown 预览区 -->
-            <div class="markdown-preview" id="markdownPreview"></div>
+            <!-- 预览区域 -->
+            <div id="preview"></div>
 
             <!-- 分界线 -->
             <div class="post-divider"></div>
@@ -421,15 +420,16 @@
 
             let currentUser = null;
             const textarea = document.getElementById('postContent');
-            const previewDiv = document.getElementById('markdownPreview');
+            const previewDiv = document.getElementById('preview');
             const contentArea = document.getElementById('contentArea');
             const cancelBtn = document.getElementById('cancelBtn');
             const publishBtn = document.getElementById('publishBtn');
-            const previewToggle = document.getElementById('previewToggle');
-            const previewLabel = document.getElementById('previewLabel');
             const helpBtn = document.getElementById('helpBtn');
+            const previewBtn = document.getElementById('previewBtn');
+            const previewBtnText = document.getElementById('previewBtnText');
+            const charCount = document.getElementById('charCount');
 
-            let isPreviewMode = false;
+            let previewMode = false;
 
             // ============================================================
             // 1. 初始化
@@ -464,10 +464,17 @@
                         return;
                     }
 
-                    // 初始调整
+                    // 初始调整输入框高度
                     adjustTextareaHeight();
+
+                    // 绑定事件
                     bindEvents();
+
+                    // 聚焦输入框
                     textarea.focus();
+
+                    // 更新字符数
+                    updateCharCount();
 
                 } catch (e) {
                     console.error('初始化失败', e);
@@ -489,9 +496,6 @@
                 const contentHeight = textarea.scrollHeight;
                 const targetHeight = Math.max(contentHeight, availableHeight, 180);
                 textarea.style.height = targetHeight + 'px';
-
-                // 预览区高度同步
-                previewDiv.style.minHeight = targetHeight + 'px';
             }
 
             function onInput() {
@@ -506,13 +510,13 @@
                     window.innerHeight - toolbarHeight - dividerHeight - actionsHeight - contentPadding - gap,
                     180
                 );
-                const targetHeight = Math.max(contentHeight, minHeight);
-                textarea.style.height = targetHeight + 'px';
-                previewDiv.style.minHeight = targetHeight + 'px';
+                textarea.style.height = Math.max(contentHeight, minHeight) + 'px';
 
-                // 预览模式下实时渲染
-                if (isPreviewMode) {
-                    renderMarkdown();
+                updateCharCount();
+
+                // 如果在预览模式下，实时更新预览
+                if (previewMode) {
+                    renderPreview();
                 }
             }
 
@@ -521,82 +525,91 @@
             }
 
             // ============================================================
-            // 3. Markdown 渲染
+            // 3. 字符计数
             // ============================================================
-            function renderMarkdown() {
-                const raw = textarea.value || '';
+            function updateCharCount() {
+                const len = textarea.value.length;
+                charCount.textContent = len + (len > 0 ? '' : '');
+            }
+
+            // ============================================================
+            // 4. Markdown 渲染
+            // ============================================================
+            function renderPreview() {
+                const raw = textarea.value;
+                if (!raw.trim()) {
+                    previewDiv.innerHTML = '<p style="color:var(--text-light);">预览区域为空</p>';
+                    return;
+                }
                 try {
                     const html = marked.parse(raw);
                     previewDiv.innerHTML = html;
                 } catch (e) {
-                    previewDiv.innerHTML = '<p style="color:var(--danger);">渲染出错，请检查 Markdown 语法</p>';
+                    previewDiv.innerHTML = '<p style="color:var(--danger);">渲染错误：' + e.message + '</p>';
                 }
             }
 
             // ============================================================
-            // 4. 切换预览模式
+            // 5. 切换预览模式
             // ============================================================
             function togglePreview() {
-                isPreviewMode = !isPreviewMode;
-
-                if (isPreviewMode) {
-                    // 切换到预览
+                previewMode = !previewMode;
+                if (previewMode) {
+                    // 进入预览模式
                     textarea.style.display = 'none';
-                    previewDiv.classList.add('active');
-                    renderMarkdown();
-                    previewLabel.textContent = '编辑';
-                    previewToggle.classList.add('active');
+                    previewDiv.classList.add('show');
+                    renderPreview();
+                    previewBtnText.textContent = '编辑';
+                    previewBtn.classList.add('active');
+                    // 调整预览区域高度
+                    previewDiv.style.minHeight = textarea.style.height || '180px';
                 } else {
-                    // 切回编辑
+                    // 退出预览模式
                     textarea.style.display = 'block';
-                    previewDiv.classList.remove('active');
-                    previewLabel.textContent = '预览';
-                    previewToggle.classList.remove('active');
-                    // 恢复输入框高度
-                    setTimeout(adjustTextareaHeight, 50);
+                    previewDiv.classList.remove('show');
+                    previewBtnText.textContent = '预览';
+                    previewBtn.classList.remove('active');
+                    // 重新调整输入框高度
+                    adjustTextareaHeight();
+                    textarea.focus();
                 }
             }
 
             // ============================================================
-            // 5. Markdown 帮助
+            // 6. Markdown 帮助弹窗
             // ============================================================
-            function showHelp() {
-                const helpContent = `
+            function showHelpModal() {
+                const content = `
                     <div class="help-modal">
-                        <div style="margin-bottom:12px;font-size:15px;font-weight:600;color:var(--text-main);">Markdown 语法速查</div>
-                        <div class="help-row"><span class="help-syntax"><code># 标题</code></span><span class="help-desc">一级标题（最多支持 ###### 六级）</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>**粗体**</code></span><span class="help-desc">加粗文本</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>*斜体*</code></span><span class="help-desc">斜体文本</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>~~删除线~~</code></span><span class="help-desc">删除线</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>[链接](url)</code></span><span class="help-desc">插入超链接</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>![图片](url)</code></span><span class="help-desc">插入图片</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>- 列表项</code></span><span class="help-desc">无序列表（支持 + 和 *）</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>1. 列表项</code></span><span class="help-desc">有序列表</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>> 引用</code></span><span class="help-desc">引用块</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>`code`</code></span><span class="help-desc">行内代码</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>```代码块```</code></span><span class="help-desc">多行代码块（可指定语言）</span></div>
-                        <div class="help-row"><span class="help-syntax"><code>---</code></span><span class="help-desc">分隔线</span></div>
-                        <div style="margin-top:12px;font-size:13px;color:var(--text-light);">提示：发布后帖子内容将以 Markdown 格式渲染显示</div>
+                        <h3 style="margin-bottom:12px;">Markdown 语法速查</h3>
+                        <table>
+                            <thead><tr><th>语法</th><th>效果</th></tr></thead>
+                            <tbody>
+                                <tr><td><code># 标题</code></td><td>一级标题</td></tr>
+                                <tr><td><code>## 标题</code></td><td>二级标题</td></tr>
+                                <tr><td><code>**粗体**</code></td><td><strong>粗体</strong></td></tr>
+                                <tr><td><code>*斜体*</code></td><td><em>斜体</em></td></tr>
+                                <tr><td><code>- 列表项</code></td><td>无序列表</td></tr>
+                                <tr><td><code>1. 列表项</code></td><td>有序列表</td></tr>
+                                <tr><td><code>[文字](链接)</code></td><td><a href="#">链接</a></td></tr>
+                                <tr><td><code>![alt](图片URL)</code></td><td>图片</td></tr>
+                                <tr><td><code>> 引用</code></td><td>引用块</td></tr>
+                                <tr><td><code>\`代码\`</code></td><td><code>行内代码</code></td></tr>
+                                <tr><td><code>\`\`\`代码块\`\`\`</code></td><td>代码块</td></tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top:12px;color:var(--text-light);font-size:13px;">更多语法请参考 <a href="https://markdown.com.cn" target="_blank">Markdown 中文教程</a></p>
                     </div>
                 `;
-
-                const modal = openModal('Markdown 帮助', helpContent);
-                // 给 modal 添加类用于样式
-                modal.closest('.modal-overlay').classList.add('help-modal');
+                openModal('Markdown 帮助', content);
             }
 
             // ============================================================
-            // 6. 事件绑定
+            // 7. 事件绑定
             // ============================================================
             function bindEvents() {
                 textarea.addEventListener('input', onInput);
                 window.addEventListener('resize', onResize);
-
-                // 预览切换
-                previewToggle.addEventListener('click', togglePreview);
-
-                // 帮助
-                helpBtn.addEventListener('click', showHelp);
 
                 // 取消
                 cancelBtn.addEventListener('click', () => {
@@ -631,17 +644,23 @@
                     );
                 });
 
-                // Ctrl+Enter
+                // Ctrl+Enter 快速发布
                 textarea.addEventListener('keydown', (e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                         e.preventDefault();
                         publishBtn.click();
                     }
                 });
+
+                // Markdown 帮助
+                helpBtn.addEventListener('click', showHelpModal);
+
+                // 预览切换
+                previewBtn.addEventListener('click', togglePreview);
             }
 
             // ============================================================
-            // 7. 二次确认弹窗
+            // 8. 二次确认弹窗
             // ============================================================
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
@@ -653,20 +672,16 @@
                         </div>
                     </div>
                 `;
-
                 const modal = openModal(title, content);
-
                 modal.querySelector('#confirmCancelBtn').addEventListener('click', () => {
                     modal.closest('.modal-overlay').remove();
                 });
-
                 modal.querySelector('#confirmOkBtn').addEventListener('click', async () => {
                     modal.closest('.modal-overlay').remove();
                     if (typeof onConfirm === 'function') {
                         await onConfirm();
                     }
                 });
-
                 const overlay = modal.closest('.modal-overlay');
                 overlay.addEventListener('click', (e) => {
                     if (e.target === overlay) {
@@ -676,7 +691,7 @@
             }
 
             // ============================================================
-            // 8. 执行发布
+            // 9. 执行发布
             // ============================================================
             async function doPublish() {
                 const content = textarea.value.trim();
@@ -690,15 +705,12 @@
 
                 try {
                     const publicId = generatePublicId();
-
-                    // 保存原始 Markdown 内容（不转换）
                     const { data: newPost, error } = await supabaseClient
                         .from('posts')
                         .insert({
                             user_id: currentUser.id,
-                            content: content, // 存 Markdown 源码
+                            content: content,
                             public_id: publicId,
-                            // 后续可加字段: is_markdown: true
                         })
                         .select()
                         .single();
@@ -724,7 +736,7 @@
             }
 
             // ============================================================
-            // 9. 工具函数
+            // 10. 工具函数
             // ============================================================
             function generatePublicId() {
                 const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -736,7 +748,7 @@
             }
 
             // ============================================================
-            // 10. 启动
+            // 11. 启动
             // ============================================================
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
