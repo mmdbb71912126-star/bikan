@@ -9,487 +9,89 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html,
-        body {
-            height: 100%;
-            overflow: hidden;
-        }
-        .post-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: white;
-            position: relative;
-        }
-        .post-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            padding: 4px 8px;
-            min-height: 44px;
-            background: white;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            z-index: 10;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scrollbar-width: thin;
-        }
-        .post-toolbar::-webkit-scrollbar {
-            height: 4px;
-        }
-        .post-toolbar::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-        }
-        .post-toolbar .toolbar-btn {
-            background: none;
-            border: none;
-            padding: 4px 6px;
-            border-radius: 4px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .post-toolbar .toolbar-btn:hover {
-            background: var(--bg-hover);
-            color: var(--text-main);
-        }
-        .post-toolbar .toolbar-btn.active {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-        .post-toolbar .toolbar-btn svg {
-            width: 20px;
-            height: 20px;
-        }
-        .post-toolbar .toolbar-spacer {
-            flex: 1;
-            min-width: 8px;
-        }
-        .post-toolbar .char-count {
-            font-size: 13px;
-            color: var(--text-light);
-            font-weight: 400;
-            min-width: 30px;
-            text-align: right;
-            flex-shrink: 0;
-        }
-        .post-content-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 20px 8px;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        .post-content-area #postContent {
-            width: 100%;
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            resize: none;
-            font-size: 18px;
-            line-height: 1.7;
-            font-family: inherit;
-            color: var(--text-main);
-            background: transparent;
-            padding: 0;
-            min-height: 120px;
-            flex-shrink: 0;
-        }
-        .post-content-area #postContent:focus {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-        .post-content-area #postContent::placeholder {
-            color: var(--text-light);
-            font-size: 18px;
-        }
-        .post-content-area #preview {
-            display: none;
-            width: 100%;
-            font-size: 17px;
-            line-height: 1.8;
-            color: var(--text-main);
-            padding: 0;
-            min-height: 120px;
-            overflow-y: auto;
-        }
-        .post-content-area #preview.show {
-            display: block;
-        }
-        .post-content-area #preview h1,
-        .post-content-area #preview h2,
-        .post-content-area #preview h3 {
-            margin: 16px 0 8px;
-            font-weight: 600;
-        }
-        .post-content-area #preview h1 {
-            font-size: 26px;
-        }
-        .post-content-area #preview h2 {
-            font-size: 22px;
-        }
-        .post-content-area #preview h3 {
-            font-size: 18px;
-        }
-        .post-content-area #preview p {
-            margin: 0 0 12px;
-        }
-        .post-content-area #preview ul,
-        .post-content-area #preview ol {
-            padding-left: 24px;
-            margin: 8px 0 12px;
-        }
-        .post-content-area #preview blockquote {
-            border-left: 4px solid var(--primary);
-            padding-left: 16px;
-            margin: 8px 0 12px;
-            color: var(--text-secondary);
-        }
-        .post-content-area #preview code {
-            background: var(--bg-light);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-family: monospace;
-        }
-        .post-content-area #preview pre {
-            background: var(--bg-light);
-            padding: 12px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 8px 0 12px;
-        }
-        .post-content-area #preview pre code {
-            background: transparent;
-            padding: 0;
-        }
-        .post-content-area #preview a {
-            color: var(--primary);
-            text-decoration: underline;
-        }
-        .post-content-area #preview table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 8px 0 12px;
-        }
-        .post-content-area #preview th,
-        .post-content-area #preview td {
-            border: 1px solid var(--border);
-            padding: 6px 10px;
-            text-align: left;
-        }
-        .post-content-area #preview th {
-            background: var(--bg-light);
-        }
-        .post-content-area #preview .media-placeholder {
-            display: inline-block;
-            padding: 4px 12px;
-            background: var(--primary-light);
-            color: var(--primary);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            border: 1px dashed var(--primary);
-            transition: var(--transition);
-        }
-        .post-content-area #preview .media-placeholder:hover {
-            background: var(--primary);
-            color: white;
-        }
-        .post-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            padding: 8px 0 12px;
-            flex-shrink: 0;
-            border-top: 1px solid var(--border);
-        }
-        .post-actions .btn {
-            padding: 8px 24px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            min-width: 72px;
-            text-align: center;
-        }
-        .post-actions .btn-cancel {
-            background: var(--bg-light);
-            color: var(--text-secondary);
-        }
-        .post-actions .btn-cancel:hover {
-            background: #e2e8f0;
-        }
-        .post-actions .btn-publish {
-            background: var(--primary);
-            color: white;
-        }
-        .post-actions .btn-publish:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-        .post-actions .btn-publish:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .file-library {
-            border-top: 1px solid var(--border);
-            padding: 8px 16px;
-            background: var(--bg-light);
-            flex-shrink: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .file-library .file-library-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            padding: 2px 0;
-        }
-        .file-library .file-library-header .add-file-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 13px;
-            font-weight: 500;
-            padding: 2px 8px;
-            border-radius: 4px;
-            transition: var(--transition);
-        }
-        .file-library .file-library-header .add-file-btn:hover {
-            background: var(--primary-light);
-        }
-        .file-library .file-library-header .add-file-btn svg {
-            width: 18px;
-            height: 18px;
-        }
-        .file-library .file-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            cursor: grab;
-            transition: var(--transition);
-        }
-        .file-library .file-item:hover {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-sm);
-        }
-        .file-library .file-item:active {
-            cursor: grabbing;
-        }
-        .file-library .file-item .file-icon {
-            width: 28px;
-            height: 28px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-        }
-        .file-library .file-item .file-icon svg {
-            width: 20px;
-            height: 20px;
-        }
-        .file-library .file-item .file-info {
-            flex: 1;
-            min-width: 0;
-            font-size: 13px;
-        }
-        .file-library .file-item .file-info .file-name {
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .file-library .file-item .file-info .file-size {
-            color: var(--text-light);
-            font-size: 12px;
-        }
-        .file-library .file-item .file-delete {
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            padding: 2px 4px;
-            border-radius: 4px;
-            transition: var(--transition);
-        }
-        .file-library .file-item .file-delete:hover {
-            color: var(--danger);
-            background: #fee2e2;
-        }
-        .file-library .file-item .file-delete svg {
-            width: 16px;
-            height: 16px;
-        }
-        .file-library .empty-library {
-            text-align: center;
-            color: var(--text-light);
-            font-size: 13px;
-            padding: 12px 0;
-        }
-        .confirm-modal .modal {
-            max-width: 400px;
-        }
-        .confirm-modal .modal-body {
-            font-size: 15px;
-            color: var(--text-secondary);
-            text-align: center;
-            padding: 8px 0 16px;
-        }
-        .confirm-modal .modal-footer {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 8px;
-        }
-        .confirm-modal .modal-footer .btn {
-            padding: 8px 24px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .confirm-modal .modal-footer .btn-secondary {
-            background: var(--bg-light);
-            color: var(--text-secondary);
-        }
-        .confirm-modal .modal-footer .btn-secondary:hover {
-            background: #e2e8f0;
-        }
-        .confirm-modal .modal-footer .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-        .confirm-modal .modal-footer .btn-danger:hover {
-            background: var(--danger-dark);
-        }
-        .confirm-modal .modal-footer .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        .confirm-modal .modal-footer .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-        .syntax-panel .modal {
-            max-width: 520px;
-        }
-        .syntax-panel .modal-body {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .syntax-panel .syntax-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .syntax-panel .syntax-item:last-child {
-            border-bottom: none;
-        }
-        .syntax-panel .syntax-item .syntax-code {
-            font-family: monospace;
-            background: var(--bg-light);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            color: var(--text-main);
-        }
-        .syntax-panel .syntax-item .syntax-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-            flex: 1;
-            margin: 0 8px;
-        }
-        .syntax-panel .syntax-item .syntax-add-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 18px;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-        .syntax-panel .syntax-item .syntax-add-btn:hover {
-            background: var(--primary-light);
-        }
-        @media (max-width: 640px) {
-            .post-toolbar {
-                padding: 2px 6px;
-                min-height: 36px;
-                gap: 1px;
-            }
-            .post-toolbar .toolbar-btn {
-                padding: 2px 4px;
-            }
-            .post-toolbar .toolbar-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-            .post-content-area {
-                padding: 8px 12px 4px;
-            }
-            .post-content-area #postContent {
-                font-size: 16px;
-                min-height: 80px;
-            }
-            .post-content-area #postContent::placeholder {
-                font-size: 16px;
-            }
-            .post-content-area #preview {
-                font-size: 15px;
-            }
-            .post-actions .btn {
-                padding: 6px 16px;
-                font-size: 14px;
-                min-width: 56px;
-            }
-            .file-library {
-                padding: 4px 8px;
-                max-height: 140px;
-            }
-            .file-library .file-item {
-                padding: 2px 6px;
-            }
-        }
+        /* ===== 样式与之前相同，此处保留完整 ===== */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; overflow:hidden; }
+        .post-container { display:flex; flex-direction:column; height:100vh; background:white; position:relative; }
+        .post-toolbar { display:flex; align-items:center; gap:2px; padding:4px 8px; min-height:44px; background:white; border-bottom:1px solid var(--border); flex-shrink:0; z-index:10; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+        .post-toolbar::-webkit-scrollbar { height:4px; }
+        .post-toolbar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+        .post-toolbar .toolbar-btn { background:none; border:none; padding:4px 6px; border-radius:4px; cursor:pointer; color:var(--text-secondary); transition:var(--transition); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .post-toolbar .toolbar-btn:hover { background:var(--bg-hover); color:var(--text-main); }
+        .post-toolbar .toolbar-btn.active { background:var(--primary-light); color:var(--primary); }
+        .post-toolbar .toolbar-btn svg { width:20px; height:20px; }
+        .post-toolbar .toolbar-spacer { flex:1; min-width:8px; }
+        .post-toolbar .char-count { font-size:13px; color:var(--text-light); font-weight:400; min-width:30px; text-align:right; flex-shrink:0; }
+        .post-content-area { flex:1; overflow-y:auto; padding:12px 20px 8px; background:white; display:flex; flex-direction:column; position:relative; }
+        .post-content-area #postContent { width:100%; border:none !important; outline:none !important; box-shadow:none !important; resize:none; font-size:18px; line-height:1.7; font-family:inherit; color:var(--text-main); background:transparent; padding:0; min-height:120px; flex-shrink:0; }
+        .post-content-area #postContent:focus { border:none !important; outline:none !important; box-shadow:none !important; }
+        .post-content-area #postContent::placeholder { color:var(--text-light); font-size:18px; }
+        .post-content-area #preview { display:none; width:100%; font-size:17px; line-height:1.8; color:var(--text-main); padding:0; min-height:120px; overflow-y:auto; }
+        .post-content-area #preview.show { display:block; }
+        .post-content-area #preview h1, .post-content-area #preview h2, .post-content-area #preview h3 { margin:16px 0 8px; font-weight:600; }
+        .post-content-area #preview h1 { font-size:26px; }
+        .post-content-area #preview h2 { font-size:22px; }
+        .post-content-area #preview h3 { font-size:18px; }
+        .post-content-area #preview p { margin:0 0 12px; }
+        .post-content-area #preview ul, .post-content-area #preview ol { padding-left:24px; margin:8px 0 12px; }
+        .post-content-area #preview blockquote { border-left:4px solid var(--primary); padding-left:16px; margin:8px 0 12px; color:var(--text-secondary); }
+        .post-content-area #preview code { background:var(--bg-light); padding:2px 6px; border-radius:4px; font-size:0.9em; font-family:monospace; }
+        .post-content-area #preview pre { background:var(--bg-light); padding:12px; border-radius:8px; overflow-x:auto; margin:8px 0 12px; }
+        .post-content-area #preview pre code { background:transparent; padding:0; }
+        .post-content-area #preview a { color:var(--primary); text-decoration:underline; }
+        .post-content-area #preview table { border-collapse:collapse; width:100%; margin:8px 0 12px; }
+        .post-content-area #preview th, .post-content-area #preview td { border:1px solid var(--border); padding:6px 10px; text-align:left; }
+        .post-content-area #preview th { background:var(--bg-light); }
+        .post-content-area #preview .media-preview { margin:8px 0; border-radius:8px; overflow:hidden; cursor:pointer; position:relative; display:inline-block; }
+        .post-content-area #preview .media-preview img { max-width:100%; max-height:500px; height:auto; border-radius:8px; object-fit:contain; }
+        .post-content-area #preview .media-preview video { max-width:100%; max-height:500px; border-radius:8px; }
+        .post-content-area #preview .media-preview audio { width:100%; }
+        .post-content-area #preview .media-preview .media-badge { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.6); color:white; font-size:11px; padding:2px 8px; border-radius:12px; pointer-events:none; }
+        .post-content-area #preview .media-placeholder { display:inline-block; padding:4px 12px; background:var(--primary-light); color:var(--primary); border-radius:4px; cursor:pointer; font-size:14px; border:1px dashed var(--primary); transition:var(--transition); }
+        .post-content-area #preview .media-placeholder:hover { background:var(--primary); color:white; }
+        .post-actions { display:flex; justify-content:flex-end; gap:12px; padding:8px 0 12px; flex-shrink:0; border-top:1px solid var(--border); }
+        .post-actions .btn { padding:8px 24px; border-radius:20px; font-size:15px; font-weight:600; border:none; cursor:pointer; transition:var(--transition); min-width:72px; text-align:center; }
+        .post-actions .btn-cancel { background:var(--bg-light); color:var(--text-secondary); }
+        .post-actions .btn-cancel:hover { background:#e2e8f0; }
+        .post-actions .btn-publish { background:var(--primary); color:white; }
+        .post-actions .btn-publish:hover { background:var(--primary-dark); transform:translateY(-1px); box-shadow:var(--shadow-md); }
+        .post-actions .btn-publish:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .file-library { border-top:1px solid var(--border); padding:8px 16px; background:var(--bg-light); flex-shrink:0; max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+        .file-library .file-library-header { display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--text-secondary); font-weight:500; padding:2px 0; }
+        .file-library .file-library-header .add-file-btn { background:none; border:none; cursor:pointer; color:var(--primary); display:flex; align-items:center; gap:4px; font-size:13px; font-weight:500; padding:2px 8px; border-radius:4px; transition:var(--transition); }
+        .file-library .file-library-header .add-file-btn:hover { background:var(--primary-light); }
+        .file-library .file-library-header .add-file-btn svg { width:18px; height:18px; }
+        .file-library .file-item { display:flex; align-items:center; gap:8px; background:white; padding:4px 10px; border-radius:6px; border:1px solid var(--border); cursor:grab; transition:var(--transition); }
+        .file-library .file-item:hover { border-color:var(--primary); box-shadow:var(--shadow-sm); }
+        .file-library .file-item:active { cursor:grabbing; }
+        .file-library .file-item .file-icon { width:28px; height:28px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); }
+        .file-library .file-item .file-icon svg { width:20px; height:20px; }
+        .file-library .file-item .file-info { flex:1; min-width:0; font-size:13px; }
+        .file-library .file-item .file-info .file-name { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .file-library .file-item .file-info .file-size { color:var(--text-light); font-size:12px; }
+        .file-library .file-item .file-delete { background:none; border:none; color:var(--text-light); cursor:pointer; padding:2px 4px; border-radius:4px; transition:var(--transition); }
+        .file-library .file-item .file-delete:hover { color:var(--danger); background:#fee2e2; }
+        .file-library .file-item .file-delete svg { width:16px; height:16px; }
+        .file-library .empty-library { text-align:center; color:var(--text-light); font-size:13px; padding:12px 0; }
+        .confirm-modal .modal { max-width:400px; }
+        .confirm-modal .modal-body { font-size:15px; color:var(--text-secondary); text-align:center; padding:8px 0 16px; }
+        .confirm-modal .modal-footer { display:flex; gap:12px; justify-content:center; margin-top:8px; }
+        .confirm-modal .modal-footer .btn { padding:8px 24px; border-radius:20px; font-size:14px; font-weight:500; border:none; cursor:pointer; transition:var(--transition); }
+        .confirm-modal .modal-footer .btn-secondary { background:var(--bg-light); color:var(--text-secondary); }
+        .confirm-modal .modal-footer .btn-secondary:hover { background:#e2e8f0; }
+        .confirm-modal .modal-footer .btn-danger { background:var(--danger); color:white; }
+        .confirm-modal .modal-footer .btn-danger:hover { background:var(--danger-dark); }
+        .confirm-modal .modal-footer .btn-primary { background:var(--primary); color:white; }
+        .confirm-modal .modal-footer .btn-primary:hover { background:var(--primary-dark); }
+        .syntax-panel .modal { max-width:520px; }
+        .syntax-panel .modal-body { max-height:400px; overflow-y:auto; }
+        .syntax-panel .syntax-item { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); }
+        .syntax-panel .syntax-item:last-child { border-bottom:none; }
+        .syntax-panel .syntax-item .syntax-code { font-family:monospace; background:var(--bg-light); padding:2px 8px; border-radius:4px; font-size:14px; color:var(--text-main); }
+        .syntax-panel .syntax-item .syntax-desc { font-size:13px; color:var(--text-secondary); flex:1; margin:0 8px; }
+        .syntax-panel .syntax-item .syntax-add-btn { background:none; border:none; color:var(--primary); cursor:pointer; padding:2px 8px; border-radius:4px; font-size:18px; font-weight:600; transition:var(--transition); }
+        .syntax-panel .syntax-item .syntax-add-btn:hover { background:var(--primary-light); }
+        @media (max-width:640px) { .post-toolbar { padding:2px 6px; min-height:36px; gap:1px; } .post-toolbar .toolbar-btn { padding:2px 4px; } .post-toolbar .toolbar-btn svg { width:16px; height:16px; } .post-content-area { padding:8px 12px 4px; } .post-content-area #postContent { font-size:16px; min-height:80px; } .post-content-area #postContent::placeholder { font-size:16px; } .post-content-area #preview { font-size:15px; } .post-actions .btn { padding:6px 16px; font-size:14px; min-width:56px; } .file-library { padding:4px 8px; max-height:140px; } .file-library .file-item { padding:2px 6px; } }
     </style>
 </head>
 <body>
@@ -503,8 +105,10 @@
             <button class="toolbar-btn" data-syntax="`代码`" title="行内代码"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button>
             <button class="toolbar-btn" data-syntax="\n```\n代码块\n```\n" title="代码块"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="17" x2="13" y2="17"/></svg></button>
             <button class="toolbar-btn" data-syntax="[链接文本](url)" title="链接"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
-            <button class="toolbar-btn" data-syntax="[img]文件ID[/img]" title="图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
-            <button class="toolbar-btn" data-syntax="[video]文件ID[/video]" title="视频"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+            <!-- 图片按钮：带默认尺寸 -->
+            <button class="toolbar-btn" data-syntax="[img]文件ID=500x500[/img]" title="图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+            <!-- 视频按钮：带默认尺寸 -->
+            <button class="toolbar-btn" data-syntax="[video]文件ID=500x500[/video]" title="视频"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
             <button class="toolbar-btn" data-syntax="[audio]文件ID[/audio]" title="音频"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
             <button class="toolbar-btn" data-syntax="[file]文件ID[/file]" title="文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg></button>
             <button class="toolbar-btn" data-syntax="- 列表项" title="无序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
@@ -810,7 +414,7 @@
             }
 
             // ============================================================
-            // 预览渲染（支持尺寸语法）
+            // 预览渲染（支持真实媒体 + 默认尺寸）
             // ============================================================
             function renderPreview() {
                 const raw = textarea.value;
@@ -819,6 +423,68 @@
                     return;
                 }
                 try {
+                    // 解析尺寸
+                    function parseSize(sizeStr) {
+                        if (!sizeStr) return null;
+                        const parts = sizeStr.split('x');
+                        if (parts.length === 2) {
+                            const w = parseInt(parts[0]);
+                            const h = parseInt(parts[1]);
+                            if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) {
+                                return { width: w, height: h, unit: 'px' };
+                            }
+                        }
+                        if (sizeStr.endsWith('%')) {
+                            const pct = parseInt(sizeStr);
+                            if (!isNaN(pct) && pct > 0 && pct <= 100) {
+                                return { width: pct, unit: '%' };
+                            }
+                        }
+                        return null;
+                    }
+
+                    // 从 fileList 查找文件
+                    function findFile(id) {
+                        return fileList.find(f => f.id === id);
+                    }
+
+                    // 构建媒体 HTML
+                    function buildMediaHTML(type, id, sizeStr) {
+                        const file = findFile(id);
+                        const sizeInfo = parseSize(sizeStr);
+                        let style = '';
+                        if (sizeInfo) {
+                            if (sizeInfo.unit === '%') {
+                                style = ` style="width:${sizeInfo.width}%; max-width:100%; height:auto;"`;
+                            } else {
+                                style = ` style="width:${sizeInfo.width}px; height:${sizeInfo.height}px; max-width:100%; object-fit:contain;"`;
+                            }
+                        } else {
+                            // 默认尺寸
+                            if (type === 'img') {
+                                style = ` style="max-width:100%; max-height:500px; height:auto; width:auto;"`;
+                            } else if (type === 'video') {
+                                style = ` style="max-width:100%; max-height:500px; width:auto;"`;
+                            } else {
+                                style = ` style="width:100%;"`;
+                            }
+                        }
+
+                        if (file) {
+                            if (type === 'img') {
+                                return `<div class="media-preview" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${sizeStr || ''}"><img src="${file.file_url}" alt="${file.file_name}"${style} /><span class="media-badge">点击更换</span></div>`;
+                            } else if (type === 'video') {
+                                return `<div class="media-preview" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${sizeStr || ''}"><video src="${file.file_url}" controls preload="metadata"${style}></video><span class="media-badge">点击更换</span></div>`;
+                            } else if (type === 'audio') {
+                                return `<div class="media-preview" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${sizeStr || ''}"><audio src="${file.file_url}" controls style="width:100%;"></audio><span class="media-badge">点击更换</span></div>`;
+                            }
+                        }
+                        // 文件未找到，显示占位符
+                        const label = type === 'img' ? '🖼️' : type === 'video' ? '🎬' : type === 'audio' ? '🎵' : '📄';
+                        const sizeDisplay = sizeStr ? ' (' + sizeStr + ')' : '';
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${sizeStr || ''}">${label} ${type}${sizeDisplay} (未关联)</span>`;
+                    }
+
                     // 使用临时标记法
                     const mediaMap = {};
                     let counter = 0;
@@ -830,19 +496,37 @@
 
                     let finalHtml = marked.parse(tempContent);
 
-                    // 替换回媒体占位符
+                    // 替换回媒体 HTML
                     for (const key in mediaMap) {
                         const { type, id, size } = mediaMap[key];
-                        const sizeDisplay = size ? ' (' + size + ')' : '';
-                        const label = type === 'img' ? '🖼️' : type === 'video' ? '🎬' : type === 'audio' ? '🎵' : '📄';
-                        const mediaHtml =
-                            `<span class="media-placeholder" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${size}" style="display:inline-block;padding:4px 12px;background:var(--primary-light);color:var(--primary);border-radius:4px;cursor:pointer;font-size:14px;border:1px dashed var(--primary);">${label} ${type}${sizeDisplay}</span>`;
+                        const mediaHtml = buildMediaHTML(type, id, size);
                         finalHtml = finalHtml.replace(key, mediaHtml);
                     }
 
                     previewDiv.innerHTML = finalHtml;
 
-                    // 点击占位符选择文件
+                    // 点击媒体预览 -> 打开文件选择器（更换文件）
+                    previewDiv.querySelectorAll('.media-preview').forEach(el => {
+                        el.addEventListener('click', (e) => {
+                            // 如果点击的是 video/audio 的控制按钮，不触发更换
+                            if (e.target.closest('video') || e.target.closest('audio')) {
+                                // 但不阻止默认行为（播放/暂停）
+                                return;
+                            }
+                            const fileId = el.dataset.fileId;
+                            const type = el.dataset.type;
+                            const originalId = el.dataset.originalId;
+                            const size = el.dataset.size || '';
+                            // 如果文件已关联，允许更换
+                            if (fileId) {
+                                showFilePickerForMedia(el, originalId, type, size);
+                            } else {
+                                showFilePickerForMedia(el, originalId, type, size);
+                            }
+                        });
+                    });
+
+                    // 点击占位符 -> 选择文件
                     previewDiv.querySelectorAll('.media-placeholder').forEach(el => {
                         el.addEventListener('click', () => {
                             const fileId = el.dataset.fileId;
@@ -863,7 +547,7 @@
                 }
             }
 
-            // ===== 选择文件替换占位符 =====
+            // ===== 选择文件替换占位符/媒体 =====
             function showFilePickerForMedia(el, originalId, type, size) {
                 if (!fileList.length) {
                     showToast('文件库为空，请先上传文件', 'error');
@@ -915,7 +599,7 @@
                     if (data) {
                         try {
                             const fileInfo = JSON.parse(data);
-                            const target = e.target.closest('.media-placeholder');
+                            const target = e.target.closest('.media-preview') || e.target.closest('.media-placeholder');
                             if (target) {
                                 const originalId = target.dataset.originalId;
                                 const type = target.dataset.type;
