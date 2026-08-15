@@ -35,7 +35,6 @@
             object-fit: cover;
         }
 
-        /* 评论区滚动 */
         .comments-section {
             margin-top: 16px;
             padding-top: 16px;
@@ -47,7 +46,6 @@
             margin-bottom: 12px;
         }
 
-        /* 评论项 */
         .comment-item {
             margin-bottom: 16px;
         }
@@ -99,7 +97,6 @@
             border-color: var(--primary);
         }
 
-        /* 帖子内容中的媒体 */
         .post-content .file-card {
             display: flex;
             align-items: center;
@@ -187,7 +184,6 @@
             border: 1px dashed var(--border);
         }
 
-        /* 返回按钮始终在左上角 */
         #backBtn {
             position: sticky;
             top: 0;
@@ -196,7 +192,6 @@
             margin-bottom: 12px;
         }
 
-        /* 响应式 */
         @media (max-width: 640px) {
             .main-content {
                 padding: 10px 12px !important;
@@ -265,7 +260,6 @@
                 formatFileSize
             } = comp;
 
-            // 统一 showToast
             const showToast = configShowToast || compShowToast;
 
             let currentUser = null;
@@ -276,7 +270,7 @@
             const id = urlParams.get('id');
 
             // ============================================================
-            // 辅助函数：为帖子加载文件信息
+            // 辅助函数
             // ============================================================
             async function enrichPostWithFiles(post) {
                 if (!post || !post.content) return post;
@@ -360,7 +354,6 @@
                 window.location.href = 'app.html';
             }
 
-            // ---------- 全局事件（头像跳转） ----------
             function setupGlobalEvents() {
                 document.addEventListener('click', (e) => {
                     const target = e.target.closest('[data-action="view-profile"]');
@@ -373,7 +366,6 @@
                 });
             }
 
-            // ---------- 实时订阅 ----------
             function setupRealtime() {
                 if (!supabaseClient || !id) return;
 
@@ -455,7 +447,6 @@
                     container.appendChild(idTag);
                 }
 
-                // 传入 isAdmin 参数
                 const isAdmin = currentUser.is_admin === true;
                 container.appendChild(comp.renderPostCard(enrichedPost, { showActions: true, isDetail: true, isAdmin: isAdmin }));
 
@@ -478,6 +469,9 @@
                 bindPostActions(postId, enrichedPost.user_id, container);
             }
 
+            // ============================================================
+            // 修复：递归渲染所有层级的评论嵌套
+            // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
                 if (!listDiv) return;
@@ -501,23 +495,74 @@
 
                 const isAdmin = currentUser.is_admin === true;
 
-                const mainComments = data.filter(c => !c.parent_id);
-                const replies = data.filter(c => c.parent_id);
-                mainComments.forEach(comment => {
-                    listDiv.appendChild(renderCommentWithDelete(comment, false, isAdmin));
-                    const commentReplies = replies.filter(r => r.parent_id === comment.id);
-                    commentReplies.forEach(reply => {
-                        const replyEl = renderCommentWithDelete(reply, true, isAdmin);
-                        replyEl.style.marginLeft = '24px';
-                        listDiv.appendChild(replyEl);
-                    });
+                // 构建评论树
+                const commentMap = {};
+                const roots = [];
+
+                // 先建立所有评论的映射
+                data.forEach(c => {
+                    commentMap[c.id] = c;
+                    c.children = [];
                 });
+
+                // 构建父子关系
+                data.forEach(c => {
+                    if (c.parent_id && commentMap[c.parent_id]) {
+                        commentMap[c.parent_id].children.push(c);
+                    } else {
+                        roots.push(c);
+                    }
+                });
+
+                // 递归渲染函数
+                function renderCommentNode(comment, depth = 0) {
+                    // 将当前用户ID和帖子作者ID传递给评论渲染
+                    comment.currentUserId = currentUser.id;
+                    comment.is_owner = comment.user_id === postAuthorId;
+
+                    // 使用 renderCommentItem 渲染，但我们需要把删除/举报按钮的控制权交给它
+                    // 它内部会根据 isAdmin 和 is_owner 决定显示删除还是举报
+                    const el = comp.renderCommentItem(comment, {
+                        isReply: depth > 0,
+                        isAdmin: isAdmin
+                    });
+
+                    // 缩进：每层增加 24px，最多 60px
+                    if (depth > 0) {
+                        el.style.marginLeft = Math.min(depth * 24, 60) + 'px';
+                        // 添加视觉提示：左侧边框线
+                        el.style.borderLeft = '2px solid var(--border)';
+                        el.style.paddingLeft = '8px';
+                    }
+
+                    // 递归渲染子评论
+                    if (comment.children && comment.children.length > 0) {
+                        // 按时间排序子评论
+                        comment.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                        comment.children.forEach(child => {
+                            const childEl = renderCommentNode(child, depth + 1);
+                            el.appendChild(childEl);
+                        });
+                    }
+
+                    return el;
+                }
+
+                // 按时间排序根评论（主评论）
+                roots.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+                // 渲染所有根评论
+                roots.forEach(root => {
+                    const el = renderCommentNode(root, 0);
+                    listDiv.appendChild(el);
+                });
+
+                // 为递归渲染的评论中的按钮绑定事件（由全局事件委托处理）
             }
 
             function renderCommentWithDelete(comment, isReply, isAdmin) {
-                const commentEl = comp.renderCommentItem(comment, { isReply, isAdmin: isAdmin });
-                // 如果有删除按钮，确保绑定事件（事件委托中处理）
-                return commentEl;
+                // 此函数已被上面的递归逻辑替代，但保留以防其他地方调用
+                return comp.renderCommentItem(comment, { isReply, isAdmin: isAdmin });
             }
 
             function bindPostActions(postId, postAuthorId, container) {
@@ -536,7 +581,6 @@
                     else if (action === 'report') showReportModal('post', postId);
                     else if (action === 'edit') showEditPostModal(postId);
                     else if (action === 'delete') {
-                        // 删除帖子：作者 或 管理员
                         const canDelete = target.dataset.postId === postId && (currentUser.id === postAuthorId || isAdmin);
                         if (!canDelete) {
                             showToast('你没有权限删除此帖', 'error');
@@ -557,7 +601,6 @@
                     } else if (action === 'share-comment' && commentId) await shareComment(commentId);
                     else if (action === 'report-comment' && commentId) showReportModal('comment', commentId);
                     else if (action === 'delete-comment' && commentId) {
-                        // 删除评论：评论作者 或 帖子作者 或 管理员
                         const { data: comment } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
                         if (!comment) return showToast('评论不存在', 'error');
                         const canDelete = comment.user_id === currentUser.id || postAuthorId === currentUser.id || isAdmin;
@@ -738,15 +781,13 @@
                             const input = modal.querySelector('#sharePostIdInput');
                             input.select();
                             navigator.clipboard.writeText(input.value).then(() => showToast('已复制帖子 ID', 'success'))
-                                .catch(() => { document.execCommand('copy'); showToast('已复制帖子 ID', 'success'); });
+                                .catch(() => { document.execCommand('copy');
+                                    showToast('已复制帖子 ID', 'success'); });
                         });
                     })
                     .catch(() => { window._modalLock = false; });
             }
 
-            // ============================================================
-            // 举报/编辑/分享评论
-            // ============================================================
             function showReportModal(targetType, targetId) {
                 if (window._modalLock) return;
                 window._modalLock = true;
@@ -802,7 +843,9 @@
                 const friendListDiv = modal.querySelector('#friendList');
                 const { data: follows } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id);
                 if (follows?.length) follows.forEach(f => {
-                    const btn = document.createElement('button'); btn.className = 'btn btn-secondary btn-sm'; btn.textContent = getUserDisplayName(f.following);
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-secondary btn-sm';
+                    btn.textContent = getUserDisplayName(f.following);
                     btn.addEventListener('click', async () => {
                         await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false });
                         modal.remove();
@@ -1050,7 +1093,6 @@
 
                 container.innerHTML = html;
 
-                // ---------- 事件绑定 ----------
                 document.getElementById('chatBtn').addEventListener('click', () => {
                     window.location.href = 'chat.html?userId=' + userId;
                 });
@@ -1160,7 +1202,6 @@
                     loadUserProfile(userId);
                 });
 
-                // ===== 加载帖子/话题列表 =====
                 const contentDiv = document.getElementById('profileContent');
                 const isAdmin = currentUser.is_admin === true;
 
