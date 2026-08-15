@@ -876,3 +876,38 @@ body.fullscreen-app .main-content { width: 100%; height: 100vh; padding: 20px; }
         height: 18px;
     }
 }
+
+/* ========== 关于页面内容隔离 ========== */
+.about-content-wrapper {
+    width: 100%;
+    overflow: auto;
+}
+
+.about-content {
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow: auto;
+}
+
+.about-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.about-content * {
+    box-sizing: border-box;
+}
+
+.about-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+}
+.about-content th,
+.about-content td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+}
+.about-content th {
+    background: var(--bg-light);
+}
