@@ -9,496 +9,90 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 所有样式与之前相同（省略，请使用之前版本的样式） ===== */
-        /* 为了完整，这里包含所有样式，但为了节省空间，只保留关键部分，实际使用时复制上面提供的完整 style 块 */
-        /* 但为了确保无误，我把完整样式再贴一遍（与之前完全相同） */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
-        .post-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: white;
-            position: relative;
-        }
-        .post-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            padding: 4px 8px;
-            min-height: 44px;
-            background: white;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            z-index: 10;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scrollbar-width: thin;
-        }
-        .post-toolbar::-webkit-scrollbar {
-            height: 4px;
-        }
-        .post-toolbar::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-        }
-        .post-toolbar .toolbar-btn {
-            background: none;
-            border: none;
-            padding: 4px 6px;
-            border-radius: 4px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .post-toolbar .toolbar-btn:hover {
-            background: var(--bg-hover);
-            color: var(--text-main);
-        }
-        .post-toolbar .toolbar-btn.active {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-        .post-toolbar .toolbar-btn svg {
-            width: 20px;
-            height: 20px;
-        }
-        .post-toolbar .toolbar-spacer {
-            flex: 1;
-            min-width: 8px;
-        }
-        .post-toolbar .char-count {
-            font-size: 13px;
-            color: var(--text-light);
-            font-weight: 400;
-            min-width: 30px;
-            text-align: right;
-            flex-shrink: 0;
-        }
-        .post-content-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 20px 8px;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        .post-content-area #postContent {
-            width: 100%;
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            resize: none;
-            font-size: 18px;
-            line-height: 1.7;
-            font-family: inherit;
-            color: var(--text-main);
-            background: transparent;
-            padding: 0;
-            min-height: 120px;
-            flex-shrink: 0;
-        }
-        .post-content-area #postContent:focus {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-        .post-content-area #postContent::placeholder {
-            color: var(--text-light);
-            font-size: 18px;
-        }
-        .post-content-area #preview {
-            display: none;
-            width: 100%;
-            font-size: 17px;
-            line-height: 1.8;
-            color: var(--text-main);
-            padding: 0;
-            min-height: 120px;
-            overflow-y: auto;
-        }
-        .post-content-area #preview.show {
-            display: block;
-        }
-        .post-content-area #preview h1,
-        .post-content-area #preview h2,
-        .post-content-area #preview h3 {
-            margin: 16px 0 8px;
-            font-weight: 600;
-        }
-        .post-content-area #preview h1 {
-            font-size: 26px;
-        }
-        .post-content-area #preview h2 {
-            font-size: 22px;
-        }
-        .post-content-area #preview h3 {
-            font-size: 18px;
-        }
-        .post-content-area #preview p {
-            margin: 0 0 12px;
-        }
-        .post-content-area #preview ul,
-        .post-content-area #preview ol {
-            padding-left: 24px;
-            margin: 8px 0 12px;
-        }
-        .post-content-area #preview blockquote {
-            border-left: 4px solid var(--primary);
-            padding-left: 16px;
-            margin: 8px 0 12px;
-            color: var(--text-secondary);
-        }
-        .post-content-area #preview code {
-            background: var(--bg-light);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-family: monospace;
-        }
-        .post-content-area #preview pre {
-            background: var(--bg-light);
-            padding: 12px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 8px 0 12px;
-        }
-        .post-content-area #preview pre code {
-            background: transparent;
-            padding: 0;
-        }
-        .post-content-area #preview a {
-            color: var(--primary);
-            text-decoration: underline;
-        }
-        .post-content-area #preview table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 8px 0 12px;
-        }
-        .post-content-area #preview th,
-        .post-content-area #preview td {
-            border: 1px solid var(--border);
-            padding: 6px 10px;
-            text-align: left;
-        }
-        .post-content-area #preview th {
-            background: var(--bg-light);
-        }
-        .post-content-area #preview .media-placeholder {
-            display: inline-block;
-            padding: 4px 12px;
-            background: var(--primary-light);
-            color: var(--primary);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            border: 1px dashed var(--primary);
-            transition: var(--transition);
-        }
-        .post-content-area #preview .media-placeholder:hover {
-            background: var(--primary);
-            color: white;
-        }
-        .post-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            padding: 8px 0 12px;
-            flex-shrink: 0;
-            border-top: 1px solid var(--border);
-        }
-        .post-actions .btn {
-            padding: 8px 24px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            min-width: 72px;
-            text-align: center;
-        }
-        .post-actions .btn-cancel {
-            background: var(--bg-light);
-            color: var(--text-secondary);
-        }
-        .post-actions .btn-cancel:hover {
-            background: #e2e8f0;
-        }
-        .post-actions .btn-publish {
-            background: var(--primary);
-            color: white;
-        }
-        .post-actions .btn-publish:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-        .post-actions .btn-publish:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .file-library {
-            border-top: 1px solid var(--border);
-            padding: 8px 16px;
-            background: var(--bg-light);
-            flex-shrink: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .file-library .file-library-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            padding: 2px 0;
-        }
-        .file-library .file-library-header .add-file-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 13px;
-            font-weight: 500;
-            padding: 2px 8px;
-            border-radius: 4px;
-            transition: var(--transition);
-        }
-        .file-library .file-library-header .add-file-btn:hover {
-            background: var(--primary-light);
-        }
-        .file-library .file-library-header .add-file-btn svg {
-            width: 18px;
-            height: 18px;
-        }
-        .file-library .file-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            cursor: grab;
-            transition: var(--transition);
-        }
-        .file-library .file-item:hover {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-sm);
-        }
-        .file-library .file-item:active {
-            cursor: grabbing;
-        }
-        .file-library .file-item .file-icon {
-            width: 28px;
-            height: 28px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-        }
-        .file-library .file-item .file-icon svg {
-            width: 20px;
-            height: 20px;
-        }
-        .file-library .file-item .file-info {
-            flex: 1;
-            min-width: 0;
-            font-size: 13px;
-        }
-        .file-library .file-item .file-info .file-name {
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .file-library .file-item .file-info .file-size {
-            color: var(--text-light);
-            font-size: 12px;
-        }
-        .file-library .file-item .file-delete {
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            padding: 2px 4px;
-            border-radius: 4px;
-            transition: var(--transition);
-        }
-        .file-library .file-item .file-delete:hover {
-            color: var(--danger);
-            background: #fee2e2;
-        }
-        .file-library .file-item .file-delete svg {
-            width: 16px;
-            height: 16px;
-        }
-        .file-library .empty-library {
-            text-align: center;
-            color: var(--text-light);
-            font-size: 13px;
-            padding: 12px 0;
-        }
-        .confirm-modal .modal {
-            max-width: 400px;
-        }
-        .confirm-modal .modal-body {
-            font-size: 15px;
-            color: var(--text-secondary);
-            text-align: center;
-            padding: 8px 0 16px;
-        }
-        .confirm-modal .modal-footer {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 8px;
-        }
-        .confirm-modal .modal-footer .btn {
-            padding: 8px 24px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .confirm-modal .modal-footer .btn-secondary {
-            background: var(--bg-light);
-            color: var(--text-secondary);
-        }
-        .confirm-modal .modal-footer .btn-secondary:hover {
-            background: #e2e8f0;
-        }
-        .confirm-modal .modal-footer .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-        .confirm-modal .modal-footer .btn-danger:hover {
-            background: var(--danger-dark);
-        }
-        .confirm-modal .modal-footer .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        .confirm-modal .modal-footer .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-        .syntax-panel .modal {
-            max-width: 520px;
-        }
-        .syntax-panel .modal-body {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .syntax-panel .syntax-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .syntax-panel .syntax-item:last-child {
-            border-bottom: none;
-        }
-        .syntax-panel .syntax-item .syntax-code {
-            font-family: monospace;
-            background: var(--bg-light);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            color: var(--text-main);
-        }
-        .syntax-panel .syntax-item .syntax-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-            flex: 1;
-            margin: 0 8px;
-        }
-        .syntax-panel .syntax-item .syntax-add-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 18px;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-        .syntax-panel .syntax-item .syntax-add-btn:hover {
-            background: var(--primary-light);
-        }
-        @media (max-width: 640px) {
-            .post-toolbar {
-                padding: 2px 6px;
-                min-height: 36px;
-                gap: 1px;
-            }
-            .post-toolbar .toolbar-btn {
-                padding: 2px 4px;
-            }
-            .post-toolbar .toolbar-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-            .post-content-area {
-                padding: 8px 12px 4px;
-            }
-            .post-content-area #postContent {
-                font-size: 16px;
-                min-height: 80px;
-            }
-            .post-content-area #postContent::placeholder {
-                font-size: 16px;
-            }
-            .post-content-area #preview {
-                font-size: 15px;
-            }
-            .post-actions .btn {
-                padding: 6px 16px;
-                font-size: 14px;
-                min-width: 56px;
-            }
-            .file-library {
-                padding: 4px 8px;
-                max-height: 140px;
-            }
-            .file-library .file-item {
-                padding: 2px 6px;
-            }
-        }
+        /* ===== 与之前完全相同，此处省略（使用之前完整的样式块） ===== */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; overflow:hidden; }
+        .post-container { display:flex; flex-direction:column; height:100vh; background:white; position:relative; }
+        .post-toolbar { display:flex; align-items:center; gap:2px; padding:4px 8px; min-height:44px; background:white; border-bottom:1px solid var(--border); flex-shrink:0; z-index:10; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+        .post-toolbar::-webkit-scrollbar { height:4px; }
+        .post-toolbar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+        .post-toolbar .toolbar-btn { background:none; border:none; padding:4px 6px; border-radius:4px; cursor:pointer; color:var(--text-secondary); transition:var(--transition); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .post-toolbar .toolbar-btn:hover { background:var(--bg-hover); color:var(--text-main); }
+        .post-toolbar .toolbar-btn.active { background:var(--primary-light); color:var(--primary); }
+        .post-toolbar .toolbar-btn svg { width:20px; height:20px; }
+        .post-toolbar .toolbar-spacer { flex:1; min-width:8px; }
+        .post-toolbar .char-count { font-size:13px; color:var(--text-light); font-weight:400; min-width:30px; text-align:right; flex-shrink:0; }
+        .post-content-area { flex:1; overflow-y:auto; padding:12px 20px 8px; background:white; display:flex; flex-direction:column; position:relative; }
+        .post-content-area #postContent { width:100%; border:none !important; outline:none !important; box-shadow:none !important; resize:none; font-size:18px; line-height:1.7; font-family:inherit; color:var(--text-main); background:transparent; padding:0; min-height:120px; flex-shrink:0; }
+        .post-content-area #postContent:focus { border:none !important; outline:none !important; box-shadow:none !important; }
+        .post-content-area #postContent::placeholder { color:var(--text-light); font-size:18px; }
+        .post-content-area #preview { display:none; width:100%; font-size:17px; line-height:1.8; color:var(--text-main); padding:0; min-height:120px; overflow-y:auto; }
+        .post-content-area #preview.show { display:block; }
+        .post-content-area #preview h1, .post-content-area #preview h2, .post-content-area #preview h3 { margin:16px 0 8px; font-weight:600; }
+        .post-content-area #preview h1 { font-size:26px; }
+        .post-content-area #preview h2 { font-size:22px; }
+        .post-content-area #preview h3 { font-size:18px; }
+        .post-content-area #preview p { margin:0 0 12px; }
+        .post-content-area #preview ul, .post-content-area #preview ol { padding-left:24px; margin:8px 0 12px; }
+        .post-content-area #preview blockquote { border-left:4px solid var(--primary); padding-left:16px; margin:8px 0 12px; color:var(--text-secondary); }
+        .post-content-area #preview code { background:var(--bg-light); padding:2px 6px; border-radius:4px; font-size:0.9em; font-family:monospace; }
+        .post-content-area #preview pre { background:var(--bg-light); padding:12px; border-radius:8px; overflow-x:auto; margin:8px 0 12px; }
+        .post-content-area #preview pre code { background:transparent; padding:0; }
+        .post-content-area #preview a { color:var(--primary); text-decoration:underline; }
+        .post-content-area #preview table { border-collapse:collapse; width:100%; margin:8px 0 12px; }
+        .post-content-area #preview th, .post-content-area #preview td { border:1px solid var(--border); padding:6px 10px; text-align:left; }
+        .post-content-area #preview th { background:var(--bg-light); }
+        .post-content-area #preview .media-placeholder { display:inline-block; padding:4px 12px; background:var(--primary-light); color:var(--primary); border-radius:4px; cursor:pointer; font-size:14px; border:1px dashed var(--primary); transition:var(--transition); }
+        .post-content-area #preview .media-placeholder:hover { background:var(--primary); color:white; }
+        .post-actions { display:flex; justify-content:flex-end; gap:12px; padding:8px 0 12px; flex-shrink:0; border-top:1px solid var(--border); }
+        .post-actions .btn { padding:8px 24px; border-radius:20px; font-size:15px; font-weight:600; border:none; cursor:pointer; transition:var(--transition); min-width:72px; text-align:center; }
+        .post-actions .btn-cancel { background:var(--bg-light); color:var(--text-secondary); }
+        .post-actions .btn-cancel:hover { background:#e2e8f0; }
+        .post-actions .btn-publish { background:var(--primary); color:white; }
+        .post-actions .btn-publish:hover { background:var(--primary-dark); transform:translateY(-1px); box-shadow:var(--shadow-md); }
+        .post-actions .btn-publish:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .file-library { border-top:1px solid var(--border); padding:8px 16px; background:var(--bg-light); flex-shrink:0; max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+        .file-library .file-library-header { display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--text-secondary); font-weight:500; padding:2px 0; }
+        .file-library .file-library-header .add-file-btn { background:none; border:none; cursor:pointer; color:var(--primary); display:flex; align-items:center; gap:4px; font-size:13px; font-weight:500; padding:2px 8px; border-radius:4px; transition:var(--transition); }
+        .file-library .file-library-header .add-file-btn:hover { background:var(--primary-light); }
+        .file-library .file-library-header .add-file-btn svg { width:18px; height:18px; }
+        .file-library .file-item { display:flex; align-items:center; gap:8px; background:white; padding:4px 10px; border-radius:6px; border:1px solid var(--border); cursor:grab; transition:var(--transition); }
+        .file-library .file-item:hover { border-color:var(--primary); box-shadow:var(--shadow-sm); }
+        .file-library .file-item:active { cursor:grabbing; }
+        .file-library .file-item .file-icon { width:28px; height:28px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); }
+        .file-library .file-item .file-icon svg { width:20px; height:20px; }
+        .file-library .file-item .file-info { flex:1; min-width:0; font-size:13px; }
+        .file-library .file-item .file-info .file-name { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .file-library .file-item .file-info .file-size { color:var(--text-light); font-size:12px; }
+        .file-library .file-item .file-delete { background:none; border:none; color:var(--text-light); cursor:pointer; padding:2px 4px; border-radius:4px; transition:var(--transition); }
+        .file-library .file-item .file-delete:hover { color:var(--danger); background:#fee2e2; }
+        .file-library .file-item .file-delete svg { width:16px; height:16px; }
+        .file-library .empty-library { text-align:center; color:var(--text-light); font-size:13px; padding:12px 0; }
+        .confirm-modal .modal { max-width:400px; }
+        .confirm-modal .modal-body { font-size:15px; color:var(--text-secondary); text-align:center; padding:8px 0 16px; }
+        .confirm-modal .modal-footer { display:flex; gap:12px; justify-content:center; margin-top:8px; }
+        .confirm-modal .modal-footer .btn { padding:8px 24px; border-radius:20px; font-size:14px; font-weight:500; border:none; cursor:pointer; transition:var(--transition); }
+        .confirm-modal .modal-footer .btn-secondary { background:var(--bg-light); color:var(--text-secondary); }
+        .confirm-modal .modal-footer .btn-secondary:hover { background:#e2e8f0; }
+        .confirm-modal .modal-footer .btn-danger { background:var(--danger); color:white; }
+        .confirm-modal .modal-footer .btn-danger:hover { background:var(--danger-dark); }
+        .confirm-modal .modal-footer .btn-primary { background:var(--primary); color:white; }
+        .confirm-modal .modal-footer .btn-primary:hover { background:var(--primary-dark); }
+        .syntax-panel .modal { max-width:520px; }
+        .syntax-panel .modal-body { max-height:400px; overflow-y:auto; }
+        .syntax-panel .syntax-item { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); }
+        .syntax-panel .syntax-item:last-child { border-bottom:none; }
+        .syntax-panel .syntax-item .syntax-code { font-family:monospace; background:var(--bg-light); padding:2px 8px; border-radius:4px; font-size:14px; color:var(--text-main); }
+        .syntax-panel .syntax-item .syntax-desc { font-size:13px; color:var(--text-secondary); flex:1; margin:0 8px; }
+        .syntax-panel .syntax-item .syntax-add-btn { background:none; border:none; color:var(--primary); cursor:pointer; padding:2px 8px; border-radius:4px; font-size:18px; font-weight:600; transition:var(--transition); }
+        .syntax-panel .syntax-item .syntax-add-btn:hover { background:var(--primary-light); }
+        @media (max-width:640px) { .post-toolbar { padding:2px 6px; min-height:36px; gap:1px; } .post-toolbar .toolbar-btn { padding:2px 4px; } .post-toolbar .toolbar-btn svg { width:16px; height:16px; } .post-content-area { padding:8px 12px 4px; } .post-content-area #postContent { font-size:16px; min-height:80px; } .post-content-area #postContent::placeholder { font-size:16px; } .post-content-area #preview { font-size:15px; } .post-actions .btn { padding:6px 16px; font-size:14px; min-width:56px; } .file-library { padding:4px 8px; max-height:140px; } .file-library .file-item { padding:2px 6px; } }
     </style>
 </head>
 <body>
     <div class="post-container">
-        <!-- ===== 顶部工具栏 ===== -->
+        <!-- ===== 顶部工具栏（18个语法按钮 + 预览） ===== -->
         <div class="post-toolbar" id="toolbar">
-            <!-- 语法按钮（18个） -->
             <button class="toolbar-btn" data-syntax="# " title="标题"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M12 4v16M4 12h8"/></svg></button>
             <button class="toolbar-btn" data-syntax="**粗体文本**" title="粗体"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg></button>
             <button class="toolbar-btn" data-syntax="*斜体文本*" title="斜体"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg></button>
@@ -556,13 +150,11 @@
     <script src="js/components.js"></script>
     <script>
         (function() {
-            // ===== 修复：从 comp 解构 showToast =====
             const cfg = window.BikanConfig;
             const comp = window.BikanComponents;
             const { supabaseClient, sdkReady, uploadFile } = cfg;
             const { openModal, Icons, showToast } = comp;
 
-            // ===== 其余代码与之前完全相同 =====
             let currentUser = null;
             let editPostId = null;
             let isEditMode = false;
@@ -813,7 +405,51 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
 
+            // ===== 预览区拖拽支持 =====
+            function setupPreviewDropZone() {
+                previewDiv.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+                previewDiv.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (data) {
+                        try {
+                            const fileInfo = JSON.parse(data);
+                            // 检查拖拽目标是否为 .media-placeholder
+                            const target = e.target.closest('.media-placeholder');
+                            if (target) {
+                                // 替换占位符
+                                const originalId = target.dataset.originalId;
+                                const type = target.dataset.type;
+                                if (originalId) {
+                                    // 替换原有 ID 为新 ID
+                                    const oldSyntax = `[${type}]${originalId}[/${type}]`;
+                                    const newSyntax = `[${type}]${fileInfo.id}[/${type}]`;
+                                    textarea.value = textarea.value.replace(oldSyntax, newSyntax);
+                                    onInput();
+                                    showToast('文件已关联', 'success');
+                                }
+                            } else {
+                                // 如果没有目标占位符，插入到光标位置或末尾
+                                const syntax = getMediaSyntax(fileInfo);
+                                insertAtCursor(syntax);
+                            }
+                        } catch (e) {
+                            // 不是 JSON，可能是文件
+                            const files = e.dataTransfer.files;
+                            if (files && files.length > 0) {
+                                uploadFilesToLibrary(files);
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 在编辑区拖拽（textarea 已有处理，预览区需要额外支持）
+
             function setupDropZone() {
+                // 全局拖拽上传
                 document.addEventListener('dragover', (e) => e.preventDefault());
                 document.addEventListener('drop', (e) => {
                     e.preventDefault();
@@ -822,6 +458,7 @@
                         uploadFilesToLibrary(files);
                     }
                 });
+                // textarea 拖拽
                 textarea.addEventListener('dragover', (e) => e.preventDefault());
                 textarea.addEventListener('drop', (e) => {
                     e.preventDefault();
@@ -845,6 +482,8 @@
                         }
                     }
                 });
+                // 预览区拖拽
+                setupPreviewDropZone();
             }
 
             function getMediaSyntax(fileInfo) {
@@ -867,6 +506,7 @@
                 markChange();
             }
 
+            // ===== 调整高度 =====
             function adjustTextareaHeight() {
                 textarea.style.height = 'auto';
                 const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight || 44;
@@ -904,6 +544,7 @@
                 charCount.textContent = textarea.value.length;
             }
 
+            // ===== 预览渲染（含 data-original-id） =====
             function renderPreview() {
                 const raw = textarea.value;
                 if (!raw.trim()) {
@@ -912,27 +553,33 @@
                 }
                 try {
                     let html = marked.parse(raw);
+                    // 替换自定义媒体，并存储 original-id
                     html = html.replace(/\[img\]([^\]]+)\[\/img\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="img">🖼️ 点击添加图片</span>`;
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="img" data-original-id="${id}">🖼️ 图片 (${id})</span>`;
                     });
                     html = html.replace(/\[video\]([^\]]+)\[\/video\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="video">🎬 点击添加视频</span>`;
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="video" data-original-id="${id}">🎬 视频 (${id})</span>`;
                     });
                     html = html.replace(/\[audio\]([^\]]+)\[\/audio\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="audio">🎵 点击添加音频</span>`;
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="audio" data-original-id="${id}">🎵 音频 (${id})</span>`;
                     });
                     html = html.replace(/\[file\]([^\]]+)\[\/file\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="file">📄 点击添加文件</span>`;
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="file" data-original-id="${id}">📄 文件 (${id})</span>`;
                     });
                     previewDiv.innerHTML = html;
+                    // 绑定点击事件
                     previewDiv.querySelectorAll('.media-placeholder').forEach(el => {
                         el.addEventListener('click', () => {
                             const fileId = el.dataset.fileId;
+                            const type = el.dataset.type;
+                            const originalId = el.dataset.originalId;
                             const file = fileList.find(f => f.id === fileId);
-                            if (file) {
+                            if (file && fileId === originalId) {
+                                // 如果已经有文件且匹配，提示已关联
                                 showToast('文件已关联', 'success');
                             } else {
-                                showFilePickerForMedia(el);
+                                // 打开选择器，传入原始ID用于替换
+                                showFilePickerForMedia(el, originalId, type);
                             }
                         });
                     });
@@ -941,7 +588,8 @@
                 }
             }
 
-            function showFilePickerForMedia(el) {
+            // ===== 选择文件替换占位符 =====
+            function showFilePickerForMedia(el, originalId, type) {
                 if (!fileList.length) {
                     showToast('文件库为空，请先上传文件', 'error');
                     return;
@@ -967,14 +615,13 @@
                 });
                 modal.querySelector('#filePickerConfirm').addEventListener('click', () => {
                     const select = modal.querySelector('#filePickerSelect');
-                    const fileId = select.value;
-                    const file = fileList.find(f => f.id === fileId);
+                    const newId = select.value;
+                    const file = fileList.find(f => f.id === newId);
                     if (file) {
-                        const syntax = getMediaSyntax(file);
-                        const raw = textarea.value;
-                        const placeholder = el.outerHTML;
-                        const newRaw = raw.replace(placeholder, syntax);
-                        textarea.value = newRaw;
+                        // 替换 textarea 中的旧语法
+                        const oldSyntax = `[${type}]${originalId}[/${type}]`;
+                        const newSyntax = `[${type}]${newId}[/${type}]`;
+                        textarea.value = textarea.value.replace(oldSyntax, newSyntax);
                         onInput();
                         modal.closest('.modal-overlay').remove();
                         showToast('已关联文件', 'success');
@@ -983,6 +630,7 @@
                 });
             }
 
+            // ===== 切换预览 =====
             function togglePreview() {
                 previewMode = !previewMode;
                 if (previewMode) {
@@ -1000,6 +648,7 @@
                 }
             }
 
+            // ===== 话题标签校验 =====
             function validateTopicTags(content) {
                 const lines = content.split('\n');
                 const lastLine = lines[lines.length - 1] || '';
@@ -1019,6 +668,7 @@
                 return { valid: true };
             }
 
+            // ===== 发布/更新 =====
             async function doPublish() {
                 const content = textarea.value;
                 const trimmed = content.trim();
@@ -1086,6 +736,7 @@
                 }
             }
 
+            // ===== 二次确认弹窗 =====
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
                     <div class="confirm-modal">
@@ -1123,6 +774,7 @@
                 return result;
             }
 
+            // ===== 事件绑定 =====
             function bindEvents() {
                 textarea.addEventListener('input', onInput);
                 window.addEventListener('resize', onResize);
