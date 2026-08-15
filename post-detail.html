@@ -3,12 +3,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>必看 - 详情</title>
+    <title>必看 - 帖子详情</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
+        /* ===== 全屏详情页样式 ===== */
+        .app-container {
+            display: block !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        .main-content {
+            max-width: 100% !important;
+            padding: 16px 24px !important;
+            height: 100vh !important;
+            overflow-y: auto !important;
+            background: var(--bg-light) !important;
+        }
+
         .modal .avatar-sm {
             width: 32px !important;
             height: 32px !important;
@@ -19,52 +34,72 @@
             border-radius: 50%;
             object-fit: cover;
         }
-        .stat-link {
-            cursor: pointer;
-            color: var(--text-main);
-            transition: var(--transition);
+
+        /* 评论区滚动 */
+        .comments-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
         }
-        .stat-link:hover {
-            color: var(--primary);
+        #commentsList {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 12px;
         }
-        .stat-link.disabled {
-            cursor: default;
-            color: var(--text-light);
-        }
-        .stat-link.disabled:hover {
-            color: var(--text-light);
-        }
-        .profile-tabs {
-            display: flex;
-            gap: 0;
+
+        /* 评论项 */
+        .comment-item {
             margin-bottom: 16px;
-            border-bottom: 2px solid var(--border);
         }
-        .profile-tab {
-            padding: 8px 20px;
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .comment-user {
+            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            font-weight: 500;
-            color: var(--text-secondary);
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: var(--transition);
         }
-        .profile-tab:hover {
-            color: var(--text-main);
-        }
-        .profile-tab.active {
+        .comment-user:hover {
             color: var(--primary);
-            border-bottom-color: var(--primary);
         }
-        .profile-content {
-            min-height: 100px;
-        }
-        .loading {
-            text-align: center;
+        .comment-reply-to {
             color: var(--text-light);
-            padding: 20px;
+            font-size: 13px;
         }
-        /* 文件卡片在帖子内容中的样式 */
+        .comment-content {
+            font-size: 14px;
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+        .comment-actions {
+            display: flex;
+            gap: 16px;
+        }
+        .comment-actions .action-btn {
+            font-size: 13px;
+        }
+        .comment-reply-form {
+            margin-top: 8px;
+            margin-left: 20px;
+            display: flex;
+            gap: 8px;
+        }
+        .comment-reply-form input {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 13px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            outline: none;
+        }
+        .comment-reply-form input:focus {
+            border-color: var(--primary);
+        }
+
+        /* 帖子内容中的媒体 */
         .post-content .file-card {
             display: flex;
             align-items: center;
@@ -76,6 +111,7 @@
             min-height: 60px;
             width: 100%;
             aspect-ratio: 3 / 1;
+            border: 1px solid #F59E0B;
         }
         .post-content .file-card .file-card-icon {
             flex-shrink: 0;
@@ -105,8 +141,17 @@
             flex-shrink: 0;
             color: #78350F;
             transition: var(--transition);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .post-content .file-card .file-card-download:hover {
+            background: rgba(0, 0, 0, 0.05);
             transform: scale(1.1);
         }
         .post-content .file-card .file-card-download svg {
@@ -132,7 +177,7 @@
         .post-content .post-media-wrapper audio {
             width: 100%;
         }
-        .media-placeholder {
+        .post-content .media-placeholder {
             display: inline-block;
             padding: 4px 12px;
             background: var(--bg-light);
@@ -141,13 +186,50 @@
             font-size: 13px;
             border: 1px dashed var(--border);
         }
+
+        /* 返回按钮始终在左上角 */
+        #backBtn {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--bg-light);
+            margin-bottom: 12px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 10px 12px !important;
+            }
+            .post-content .file-card {
+                padding: 6px 12px;
+                min-height: 44px;
+            }
+            .post-content .file-card .file-card-icon svg {
+                width: 24px;
+                height: 24px;
+            }
+            .post-content .file-card .file-card-name {
+                font-size: 13px;
+            }
+            .post-content .file-card .file-card-size {
+                font-size: 12px;
+            }
+            .post-content .file-card .file-card-download svg {
+                width: 18px;
+                height: 18px;
+            }
+            #commentsList {
+                max-height: 300px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="app-container" style="display:block;">
-        <main class="main-content" id="mainContent" style="max-width:800px; margin:0 auto; padding:20px; position:relative;">
+        <main class="main-content" id="mainContent">
             <button class="btn btn-secondary" id="backBtn">返回</button>
-            <div id="detailContainer" style="margin-top:16px; position:relative;"></div>
+            <div id="detailContainer" style="margin-top:8px; position:relative;"></div>
         </main>
     </div>
 
@@ -157,8 +239,34 @@
         (function() {
             const cfg = window.BikanConfig;
             const comp = window.BikanComponents;
-            const { supabaseClient, sdkReady, uploadFile, uploadFiles, showToast, extractFileIdsFromContent, fetchFilesByIds } = cfg;
-            const { Icons, renderPostCard, renderCommentItem, renderNotificationItem, renderUserCard, renderTopicCard, renderFileDetail, renderFileCard, renderPostContentWithMedia, getUserAvatarHTML, getUserDisplayName, getUserHandle, openModal, showToast: compShowToast } = comp;
+            const {
+                supabaseClient,
+                sdkReady,
+                uploadFile,
+                uploadFiles,
+                showToast: configShowToast
+            } = cfg;
+            const {
+                Icons,
+                renderPostCard,
+                renderCommentItem,
+                renderNotificationItem,
+                renderUserCard,
+                renderTopicCard,
+                renderFileDetail,
+                renderFileCard,
+                renderPostContentWithMedia,
+                getUserAvatarHTML,
+                getUserDisplayName,
+                getUserHandle,
+                openModal,
+                showToast: compShowToast,
+                extractFileIdsFromContent,
+                formatFileSize
+            } = comp;
+
+            // 统一 showToast
+            const showToast = configShowToast || compShowToast;
 
             let currentUser = null;
             let isTogglingLike = false;
@@ -194,6 +302,26 @@
                     p.fileMap = fileMap;
                 });
                 return posts;
+            }
+
+            async function fetchFilesByIds(fileIds) {
+                if (!fileIds || fileIds.length === 0) return {};
+                if (!supabaseClient) return {};
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('user_files')
+                        .select('*')
+                        .in('id', fileIds);
+                    if (error) throw error;
+                    const fileMap = {};
+                    (data || []).forEach(file => {
+                        fileMap[file.id] = file;
+                    });
+                    return fileMap;
+                } catch (e) {
+                    console.error('获取文件信息失败:', e);
+                    return {};
+                }
             }
 
             // ---------- 初始化 ----------
@@ -308,7 +436,6 @@
 
                 await supabaseClient.from('view_history').upsert({ user_id: currentUser.id, post_id: postId, viewed_at: new Date().toISOString() }, { onConflict: 'user_id,post_id' });
 
-                // 加载文件信息
                 const enrichedPost = await enrichPostWithFiles(post);
 
                 const [likeRes, favRes] = await Promise.all([
@@ -328,8 +455,9 @@
                     container.appendChild(idTag);
                 }
 
-                // 使用渲染函数，传入 fileMap
-                container.appendChild(comp.renderPostCard(enrichedPost, { showActions: true, isDetail: true }));
+                // 传入 isAdmin 参数
+                const isAdmin = currentUser.is_admin === true;
+                container.appendChild(comp.renderPostCard(enrichedPost, { showActions: true, isDetail: true, isAdmin: isAdmin }));
 
                 if (enrichedPost.media && enrichedPost.media.length) {
                     const mediaDiv = document.createElement('div');
@@ -371,36 +499,30 @@
                 listDiv.dataset.postId = postId;
                 listDiv.dataset.postAuthorId = postAuthorId;
 
+                const isAdmin = currentUser.is_admin === true;
+
                 const mainComments = data.filter(c => !c.parent_id);
                 const replies = data.filter(c => c.parent_id);
                 mainComments.forEach(comment => {
-                    listDiv.appendChild(renderCommentWithDelete(comment, false));
+                    listDiv.appendChild(renderCommentWithDelete(comment, false, isAdmin));
                     const commentReplies = replies.filter(r => r.parent_id === comment.id);
                     commentReplies.forEach(reply => {
-                        const replyEl = renderCommentWithDelete(reply, true);
+                        const replyEl = renderCommentWithDelete(reply, true, isAdmin);
                         replyEl.style.marginLeft = '24px';
                         listDiv.appendChild(replyEl);
                     });
                 });
             }
 
-            function renderCommentWithDelete(comment, isReply) {
-                const commentEl = comp.renderCommentItem(comment, { isReply });
-                const postAuthorId = document.getElementById('commentsList')?.dataset.postAuthorId;
-                const canDelete = comment.user_id === currentUser.id || (postAuthorId && postAuthorId === currentUser.id);
-                if (canDelete) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'action-btn';
-                    deleteBtn.dataset.action = 'delete-comment';
-                    deleteBtn.dataset.commentId = comment.id;
-                    deleteBtn.innerHTML = `${Icons.trash} 删除`;
-                    const actionsDiv = commentEl.querySelector('.comment-actions');
-                    if (actionsDiv) actionsDiv.appendChild(deleteBtn);
-                }
+            function renderCommentWithDelete(comment, isReply, isAdmin) {
+                const commentEl = comp.renderCommentItem(comment, { isReply, isAdmin: isAdmin });
+                // 如果有删除按钮，确保绑定事件（事件委托中处理）
                 return commentEl;
             }
 
             function bindPostActions(postId, postAuthorId, container) {
+                const isAdmin = currentUser.is_admin === true;
+
                 container.addEventListener('click', async (e) => {
                     const target = e.target.closest('[data-action]');
                     if (!target) return;
@@ -414,23 +536,35 @@
                     else if (action === 'report') showReportModal('post', postId);
                     else if (action === 'edit') showEditPostModal(postId);
                     else if (action === 'delete') {
+                        // 删除帖子：作者 或 管理员
+                        const canDelete = target.dataset.postId === postId && (currentUser.id === postAuthorId || isAdmin);
+                        if (!canDelete) {
+                            showToast('你没有权限删除此帖', 'error');
+                            return;
+                        }
                         if (confirm('确认删除这条帖子吗？')) {
                             await supabaseClient.from('posts').delete().eq('id', postId);
                             showToast('已删除', 'success');
                             window.location.href = 'app.html';
                         }
-                    }
-                    else if (action === 'like-comment' && commentId) await toggleCommentLike(commentId, target);
+                    } else if (action === 'like-comment' && commentId) await toggleCommentLike(commentId, target);
                     else if (action === 'reply-comment' && commentId) {
                         const commentInput = document.getElementById('commentInput');
                         commentInput.focus();
                         commentInput.dataset.parentId = commentId;
                         const { data: cmt } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
                         if (cmt) commentInput.dataset.replyToUserId = cmt.user_id;
-                    }
-                    else if (action === 'share-comment' && commentId) await shareComment(commentId);
+                    } else if (action === 'share-comment' && commentId) await shareComment(commentId);
                     else if (action === 'report-comment' && commentId) showReportModal('comment', commentId);
                     else if (action === 'delete-comment' && commentId) {
+                        // 删除评论：评论作者 或 帖子作者 或 管理员
+                        const { data: comment } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
+                        if (!comment) return showToast('评论不存在', 'error');
+                        const canDelete = comment.user_id === currentUser.id || postAuthorId === currentUser.id || isAdmin;
+                        if (!canDelete) {
+                            showToast('你没有权限删除此评论', 'error');
+                            return;
+                        }
                         if (confirm('确认删除这条评论吗？')) {
                             await supabaseClient.from('comments').delete().eq('id', commentId);
                             showToast('评论已删除', 'success');
@@ -504,7 +638,7 @@
             }
 
             // ============================================================
-            // 分享弹窗（带好友列表）
+            // 分享弹窗
             // ============================================================
             function showShareModal(postId) {
                 if (window._modalLock) return;
@@ -643,7 +777,6 @@
             }
 
             function showEditPostModal(postId) {
-                // 直接跳转到编辑页
                 window.location.href = 'post.html?edit=' + postId;
             }
 
@@ -674,7 +807,7 @@
                         await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false });
                         modal.remove();
                         window._modalLock = false;
-                        showToast('已发送到私聊','success');
+                        showToast('已发送到私聊', 'success');
                     });
                     friendListDiv.appendChild(btn);
                 });
@@ -754,7 +887,8 @@
                 const posts = topicPosts.map(tp => tp.post).filter(Boolean);
                 const enriched = await enrichPostsWithFiles(posts);
                 postsDiv.innerHTML = '';
-                const sorted = enriched.sort((a,b) => (b.like_count - a.like_count) || (new Date(b.created_at) - new Date(a.created_at)));
+                const isAdmin = currentUser.is_admin === true;
+                const sorted = enriched.sort((a, b) => (b.like_count - a.like_count) || (new Date(b.created_at) - new Date(a.created_at)));
                 for (const post of sorted) {
                     const [likeRes, favRes] = await Promise.all([
                         supabaseClient.from('likes').select('id').eq('user_id', currentUser.id).eq('post_id', post.id).maybeSingle(),
@@ -763,7 +897,7 @@
                     post.liked_by_me = !!likeRes.data;
                     post.favorited_by_me = !!favRes.data;
                     post.is_owner = post.user_id === currentUser.id;
-                    postsDiv.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+                    postsDiv.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
                 }
                 postsDiv.addEventListener('click', (e) => {
                     const card = e.target.closest('.post-card');
@@ -794,11 +928,12 @@
                 if (ann.referenced_posts?.length) {
                     const postsDiv = document.createElement('div');
                     postsDiv.innerHTML = '<h3>引用帖子</h3>';
+                    const isAdmin = currentUser.is_admin === true;
                     for (const postId of ann.referenced_posts) {
                         const { data: post } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('id', postId).single();
                         if (post) {
                             const enriched = await enrichPostWithFiles(post);
-                            postsDiv.appendChild(renderPostCard(enriched, { fileMap: enriched.fileMap || {} }));
+                            postsDiv.appendChild(renderPostCard(enriched, { fileMap: enriched.fileMap || {}, isAdmin: isAdmin }));
                         }
                     }
                     container.appendChild(postsDiv);
@@ -924,9 +1059,9 @@
                     e.stopPropagation();
                     const menu = document.createElement('div');
                     menu.className = 'more-menu';
-                    const menuItems = isOwnProfile
-                        ? `<button data-action="settings">设置</button><button data-action="share-profile" data-user-id="${profile.id}">分享主页</button>`
-                        : `<button data-action="report-user" data-user-id="${profile.id}">举报</button><button data-action="block-user" data-user-id="${profile.id}">拉黑</button><button data-action="share-profile" data-user-id="${profile.id}">分享主页</button>`;
+                    const menuItems = isOwnProfile ?
+                        `<button data-action="settings">设置</button><button data-action="share-profile" data-user-id="${profile.id}">分享主页</button>` :
+                        `<button data-action="report-user" data-user-id="${profile.id}">举报</button><button data-action="block-user" data-user-id="${profile.id}">拉黑</button><button data-action="share-profile" data-user-id="${profile.id}">分享主页</button>`;
                     menu.innerHTML = menuItems;
                     document.body.appendChild(menu);
                     document.addEventListener('click', function closeMenu(ev) {
@@ -979,7 +1114,7 @@
                             let html = '<ul style="list-style:none;padding:0;">';
                             list.forEach(item => {
                                 const u = item.following;
-                                html += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">${getUserAvatarHTML(u,'avatar-sm')}<span class="post-user-name">${getUserDisplayName(u)}</span><span class="post-user-id">${getUserHandle(u)}</span></li>`;
+                                html += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">${getUserAvatarHTML(u, 'avatar-sm')}<span class="post-user-name">${getUserDisplayName(u)}</span><span class="post-user-id">${getUserHandle(u)}</span></li>`;
                             });
                             html += '</ul>';
                             openModal('关注列表', html);
@@ -990,7 +1125,7 @@
                             let html = '<ul style="list-style:none;padding:0;">';
                             list.forEach(item => {
                                 const u = item.follower;
-                                html += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">${getUserAvatarHTML(u,'avatar-sm')}<span class="post-user-name">${getUserDisplayName(u)}</span><span class="post-user-id">${getUserHandle(u)}</span></li>`;
+                                html += `<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">${getUserAvatarHTML(u, 'avatar-sm')}<span class="post-user-name">${getUserDisplayName(u)}</span><span class="post-user-id">${getUserHandle(u)}</span></li>`;
                             });
                             html += '</ul>';
                             openModal('粉丝列表', html);
@@ -1001,9 +1136,10 @@
                             const container2 = document.createElement('div');
                             const posts = favs.map(f => f.post).filter(Boolean);
                             const enriched = await enrichPostsWithFiles(posts);
+                            const isAdmin = currentUser.is_admin === true;
                             enriched.forEach(post => {
                                 post.is_owner = post.user_id === currentUser.id;
-                                container2.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+                                container2.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
                             });
                             openModal('收藏列表', container2.innerHTML);
                         }
@@ -1026,6 +1162,7 @@
 
                 // ===== 加载帖子/话题列表 =====
                 const contentDiv = document.getElementById('profileContent');
+                const isAdmin = currentUser.is_admin === true;
 
                 async function loadUserPosts() {
                     contentDiv.innerHTML = '<div class="loading">加载帖子...</div>';
@@ -1057,7 +1194,7 @@
                             post.liked_by_me = likedSet.has(post.id);
                             post.favorited_by_me = favSet.has(post.id);
                             post.is_owner = post.user_id === currentUser.id;
-                            contentDiv.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+                            contentDiv.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
                         });
                     } catch (e) {
                         console.error('加载帖子异常:', e);
