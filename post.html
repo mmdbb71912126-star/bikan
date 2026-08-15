@@ -6,11 +6,10 @@
     <title>必看 - 发帖</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 引入 marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 重置 ===== */
+        /* ===== 发帖页专用样式 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -31,13 +30,13 @@
             position: relative;
         }
 
-        /* ===== 顶部工具栏（纯图标） ===== */
+        /* ===== 顶部工具栏 ===== */
         .post-toolbar {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 16px;
-            min-height: 48px;
+            gap: 4px;
+            padding: 4px 12px;
+            min-height: 44px;
             background: white;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
@@ -47,7 +46,7 @@
         .post-toolbar .toolbar-btn {
             background: none;
             border: none;
-            padding: 6px 10px;
+            padding: 4px 8px;
             border-radius: 6px;
             cursor: pointer;
             color: var(--text-secondary);
@@ -65,8 +64,8 @@
             color: var(--primary);
         }
         .post-toolbar .toolbar-btn svg {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
         }
         .post-toolbar .toolbar-spacer {
             flex: 1;
@@ -79,18 +78,18 @@
             text-align: right;
         }
 
-        /* ===== 内容区（可滚动） ===== */
+        /* ===== 内容区 ===== */
         .post-content-area {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 20px 12px;
+            padding: 12px 20px 8px;
             background: white;
             display: flex;
             flex-direction: column;
             position: relative;
         }
 
-        /* ===== 输入框（强制无边框） ===== */
+        /* ===== 输入框 ===== */
         .post-content-area #postContent {
             width: 100%;
             border: none !important;
@@ -103,7 +102,7 @@
             color: var(--text-main);
             background: transparent;
             padding: 0;
-            min-height: 180px;
+            min-height: 120px;
             flex-shrink: 0;
         }
         .post-content-area #postContent:focus {
@@ -124,7 +123,7 @@
             line-height: 1.8;
             color: var(--text-main);
             padding: 0;
-            min-height: 180px;
+            min-height: 120px;
             overflow-y: auto;
         }
         .post-content-area #preview.show {
@@ -177,11 +176,6 @@
             background: transparent;
             padding: 0;
         }
-        .post-content-area #preview img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 8px 0;
-        }
         .post-content-area #preview a {
             color: var(--primary);
             text-decoration: underline;
@@ -200,31 +194,41 @@
         .post-content-area #preview th {
             background: var(--bg-light);
         }
-
-        /* ===== 分界线 ===== */
-        .post-divider {
-            border-top: 1px solid var(--border);
-            margin: 12px 0 14px;
-            flex-shrink: 0;
+        /* 自定义媒体在预览中的占位 */
+        .post-content-area #preview .media-placeholder {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            border: 1px dashed var(--primary);
+            transition: var(--transition);
+        }
+        .post-content-area #preview .media-placeholder:hover {
+            background: var(--primary);
+            color: white;
         }
 
-        /* ===== 底部按钮区域 ===== */
+        /* ===== 底部操作栏 ===== */
         .post-actions {
             display: flex;
             justify-content: flex-end;
             gap: 12px;
-            padding: 4px 0 16px;
+            padding: 8px 0 12px;
             flex-shrink: 0;
+            border-top: 1px solid var(--border);
         }
         .post-actions .btn {
-            padding: 10px 28px;
-            border-radius: 24px;
+            padding: 8px 24px;
+            border-radius: 20px;
             font-size: 15px;
             font-weight: 600;
             border: none;
             cursor: pointer;
             transition: var(--transition);
-            min-width: 80px;
+            min-width: 72px;
             text-align: center;
         }
         .post-actions .btn-cancel {
@@ -247,6 +251,162 @@
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* ===== 文件库 ===== */
+        .file-library {
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            background: var(--bg-light);
+            flex-shrink: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .file-library .file-library-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 2px 0;
+        }
+        .file-library .file-library-header .add-file-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .file-library .file-library-header .add-file-btn:hover {
+            background: var(--primary-light);
+        }
+        .file-library .file-library-header .add-file-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        .file-library .file-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            cursor: grab;
+            transition: var(--transition);
+        }
+        .file-library .file-item:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .file-library .file-item:active {
+            cursor: grabbing;
+        }
+        .file-library .file-item .file-icon {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        .file-library .file-item .file-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+        .file-library .file-item .file-info {
+            flex: 1;
+            min-width: 0;
+            font-size: 13px;
+        }
+        .file-library .file-item .file-info .file-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-library .file-item .file-info .file-size {
+            color: var(--text-light);
+            font-size: 12px;
+        }
+        .file-library .file-item .file-delete {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .file-library .file-item .file-delete:hover {
+            color: var(--danger);
+            background: #fee2e2;
+        }
+        .file-library .file-item .file-delete svg {
+            width: 16px;
+            height: 16px;
+        }
+        .file-library .empty-library {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 13px;
+            padding: 12px 0;
+        }
+
+        /* ===== 语法面板（弹窗） ===== */
+        .syntax-panel .modal {
+            max-width: 520px;
+        }
+        .syntax-panel .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .syntax-panel .syntax-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .syntax-panel .syntax-item:last-child {
+            border-bottom: none;
+        }
+        .syntax-panel .syntax-item .syntax-code {
+            font-family: monospace;
+            background: var(--bg-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+        .syntax-panel .syntax-item .syntax-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .syntax-panel .syntax-item .syntax-add-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+        .syntax-panel .syntax-item .syntax-add-btn:hover {
+            background: var(--primary-light);
         }
 
         /* ===== 二次确认弹窗 ===== */
@@ -299,23 +459,22 @@
         /* ===== 响应式 ===== */
         @media (max-width: 640px) {
             .post-toolbar {
-                padding: 4px 10px;
-                min-height: 40px;
-                gap: 4px;
+                padding: 2px 8px;
+                min-height: 36px;
             }
             .post-toolbar .toolbar-btn {
-                padding: 4px 8px;
+                padding: 2px 6px;
             }
             .post-toolbar .toolbar-btn svg {
                 width: 18px;
                 height: 18px;
             }
             .post-content-area {
-                padding: 12px 16px 8px;
+                padding: 8px 12px 4px;
             }
             .post-content-area #postContent {
                 font-size: 16px;
-                min-height: 140px;
+                min-height: 80px;
             }
             .post-content-area #postContent::placeholder {
                 font-size: 16px;
@@ -324,21 +483,34 @@
                 font-size: 15px;
             }
             .post-actions .btn {
-                padding: 8px 20px;
+                padding: 6px 16px;
                 font-size: 14px;
-                min-width: 60px;
+                min-width: 56px;
             }
-            .post-divider {
-                margin: 8px 0 10px;
+            .file-library {
+                padding: 4px 8px;
+                max-height: 140px;
+            }
+            .file-library .file-item {
+                padding: 2px 6px;
             }
         }
     </style>
 </head>
 <body>
     <div class="post-container">
-        <!-- ===== 顶部工具栏（纯图标 + 字符计数） ===== -->
+        <!-- ===== 顶部工具栏 ===== -->
         <div class="post-toolbar" id="toolbar">
-            <!-- 预览切换按钮（纯图标） -->
+            <!-- 语法辅助按钮 -->
+            <button class="toolbar-btn" id="syntaxBtn" title="语法帮助">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+            </button>
+
+            <!-- 预览按钮 -->
             <button class="toolbar-btn" id="previewBtn" title="预览 Markdown">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -347,26 +519,38 @@
             </button>
 
             <span class="toolbar-spacer"></span>
-
-            <!-- 字符计数 -->
             <span class="char-count" id="charCount">0</span>
         </div>
 
         <!-- ===== 内容区 ===== -->
         <div class="post-content-area" id="contentArea">
-            <!-- 输入框 -->
             <textarea id="postContent" placeholder="支持 Markdown 语法..." autofocus></textarea>
-
-            <!-- 预览区域 -->
             <div id="preview"></div>
+        </div>
 
-            <!-- 分界线 -->
-            <div class="post-divider"></div>
+        <!-- ===== 分界线 ===== -->
+        <div style="border-top:1px solid var(--border); flex-shrink:0;"></div>
 
-            <!-- 底部按钮 -->
-            <div class="post-actions">
-                <button class="btn btn-cancel" id="cancelBtn">取消</button>
-                <button class="btn btn-publish" id="publishBtn">发布</button>
+        <!-- ===== 底部操作栏 ===== -->
+        <div class="post-actions">
+            <button class="btn btn-cancel" id="cancelBtn">取消</button>
+            <button class="btn btn-publish" id="publishBtn">发布</button>
+        </div>
+
+        <!-- ===== 文件库 ===== -->
+        <div class="file-library" id="fileLibrary">
+            <div class="file-library-header">
+                <span>文件库</span>
+                <button class="add-file-btn" id="addFileBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    添加文件
+                </button>
+            </div>
+            <div id="fileList">
+                <div class="empty-library">暂无文件，点击「添加文件」上传</div>
             </div>
         </div>
     </div>
@@ -377,17 +561,33 @@
         (function() {
             const cfg = window.BikanConfig;
             const comp = window.BikanComponents;
-            const { supabaseClient, sdkReady, showToast } = cfg;
-            const { openModal } = comp;
+            const { supabaseClient, sdkReady, showToast, uploadFile } = cfg;
+            const { openModal, Icons } = comp;
 
+            // ============================================================
+            // 状态
+            // ============================================================
             let currentUser = null;
+            let editPostId = null; // 编辑模式下的帖子ID
+            let isEditMode = false;
+            let fileList = []; // 当前用户文件库
+            let uploadedFiles = []; // 本次上传的文件（用于关联帖子）
+
             const textarea = document.getElementById('postContent');
             const previewDiv = document.getElementById('preview');
             const contentArea = document.getElementById('contentArea');
             const cancelBtn = document.getElementById('cancelBtn');
             const publishBtn = document.getElementById('publishBtn');
             const previewBtn = document.getElementById('previewBtn');
+            const syntaxBtn = document.getElementById('syntaxBtn');
             const charCount = document.getElementById('charCount');
+            const fileListEl = document.getElementById('fileList');
+            const addFileBtn = document.getElementById('addFileBtn');
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.multiple = true;
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
 
             let previewMode = false;
 
@@ -400,6 +600,7 @@
                     return;
                 }
                 try {
+                    // 检查登录
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     if (!session) {
                         window.location.href = 'index.html';
@@ -418,15 +619,35 @@
 
                     if (currentUser.is_banned) {
                         showToast('你已被封禁，无法发帖', 'error');
-                        setTimeout(() => {
-                            window.location.href = 'app.html';
-                        }, 1500);
+                        setTimeout(() => { window.location.href = 'app.html'; }, 1500);
                         return;
                     }
 
+                    // 检查是否为编辑模式
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const editId = urlParams.get('edit');
+                    if (editId) {
+                        editPostId = editId;
+                        isEditMode = true;
+                        document.title = '编辑帖子 - 必看';
+                        publishBtn.textContent = '更新';
+                        await loadPostForEdit(editId);
+                    }
+
+                    // 加载文件库
+                    await loadFileLibrary();
+
+                    // 调整高度
                     adjustTextareaHeight();
+
+                    // 绑定事件
                     bindEvents();
-                    textarea.focus();
+
+                    // 聚焦
+                    if (!isEditMode) {
+                        textarea.focus();
+                    }
+
                     updateCharCount();
 
                 } catch (e) {
@@ -436,37 +657,270 @@
             }
 
             // ============================================================
-            // 2. 调整输入框高度
+            // 2. 编辑模式 - 加载帖子
+            // ============================================================
+            async function loadPostForEdit(postId) {
+                try {
+                    const { data: post, error } = await supabaseClient
+                        .from('posts')
+                        .select('*')
+                        .eq('id', postId)
+                        .single();
+                    if (error || !post) {
+                        showToast('帖子不存在', 'error');
+                        setTimeout(() => { window.location.href = 'app.html'; }, 1500);
+                        return;
+                    }
+                    if (post.user_id !== currentUser.id) {
+                        showToast('你没有权限编辑此帖', 'error');
+                        setTimeout(() => { window.location.href = 'app.html'; }, 1500);
+                        return;
+                    }
+                    textarea.value = post.content || '';
+                    // 关联的文件（如果有）可以从post中解析，但暂时不处理
+                    // 文件库中的文件已经在加载时显示
+                    // 话题标签校验稍后在保存时处理
+                    updateCharCount();
+                } catch (e) {
+                    console.error('加载帖子失败', e);
+                    showToast('加载帖子失败', 'error');
+                }
+            }
+
+            // ============================================================
+            // 3. 文件库
+            // ============================================================
+            async function loadFileLibrary() {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('user_files')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    fileList = data || [];
+                    renderFileLibrary();
+                } catch (e) {
+                    console.error('加载文件库失败', e);
+                }
+            }
+
+            function renderFileLibrary() {
+                if (!fileList.length) {
+                    fileListEl.innerHTML = '<div class="empty-library">暂无文件，点击「添加文件」上传</div>';
+                    return;
+                }
+                let html = '';
+                fileList.forEach(file => {
+                    const icon = getFileIcon(file.file_type);
+                    const size = formatFileSize(file.file_size);
+                    html += `
+                        <div class="file-item" draggable="true" data-file-id="${file.id}" data-file-name="${file.file_name}" data-file-url="${file.file_url}" data-file-type="${file.file_type || 'file'}">
+                            <div class="file-icon">${icon}</div>
+                            <div class="file-info">
+                                <div class="file-name">${file.file_name}</div>
+                                <div class="file-size">${size}</div>
+                            </div>
+                            <button class="file-delete" data-file-id="${file.id}" title="删除文件">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                });
+                fileListEl.innerHTML = html;
+
+                // 删除事件
+                fileListEl.querySelectorAll('.file-delete').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const fileId = btn.dataset.fileId;
+                        if (confirm('确定要删除这个文件吗？')) {
+                            await deleteFile(fileId);
+                        }
+                    });
+                });
+
+                // 拖拽事件
+                fileListEl.querySelectorAll('.file-item').forEach(el => {
+                    el.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', JSON.stringify({
+                            id: el.dataset.fileId,
+                            name: el.dataset.fileName,
+                            url: el.dataset.fileUrl,
+                            type: el.dataset.fileType
+                        }));
+                        el.style.opacity = '0.5';
+                    });
+                    el.addEventListener('dragend', (e) => {
+                        el.style.opacity = '1';
+                    });
+                });
+            }
+
+            async function deleteFile(fileId) {
+                try {
+                    // 从存储删除文件
+                    const file = fileList.find(f => f.id === fileId);
+                    if (file) {
+                        const path = file.file_url.split('/').pop();
+                        await supabaseClient.storage.from('files').remove([`${currentUser.id}/${path}`]);
+                    }
+                    // 从数据库删除
+                    const { error } = await supabaseClient
+                        .from('user_files')
+                        .delete()
+                        .eq('id', fileId)
+                        .eq('user_id', currentUser.id);
+                    if (error) throw error;
+                    fileList = fileList.filter(f => f.id !== fileId);
+                    renderFileLibrary();
+                    showToast('文件已删除', 'success');
+                } catch (e) {
+                    console.error('删除文件失败', e);
+                    showToast('删除失败: ' + e.message, 'error');
+                }
+            }
+
+            async function uploadFilesToLibrary(files) {
+                let successCount = 0;
+                for (const file of files) {
+                    try {
+                        // 上传到存储
+                        const result = await uploadFile(file, 'files', `${currentUser.id}`);
+                        // 插入数据库
+                        const { data, error } = await supabaseClient
+                            .from('user_files')
+                            .insert({
+                                user_id: currentUser.id,
+                                file_name: file.name,
+                                file_url: result.url,
+                                file_type: file.type || null,
+                                file_size: file.size || null,
+                            })
+                            .select()
+                            .single();
+                        if (error) throw error;
+                        fileList.unshift(data);
+                        successCount++;
+                    } catch (e) {
+                        console.error('上传文件失败:', e);
+                        showToast(`上传 ${file.name} 失败: ${e.message}`, 'error');
+                    }
+                }
+                if (successCount > 0) {
+                    renderFileLibrary();
+                    showToast(`成功上传 ${successCount} 个文件`, 'success');
+                }
+                // 重新渲染文件库
+                renderFileLibrary();
+            }
+
+            function getFileIcon(mimeType) {
+                if (!mimeType) return Icons.file;
+                if (mimeType.startsWith('image/')) return Icons.image;
+                if (mimeType.startsWith('video/')) return Icons.video;
+                if (mimeType.startsWith('audio/')) return Icons.audio;
+                return Icons.file;
+            }
+
+            function formatFileSize(bytes) {
+                if (!bytes) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // ============================================================
+            // 4. 拖拽上传（拖到页面）
+            // ============================================================
+            function setupDropZone() {
+                document.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+                document.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                        uploadFilesToLibrary(files);
+                    }
+                });
+                // 拖拽到文本区插入文件引用
+                textarea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+                textarea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (data) {
+                        try {
+                            const fileInfo = JSON.parse(data);
+                            const syntax = getMediaSyntax(fileInfo);
+                            insertAtCursor(syntax);
+                        } catch (e) {
+                            // 可能是纯文本
+                            const files = e.dataTransfer.files;
+                            if (files && files.length > 0) {
+                                uploadFilesToLibrary(files);
+                            }
+                        }
+                    } else {
+                        const files = e.dataTransfer.files;
+                        if (files && files.length > 0) {
+                            uploadFilesToLibrary(files);
+                        }
+                    }
+                });
+            }
+
+            function getMediaSyntax(fileInfo) {
+                const type = fileInfo.type || 'file';
+                const id = fileInfo.id;
+                if (type.startsWith('image/')) return `[img]${id}[/img]`;
+                if (type.startsWith('video/')) return `[video]${id}[/video]`;
+                if (type.startsWith('audio/')) return `[audio]${id}[/audio]`;
+                return `[file]${id}[/file]`;
+            }
+
+            function insertAtCursor(text) {
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const value = textarea.value;
+                textarea.value = value.substring(0, start) + text + value.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start + text.length;
+                textarea.focus();
+                onInput();
+            }
+
+            // ============================================================
+            // 5. 调整高度
             // ============================================================
             function adjustTextareaHeight() {
                 textarea.style.height = 'auto';
-                const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight;
-                const dividerHeight = document.querySelector('.post-divider').offsetHeight;
-                const actionsHeight = document.querySelector('.post-actions').offsetHeight;
-                const contentPadding = 16 + 12;
-                const gap = 12 + 14;
-                const availableHeight = window.innerHeight - toolbarHeight - dividerHeight - actionsHeight - contentPadding - gap;
+                const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight || 44;
+                const actionsHeight = document.querySelector('.post-actions').offsetHeight || 60;
+                const libraryHeight = document.querySelector('.file-library').offsetHeight || 60;
+                const contentPadding = 12 + 8;
+                const availableHeight = window.innerHeight - toolbarHeight - actionsHeight - libraryHeight - contentPadding - 4;
                 const contentHeight = textarea.scrollHeight;
-                const targetHeight = Math.max(contentHeight, availableHeight, 180);
+                const targetHeight = Math.max(contentHeight, availableHeight, 120);
                 textarea.style.height = targetHeight + 'px';
             }
 
             function onInput() {
                 textarea.style.height = 'auto';
+                const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight || 44;
+                const actionsHeight = document.querySelector('.post-actions').offsetHeight || 60;
+                const libraryHeight = document.querySelector('.file-library').offsetHeight || 60;
+                const contentPadding = 12 + 8;
+                const availableHeight = window.innerHeight - toolbarHeight - actionsHeight - libraryHeight - contentPadding - 4;
                 const contentHeight = textarea.scrollHeight;
-                const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight;
-                const dividerHeight = document.querySelector('.post-divider').offsetHeight;
-                const actionsHeight = document.querySelector('.post-actions').offsetHeight;
-                const contentPadding = 16 + 12;
-                const gap = 12 + 14;
-                const minHeight = Math.max(
-                    window.innerHeight - toolbarHeight - dividerHeight - actionsHeight - contentPadding - gap,
-                    180
-                );
-                textarea.style.height = Math.max(contentHeight, minHeight) + 'px';
-
+                const targetHeight = Math.max(contentHeight, availableHeight, 120);
+                textarea.style.height = targetHeight + 'px';
                 updateCharCount();
-
                 if (previewMode) {
                     renderPreview();
                 }
@@ -477,15 +931,14 @@
             }
 
             // ============================================================
-            // 3. 字符计数
+            // 6. 字符计数
             // ============================================================
             function updateCharCount() {
-                const len = textarea.value.length;
-                charCount.textContent = len;
+                charCount.textContent = textarea.value.length;
             }
 
             // ============================================================
-            // 4. Markdown 渲染
+            // 7. Markdown 预览（含自定义媒体占位）
             // ============================================================
             function renderPreview() {
                 const raw = textarea.value;
@@ -494,15 +947,85 @@
                     return;
                 }
                 try {
-                    const html = marked.parse(raw);
+                    let html = marked.parse(raw);
+                    // 替换自定义媒体语法为占位符
+                    html = html.replace(/\[img\]([^\]]+)\[\/img\]/g, (match, id) => {
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="img">🖼️ 点击添加图片</span>`;
+                    });
+                    html = html.replace(/\[video\]([^\]]+)\[\/video\]/g, (match, id) => {
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="video">🎬 点击添加视频</span>`;
+                    });
+                    html = html.replace(/\[audio\]([^\]]+)\[\/audio\]/g, (match, id) => {
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="audio">🎵 点击添加音频</span>`;
+                    });
+                    html = html.replace(/\[file\]([^\]]+)\[\/file\]/g, (match, id) => {
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="file">📄 点击添加文件</span>`;
+                    });
                     previewDiv.innerHTML = html;
+                    // 绑定点击事件：选择文件库文件
+                    previewDiv.querySelectorAll('.media-placeholder').forEach(el => {
+                        el.addEventListener('click', () => {
+                            const fileId = el.dataset.fileId;
+                            const file = fileList.find(f => f.id === fileId);
+                            if (file) {
+                                // 替换占位符为实际语法（已存在，不需要替换）
+                                showToast('文件已关联', 'success');
+                            } else {
+                                // 从文件库选择文件
+                                showFilePickerForMedia(el);
+                            }
+                        });
+                    });
                 } catch (e) {
                     previewDiv.innerHTML = '<p style="color:var(--danger);">渲染错误：' + e.message + '</p>';
                 }
             }
 
+            function showFilePickerForMedia(el) {
+                // 简单实现：打开文件库选择器
+                if (!fileList.length) {
+                    showToast('文件库为空，请先上传文件', 'error');
+                    return;
+                }
+                const fileOptions = fileList.map(f =>
+                    `<option value="${f.id}">${f.file_name}</option>`
+                ).join('');
+                const content = `
+                    <div>
+                        <p style="margin-bottom:12px;">选择要关联的文件：</p>
+                        <select id="filePickerSelect" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);">
+                            ${fileOptions}
+                        </select>
+                        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                            <button class="btn btn-secondary" id="filePickerCancel">取消</button>
+                            <button class="btn btn-primary" id="filePickerConfirm">确认</button>
+                        </div>
+                    </div>
+                `;
+                const modal = openModal('选择文件', content);
+                modal.querySelector('#filePickerCancel').addEventListener('click', () => {
+                    modal.closest('.modal-overlay').remove();
+                });
+                modal.querySelector('#filePickerConfirm').addEventListener('click', () => {
+                    const select = modal.querySelector('#filePickerSelect');
+                    const fileId = select.value;
+                    const file = fileList.find(f => f.id === fileId);
+                    if (file) {
+                        const syntax = getMediaSyntax(file);
+                        // 替换占位符为实际语法
+                        const raw = textarea.value;
+                        const placeholder = el.outerHTML;
+                        const newRaw = raw.replace(placeholder, syntax);
+                        textarea.value = newRaw;
+                        onInput();
+                        modal.closest('.modal-overlay').remove();
+                        showToast('已关联文件', 'success');
+                    }
+                });
+            }
+
             // ============================================================
-            // 5. 切换预览模式
+            // 8. 切换预览
             // ============================================================
             function togglePreview() {
                 previewMode = !previewMode;
@@ -511,7 +1034,7 @@
                     previewDiv.classList.add('show');
                     renderPreview();
                     previewBtn.classList.add('active');
-                    previewDiv.style.minHeight = textarea.style.height || '180px';
+                    previewDiv.style.minHeight = textarea.style.height || '120px';
                 } else {
                     textarea.style.display = 'block';
                     previewDiv.classList.remove('show');
@@ -522,55 +1045,155 @@
             }
 
             // ============================================================
-            // 6. 事件绑定
+            // 9. 语法面板
             // ============================================================
-            function bindEvents() {
-                textarea.addEventListener('input', onInput);
-                window.addEventListener('resize', onResize);
-
-                cancelBtn.addEventListener('click', () => {
-                    const content = textarea.value.trim();
-                    if (content) {
-                        showConfirmModal(
-                            '取消发布',
-                            '确定要取消发布吗？输入的内容将丢失。',
-                            () => { window.location.href = 'app.html'; },
-                            '取消发布',
-                            'danger'
-                        );
-                    } else {
-                        window.location.href = 'app.html';
-                    }
+            function showSyntaxPanel() {
+                const syntaxList = [
+                    { syntax: '# 标题', desc: '一级标题' },
+                    { syntax: '## 标题', desc: '二级标题' },
+                    { syntax: '### 标题', desc: '三级标题' },
+                    { syntax: '**粗体**', desc: '粗体文本' },
+                    { syntax: '*斜体*', desc: '斜体文本' },
+                    { syntax: '~~删除线~~', desc: '删除线文本' },
+                    { syntax: '`代码`', desc: '行内代码' },
+                    { syntax: '```代码块```', desc: '代码块' },
+                    { syntax: '[文字](url)', desc: '链接' },
+                    { syntax: '[img]文件ID[/img]', desc: '图片' },
+                    { syntax: '[video]文件ID[/video]', desc: '视频' },
+                    { syntax: '[audio]文件ID[/audio]', desc: '音频' },
+                    { syntax: '[file]文件ID[/file]', desc: '文件' },
+                    { syntax: '- 项目', desc: '无序列表' },
+                    { syntax: '1. 项目', desc: '有序列表' },
+                    { syntax: '- [ ] 待办', desc: '任务列表（未完成）' },
+                    { syntax: '- [x] 已完成', desc: '任务列表（已完成）' },
+                    { syntax: '> 引用', desc: '引用块' },
+                    { syntax: '| 列1 | 列2 |', desc: '表格' },
+                    { syntax: '---', desc: '分割线' },
+                    { syntax: '@用户名', desc: '提及用户' },
+                    { syntax: '#话题', desc: '话题标签（必须在最后一行）' },
+                ];
+                let listHtml = '';
+                syntaxList.forEach(item => {
+                    listHtml += `
+                        <div class="syntax-item">
+                            <span class="syntax-code">${item.syntax}</span>
+                            <span class="syntax-desc">${item.desc}</span>
+                            <button class="syntax-add-btn" data-syntax="${item.syntax}">+</button>
+                        </div>
+                    `;
                 });
-
-                publishBtn.addEventListener('click', () => {
-                    const content = textarea.value.trim();
-                    if (!content) {
-                        showToast('请输入内容', 'error');
-                        textarea.focus();
-                        return;
-                    }
-                    showConfirmModal(
-                        '发布帖子',
-                        '确定发布此帖吗？发布后所有人都能看到。',
-                        async () => { await doPublish(); },
-                        '发布',
-                        'primary'
-                    );
+                const content = `<div>${listHtml}</div>`;
+                const modal = openModal('语法列表', content);
+                modal.classList.add('syntax-panel');
+                modal.querySelectorAll('.syntax-add-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const syntax = btn.dataset.syntax;
+                        insertAtCursor(syntax);
+                        modal.closest('.modal-overlay').remove();
+                    });
                 });
-
-                textarea.addEventListener('keydown', (e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                        e.preventDefault();
-                        publishBtn.click();
-                    }
-                });
-
-                previewBtn.addEventListener('click', togglePreview);
             }
 
             // ============================================================
-            // 7. 二次确认弹窗
+            // 10. 话题标签校验
+            // ============================================================
+            function validateTopicTags(content) {
+                const lines = content.split('\n');
+                const lastLine = lines[lines.length - 1] || '';
+                // 检查最后一行是否包含 # 话题标签
+                const tagRegex = /#\w+/g;
+                const tags = lastLine.match(tagRegex);
+                // 如果内容中有 # 标签但不在最后一行，报错
+                const allTags = content.match(/#\w+/g);
+                if (allTags && allTags.length > 0) {
+                    if (!tags || tags.length === 0) {
+                        return { valid: false, message: '话题标签必须在最后一行' };
+                    }
+                    // 检查是否有标签在其他行
+                    const otherLines = content.split('\n').slice(0, -1).join('\n');
+                    const otherTags = otherLines.match(/#\w+/g);
+                    if (otherTags && otherTags.length > 0) {
+                        return { valid: false, message: '话题标签必须在最后一行' };
+                    }
+                }
+                return { valid: true };
+            }
+
+            // ============================================================
+            // 11. 发布/更新
+            // ============================================================
+            async function doPublish() {
+                const content = textarea.value;
+                const trimmed = content.trim();
+                if (!trimmed) {
+                    showToast('请输入内容', 'error');
+                    textarea.focus();
+                    return;
+                }
+
+                // 话题标签校验
+                const validation = validateTopicTags(content);
+                if (!validation.valid) {
+                    showToast(validation.message, 'error');
+                    return;
+                }
+
+                publishBtn.disabled = true;
+                publishBtn.textContent = isEditMode ? '更新中...' : '发布中...';
+
+                try {
+                    let result;
+                    if (isEditMode) {
+                        // 更新帖子
+                        const { data, error } = await supabaseClient
+                            .from('posts')
+                            .update({
+                                content: content,
+                                updated_at: new Date().toISOString(),
+                                is_edited: true,
+                            })
+                            .eq('id', editPostId)
+                            .select()
+                            .single();
+                        if (error) throw error;
+                        result = data;
+                        showToast('更新成功！', 'success');
+                    } else {
+                        // 新建帖子
+                        const publicId = generatePublicId();
+                        const { data, error } = await supabaseClient
+                            .from('posts')
+                            .insert({
+                                user_id: currentUser.id,
+                                content: content,
+                                public_id: publicId,
+                            })
+                            .select()
+                            .single();
+                        if (error) throw error;
+                        result = data;
+                        showToast('发布成功！', 'success');
+                    }
+
+                    // 跳转
+                    setTimeout(() => {
+                        if (isEditMode) {
+                            window.location.href = 'post-detail.html?type=post&id=' + editPostId;
+                        } else {
+                            window.location.href = 'app.html';
+                        }
+                    }, 800);
+
+                } catch (e) {
+                    console.error('发布失败', e);
+                    showToast('操作失败: ' + e.message, 'error');
+                    publishBtn.disabled = false;
+                    publishBtn.textContent = isEditMode ? '更新' : '发布';
+                }
+            }
+
+            // ============================================================
+            // 12. 二次确认弹窗
             // ============================================================
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
@@ -601,52 +1224,7 @@
             }
 
             // ============================================================
-            // 8. 执行发布
-            // ============================================================
-            async function doPublish() {
-                const content = textarea.value.trim();
-                if (!content) {
-                    showToast('请输入内容', 'error');
-                    return;
-                }
-
-                publishBtn.disabled = true;
-                publishBtn.textContent = '发布中...';
-
-                try {
-                    const publicId = generatePublicId();
-                    const { data: newPost, error } = await supabaseClient
-                        .from('posts')
-                        .insert({
-                            user_id: currentUser.id,
-                            content: content,
-                            public_id: publicId,
-                        })
-                        .select()
-                        .single();
-
-                    if (error) {
-                        showToast('发布失败: ' + error.message, 'error');
-                        publishBtn.disabled = false;
-                        publishBtn.textContent = '发布';
-                        return;
-                    }
-
-                    showToast('发布成功！', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'app.html';
-                    }, 800);
-
-                } catch (e) {
-                    console.error('发布异常', e);
-                    showToast('发布失败: ' + e.message, 'error');
-                    publishBtn.disabled = false;
-                    publishBtn.textContent = '发布';
-                }
-            }
-
-            // ============================================================
-            // 9. 工具函数
+            // 13. 工具函数
             // ============================================================
             function generatePublicId() {
                 const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -658,13 +1236,98 @@
             }
 
             // ============================================================
-            // 10. 启动
+            // 14. 事件绑定
+            // ============================================================
+            function bindEvents() {
+                textarea.addEventListener('input', onInput);
+                window.addEventListener('resize', onResize);
+
+                // 取消
+                cancelBtn.addEventListener('click', () => {
+                    const content = textarea.value.trim();
+                    if (content) {
+                        showConfirmModal(
+                            isEditMode ? '取消编辑' : '取消发布',
+                            isEditMode ? '确定要取消编辑吗？修改将丢失。' : '确定要取消发布吗？输入的内容将丢失。',
+                            () => {
+                                if (isEditMode) {
+                                    window.location.href = 'post-detail.html?type=post&id=' + editPostId;
+                                } else {
+                                    window.location.href = 'app.html';
+                                }
+                            },
+                            isEditMode ? '取消编辑' : '取消发布',
+                            'danger'
+                        );
+                    } else {
+                        if (isEditMode) {
+                            window.location.href = 'post-detail.html?type=post&id=' + editPostId;
+                        } else {
+                            window.location.href = 'app.html';
+                        }
+                    }
+                });
+
+                // 发布/更新
+                publishBtn.addEventListener('click', () => {
+                    const content = textarea.value.trim();
+                    if (!content) {
+                        showToast('请输入内容', 'error');
+                        textarea.focus();
+                        return;
+                    }
+                    const validation = validateTopicTags(textarea.value);
+                    if (!validation.valid) {
+                        showToast(validation.message, 'error');
+                        return;
+                    }
+                    showConfirmModal(
+                        isEditMode ? '更新帖子' : '发布帖子',
+                        isEditMode ? '确定更新此帖吗？' : '确定发布此帖吗？发布后所有人都能看到。',
+                        async () => { await doPublish(); },
+                        isEditMode ? '更新' : '发布',
+                        'primary'
+                    );
+                });
+
+                // Ctrl+Enter
+                textarea.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        publishBtn.click();
+                    }
+                });
+
+                // 预览
+                previewBtn.addEventListener('click', togglePreview);
+
+                // 语法面板
+                syntaxBtn.addEventListener('click', showSyntaxPanel);
+
+                // 添加文件
+                addFileBtn.addEventListener('click', () => {
+                    fileInput.click();
+                });
+                fileInput.addEventListener('change', (e) => {
+                    if (fileInput.files.length) {
+                        uploadFilesToLibrary(fileInput.files);
+                        fileInput.value = '';
+                    }
+                });
+
+                // 拖拽上传
+                setupDropZone();
+            }
+
+            // ============================================================
+            // 15. 启动
             // ============================================================
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
                 init();
             }
+
         })();
     </script>
 </body>
