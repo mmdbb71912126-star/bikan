@@ -804,10 +804,29 @@
 
     // ---------- 关于 ----------
     async function renderAbout() {
-        mainContent.innerHTML = '<div class="page-header"><div class="page-title">关于</div></div><div id="aboutContent"></div>';
-        const { data, error } = await supabaseClient.from('about_page').select('*').order('updated_at', { ascending: false }).limit(1);
-        document.getElementById('aboutContent').innerHTML = (!error && data?.length) ? data[0].content : '<p>暂无关于信息</p>';
-    }
+        mainContent.innerHTML = `
+            <div class="page-header">
+                <div class="page-title">关于</div>
+            </div>
+            <div id="aboutContent" class="about-content-wrapper"></div>
+        `;
+        const aboutDiv = document.getElementById('aboutContent');
+        const { data, error } = await supabaseClient
+            .from('about_page')
+            .select('*')
+            .order('updated_at', { ascending: false })
+            .limit(1);
+
+        let contentHtml = '';
+        if (!error && data && data.length > 0) {
+            contentHtml = data[0].content || '';
+        } else {
+            contentHtml = '<p>暂无关于信息</p>';
+        }
+
+    // 用沙盒容器隔离内容
+    aboutDiv.innerHTML = `<div class="about-content">${contentHtml}</div>`;
+}
 
     // ---------- 管理员 ----------
     async function renderAdmin() {
