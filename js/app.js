@@ -78,6 +78,15 @@
         return posts;
     }
 
+    async function enrichPostWithFiles(post) {
+        if (!post || !post.content) return post;
+        const ids = extractFileIdsFromContent(post.content);
+        if (ids.length === 0) return post;
+        const fileMap = await fetchFilesByIds(ids);
+        post.fileMap = fileMap;
+        return post;
+    }
+
     // ---------- 初始化 ----------
     async function init() {
         console.log('[必看] 初始化开始');
@@ -406,7 +415,7 @@
     }
 
     // ============================================================
-    // 加载帖子列表（含文件信息）
+    // 加载帖子列表（含文件信息 + isAdmin）
     // ============================================================
     async function loadPosts(container, type) {
         container.innerHTML = '<p>加载中...</p>';
@@ -420,8 +429,8 @@
         if (error) { container.innerHTML = `<p>加载失败: ${error.message}</p>`; return; }
         if (!data.length) { container.innerHTML = '<p>暂无帖子</p>'; return; }
 
-        // 加载文件信息
         const enriched = await enrichPostsWithFiles(data);
+        const isAdmin = currentUser.is_admin === true;
 
         container.innerHTML = '';
         const postsWithState = await Promise.all(enriched.map(async post => {
@@ -435,7 +444,7 @@
             return post;
         }));
         postsWithState.forEach(post => {
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
         });
     }
 
@@ -449,8 +458,8 @@
         const posts = postsRes.data || [], topics = topicsRes.data || [];
         if (!posts.length && !topics.length) { container.innerHTML = '<p>暂无推荐内容</p>'; return; }
 
-        // 加载文件信息
         const enriched = await enrichPostsWithFiles(posts);
+        const isAdmin = currentUser.is_admin === true;
 
         container.innerHTML = '';
         for (const post of enriched) {
@@ -461,12 +470,12 @@
             post.liked_by_me = !!likeRes.data;
             post.favorited_by_me = !!favRes.data;
             post.is_owner = post.user_id === currentUser.id;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
         }
         topics.forEach(topic => container.appendChild(renderTopicCard(topic, { showJoin: true })));
     }
 
-    // ---------- 搜索（含关注状态） ----------
+    // ---------- 搜索 ----------
     function renderSearch(container) {
         container.innerHTML = `<div class="search-bar"><input type="search" id="searchInput" placeholder="搜索帖子、用户、话题、文件名称" /><button class="btn btn-primary" id="searchBtn" style="text-align:center;">${Icons.search} 搜索</button></div><div id="searchResults"></div>`;
         document.getElementById('searchBtn').addEventListener('click', async () => {
@@ -486,19 +495,19 @@
                     .eq('follower_id', currentUser.id);
                 followingIds = follows ? follows.map(f => f.following_id) : [];
             }
-            // 为帖子加载文件信息
             const enrichedPosts = await enrichPostsWithFiles(postRes.data || []);
-            renderSearchResults(document.getElementById('searchResults'), enrichedPosts, userRes.data, topicRes.data, fileRes.data, followingIds);
+            const isAdmin = currentUser.is_admin === true;
+            renderSearchResults(document.getElementById('searchResults'), enrichedPosts, userRes.data, topicRes.data, fileRes.data, followingIds, isAdmin);
         });
     }
 
-    function renderSearchResults(container, posts, users, topics, files, followingIds) {
+    function renderSearchResults(container, posts, users, topics, files, followingIds, isAdmin) {
         let html = '';
         if (posts?.length) {
             html += '<h3>帖子</h3>';
             posts.forEach(post => {
                 post.is_owner = post.user_id === currentUser.id;
-                const card = renderPostCard(post, { fileMap: post.fileMap || {} });
+                const card = renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin });
                 html += card.outerHTML;
             });
         }
@@ -690,16 +699,17 @@
     }
 
     // ============================================================
-    // 个人帖子列表（含文件信息）
+    // 个人帖子列表（含文件信息 + isAdmin）
     // ============================================================
     async function loadUserPosts(container) {
         const { data, error } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
         if (error || !data.length) return container.innerHTML = '<p>暂无帖子</p>';
         const enriched = await enrichPostsWithFiles(data);
+        const isAdmin = currentUser.is_admin === true;
         container.innerHTML = '';
         enriched.forEach(post => {
             post.is_owner = true;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
         });
     }
 
@@ -708,10 +718,11 @@
         if (error || !data.length) return container.innerHTML = '<p>暂无收藏</p>';
         const posts = data.map(f => f.post).filter(Boolean);
         const enriched = await enrichPostsWithFiles(posts);
+        const isAdmin = currentUser.is_admin === true;
         container.innerHTML = '';
         enriched.forEach(post => {
             post.is_owner = post.user_id === currentUser.id;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
         });
     }
 
@@ -720,10 +731,11 @@
         if (error || !data.length) return container.innerHTML = '<p>暂无历史记录</p>';
         const posts = data.map(h => h.post).filter(Boolean);
         const enriched = await enrichPostsWithFiles(posts);
+        const isAdmin = currentUser.is_admin === true;
         container.innerHTML = '';
         enriched.forEach(post => {
             post.is_owner = post.user_id === currentUser.id;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
         });
     }
 
@@ -823,10 +835,8 @@
         } else {
             contentHtml = '<p>暂无关于信息</p>';
         }
-
-    // 用沙盒容器隔离内容
-    aboutDiv.innerHTML = `<div class="about-content">${contentHtml}</div>`;
-}
+        aboutDiv.innerHTML = `<div class="about-content">${contentHtml}</div>`;
+    }
 
     // ---------- 管理员 ----------
     async function renderAdmin() {
@@ -917,10 +927,11 @@
         if(postsRes.error||topicsRes.error)return listDiv.innerHTML=`<p>加载失败: ${(postsRes.error||topicsRes.error).message}</p>`;
         const posts=postsRes.data||[],topics=topicsRes.data||[];if(!posts.length&&!topics.length)return listDiv.innerHTML='<p>暂无推荐内容</p>';
         listDiv.innerHTML='';
+        const isAdmin = currentUser.is_admin === true;
         const enriched = await enrichPostsWithFiles(posts);
         enriched.forEach(post=>{
             post.is_owner=post.user_id===currentUser.id;
-            const card=renderPostCard(post, { fileMap: post.fileMap || {} });
+            const card=renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin });
             const btn=document.createElement('button');
             btn.className='btn btn-secondary btn-sm';
             btn.textContent='取消推荐';
@@ -1036,11 +1047,51 @@
             else if (action === 'share' && postId) { showShareModal(postId); }
             else if (action === 'report' && postId) { showReportModal('post', postId); }
             else if (action === 'edit' && postId) { showEditPostModal(postId); }
-            else if (action === 'delete' && postId) { if (confirm('确认删除这条帖子吗？')) { await supabaseClient.from('posts').delete().eq('id', postId); showToast('已删除','success'); navigateTo(ROUTES.EXPLORE); } }
+            else if (action === 'delete' && postId) {
+                // 删除帖子：作者 或 管理员
+                const { data: post } = await supabaseClient.from('posts').select('user_id').eq('id', postId).single();
+                if (!post) return showToast('帖子不存在', 'error');
+                const canDelete = post.user_id === currentUser.id || currentUser.is_admin === true;
+                if (!canDelete) {
+                    showToast('你没有权限删除此帖', 'error');
+                    return;
+                }
+                if (confirm('确认删除这条帖子吗？')) {
+                    await supabaseClient.from('posts').delete().eq('id', postId);
+                    showToast('已删除', 'success');
+                    navigateTo(ROUTES.EXPLORE);
+                }
+            }
             else if (action === 'like-comment' && commentId) { await toggleCommentLike(commentId, target); }
-            else if (action === 'reply-comment' && commentId) { const commentInput = document.getElementById('commentInput'); if (commentInput) { commentInput.focus(); commentInput.dataset.parentId = commentId; const { data } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single(); if (data) commentInput.dataset.replyToUserId = data.user_id; } }
+            else if (action === 'reply-comment' && commentId) {
+                const commentInput = document.getElementById('commentInput');
+                if (commentInput) {
+                    commentInput.focus();
+                    commentInput.dataset.parentId = commentId;
+                    const { data } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
+                    if (data) commentInput.dataset.replyToUserId = data.user_id;
+                }
+            }
             else if (action === 'share-comment' && commentId) { await shareComment(commentId); }
             else if (action === 'report-comment' && commentId) { showReportModal('comment', commentId); }
+            else if (action === 'delete-comment' && commentId) {
+                // 删除评论：评论作者 或 帖子作者 或 管理员
+                const { data: comment } = await supabaseClient.from('comments').select('user_id, post_id').eq('id', commentId).single();
+                if (!comment) return showToast('评论不存在', 'error');
+                const { data: post } = await supabaseClient.from('posts').select('user_id').eq('id', comment.post_id).single();
+                const canDelete = comment.user_id === currentUser.id ||
+                    (post && post.user_id === currentUser.id) ||
+                    currentUser.is_admin === true;
+                if (!canDelete) {
+                    showToast('你没有权限删除此评论', 'error');
+                    return;
+                }
+                if (confirm('确认删除这条评论吗？')) {
+                    await supabaseClient.from('comments').delete().eq('id', commentId);
+                    showToast('评论已删除', 'success');
+                    navigateTo(ROUTES.EXPLORE);
+                }
+            }
             else if (action === 'accept-friend' && requestId) {
                 await supabaseClient.from('friend_requests').update({ status: 'accepted' }).eq('id', requestId);
                 const { data: reqData } = await supabaseClient.from('friend_requests').select('sender_id, receiver_id').eq('id', requestId).single();
@@ -1049,19 +1100,19 @@
                 }
                 unreadFriendRequests = Math.max(0, unreadFriendRequests - 1);
                 updateAllBadges();
-                showToast('已接受','success');
-                if(currentRoute===ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL);
+                showToast('已接受', 'success');
+                if (currentRoute === ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL);
             }
             else if (action === 'decline-friend' && requestId) {
                 await supabaseClient.from('friend_requests').update({ status: 'declined' }).eq('id', requestId);
                 unreadFriendRequests = Math.max(0, unreadFriendRequests - 1);
                 updateAllBadges();
-                showToast('已拒绝','success');
-                if(currentRoute===ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL);
+                showToast('已拒绝', 'success');
+                if (currentRoute === ROUTES.SOCIAL) navigateTo(ROUTES.SOCIAL);
             }
             else if (action === 'follow' && userId) {
                 await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
-                showToast('已关注','success');
+                showToast('已关注', 'success');
                 const btn = target;
                 btn.textContent = '已关注';
                 btn.dataset.action = 'unfollow';
@@ -1075,7 +1126,7 @@
             }
             else if (action === 'unfollow' && userId) {
                 await supabaseClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
-                showToast('已取关','success');
+                showToast('已取关', 'success');
                 const btn = target;
                 btn.textContent = '关注';
                 btn.dataset.action = 'follow';
@@ -1087,32 +1138,100 @@
                     }
                 }
             }
-            else if (action === 'block' && userId) { await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId }); showToast('已拉黑','success'); }
-            else if (action === 'dismiss-report' && id) { await supabaseClient.from('reports').update({ status:'dismissed', reviewed_by:currentUser.id, reviewed_at:new Date().toISOString() }).eq('id', id); showToast('已忽略','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
-            else if (action === 'action-report' && id) { const targetType = target.dataset.targetType, targetId = target.dataset.targetId; if(targetType==='post') await supabaseClient.from('posts').delete().eq('id', targetId); else if(targetType==='comment') await supabaseClient.from('comments').delete().eq('id', targetId); else if(targetType==='user') await supabaseClient.from('profiles').update({ is_banned: true }).eq('id', targetId); else if(targetType==='topic') await supabaseClient.from('topics').update({ status:'closed' }).eq('id', targetId); await supabaseClient.from('reports').update({ status:'action_taken', reviewed_by:currentUser.id, reviewed_at:new Date().toISOString() }).eq('id', id); showToast('已处理','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
-            else if (action === 'approve-topic' && id) { await supabaseClient.from('topics').update({ status:'approved', approved_at:new Date().toISOString(), approved_by:currentUser.id }).eq('id', id); showToast('已批准','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
-            else if (action === 'reject-topic' && id) { await supabaseClient.from('topics').update({ status:'rejected' }).eq('id', id); showToast('已拒绝','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
-            else if (action === 'delete-announcement' && id) { await supabaseClient.from('announcements').delete().eq('id', id); showToast('已删除','success'); if(currentRoute===ROUTES.ADMIN) navigateTo(ROUTES.ADMIN); }
-            else if (action === 'qq-appeal' && notificationId) { e.stopPropagation(); navigator.clipboard.writeText('976926251').then(() => { showToast('QQ群号已复制，请到群内 @管理员 申诉','success'); target.textContent='已提示'; target.disabled=true; }).catch(() => showToast('请手动搜索 QQ 群：976926251','error')); }
-            else if (action === 'join-topic' && topicId) { openTopicDetail(topicId); }
+            else if (action === 'block' && userId) {
+                await supabaseClient.from('blocked_users').insert({ user_id: currentUser.id, blocked_user_id: userId });
+                showToast('已拉黑', 'success');
+            }
+            else if (action === 'dismiss-report' && id) {
+                await supabaseClient.from('reports').update({ status: 'dismissed', reviewed_by: currentUser.id, reviewed_at: new Date().toISOString() }).eq('id', id);
+                showToast('已忽略', 'success');
+                if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
+            }
+            else if (action === 'action-report' && id) {
+                const targetType = target.dataset.targetType, targetId = target.dataset.targetId;
+                if (targetType === 'post') await supabaseClient.from('posts').delete().eq('id', targetId);
+                else if (targetType === 'comment') await supabaseClient.from('comments').delete().eq('id', targetId);
+                else if (targetType === 'user') await supabaseClient.from('profiles').update({ is_banned: true }).eq('id', targetId);
+                else if (targetType === 'topic') await supabaseClient.from('topics').update({ status: 'closed' }).eq('id', targetId);
+                await supabaseClient.from('reports').update({ status: 'action_taken', reviewed_by: currentUser.id, reviewed_at: new Date().toISOString() }).eq('id', id);
+                showToast('已处理', 'success');
+                if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
+            }
+            else if (action === 'approve-topic' && id) {
+                await supabaseClient.from('topics').update({ status: 'approved', approved_at: new Date().toISOString(), approved_by: currentUser.id }).eq('id', id);
+                showToast('已批准', 'success');
+                if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
+            }
+            else if (action === 'reject-topic' && id) {
+                await supabaseClient.from('topics').update({ status: 'rejected' }).eq('id', id);
+                showToast('已拒绝', 'success');
+                if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
+            }
+            else if (action === 'delete-announcement' && id) {
+                await supabaseClient.from('announcements').delete().eq('id', id);
+                showToast('已删除', 'success');
+                if (currentRoute === ROUTES.ADMIN) navigateTo(ROUTES.ADMIN);
+            }
+            else if (action === 'qq-appeal' && notificationId) {
+                e.stopPropagation();
+                navigator.clipboard.writeText('976926251').then(() => {
+                    showToast('QQ群号已复制，请到群内 @管理员 申诉', 'success');
+                    target.textContent = '已提示';
+                    target.disabled = true;
+                }).catch(() => showToast('请手动搜索 QQ 群：976926251', 'error'));
+            }
+            else if (action === 'join-topic' && topicId) {
+                openTopicDetail(topicId);
+            }
         });
 
         document.addEventListener('click', (e) => {
             const notificationCard = e.target.closest('.notification-card');
             if (notificationCard) {
                 const postId = notificationCard.dataset.postId;
-                if (postId) openPostDetail(postId); else { const content = notificationCard.querySelector('.notification-text')?.textContent || '通知'; openModal('通知详情', `<p>${content}</p>`); }
+                if (postId) openPostDetail(postId);
+                else {
+                    const content = notificationCard.querySelector('.notification-text')?.textContent || '通知';
+                    openModal('通知详情', `<p>${content}</p>`);
+                }
                 return;
             }
             const postCard = e.target.closest('.post-card');
-            if (postCard && !e.target.closest('[data-action]') && !e.target.closest('.media-item')) { const postId = postCard.querySelector('[data-post-id]')?.dataset.postId; if(postId) openPostDetail(postId); }
+            if (postCard && !e.target.closest('[data-action]') && !e.target.closest('.media-item')) {
+                const postId = postCard.querySelector('[data-post-id]')?.dataset.postId;
+                if (postId) openPostDetail(postId);
+            }
             const mediaItem = e.target.closest('.media-item');
-            if (mediaItem) { const url = mediaItem.dataset.fileUrl, type = mediaItem.dataset.fileType; if(url){ if(type==='image') window.open(url,'_blank'); else if(type==='video'||type==='audio'){ const postId=mediaItem.closest('.post-card')?.querySelector('[data-post-id]')?.dataset.postId; if(postId) openPostDetail(postId); } } }
+            if (mediaItem) {
+                const url = mediaItem.dataset.fileUrl,
+                    type = mediaItem.dataset.fileType;
+                if (url) {
+                    if (type === 'image') window.open(url, '_blank');
+                    else if (type === 'video' || type === 'audio') {
+                        const postId = mediaItem.closest('.post-card')?.querySelector('[data-post-id]')?.dataset.postId;
+                        if (postId) openPostDetail(postId);
+                    }
+                }
+            }
             const tag = e.target.closest('.tag');
-            if (tag) { currentTab=EXPLORE_TABS.SEARCH; renderExplore(); const searchInput=document.getElementById('searchInput'); if(searchInput){ searchInput.value=tag.dataset.tag; document.getElementById('searchBtn')?.click(); } }
+            if (tag) {
+                currentTab = EXPLORE_TABS.SEARCH;
+                renderExplore();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = tag.dataset.tag;
+                    document.getElementById('searchBtn')?.click();
+                }
+            }
         });
 
-        sidebarNav.addEventListener('click', (e) => { const navItem = e.target.closest('.nav-item'); if(navItem){ exitFullscreen(); navigateTo(navItem.dataset.route); } });
+        sidebarNav.addEventListener('click', (e) => {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
+                exitFullscreen();
+                navigateTo(navItem.dataset.route);
+            }
+        });
     }
 
     // ---------- 点赞/收藏/评论点赞 ----------
@@ -1269,7 +1388,8 @@
                     const input = modal.querySelector('#sharePostIdInput');
                     input.select();
                     navigator.clipboard.writeText(input.value).then(() => showToast('已复制帖子 ID', 'success'))
-                        .catch(() => { document.execCommand('copy'); showToast('已复制帖子 ID', 'success'); });
+                        .catch(() => { document.execCommand('copy');
+                            showToast('已复制帖子 ID', 'success'); });
                 });
             })
             .catch(() => { window._modalLock = false; });
@@ -1306,12 +1426,6 @@
     }
 
     async function showEditPostModal(postId) {
-        if (window._modalLock) return;
-        window._modalLock = true;
-        document.querySelector('.modal-overlay')?.remove();
-        const { data: post } = await supabaseClient.from('posts').select('*').eq('id', postId).single();
-        if (!post) { window._modalLock = false; return; }
-        // 跳转到编辑页
         window.location.href = 'post.html?edit=' + postId;
     }
 
@@ -1337,12 +1451,14 @@
         const friendListDiv = modal.querySelector('#friendList');
         const { data: follows } = await supabaseClient.from('follows').select('following:following_id(id, username, nickname, avatar_url)').eq('follower_id', currentUser.id);
         if (follows?.length) follows.forEach(f => {
-            const btn = document.createElement('button'); btn.className = 'btn btn-secondary btn-sm'; btn.textContent = getUserDisplayName(f.following);
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-secondary btn-sm';
+            btn.textContent = getUserDisplayName(f.following);
             btn.addEventListener('click', async () => {
                 await supabaseClient.from('messages').insert({ sender_id: currentUser.id, receiver_id: f.following.id, content: `分享评论：${shareContent}`, is_read: false });
                 modal.remove();
                 window._modalLock = false;
-                showToast('已发送到私聊','success');
+                showToast('已发送到私聊', 'success');
             });
             friendListDiv.appendChild(btn);
         });
@@ -1350,6 +1466,7 @@
     }
 
     // ---------- 启动 ----------
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
 
 })();
