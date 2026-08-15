@@ -36,9 +36,22 @@
         .comment-reply-form { margin-top: 8px; margin-left: 20px; display: flex; gap: 8px; }
         .comment-reply-form input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; }
         .comment-reply-form input:focus { border-color: var(--primary); }
-        .replies-list { margin-top: 4px; }
-        .toggle-replies { margin-bottom: 4px; background: none; border: none; color: var(--primary); cursor: pointer; font-size: 13px; font-weight: 500; padding: 0; }
-        .toggle-replies:hover { text-decoration: underline; }
+        .replies-container { margin-top: 8px; }
+        .replies-list { margin-left: 24px; border-left: 2px solid var(--border); padding-left: 8px; }
+        .toggle-replies { margin-bottom: 4px; font-size: 13px; padding: 2px 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer; }
+        .toggle-replies:hover { color: var(--primary); }
+        .reply-quote {
+            background: var(--bg-light);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            border-left: 3px solid var(--primary);
+        }
+        .reply-quote strong { color: var(--text-main); }
+        .comment-item.level-0 { margin-left: 0; }
+        .comment-item.level-1 { margin-left: 24px; border-left: 2px solid var(--border); padding-left: 8px; }
 
         .post-content .file-card { display: flex; align-items: center; gap: 12px; background: #FCD34D; border-radius: 8px; padding: 10px 16px; margin: 8px 0; min-height: 60px; width: 100%; aspect-ratio: 3 / 1; border: 1px solid #F59E0B; }
         .post-content .file-card .file-card-icon { flex-shrink: 0; color: #92400E; }
@@ -305,7 +318,7 @@
             }
 
             // ============================================================
-            // 核心：渲染评论树，支持折叠/展开回复
+            // 核心：只嵌套1层，每个根评论只有一个折叠按钮
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -351,73 +364,106 @@
                     if (root.children) root.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 });
 
-                // 递归渲染函数（返回元素，并附加折叠控制）
-                function renderCommentTree(comment, depth = 0) {
-                    const el = document.createElement('div');
-                    el.className = `comment-item level-${depth}`;
-                    if (depth > 0) {
-                        el.style.marginLeft = Math.min(depth * 24, 60) + 'px';
-                        el.style.borderLeft = '2px solid var(--border)';
-                        el.style.paddingLeft = '8px';
-                    }
+                // ============================================================
+                // 渲染根评论（嵌套深度只到1层）
+                // ============================================================
+                function renderRootComment(root) {
+                    // 根评论主体
+                    const rootEl = document.createElement('div');
+                    rootEl.className = 'comment-item level-0';
 
-                    // 渲染评论主体（使用 components 中的 renderCommentItem）
-                    const commentEl = comp.renderCommentItem(comment, {
-                        isReply: depth > 0,
+                    const rootCommentEl = comp.renderCommentItem(root, {
+                        isReply: false,
                         isAdmin: isAdmin
                     });
-                    el.appendChild(commentEl);
+                    rootEl.appendChild(rootCommentEl);
 
-                    // 如果有子评论，添加折叠按钮和子评论容器
-                    if (comment.children && comment.children.length > 0) {
-                        const childCount = comment.children.length;
-                        const childContainer = document.createElement('div');
-                        childContainer.className = 'replies-container';
-                        childContainer.style.marginTop = '4px';
+                    // 获取直接子评论（深度1）
+                    const directReplies = root.children || [];
 
-                        // 折叠控制按钮
+                    if (directReplies.length > 0) {
+                        const container = document.createElement('div');
+                        container.className = 'replies-container';
+
+                        // 折叠按钮
                         const toggleBtn = document.createElement('button');
                         toggleBtn.className = 'toggle-replies';
-                        toggleBtn.textContent = `收起 ${childCount} 条回复 ↑`;
+                        const count = directReplies.length;
+                        toggleBtn.textContent = `收起 ${count} 条回复 ↑`;
                         toggleBtn.dataset.expanded = 'true';
-                        toggleBtn.style.marginBottom = '4px';
 
-                        // 子评论列表容器
-                        const childList = document.createElement('div');
-                        childList.className = 'replies-list';
-                        // 递归渲染所有子评论
-                        comment.children.forEach(child => {
-                            const childEl = renderCommentTree(child, depth + 1);
-                            childList.appendChild(childEl);
+                        // 回复列表容器
+                        const listContainer = document.createElement('div');
+                        listContainer.className = 'replies-list';
+
+                        // 渲染每条直接回复
+                        directReplies.forEach(reply => {
+                            const replyEl = document.createElement('div');
+                            replyEl.className = 'comment-item level-1';
+
+                            // 检查该回复是否有子回复（深度2+）
+                            const deeperReplies = reply.children || [];
+
+                            // 如果有深层回复，构建引用块
+                            let quoteHtml = '';
+                            if (deeperReplies.length > 0) {
+                                // 取最深层的第一个回复作为引用来源（也可以取所有）
+                                // 这里取第一个子回复
+                                const firstDeep = deeperReplies[0];
+                                const parentNickname = getUserDisplayName(reply.profiles);
+                                const parentContent = reply.content || '';
+                                const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
+                                const deepNickname = getUserDisplayName(firstDeep.profiles);
+                                quoteHtml = `<div class="reply-quote"><strong>${deepNickname}</strong> 回复了 <strong>${parentNickname}</strong> 的评论：<span style="color:var(--text-light);">“${preview}”</span></div>`;
+                            }
+
+                            // 渲染回复本身
+                            const replyCommentEl = comp.renderCommentItem(reply, {
+                                isReply: true,
+                                isAdmin: isAdmin
+                            });
+
+                            // 如果有引用，插入到评论内容之前
+                            if (quoteHtml) {
+                                const quoteDiv = document.createElement('div');
+                                quoteDiv.innerHTML = quoteHtml;
+                                replyEl.appendChild(quoteDiv);
+                            }
+                            replyEl.appendChild(replyCommentEl);
+
+                            // 隐藏原有的 reply-to 提示
+                            const replyToSpan = replyCommentEl.querySelector('.comment-reply-to');
+                            if (replyToSpan) replyToSpan.style.display = 'none';
+
+                            listContainer.appendChild(replyEl);
                         });
 
-                        childContainer.appendChild(toggleBtn);
-                        childContainer.appendChild(childList);
+                        container.appendChild(toggleBtn);
+                        container.appendChild(listContainer);
+                        rootEl.appendChild(container);
 
-                        // 切换展开/收起
+                        // 折叠切换
                         toggleBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const expanded = toggleBtn.dataset.expanded === 'true';
                             if (expanded) {
-                                childList.style.display = 'none';
-                                toggleBtn.textContent = `展开 ${childCount} 条回复 ↓`;
+                                listContainer.style.display = 'none';
+                                toggleBtn.textContent = `展开 ${count} 条回复 ↓`;
                                 toggleBtn.dataset.expanded = 'false';
                             } else {
-                                childList.style.display = 'block';
-                                toggleBtn.textContent = `收起 ${childCount} 条回复 ↑`;
+                                listContainer.style.display = 'block';
+                                toggleBtn.textContent = `收起 ${count} 条回复 ↑`;
                                 toggleBtn.dataset.expanded = 'true';
                             }
                         });
-
-                        el.appendChild(childContainer);
                     }
 
-                    return el;
+                    return rootEl;
                 }
 
                 // 渲染所有根评论
                 roots.forEach(root => {
-                    const el = renderCommentTree(root, 0);
+                    const el = renderRootComment(root);
                     listDiv.appendChild(el);
                 });
             }
@@ -456,7 +502,6 @@
                     } else if (action === 'like-comment' && commentId) await toggleCommentLike(commentId, target);
                     else if (action === 'reply-comment' && commentId) {
                         const commentInput = document.getElementById('commentInput');
-                        // 获取被回复评论的作者昵称
                         const { data: cmt, error } = await supabaseClient
                             .from('comments')
                             .select('user_id, profiles:user_id(nickname)')
@@ -502,7 +547,6 @@
                     const { error } = await supabaseClient.from('comments').insert(insertData);
                     if (error) return showToast('评论失败: ' + error.message, 'error');
                     input.value = '';
-                    // 重置 placeholder
                     input.placeholder = '写下你的评论...';
                     delete input.dataset.parentId;
                     delete input.dataset.replyToUserId;
