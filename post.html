@@ -19,7 +19,6 @@
         body {
             height: 100%;
             overflow: hidden;
-            /* 防止页面本身滚动，由内容区控制滚动 */;
         }
 
         .post-container {
@@ -78,11 +77,12 @@
             flex-direction: column;
         }
 
-        /* ===== 输入框（无边框） ===== */
-        .post-content-area textarea {
+        /* ===== 输入框（强制无边框） ===== */
+        .post-content-area #postContent {
             width: 100%;
             border: none !important;
             outline: none !important;
+            box-shadow: none !important;
             resize: none;
             font-size: 18px;
             line-height: 1.7;
@@ -92,9 +92,14 @@
             padding: 0;
             min-height: 180px;
             flex-shrink: 0;
-            /* 高度由 JS 控制，初始占满剩余空间 */;
+            /* 覆盖全局样式 */;
         }
-        .post-content-area textarea::placeholder {
+        .post-content-area #postContent:focus {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        .post-content-area #postContent::placeholder {
             color: var(--text-light);
             font-size: 18px;
         }
@@ -203,11 +208,11 @@
             .post-content-area {
                 padding: 12px 16px 8px;
             }
-            .post-content-area textarea {
+            .post-content-area #postContent {
                 font-size: 16px;
                 min-height: 140px;
             }
-            .post-content-area textarea::placeholder {
+            .post-content-area #postContent::placeholder {
                 font-size: 16px;
             }
             .post-actions .btn {
@@ -522,7 +527,6 @@
             // ============================================================
             // 9. 启动
             // ============================================================
-            // DOM 加载完成后执行
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
