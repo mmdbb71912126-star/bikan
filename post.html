@@ -31,7 +31,7 @@
             position: relative;
         }
 
-        /* ===== 顶部工具栏 ===== */
+        /* ===== 顶部工具栏（纯图标） ===== */
         .post-toolbar {
             display: flex;
             align-items: center;
@@ -47,16 +47,14 @@
         .post-toolbar .toolbar-btn {
             background: none;
             border: none;
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 6px;
             cursor: pointer;
             color: var(--text-secondary);
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            font-weight: 500;
+            justify-content: center;
         }
         .post-toolbar .toolbar-btn:hover {
             background: var(--bg-hover);
@@ -67,11 +65,18 @@
             color: var(--primary);
         }
         .post-toolbar .toolbar-btn svg {
-            width: 18px;
-            height: 18px;
+            width: 22px;
+            height: 22px;
         }
         .post-toolbar .toolbar-spacer {
             flex: 1;
+        }
+        .post-toolbar .char-count {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 400;
+            min-width: 30px;
+            text-align: right;
         }
 
         /* ===== 内容区（可滚动） ===== */
@@ -291,37 +296,6 @@
             background: var(--primary-dark);
         }
 
-        /* ===== Markdown 帮助弹窗 ===== */
-        .help-modal .modal {
-            max-width: 560px;
-        }
-        .help-modal .modal-body {
-            font-size: 14px;
-            line-height: 1.7;
-            color: var(--text-main);
-        }
-        .help-modal .modal-body table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 8px 0;
-        }
-        .help-modal .modal-body th,
-        .help-modal .modal-body td {
-            border: 1px solid var(--border);
-            padding: 6px 10px;
-            text-align: left;
-        }
-        .help-modal .modal-body th {
-            background: var(--bg-light);
-        }
-        .help-modal .modal-body code {
-            background: var(--bg-light);
-            padding: 1px 4px;
-            border-radius: 3px;
-            font-size: 0.9em;
-            font-family: monospace;
-        }
-
         /* ===== 响应式 ===== */
         @media (max-width: 640px) {
             .post-toolbar {
@@ -331,11 +305,10 @@
             }
             .post-toolbar .toolbar-btn {
                 padding: 4px 8px;
-                font-size: 12px;
             }
             .post-toolbar .toolbar-btn svg {
-                width: 16px;
-                height: 16px;
+                width: 18px;
+                height: 18px;
             }
             .post-content-area {
                 padding: 12px 16px 8px;
@@ -363,31 +336,20 @@
 </head>
 <body>
     <div class="post-container">
-        <!-- ===== 顶部工具栏 ===== -->
+        <!-- ===== 顶部工具栏（纯图标 + 字符计数） ===== -->
         <div class="post-toolbar" id="toolbar">
-            <!-- Markdown 帮助按钮 -->
-            <button class="toolbar-btn" id="helpBtn" title="Markdown 语法帮助">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                Markdown 帮助
-            </button>
-
-            <!-- 预览切换按钮 -->
+            <!-- 预览切换按钮（纯图标） -->
             <button class="toolbar-btn" id="previewBtn" title="预览 Markdown">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                     <circle cx="12" cy="12" r="3" />
                 </svg>
-                <span id="previewBtnText">预览</span>
             </button>
 
             <span class="toolbar-spacer"></span>
 
-            <!-- 字符计数（可选） -->
-            <span style="font-size:12px;color:var(--text-light);" id="charCount">0</span>
+            <!-- 字符计数 -->
+            <span class="char-count" id="charCount">0</span>
         </div>
 
         <!-- ===== 内容区 ===== -->
@@ -424,9 +386,7 @@
             const contentArea = document.getElementById('contentArea');
             const cancelBtn = document.getElementById('cancelBtn');
             const publishBtn = document.getElementById('publishBtn');
-            const helpBtn = document.getElementById('helpBtn');
             const previewBtn = document.getElementById('previewBtn');
-            const previewBtnText = document.getElementById('previewBtnText');
             const charCount = document.getElementById('charCount');
 
             let previewMode = false;
@@ -464,16 +424,9 @@
                         return;
                     }
 
-                    // 初始调整输入框高度
                     adjustTextareaHeight();
-
-                    // 绑定事件
                     bindEvents();
-
-                    // 聚焦输入框
                     textarea.focus();
-
-                    // 更新字符数
                     updateCharCount();
 
                 } catch (e) {
@@ -514,7 +467,6 @@
 
                 updateCharCount();
 
-                // 如果在预览模式下，实时更新预览
                 if (previewMode) {
                     renderPreview();
                 }
@@ -529,7 +481,7 @@
             // ============================================================
             function updateCharCount() {
                 const len = textarea.value.length;
-                charCount.textContent = len + (len > 0 ? '' : '');
+                charCount.textContent = len;
             }
 
             // ============================================================
@@ -555,63 +507,27 @@
             function togglePreview() {
                 previewMode = !previewMode;
                 if (previewMode) {
-                    // 进入预览模式
                     textarea.style.display = 'none';
                     previewDiv.classList.add('show');
                     renderPreview();
-                    previewBtnText.textContent = '编辑';
                     previewBtn.classList.add('active');
-                    // 调整预览区域高度
                     previewDiv.style.minHeight = textarea.style.height || '180px';
                 } else {
-                    // 退出预览模式
                     textarea.style.display = 'block';
                     previewDiv.classList.remove('show');
-                    previewBtnText.textContent = '预览';
                     previewBtn.classList.remove('active');
-                    // 重新调整输入框高度
                     adjustTextareaHeight();
                     textarea.focus();
                 }
             }
 
             // ============================================================
-            // 6. Markdown 帮助弹窗
-            // ============================================================
-            function showHelpModal() {
-                const content = `
-                    <div class="help-modal">
-                        <h3 style="margin-bottom:12px;">Markdown 语法速查</h3>
-                        <table>
-                            <thead><tr><th>语法</th><th>效果</th></tr></thead>
-                            <tbody>
-                                <tr><td><code># 标题</code></td><td>一级标题</td></tr>
-                                <tr><td><code>## 标题</code></td><td>二级标题</td></tr>
-                                <tr><td><code>**粗体**</code></td><td><strong>粗体</strong></td></tr>
-                                <tr><td><code>*斜体*</code></td><td><em>斜体</em></td></tr>
-                                <tr><td><code>- 列表项</code></td><td>无序列表</td></tr>
-                                <tr><td><code>1. 列表项</code></td><td>有序列表</td></tr>
-                                <tr><td><code>[文字](链接)</code></td><td><a href="#">链接</a></td></tr>
-                                <tr><td><code>![alt](图片URL)</code></td><td>图片</td></tr>
-                                <tr><td><code>> 引用</code></td><td>引用块</td></tr>
-                                <tr><td><code>\`代码\`</code></td><td><code>行内代码</code></td></tr>
-                                <tr><td><code>\`\`\`代码块\`\`\`</code></td><td>代码块</td></tr>
-                            </tbody>
-                        </table>
-                        <p style="margin-top:12px;color:var(--text-light);font-size:13px;">更多语法请参考 <a href="https://markdown.com.cn" target="_blank">Markdown 中文教程</a></p>
-                    </div>
-                `;
-                openModal('Markdown 帮助', content);
-            }
-
-            // ============================================================
-            // 7. 事件绑定
+            // 6. 事件绑定
             // ============================================================
             function bindEvents() {
                 textarea.addEventListener('input', onInput);
                 window.addEventListener('resize', onResize);
 
-                // 取消
                 cancelBtn.addEventListener('click', () => {
                     const content = textarea.value.trim();
                     if (content) {
@@ -627,7 +543,6 @@
                     }
                 });
 
-                // 发布
                 publishBtn.addEventListener('click', () => {
                     const content = textarea.value.trim();
                     if (!content) {
@@ -644,7 +559,6 @@
                     );
                 });
 
-                // Ctrl+Enter 快速发布
                 textarea.addEventListener('keydown', (e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                         e.preventDefault();
@@ -652,15 +566,11 @@
                     }
                 });
 
-                // Markdown 帮助
-                helpBtn.addEventListener('click', showHelpModal);
-
-                // 预览切换
                 previewBtn.addEventListener('click', togglePreview);
             }
 
             // ============================================================
-            // 8. 二次确认弹窗
+            // 7. 二次确认弹窗
             // ============================================================
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
@@ -691,7 +601,7 @@
             }
 
             // ============================================================
-            // 9. 执行发布
+            // 8. 执行发布
             // ============================================================
             async function doPublish() {
                 const content = textarea.value.trim();
@@ -736,7 +646,7 @@
             }
 
             // ============================================================
-            // 10. 工具函数
+            // 9. 工具函数
             // ============================================================
             function generatePublicId() {
                 const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -748,7 +658,7 @@
             }
 
             // ============================================================
-            // 11. 启动
+            // 10. 启动
             // ============================================================
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
