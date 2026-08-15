@@ -9,7 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 与之前完全相同，此处省略（使用之前完整的样式块） ===== */
+        /* ===== 样式块与之前相同，此处省略 ===== */
+        /* 你直接使用之前版本的样式即可，此处为了完整保留，但实际使用时可复用之前的 style 块 */
+        /* 由于内容太长，这里用简写，但你实际替换时请保留完整的样式（与之前一致） */
         * { margin:0; padding:0; box-sizing:border-box; }
         html, body { height:100%; overflow:hidden; }
         .post-container { display:flex; flex-direction:column; height:100vh; background:white; position:relative; }
@@ -91,7 +93,7 @@
 </head>
 <body>
     <div class="post-container">
-        <!-- ===== 顶部工具栏（18个语法按钮 + 预览） ===== -->
+        <!-- 工具栏（省略，与之前相同，包含所有语法按钮） -->
         <div class="post-toolbar" id="toolbar">
             <button class="toolbar-btn" data-syntax="# " title="标题"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M12 4v16M4 12h8"/></svg></button>
             <button class="toolbar-btn" data-syntax="**粗体文本**" title="粗体"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg></button>
@@ -178,7 +180,9 @@
 
             let previewMode = false;
 
-            // ===== 初始化 =====
+            // ============================================================
+            // 初始化
+            // ============================================================
             async function init() {
                 if (!sdkReady) {
                     showToast('Supabase 未初始化', 'error');
@@ -269,6 +273,9 @@
                 }
             }
 
+            // ============================================================
+            // 文件库
+            // ============================================================
             async function loadFileLibrary() {
                 try {
                     const { data, error } = await supabaseClient
@@ -405,7 +412,186 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
 
-            // ===== 预览区拖拽支持 =====
+            // ============================================================
+            // 预览渲染（支持尺寸语法）
+            // ============================================================
+            function renderPreview() {
+                const raw = textarea.value;
+                if (!raw.trim()) {
+                    previewDiv.innerHTML = '<p style="color:var(--text-light);">预览区域为空</p>';
+                    return;
+                }
+                try {
+                    // 先解析自定义媒体语法，转换为 HTML 后再用 marked 渲染？
+                    // 但 marked 会转义 HTML，所以需要先替换为占位符，再用 marked 解析，最后再替换占位符为实际 HTML。
+                    // 我们采用两阶段：先将自定义媒体替换为特殊的占位符，标记后替换。
+
+                    let html = raw;
+
+                    // 定义替换函数：提取尺寸信息
+                    function replaceMedia(match, type, id, size) {
+                        // 尺寸格式：宽x高
+                        let style = '';
+                        if (size) {
+                            const parts = size.split('x');
+                            if (parts.length === 2) {
+                                const w = parseInt(parts[0]);
+                                const h = parseInt(parts[1]);
+                                if (!isNaN(w) && !isNaN(h)) {
+                                    style = ` style="width:${w}px;height:${h}px;max-width:100%;"`;
+                                }
+                            } else if (size.endsWith('%')) {
+                                style = ` style="width:${size};max-width:100%;"`;
+                            }
+                        }
+                        // 生成占位符，包含原始信息
+                        return `<span class="media-placeholder" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${size || ''}" style="display:inline-block;padding:4px 12px;background:var(--primary-light);color:var(--primary);border-radius:4px;cursor:pointer;font-size:14px;border:1px dashed var(--primary);">${type === 'img' ? '🖼️' : type === 'video' ? '🎬' : type === 'audio' ? '🎵' : '📄'} 点击添加 ${type} ${size ? '('+size+')' : ''}</span>`;
+                    }
+
+                    // 替换所有自定义媒体（支持尺寸）
+                    html = html.replace(/\[img\]([^\]]+?)(?:=([^\]]*?))?\[\/img\]/g, (match, id, size) => {
+                        return replaceMedia(match, 'img', id, size);
+                    });
+                    html = html.replace(/\[video\]([^\]]+?)(?:=([^\]]*?))?\[\/video\]/g, (match, id, size) => {
+                        return replaceMedia(match, 'video', id, size);
+                    });
+                    html = html.replace(/\[audio\]([^\]]+?)(?:=([^\]]*?))?\[\/audio\]/g, (match, id, size) => {
+                        return replaceMedia(match, 'audio', id, size);
+                    });
+                    html = html.replace(/\[file\]([^\]]+?)(?:=([^\]]*?))?\[\/file\]/g, (match, id, size) => {
+                        return replaceMedia(match, 'file', id, size);
+                    });
+
+                    // 然后使用 marked 解析（它会转义普通 HTML，但我们的占位符是纯文本，会被保留）
+                    // 但 marked 会解析 Markdown 语法，所以占位符中的 HTML 属性不会被解析，我们后面再替换
+                    // 更安全：先用 marked 解析，再替换占位符
+                    let parsed = marked.parse(html);
+
+                    // 此时占位符还是 <span> 标签，但 marked 会保留，但需要确保它们不被转义
+                    // 我们可以用 DOMParser 或直接字符串替换，但更简单的方法是用 Regex 替换占位符。
+
+                    // 重新将占位符渲染为实际的 HTML
+                    // 但是 marked 会转义 < 和 >，所以我们需要先将占位符替换为特殊的标记，在 marked 解析后再替换回来
+                    // 改用更简单的方式：不先替换为 HTML，而是先转义特殊标记
+                    // 为了简洁，我们使用更可靠的方法：先处理自定义语法为 HTML 后再用 marked 解析（但 marked 会转义）
+                    // 所以我们需要在 marked 解析后，再对结果进行替换
+                    // 这里采用另一种方法：先用 marked 解析原始内容（不含自定义语法），然后对结果进行替换，但这样无法保留 Markdown 混合
+                    // 因为用户可能在 Markdown 中插入自定义语法，所以我们需要先对自定义语法进行转义，然后解析 Markdown，再还原
+
+                    // 这里我们直接使用原始方案：先处理自定义语法为 HTML 片段，然后让 marked 处理 Markdown，但 marked 会转义 HTML，所以不行。
+                    // 改用自定义渲染：先用 marked 解析，然后对结果进行字符串替换，但自定义语法在解析过程中会被转义。
+
+                    // 更健壮的方式：在 marked 解析之前，将自定义语法替换为临时标记，然后解析 Markdown，最后将标记替换为 HTML。
+                    // 但由于时间，我们采用简单方式：如果预览模式，直接显示 raw 内容（但显然不行）。
+                    // 我们采用之前的方法：使用 marked 并禁用 HTML 转义？但 marked 默认会转义。
+
+                    // 为了节省时间，我将采用另一种方式：不依赖 marked 解析自定义语法，而使用 marked 的 renderer 自定义，但 markdown 本身不包含这些语法，所以我们需要先预处理。
+
+                    // 这里我们使用简单替换方式：在 marked 解析之前，将自定义语法替换为临时文本，解析后再替换回来
+                    const mediaMap = {};
+                    let counter = 0;
+                    const tempContent = raw.replace(/\[(img|video|audio|file)\]([^\]]+?)(?:=([^\]]*?))?\[\/\1\]/g, (match, type, id, size) => {
+                        const key = '---MEDIA_' + (counter++) + '---';
+                        mediaMap[key] = { type, id, size };
+                        return key;
+                    });
+
+                    let finalHtml = marked.parse(tempContent);
+                    // 替换回媒体
+                    for (const key in mediaMap) {
+                        const { type, id, size } = mediaMap[key];
+                        let style = '';
+                        if (size) {
+                            const parts = size.split('x');
+                            if (parts.length === 2) {
+                                const w = parseInt(parts[0]);
+                                const h = parseInt(parts[1]);
+                                if (!isNaN(w) && !isNaN(h)) {
+                                    style = ` style="width:${w}px;height:${h}px;max-width:100%;"`;
+                                }
+                            } else if (size.endsWith('%')) {
+                                style = ` style="width:${size};max-width:100%;"`;
+                            }
+                        }
+                        let mediaHtml = '';
+                        // 暂时我们只替换占位符，点击选择文件逻辑在预览中通过点击事件处理
+                        // 在预览模式中显示可点击占位符，实际渲染在帖子详情页由后端渲染
+                        // 预览中我们只显示文本提示，而不是实际媒体。
+                        // 为了预览效果，我们可以显示媒体类型和大小。
+                        mediaHtml = `<span class="media-placeholder" data-file-id="${id}" data-type="${type}" data-original-id="${id}" data-size="${size || ''}" style="display:inline-block;padding:4px 12px;background:var(--primary-light);color:var(--primary);border-radius:4px;cursor:pointer;font-size:14px;border:1px dashed var(--primary);">${type === 'img' ? '🖼️' : type === 'video' ? '🎬' : type === 'audio' ? '🎵' : '📄'} ${type} ${size ? '('+size+')' : ''}</span>`;
+                        finalHtml = finalHtml.replace(key, mediaHtml);
+                    }
+
+                    previewDiv.innerHTML = finalHtml;
+
+                    // 绑定点击事件（选择文件替换）
+                    previewDiv.querySelectorAll('.media-placeholder').forEach(el => {
+                        el.addEventListener('click', () => {
+                            const fileId = el.dataset.fileId;
+                            const type = el.dataset.type;
+                            const originalId = el.dataset.originalId;
+                            const size = el.dataset.size || '';
+                            const file = fileList.find(f => f.id === fileId);
+                            if (file && fileId === originalId) {
+                                showToast('文件已关联', 'success');
+                            } else {
+                                showFilePickerForMedia(el, originalId, type, size);
+                            }
+                        });
+                    });
+
+                } catch (e) {
+                    previewDiv.innerHTML = '<p style="color:var(--danger);">渲染错误：' + e.message + '</p>';
+                }
+            }
+
+            // ============================================================
+            // 选择文件替换占位符（支持尺寸）
+            // ============================================================
+            function showFilePickerForMedia(el, originalId, type, size) {
+                if (!fileList.length) {
+                    showToast('文件库为空，请先上传文件', 'error');
+                    return;
+                }
+                const fileOptions = fileList.map(f =>
+                    `<option value="${f.id}">${f.file_name}</option>`
+                ).join('');
+                const content = `
+                    <div>
+                        <p style="margin-bottom:12px;">选择要关联的文件：</p>
+                        <select id="filePickerSelect" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);">
+                            ${fileOptions}
+                        </select>
+                        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                            <button class="btn btn-secondary" id="filePickerCancel">取消</button>
+                            <button class="btn btn-primary" id="filePickerConfirm">确认</button>
+                        </div>
+                    </div>
+                `;
+                const modal = openModal('选择文件', content);
+                modal.querySelector('#filePickerCancel').addEventListener('click', () => {
+                    modal.closest('.modal-overlay').remove();
+                });
+                modal.querySelector('#filePickerConfirm').addEventListener('click', () => {
+                    const select = modal.querySelector('#filePickerSelect');
+                    const newId = select.value;
+                    const file = fileList.find(f => f.id === newId);
+                    if (file) {
+                        // 替换 textarea 中的旧语法，保持尺寸
+                        const oldSyntax = `[${type}]${originalId}${size ? '='+size : ''}[/${type}]`;
+                        const newSyntax = `[${type}]${newId}${size ? '='+size : ''}[/${type}]`;
+                        textarea.value = textarea.value.replace(oldSyntax, newSyntax);
+                        onInput();
+                        modal.closest('.modal-overlay').remove();
+                        showToast('已关联文件', 'success');
+                        markChange();
+                    }
+                });
+            }
+
+            // ============================================================
+            // 预览区拖拽支持（支持尺寸保留）
+            // ============================================================
             function setupPreviewDropZone() {
                 previewDiv.addEventListener('dragover', (e) => {
                     e.preventDefault();
@@ -416,27 +602,23 @@
                     if (data) {
                         try {
                             const fileInfo = JSON.parse(data);
-                            // 检查拖拽目标是否为 .media-placeholder
                             const target = e.target.closest('.media-placeholder');
                             if (target) {
-                                // 替换占位符
                                 const originalId = target.dataset.originalId;
                                 const type = target.dataset.type;
+                                const size = target.dataset.size || '';
                                 if (originalId) {
-                                    // 替换原有 ID 为新 ID
-                                    const oldSyntax = `[${type}]${originalId}[/${type}]`;
-                                    const newSyntax = `[${type}]${fileInfo.id}[/${type}]`;
+                                    const oldSyntax = `[${type}]${originalId}${size ? '='+size : ''}[/${type}]`;
+                                    const newSyntax = `[${type}]${fileInfo.id}${size ? '='+size : ''}[/${type}]`;
                                     textarea.value = textarea.value.replace(oldSyntax, newSyntax);
                                     onInput();
                                     showToast('文件已关联', 'success');
                                 }
                             } else {
-                                // 如果没有目标占位符，插入到光标位置或末尾
                                 const syntax = getMediaSyntax(fileInfo);
                                 insertAtCursor(syntax);
                             }
                         } catch (e) {
-                            // 不是 JSON，可能是文件
                             const files = e.dataTransfer.files;
                             if (files && files.length > 0) {
                                 uploadFilesToLibrary(files);
@@ -444,46 +626,6 @@
                         }
                     }
                 });
-            }
-
-            // 在编辑区拖拽（textarea 已有处理，预览区需要额外支持）
-
-            function setupDropZone() {
-                // 全局拖拽上传
-                document.addEventListener('dragover', (e) => e.preventDefault());
-                document.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const files = e.dataTransfer.files;
-                    if (files && files.length > 0) {
-                        uploadFilesToLibrary(files);
-                    }
-                });
-                // textarea 拖拽
-                textarea.addEventListener('dragover', (e) => e.preventDefault());
-                textarea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const data = e.dataTransfer.getData('text/plain');
-                    if (data) {
-                        try {
-                            const fileInfo = JSON.parse(data);
-                            const syntax = getMediaSyntax(fileInfo);
-                            insertAtCursor(syntax);
-                            markChange();
-                        } catch (e) {
-                            const files = e.dataTransfer.files;
-                            if (files && files.length > 0) {
-                                uploadFilesToLibrary(files);
-                            }
-                        }
-                    } else {
-                        const files = e.dataTransfer.files;
-                        if (files && files.length > 0) {
-                            uploadFilesToLibrary(files);
-                        }
-                    }
-                });
-                // 预览区拖拽
-                setupPreviewDropZone();
             }
 
             function getMediaSyntax(fileInfo) {
@@ -506,7 +648,9 @@
                 markChange();
             }
 
-            // ===== 调整高度 =====
+            // ============================================================
+            // 调整高度
+            // ============================================================
             function adjustTextareaHeight() {
                 textarea.style.height = 'auto';
                 const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight || 44;
@@ -544,93 +688,9 @@
                 charCount.textContent = textarea.value.length;
             }
 
-            // ===== 预览渲染（含 data-original-id） =====
-            function renderPreview() {
-                const raw = textarea.value;
-                if (!raw.trim()) {
-                    previewDiv.innerHTML = '<p style="color:var(--text-light);">预览区域为空</p>';
-                    return;
-                }
-                try {
-                    let html = marked.parse(raw);
-                    // 替换自定义媒体，并存储 original-id
-                    html = html.replace(/\[img\]([^\]]+)\[\/img\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="img" data-original-id="${id}">🖼️ 图片 (${id})</span>`;
-                    });
-                    html = html.replace(/\[video\]([^\]]+)\[\/video\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="video" data-original-id="${id}">🎬 视频 (${id})</span>`;
-                    });
-                    html = html.replace(/\[audio\]([^\]]+)\[\/audio\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="audio" data-original-id="${id}">🎵 音频 (${id})</span>`;
-                    });
-                    html = html.replace(/\[file\]([^\]]+)\[\/file\]/g, (match, id) => {
-                        return `<span class="media-placeholder" data-file-id="${id}" data-type="file" data-original-id="${id}">📄 文件 (${id})</span>`;
-                    });
-                    previewDiv.innerHTML = html;
-                    // 绑定点击事件
-                    previewDiv.querySelectorAll('.media-placeholder').forEach(el => {
-                        el.addEventListener('click', () => {
-                            const fileId = el.dataset.fileId;
-                            const type = el.dataset.type;
-                            const originalId = el.dataset.originalId;
-                            const file = fileList.find(f => f.id === fileId);
-                            if (file && fileId === originalId) {
-                                // 如果已经有文件且匹配，提示已关联
-                                showToast('文件已关联', 'success');
-                            } else {
-                                // 打开选择器，传入原始ID用于替换
-                                showFilePickerForMedia(el, originalId, type);
-                            }
-                        });
-                    });
-                } catch (e) {
-                    previewDiv.innerHTML = '<p style="color:var(--danger);">渲染错误：' + e.message + '</p>';
-                }
-            }
-
-            // ===== 选择文件替换占位符 =====
-            function showFilePickerForMedia(el, originalId, type) {
-                if (!fileList.length) {
-                    showToast('文件库为空，请先上传文件', 'error');
-                    return;
-                }
-                const fileOptions = fileList.map(f =>
-                    `<option value="${f.id}">${f.file_name}</option>`
-                ).join('');
-                const content = `
-                    <div>
-                        <p style="margin-bottom:12px;">选择要关联的文件：</p>
-                        <select id="filePickerSelect" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);">
-                            ${fileOptions}
-                        </select>
-                        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-                            <button class="btn btn-secondary" id="filePickerCancel">取消</button>
-                            <button class="btn btn-primary" id="filePickerConfirm">确认</button>
-                        </div>
-                    </div>
-                `;
-                const modal = openModal('选择文件', content);
-                modal.querySelector('#filePickerCancel').addEventListener('click', () => {
-                    modal.closest('.modal-overlay').remove();
-                });
-                modal.querySelector('#filePickerConfirm').addEventListener('click', () => {
-                    const select = modal.querySelector('#filePickerSelect');
-                    const newId = select.value;
-                    const file = fileList.find(f => f.id === newId);
-                    if (file) {
-                        // 替换 textarea 中的旧语法
-                        const oldSyntax = `[${type}]${originalId}[/${type}]`;
-                        const newSyntax = `[${type}]${newId}[/${type}]`;
-                        textarea.value = textarea.value.replace(oldSyntax, newSyntax);
-                        onInput();
-                        modal.closest('.modal-overlay').remove();
-                        showToast('已关联文件', 'success');
-                        markChange();
-                    }
-                });
-            }
-
-            // ===== 切换预览 =====
+            // ============================================================
+            // 切换预览
+            // ============================================================
             function togglePreview() {
                 previewMode = !previewMode;
                 if (previewMode) {
@@ -639,6 +699,8 @@
                     renderPreview();
                     previewBtn.classList.add('active');
                     previewDiv.style.minHeight = textarea.style.height || '120px';
+                    // 确保预览区可滚动
+                    previewDiv.style.overflowY = 'auto';
                 } else {
                     textarea.style.display = 'block';
                     previewDiv.classList.remove('show');
@@ -648,7 +710,9 @@
                 }
             }
 
-            // ===== 话题标签校验 =====
+            // ============================================================
+            // 话题标签校验
+            // ============================================================
             function validateTopicTags(content) {
                 const lines = content.split('\n');
                 const lastLine = lines[lines.length - 1] || '';
@@ -668,7 +732,9 @@
                 return { valid: true };
             }
 
-            // ===== 发布/更新 =====
+            // ============================================================
+            // 发布/更新
+            // ============================================================
             async function doPublish() {
                 const content = textarea.value;
                 const trimmed = content.trim();
@@ -736,7 +802,9 @@
                 }
             }
 
-            // ===== 二次确认弹窗 =====
+            // ============================================================
+            // 二次确认弹窗
+            // ============================================================
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
                     <div class="confirm-modal">
@@ -774,7 +842,9 @@
                 return result;
             }
 
-            // ===== 事件绑定 =====
+            // ============================================================
+            // 事件绑定
+            // ============================================================
             function bindEvents() {
                 textarea.addEventListener('input', onInput);
                 window.addEventListener('resize', onResize);
@@ -853,9 +923,46 @@
                     }
                 });
 
-                setupDropZone();
+                // 全局拖拽
+                document.addEventListener('dragover', (e) => e.preventDefault());
+                document.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                        uploadFilesToLibrary(files);
+                    }
+                });
+                textarea.addEventListener('dragover', (e) => e.preventDefault());
+                textarea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (data) {
+                        try {
+                            const fileInfo = JSON.parse(data);
+                            const syntax = getMediaSyntax(fileInfo);
+                            insertAtCursor(syntax);
+                            markChange();
+                        } catch (e) {
+                            const files = e.dataTransfer.files;
+                            if (files && files.length > 0) {
+                                uploadFilesToLibrary(files);
+                            }
+                        }
+                    } else {
+                        const files = e.dataTransfer.files;
+                        if (files && files.length > 0) {
+                            uploadFilesToLibrary(files);
+                        }
+                    }
+                });
+
+                // 预览区拖拽
+                setupPreviewDropZone();
             }
 
+            // ============================================================
+            // 启动
+            // ============================================================
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
