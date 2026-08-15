@@ -97,6 +97,42 @@
             border-color: var(--primary);
         }
 
+        /* ===== 引用摘要样式 ===== */
+        .comment-ref {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--bg-light);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+            margin: 4px 0;
+        }
+        .comment-ref:hover {
+            background: var(--bg-hover);
+            color: var(--text-main);
+        }
+        .comment-ref .ref-user {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .comment-ref .ref-target {
+            color: var(--text-light);
+        }
+        .comment-ref .ref-snippet {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .comment-ref .ref-jump {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--primary);
+        }
+
         .post-content .file-card {
             display: flex;
             align-items: center;
@@ -216,6 +252,10 @@
             }
             #commentsList {
                 max-height: 300px;
+            }
+            .comment-ref {
+                font-size: 12px;
+                padding: 3px 6px;
             }
         }
     </style>
@@ -470,7 +510,7 @@
             }
 
             // ============================================================
-            // 修复：递归渲染所有层级的评论嵌套
+            // 递归渲染评论（嵌套最多2层，超过2层显示引用摘要）
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -499,13 +539,12 @@
                 const commentMap = {};
                 const roots = [];
 
-                // 先建立所有评论的映射
                 data.forEach(c => {
                     commentMap[c.id] = c;
                     c.children = [];
+                    c._replyToContent = '';
                 });
 
-                // 构建父子关系
                 data.forEach(c => {
                     if (c.parent_id && commentMap[c.parent_id]) {
                         commentMap[c.parent_id].children.push(c);
@@ -514,55 +553,105 @@
                     }
                 });
 
+                // 建立被回复内容的映射
+                data.forEach(c => {
+                    if (c.reply_to_user_id && commentMap[c.parent_id]) {
+                        const parent = commentMap[c.parent_id];
+                        c._replyToContent = parent.content || '';
+                    }
+                });
+
+                // 截取内容摘要
+                function truncate(text, len = 20) {
+                    if (!text) return '';
+                    text = text.replace(/\n/g, ' ');
+                    return text.length > len ? text.substring(0, len) + '...' : text;
+                }
+
                 // 递归渲染函数
                 function renderCommentNode(comment, depth = 0) {
-                    // 将当前用户ID和帖子作者ID传递给评论渲染
                     comment.currentUserId = currentUser.id;
                     comment.is_owner = comment.user_id === postAuthorId;
 
-                    // 使用 renderCommentItem 渲染，但我们需要把删除/举报按钮的控制权交给它
-                    // 它内部会根据 isAdmin 和 is_owner 决定显示删除还是举报
+                    // 如果深度 >= 2，渲染为引用摘要（不展开完整评论）
+                    if (depth >= 2) {
+                        const replyToUser = comment.reply_to_user || comment.profiles;
+                        const replyToName = replyToUser ? getUserDisplayName(replyToUser) : '未知用户';
+                        const snippet = truncate(comment._replyToContent || comment.content || '', 25);
+
+                        const refEl = document.createElement('div');
+                        refEl.className = 'comment-ref';
+                        refEl.dataset.targetCommentId = comment.parent_id;
+                        refEl.dataset.commentId = comment.id;
+                        refEl.style.marginLeft = Math.min(depth * 20, 40) + 'px';
+
+                        refEl.innerHTML = `
+                            <span class="ref-user">${getUserDisplayName(comment.profiles)}</span>
+                            <span class="ref-target">回复了</span>
+                            <span class="ref-user">${replyToName}</span>
+                            <span class="ref-snippet">"${snippet}"</span>
+                            <span class="ref-jump">↩ 跳转</span>
+                        `;
+
+                        // 点击跳转到被回复的评论
+                        refEl.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const targetId = refEl.dataset.targetCommentId;
+                            if (targetId) {
+                                const targetEl = document.getElementById('comment-' + targetId);
+                                if (targetEl) {
+                                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    targetEl.style.backgroundColor = 'var(--primary-light)';
+                                    setTimeout(() => {
+                                        targetEl.style.backgroundColor = '';
+                                    }, 2000);
+                                } else {
+                                    showToast('被回复的评论已不存在', 'error');
+                                }
+                            }
+                        });
+
+                        // 不递归渲染子评论（深度>=2的子评论不再显示）
+                        return refEl;
+                    }
+
+                    // 深度 0 或 1：完整渲染评论
                     const el = comp.renderCommentItem(comment, {
                         isReply: depth > 0,
                         isAdmin: isAdmin
                     });
 
-                    // 缩进：每层增加 24px，最多 60px
+                    // 设置ID便于跳转
+                    el.id = 'comment-' + comment.id;
+
+                    // 缩进
                     if (depth > 0) {
-                        el.style.marginLeft = Math.min(depth * 24, 60) + 'px';
-                        // 添加视觉提示：左侧边框线
+                        el.style.marginLeft = Math.min(depth * 24, 40) + 'px';
                         el.style.borderLeft = '2px solid var(--border)';
                         el.style.paddingLeft = '8px';
                     }
 
-                    // 递归渲染子评论
+                    // 递归渲染子评论（深度+1）
                     if (comment.children && comment.children.length > 0) {
-                        // 按时间排序子评论
                         comment.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                        const childContainer = document.createElement('div');
+                        childContainer.style.marginTop = '4px';
                         comment.children.forEach(child => {
                             const childEl = renderCommentNode(child, depth + 1);
-                            el.appendChild(childEl);
+                            childContainer.appendChild(childEl);
                         });
+                        el.appendChild(childContainer);
                     }
 
                     return el;
                 }
 
-                // 按时间排序根评论（主评论）
                 roots.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-                // 渲染所有根评论
                 roots.forEach(root => {
                     const el = renderCommentNode(root, 0);
                     listDiv.appendChild(el);
                 });
-
-                // 为递归渲染的评论中的按钮绑定事件（由全局事件委托处理）
-            }
-
-            function renderCommentWithDelete(comment, isReply, isAdmin) {
-                // 此函数已被上面的递归逻辑替代，但保留以防其他地方调用
-                return comp.renderCommentItem(comment, { isReply, isAdmin: isAdmin });
             }
 
             function bindPostActions(postId, postAuthorId, container) {
