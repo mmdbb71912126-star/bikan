@@ -34,26 +34,37 @@
         .post-toolbar {
             display: flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 12px;
+            gap: 2px;
+            padding: 4px 8px;
             min-height: 44px;
             background: white;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
             z-index: 10;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+        }
+        .post-toolbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .post-toolbar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
         }
         .post-toolbar .toolbar-btn {
             background: none;
             border: none;
-            padding: 4px 8px;
-            border-radius: 6px;
+            padding: 4px 6px;
+            border-radius: 4px;
             cursor: pointer;
             color: var(--text-secondary);
             transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
         .post-toolbar .toolbar-btn:hover {
             background: var(--bg-hover);
@@ -69,6 +80,7 @@
         }
         .post-toolbar .toolbar-spacer {
             flex: 1;
+            min-width: 8px;
         }
         .post-toolbar .char-count {
             font-size: 13px;
@@ -76,6 +88,7 @@
             font-weight: 400;
             min-width: 30px;
             text-align: right;
+            flex-shrink: 0;
         }
 
         /* ===== 内容区 ===== */
@@ -194,7 +207,6 @@
         .post-content-area #preview th {
             background: var(--bg-light);
         }
-        /* 自定义媒体在预览中的占位 */
         .post-content-area #preview .media-placeholder {
             display: inline-block;
             padding: 4px 12px;
@@ -365,50 +377,6 @@
             padding: 12px 0;
         }
 
-        /* ===== 语法面板（弹窗） ===== */
-        .syntax-panel .modal {
-            max-width: 520px;
-        }
-        .syntax-panel .modal-body {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .syntax-panel .syntax-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .syntax-panel .syntax-item:last-child {
-            border-bottom: none;
-        }
-        .syntax-panel .syntax-item .syntax-code {
-            font-family: monospace;
-            background: var(--bg-light);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            color: var(--text-main);
-        }
-        .syntax-panel .syntax-item .syntax-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-        .syntax-panel .syntax-item .syntax-add-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 18px;
-            transition: var(--transition);
-        }
-        .syntax-panel .syntax-item .syntax-add-btn:hover {
-            background: var(--primary-light);
-        }
-
         /* ===== 二次确认弹窗 ===== */
         .confirm-modal .modal {
             max-width: 400px;
@@ -456,18 +424,66 @@
             background: var(--primary-dark);
         }
 
+        /* ===== 语法面板（弹窗） ===== */
+        .syntax-panel .modal {
+            max-width: 520px;
+        }
+        .syntax-panel .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .syntax-panel .syntax-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .syntax-panel .syntax-item:last-child {
+            border-bottom: none;
+        }
+        .syntax-panel .syntax-item .syntax-code {
+            font-family: monospace;
+            background: var(--bg-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+        .syntax-panel .syntax-item .syntax-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex: 1;
+            margin: 0 8px;
+        }
+        .syntax-panel .syntax-item .syntax-add-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .syntax-panel .syntax-item .syntax-add-btn:hover {
+            background: var(--primary-light);
+        }
+
         /* ===== 响应式 ===== */
         @media (max-width: 640px) {
             .post-toolbar {
-                padding: 2px 8px;
+                padding: 2px 6px;
                 min-height: 36px;
+                gap: 1px;
             }
             .post-toolbar .toolbar-btn {
-                padding: 2px 6px;
+                padding: 2px 4px;
             }
             .post-toolbar .toolbar-btn svg {
-                width: 18px;
-                height: 18px;
+                width: 16px;
+                height: 16px;
             }
             .post-content-area {
                 padding: 8px 12px 4px;
@@ -501,21 +517,83 @@
     <div class="post-container">
         <!-- ===== 顶部工具栏 ===== -->
         <div class="post-toolbar" id="toolbar">
-            <!-- 语法辅助按钮 -->
-            <button class="toolbar-btn" id="syntaxBtn" title="语法帮助">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
+            <!-- 语法按钮（按顺序） -->
+            <!-- 标题 -->
+            <button class="toolbar-btn" data-syntax="# " title="标题">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M12 4v16M4 12h8"/></svg>
+            </button>
+            <!-- 粗体 -->
+            <button class="toolbar-btn" data-syntax="**粗体文本**" title="粗体">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+            </button>
+            <!-- 斜体 -->
+            <button class="toolbar-btn" data-syntax="*斜体文本*" title="斜体">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+            </button>
+            <!-- 删除线 -->
+            <button class="toolbar-btn" data-syntax="~~删除线文本~~" title="删除线">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><path d="M6 5v2a4 4 0 0 0 8 2v-2"/><path d="M18 19v-2a4 4 0 0 0-8-2v2"/></svg>
+            </button>
+            <!-- 行内代码 -->
+            <button class="toolbar-btn" data-syntax="`代码`" title="行内代码">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </button>
+            <!-- 代码块 -->
+            <button class="toolbar-btn" data-syntax="\n```\n代码块\n```\n" title="代码块">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+            </button>
+            <!-- 链接 -->
+            <button class="toolbar-btn" data-syntax="[链接文本](url)" title="链接">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </button>
+            <!-- 图片 -->
+            <button class="toolbar-btn" data-syntax="[img]文件ID[/img]" title="图片">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </button>
+            <!-- 视频 -->
+            <button class="toolbar-btn" data-syntax="[video]文件ID[/video]" title="视频">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            </button>
+            <!-- 音频 -->
+            <button class="toolbar-btn" data-syntax="[audio]文件ID[/audio]" title="音频">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </button>
+            <!-- 文件 -->
+            <button class="toolbar-btn" data-syntax="[file]文件ID[/file]" title="文件">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+            </button>
+            <!-- 无序列表 -->
+            <button class="toolbar-btn" data-syntax="- 列表项" title="无序列表">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <!-- 有序列表 -->
+            <button class="toolbar-btn" data-syntax="1. 列表项" title="有序列表">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="3.5" cy="18" r="1.5"/></svg>
+            </button>
+            <!-- 任务列表 -->
+            <button class="toolbar-btn" data-syntax="- [ ] 待办事项" title="任务列表">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </button>
+            <!-- 引用 -->
+            <button class="toolbar-btn" data-syntax="> 引用内容" title="引用">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h8"/><path d="M8 14h6"/></svg>
+            </button>
+            <!-- 分割线 -->
+            <button class="toolbar-btn" data-syntax="---" title="分割线">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/></svg>
+            </button>
+            <!-- @提及 -->
+            <button class="toolbar-btn" data-syntax="@用户名" title="提及用户">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 12v4"/><path d="M12 12a3 3 0 0 1 3 3v2"/><path d="M12 12a3 3 0 0 0-3 3v2"/></svg>
+            </button>
+            <!-- #话题 -->
+            <button class="toolbar-btn" data-syntax="#话题" title="话题标签">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="10" y2="10"/><line x1="14" y1="14" x2="17" y2="17"/></svg>
             </button>
 
             <!-- 预览按钮 -->
-            <button class="toolbar-btn" id="previewBtn" title="预览 Markdown">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                </svg>
+            <button class="toolbar-btn" id="previewBtn" title="预览">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
 
             <span class="toolbar-spacer"></span>
@@ -527,9 +605,6 @@
             <textarea id="postContent" placeholder="支持 Markdown 语法..." autofocus></textarea>
             <div id="preview"></div>
         </div>
-
-        <!-- ===== 分界线 ===== -->
-        <div style="border-top:1px solid var(--border); flex-shrink:0;"></div>
 
         <!-- ===== 底部操作栏 ===== -->
         <div class="post-actions">
@@ -568,10 +643,10 @@
             // 状态
             // ============================================================
             let currentUser = null;
-            let editPostId = null; // 编辑模式下的帖子ID
+            let editPostId = null;
             let isEditMode = false;
-            let fileList = []; // 当前用户文件库
-            let uploadedFiles = []; // 本次上传的文件（用于关联帖子）
+            let fileList = [];
+            let hasChanges = false; // 用于 beforeunload 二次确认
 
             const textarea = document.getElementById('postContent');
             const previewDiv = document.getElementById('preview');
@@ -579,7 +654,6 @@
             const cancelBtn = document.getElementById('cancelBtn');
             const publishBtn = document.getElementById('publishBtn');
             const previewBtn = document.getElementById('previewBtn');
-            const syntaxBtn = document.getElementById('syntaxBtn');
             const charCount = document.getElementById('charCount');
             const fileListEl = document.getElementById('fileList');
             const addFileBtn = document.getElementById('addFileBtn');
@@ -600,7 +674,6 @@
                     return;
                 }
                 try {
-                    // 检查登录
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     if (!session) {
                         window.location.href = 'index.html';
@@ -650,6 +723,9 @@
 
                     updateCharCount();
 
+                    // 监听 beforeunload（刷新/离开提示）
+                    window.addEventListener('beforeunload', beforeUnloadHandler);
+
                 } catch (e) {
                     console.error('初始化失败', e);
                     showToast('初始化失败: ' + e.message, 'error');
@@ -657,7 +733,28 @@
             }
 
             // ============================================================
-            // 2. 编辑模式 - 加载帖子
+            // 2. beforeunload 处理（二次确认）
+            // ============================================================
+            function beforeUnloadHandler(e) {
+                if (hasChanges) {
+                    e.preventDefault();
+                    e.returnValue = '你有未保存的内容，确定离开吗？';
+                    return e.returnValue;
+                }
+            }
+
+            // 标记内容变化
+            function markChange() {
+                hasChanges = true;
+            }
+
+            // 重置变化标记（发布成功或取消时）
+            function resetChange() {
+                hasChanges = false;
+            }
+
+            // ============================================================
+            // 3. 编辑模式 - 加载帖子
             // ============================================================
             async function loadPostForEdit(postId) {
                 try {
@@ -677,10 +774,9 @@
                         return;
                     }
                     textarea.value = post.content || '';
-                    // 关联的文件（如果有）可以从post中解析，但暂时不处理
-                    // 文件库中的文件已经在加载时显示
-                    // 话题标签校验稍后在保存时处理
                     updateCharCount();
+                    // 有内容即认为有变化，但初始不应触发 beforeunload，我们设置 hasChanges = false
+                    // 因为刚加载，用户还没修改，但后续任何输入都会触发 markChange
                 } catch (e) {
                     console.error('加载帖子失败', e);
                     showToast('加载帖子失败', 'error');
@@ -688,7 +784,7 @@
             }
 
             // ============================================================
-            // 3. 文件库
+            // 4. 文件库
             // ============================================================
             async function loadFileLibrary() {
                 try {
@@ -762,13 +858,11 @@
 
             async function deleteFile(fileId) {
                 try {
-                    // 从存储删除文件
                     const file = fileList.find(f => f.id === fileId);
                     if (file) {
                         const path = file.file_url.split('/').pop();
                         await supabaseClient.storage.from('files').remove([`${currentUser.id}/${path}`]);
                     }
-                    // 从数据库删除
                     const { error } = await supabaseClient
                         .from('user_files')
                         .delete()
@@ -788,9 +882,7 @@
                 let successCount = 0;
                 for (const file of files) {
                     try {
-                        // 上传到存储
                         const result = await uploadFile(file, 'files', `${currentUser.id}`);
-                        // 插入数据库
                         const { data, error } = await supabaseClient
                             .from('user_files')
                             .insert({
@@ -811,11 +903,10 @@
                     }
                 }
                 if (successCount > 0) {
+                    // 重新渲染文件库，确保显示最新列表
                     renderFileLibrary();
                     showToast(`成功上传 ${successCount} 个文件`, 'success');
                 }
-                // 重新渲染文件库
-                renderFileLibrary();
             }
 
             function getFileIcon(mimeType) {
@@ -835,7 +926,7 @@
             }
 
             // ============================================================
-            // 4. 拖拽上传（拖到页面）
+            // 5. 拖拽上传
             // ============================================================
             function setupDropZone() {
                 document.addEventListener('dragover', (e) => {
@@ -848,7 +939,6 @@
                         uploadFilesToLibrary(files);
                     }
                 });
-                // 拖拽到文本区插入文件引用
                 textarea.addEventListener('dragover', (e) => {
                     e.preventDefault();
                 });
@@ -860,8 +950,8 @@
                             const fileInfo = JSON.parse(data);
                             const syntax = getMediaSyntax(fileInfo);
                             insertAtCursor(syntax);
+                            markChange();
                         } catch (e) {
-                            // 可能是纯文本
                             const files = e.dataTransfer.files;
                             if (files && files.length > 0) {
                                 uploadFilesToLibrary(files);
@@ -893,10 +983,11 @@
                 textarea.selectionStart = textarea.selectionEnd = start + text.length;
                 textarea.focus();
                 onInput();
+                markChange();
             }
 
             // ============================================================
-            // 5. 调整高度
+            // 6. 调整高度
             // ============================================================
             function adjustTextareaHeight() {
                 textarea.style.height = 'auto';
@@ -924,6 +1015,7 @@
                 if (previewMode) {
                     renderPreview();
                 }
+                markChange();
             }
 
             function onResize() {
@@ -931,14 +1023,14 @@
             }
 
             // ============================================================
-            // 6. 字符计数
+            // 7. 字符计数
             // ============================================================
             function updateCharCount() {
                 charCount.textContent = textarea.value.length;
             }
 
             // ============================================================
-            // 7. Markdown 预览（含自定义媒体占位）
+            // 8. Markdown 预览
             // ============================================================
             function renderPreview() {
                 const raw = textarea.value;
@@ -948,7 +1040,6 @@
                 }
                 try {
                     let html = marked.parse(raw);
-                    // 替换自定义媒体语法为占位符
                     html = html.replace(/\[img\]([^\]]+)\[\/img\]/g, (match, id) => {
                         return `<span class="media-placeholder" data-file-id="${id}" data-type="img">🖼️ 点击添加图片</span>`;
                     });
@@ -962,16 +1053,13 @@
                         return `<span class="media-placeholder" data-file-id="${id}" data-type="file">📄 点击添加文件</span>`;
                     });
                     previewDiv.innerHTML = html;
-                    // 绑定点击事件：选择文件库文件
                     previewDiv.querySelectorAll('.media-placeholder').forEach(el => {
                         el.addEventListener('click', () => {
                             const fileId = el.dataset.fileId;
                             const file = fileList.find(f => f.id === fileId);
                             if (file) {
-                                // 替换占位符为实际语法（已存在，不需要替换）
                                 showToast('文件已关联', 'success');
                             } else {
-                                // 从文件库选择文件
                                 showFilePickerForMedia(el);
                             }
                         });
@@ -982,7 +1070,6 @@
             }
 
             function showFilePickerForMedia(el) {
-                // 简单实现：打开文件库选择器
                 if (!fileList.length) {
                     showToast('文件库为空，请先上传文件', 'error');
                     return;
@@ -1012,7 +1099,6 @@
                     const file = fileList.find(f => f.id === fileId);
                     if (file) {
                         const syntax = getMediaSyntax(file);
-                        // 替换占位符为实际语法
                         const raw = textarea.value;
                         const placeholder = el.outerHTML;
                         const newRaw = raw.replace(placeholder, syntax);
@@ -1020,12 +1106,13 @@
                         onInput();
                         modal.closest('.modal-overlay').remove();
                         showToast('已关联文件', 'success');
+                        markChange();
                     }
                 });
             }
 
             // ============================================================
-            // 8. 切换预览
+            // 9. 切换预览
             // ============================================================
             function togglePreview() {
                 previewMode = !previewMode;
@@ -1045,71 +1132,18 @@
             }
 
             // ============================================================
-            // 9. 语法面板
-            // ============================================================
-            function showSyntaxPanel() {
-                const syntaxList = [
-                    { syntax: '# 标题', desc: '一级标题' },
-                    { syntax: '## 标题', desc: '二级标题' },
-                    { syntax: '### 标题', desc: '三级标题' },
-                    { syntax: '**粗体**', desc: '粗体文本' },
-                    { syntax: '*斜体*', desc: '斜体文本' },
-                    { syntax: '~~删除线~~', desc: '删除线文本' },
-                    { syntax: '`代码`', desc: '行内代码' },
-                    { syntax: '```代码块```', desc: '代码块' },
-                    { syntax: '[文字](url)', desc: '链接' },
-                    { syntax: '[img]文件ID[/img]', desc: '图片' },
-                    { syntax: '[video]文件ID[/video]', desc: '视频' },
-                    { syntax: '[audio]文件ID[/audio]', desc: '音频' },
-                    { syntax: '[file]文件ID[/file]', desc: '文件' },
-                    { syntax: '- 项目', desc: '无序列表' },
-                    { syntax: '1. 项目', desc: '有序列表' },
-                    { syntax: '- [ ] 待办', desc: '任务列表（未完成）' },
-                    { syntax: '- [x] 已完成', desc: '任务列表（已完成）' },
-                    { syntax: '> 引用', desc: '引用块' },
-                    { syntax: '| 列1 | 列2 |', desc: '表格' },
-                    { syntax: '---', desc: '分割线' },
-                    { syntax: '@用户名', desc: '提及用户' },
-                    { syntax: '#话题', desc: '话题标签（必须在最后一行）' },
-                ];
-                let listHtml = '';
-                syntaxList.forEach(item => {
-                    listHtml += `
-                        <div class="syntax-item">
-                            <span class="syntax-code">${item.syntax}</span>
-                            <span class="syntax-desc">${item.desc}</span>
-                            <button class="syntax-add-btn" data-syntax="${item.syntax}">+</button>
-                        </div>
-                    `;
-                });
-                const content = `<div>${listHtml}</div>`;
-                const modal = openModal('语法列表', content);
-                modal.classList.add('syntax-panel');
-                modal.querySelectorAll('.syntax-add-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const syntax = btn.dataset.syntax;
-                        insertAtCursor(syntax);
-                        modal.closest('.modal-overlay').remove();
-                    });
-                });
-            }
-
-            // ============================================================
             // 10. 话题标签校验
             // ============================================================
             function validateTopicTags(content) {
                 const lines = content.split('\n');
                 const lastLine = lines[lines.length - 1] || '';
-                // 检查最后一行是否包含 # 话题标签
                 const tagRegex = /#\w+/g;
                 const tags = lastLine.match(tagRegex);
-                // 如果内容中有 # 标签但不在最后一行，报错
                 const allTags = content.match(/#\w+/g);
                 if (allTags && allTags.length > 0) {
                     if (!tags || tags.length === 0) {
                         return { valid: false, message: '话题标签必须在最后一行' };
                     }
-                    // 检查是否有标签在其他行
                     const otherLines = content.split('\n').slice(0, -1).join('\n');
                     const otherTags = otherLines.match(/#\w+/g);
                     if (otherTags && otherTags.length > 0) {
@@ -1131,7 +1165,6 @@
                     return;
                 }
 
-                // 话题标签校验
                 const validation = validateTopicTags(content);
                 if (!validation.valid) {
                     showToast(validation.message, 'error');
@@ -1144,7 +1177,6 @@
                 try {
                     let result;
                     if (isEditMode) {
-                        // 更新帖子
                         const { data, error } = await supabaseClient
                             .from('posts')
                             .update({
@@ -1159,7 +1191,6 @@
                         result = data;
                         showToast('更新成功！', 'success');
                     } else {
-                        // 新建帖子
                         const publicId = generatePublicId();
                         const { data, error } = await supabaseClient
                             .from('posts')
@@ -1175,7 +1206,7 @@
                         showToast('发布成功！', 'success');
                     }
 
-                    // 跳转
+                    resetChange();
                     setTimeout(() => {
                         if (isEditMode) {
                             window.location.href = 'post-detail.html?type=post&id=' + editPostId;
@@ -1250,6 +1281,7 @@
                             isEditMode ? '取消编辑' : '取消发布',
                             isEditMode ? '确定要取消编辑吗？修改将丢失。' : '确定要取消发布吗？输入的内容将丢失。',
                             () => {
+                                resetChange();
                                 if (isEditMode) {
                                     window.location.href = 'post-detail.html?type=post&id=' + editPostId;
                                 } else {
@@ -1260,6 +1292,7 @@
                             'danger'
                         );
                     } else {
+                        resetChange();
                         if (isEditMode) {
                             window.location.href = 'post-detail.html?type=post&id=' + editPostId;
                         } else {
@@ -1301,8 +1334,13 @@
                 // 预览
                 previewBtn.addEventListener('click', togglePreview);
 
-                // 语法面板
-                syntaxBtn.addEventListener('click', showSyntaxPanel);
+                // 语法按钮
+                document.querySelectorAll('[data-syntax]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const syntax = btn.dataset.syntax;
+                        insertAtCursor(syntax);
+                    });
+                });
 
                 // 添加文件
                 addFileBtn.addEventListener('click', () => {
