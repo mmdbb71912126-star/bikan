@@ -180,37 +180,83 @@
         return card;
     }
 
-    // ---------- 渲染帖子内容中的自定义媒体语法 ----------
+    // ============================================================
+    // 渲染帖子内容中的自定义媒体语法（含默认尺寸）
+    // ============================================================
     function renderPostContentWithMedia(content, fileMap = {}) {
         if (!content) return '';
 
         let html = content;
 
-        html = html.replace(/\[img\]([^\]]+)\[\/img\]/g, (match, id) => {
+        // 解析尺寸函数：支持 300x200 或 50%
+        function parseSize(sizeStr) {
+            if (!sizeStr) return null;
+            const parts = sizeStr.split('x');
+            if (parts.length === 2) {
+                const w = parseInt(parts[0]);
+                const h = parseInt(parts[1]);
+                if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0) {
+                    return { width: w, height: h, unit: 'px' };
+                }
+            }
+            if (sizeStr.endsWith('%')) {
+                const pct = parseInt(sizeStr);
+                if (!isNaN(pct) && pct > 0 && pct <= 100) {
+                    return { width: pct, unit: '%' };
+                }
+            }
+            return null;
+        }
+
+        function buildStyle(sizeInfo, isImage = true) {
+            if (sizeInfo) {
+                if (sizeInfo.unit === '%') {
+                    return ` style="width:${sizeInfo.width}%; max-width:100%; ${isImage ? 'height:auto;' : ''}"`;
+                } else {
+                    return ` style="width:${sizeInfo.width}px; height:${sizeInfo.height}px; max-width:100%;${isImage ? ' object-fit:contain;' : ''}"`;
+                }
+            }
+            // 默认
+            if (isImage) {
+                return ` style="max-width:100%; max-height:500px; height:auto; width:auto;"`;
+            } else {
+                return ` style="max-width:100%; max-height:500px; width:auto;"`;
+            }
+        }
+
+        // 图片
+        html = html.replace(/\[img\]([^\]]+?)(?:=([^\]]*?))?\[\/img\]/g, (match, id, sizeStr) => {
             const file = fileMap[id];
             if (file) {
-                return `<div class="post-media-wrapper"><img src="${file.file_url}" alt="${file.file_name}" class="post-media-img" loading="lazy" /></div>`;
+                const sizeInfo = parseSize(sizeStr);
+                const style = buildStyle(sizeInfo, true);
+                return `<div class="post-media-wrapper"><img src="${file.file_url}" alt="${file.file_name}" class="post-media-img" loading="lazy"${style} /></div>`;
             }
             return `<span class="media-placeholder">🖼️ 图片未找到 (${id})</span>`;
         });
 
-        html = html.replace(/\[video\]([^\]]+)\[\/video\]/g, (match, id) => {
+        // 视频
+        html = html.replace(/\[video\]([^\]]+?)(?:=([^\]]*?))?\[\/video\]/g, (match, id, sizeStr) => {
             const file = fileMap[id];
             if (file) {
-                return `<div class="post-media-wrapper"><video src="${file.file_url}" controls class="post-media-video" preload="metadata"></video></div>`;
+                const sizeInfo = parseSize(sizeStr);
+                const style = buildStyle(sizeInfo, false);
+                return `<div class="post-media-wrapper"><video src="${file.file_url}" controls class="post-media-video" preload="metadata"${style}></video></div>`;
             }
             return `<span class="media-placeholder">🎬 视频未找到 (${id})</span>`;
         });
 
-        html = html.replace(/\[audio\]([^\]]+)\[\/audio\]/g, (match, id) => {
+        // 音频（固定宽度，无尺寸控制）
+        html = html.replace(/\[audio\]([^\]]+?)(?:=([^\]]*?))?\[\/audio\]/g, (match, id, sizeStr) => {
             const file = fileMap[id];
             if (file) {
-                return `<div class="post-media-wrapper"><audio src="${file.file_url}" controls class="post-media-audio" preload="metadata"></audio></div>`;
+                return `<div class="post-media-wrapper"><audio src="${file.file_url}" controls class="post-media-audio" preload="metadata" style="width:100%;"></audio></div>`;
             }
             return `<span class="media-placeholder">🎵 音频未找到 (${id})</span>`;
         });
 
-        html = html.replace(/\[file\]([^\]]+)\[\/file\]/g, (match, id) => {
+        // 文件（使用文件卡片）
+        html = html.replace(/\[file\]([^\]]+?)(?:=([^\]]*?))?\[\/file\]/g, (match, id, sizeStr) => {
             const file = fileMap[id];
             if (file) {
                 const card = renderFileCard(file);
@@ -226,7 +272,7 @@
     function extractFileIdsFromContent(content) {
         if (!content) return [];
         const ids = [];
-        const regex = /\[(img|video|audio|file)\]([^\]]+)\[\/\1\]/g;
+        const regex = /\[(img|video|audio|file)\]([^\]]+?)(?:=[^\]]*?)?\[\/\1\]/g;
         let match;
         while ((match = regex.exec(content)) !== null) {
             ids.push(match[2]);
@@ -243,7 +289,6 @@
         card.className = 'post-card';
         card.dataset.postId = post.id;
 
-        // 头部
         const header = document.createElement('div');
         header.className = 'post-header';
 
