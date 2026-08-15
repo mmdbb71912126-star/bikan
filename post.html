@@ -4,176 +4,432 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 - 发帖</title>
-    <!-- 网站图标 -->
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <!-- 加载 Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 加载样式 -->
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+        /* ===== 发帖页面专用样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .post-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: white;
+            position: relative;
+        }
+
+        /* 顶部工具栏 */
+        .post-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            min-height: 48px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .post-toolbar .toolbar-placeholder {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        .post-toolbar .toolbar-btn {
+            background: none;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+        }
+        .post-toolbar .toolbar-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-main);
+        }
+        .post-toolbar .toolbar-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* 内容输入区 */
+        .post-content-area {
+            flex: 1;
+            padding: 16px 20px;
+            overflow-y: auto;
+            background: white;
+        }
+        .post-content-area textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 18px;
+            line-height: 1.7;
+            font-family: inherit;
+            color: var(--text-main);
+            background: transparent;
+            padding: 0;
+            min-height: 200px;
+        }
+        .post-content-area textarea::placeholder {
+            color: var(--text-light);
+            font-size: 18px;
+        }
+
+        /* 底部操作栏（右下角固定） */
+        .post-actions {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+        .post-actions .btn {
+            padding: 10px 28px;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 80px;
+            text-align: center;
+        }
+        .post-actions .btn-cancel {
+            background: var(--bg-light);
+            color: var(--text-secondary);
+        }
+        .post-actions .btn-cancel:hover {
+            background: #e2e8f0;
+        }
+        .post-actions .btn-publish {
+            background: var(--primary);
+            color: white;
+        }
+        .post-actions .btn-publish:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        .post-actions .btn-publish:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 二次确认弹窗（复用 modal 样式） */
+        .confirm-modal .modal {
+            max-width: 400px;
+        }
+        .confirm-modal .modal-body {
+            font-size: 15px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 8px 0 16px;
+        }
+        .confirm-modal .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .confirm-modal .modal-footer .btn {
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .confirm-modal .modal-footer .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-secondary);
+        }
+        .confirm-modal .modal-footer .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .confirm-modal .modal-footer .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        .confirm-modal .modal-footer .btn-danger:hover {
+            background: var(--danger-dark);
+        }
+        .confirm-modal .modal-footer .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .confirm-modal .modal-footer .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        /* 响应式 */
+        @media (max-width: 640px) {
+            .post-toolbar {
+                padding: 6px 12px;
+                min-height: 44px;
+            }
+            .post-content-area {
+                padding: 12px 16px;
+            }
+            .post-content-area textarea {
+                font-size: 16px;
+            }
+            .post-content-area textarea::placeholder {
+                font-size: 16px;
+            }
+            .post-actions {
+                bottom: 20px;
+                right: 20px;
+                gap: 8px;
+            }
+            .post-actions .btn {
+                padding: 8px 20px;
+                font-size: 14px;
+                min-width: 60px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container" style="display: block;">
-        <main class="main-content" id="mainContent" style="max-width: 800px; margin: 0 auto; padding: 30px 20px;">
-            <div class="page-header">
-                <div class="page-title">发帖</div>
-                <button class="btn btn-secondary" id="cancelPostBtn">取消</button>
-            </div>
-            <div class="form-group">
-                <label>内容（支持 Markdown）</label>
-                <textarea id="postContent" rows="10" placeholder="写点什么..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>标签（用空格分隔，可选）</label>
-                <input type="text" id="postTags" placeholder="例如：技术 生活" />
-            </div>
-            <div class="form-group">
-                <label>上传文件（图片、视频、音频、文件）</label>
-                <input type="file" id="postFiles" multiple />
-            </div>
-            <button class="btn btn-primary" id="submitPostBtn">发布</button>
-            <div id="postMessage" class="message"></div>
-        </main>
+    <div class="post-container">
+        <!-- 顶部工具栏（预留，后续添加按钮） -->
+        <div class="post-toolbar" id="toolbar">
+            <span class="toolbar-placeholder">工具栏（后续添加）</span>
+            <!-- 后续可添加：加粗、斜体、插入图片、插入链接、表情等 -->
+        </div>
+
+        <!-- 内容输入区 -->
+        <div class="post-content-area">
+            <textarea id="postContent" placeholder="写点什么..." autofocus></textarea>
+        </div>
+
+        <!-- 右下角操作按钮 -->
+        <div class="post-actions">
+            <button class="btn btn-cancel" id="cancelBtn">取消</button>
+            <button class="btn btn-publish" id="publishBtn">发布</button>
+        </div>
     </div>
 
-    <!-- 加载 JS 文件 -->
+    <!-- 二次确认弹窗（由 JS 动态生成） -->
+    <div id="confirmModal" style="display:none;"></div>
+
     <script src="js/config.js"></script>
     <script src="js/components.js"></script>
     <script>
-        // ============================================================
-        // post.html 独立发帖脚本
-        // 依赖：config.js, components.js
-        // ============================================================
         (function() {
             const cfg = window.BikanConfig;
             const comp = window.BikanComponents;
-            const { supabaseClient, sdkReady, uploadFiles, showToast } = {
-                supabaseClient: cfg.supabaseClient,
-                sdkReady: cfg.sdkReady,
-                uploadFiles: cfg.uploadFiles,
-                showToast: comp.showToast
-            };
+            const { supabaseClient, sdkReady, showToast } = cfg;
+            const { openModal } = comp;
 
             let currentUser = null;
+            const contentTextarea = document.getElementById('postContent');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const publishBtn = document.getElementById('publishBtn');
 
-            async function initPostPage() {
+            // ---------- 初始化 ----------
+            async function init() {
                 if (!sdkReady) {
                     showToast('Supabase 未初始化', 'error');
                     return;
                 }
-                // 检查登录状态
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
-                if (error || !session) {
-                    window.location.href = 'index.html';
-                    return;
-                }
-                const { data: profile, error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                if (profileError || !profile) {
-                    showToast('获取用户信息失败', 'error');
-                    return;
-                }
-                currentUser = profile;
+                try {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (!session) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    const { data: profile } = await supabaseClient
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+                    if (!profile) {
+                        showToast('获取用户信息失败', 'error');
+                        return;
+                    }
+                    currentUser = profile;
 
-                // 如果被封禁，显示遮罩并禁止发帖
-                if (currentUser.is_banned) {
-                    document.body.innerHTML = `
-                        <div style="position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:none;z-index:9999;">
-                            <svg width="150" height="102" viewBox="0 0 1000 680" style="opacity:0.5;">
-                                <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="red" fill-rule="evenodd" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <rect x="484" y="273" width="32" height="100" rx="10" fill="red" />
-                                <rect x="488" y="383" width="24" height="24" rx="8" fill="red" />
-                            </svg>
-                            <div style="font-size:24px;color:red;opacity:0.5;font-weight:700;">你已被封禁</div>
-                        </div>
-                        <p style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:var(--text-light);">你已被封禁，无法发帖</p>
-                    `;
-                    return;
-                }
+                    if (currentUser.is_banned) {
+                        showToast('你已被封禁，无法发帖', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'app.html';
+                        }, 1500);
+                        return;
+                    }
 
-                bindEvents();
+                    // 绑定事件
+                    bindEvents();
+
+                    // 自动聚焦
+                    contentTextarea.focus();
+
+                } catch (e) {
+                    console.error('初始化失败', e);
+                    showToast('初始化失败: ' + e.message, 'error');
+                }
             }
 
+            // ---------- 绑定事件 ----------
             function bindEvents() {
-                document.getElementById('cancelPostBtn').addEventListener('click', () => {
-                    window.location.href = 'app.html';
+                // 取消按钮 -> 二次确认
+                cancelBtn.addEventListener('click', () => {
+                    const content = contentTextarea.value.trim();
+                    if (content) {
+                        showConfirmModal(
+                            '取消发布',
+                            '确定要取消发布吗？输入的内容将丢失。',
+                            () => {
+                                // 确认取消
+                                window.location.href = 'app.html';
+                            },
+                            '取消发布',
+                            'danger'
+                        );
+                    } else {
+                        // 没有内容，直接返回
+                        window.location.href = 'app.html';
+                    }
                 });
 
-                document.getElementById('submitPostBtn').addEventListener('click', async () => {
-                    const content = document.getElementById('postContent').value.trim();
-                    const tagsInput = document.getElementById('postTags').value.trim();
-                    const filesInput = document.getElementById('postFiles');
-                    const messageEl = document.getElementById('postMessage');
+                // 发布按钮 -> 二次确认
+                publishBtn.addEventListener('click', () => {
+                    const content = contentTextarea.value.trim();
+                    if (!content) {
+                        showToast('请输入内容', 'error');
+                        contentTextarea.focus();
+                        return;
+                    }
+                    showConfirmModal(
+                        '发布帖子',
+                        '确定发布此帖吗？发布后所有人都能看到。',
+                        async () => {
+                            // 确认发布
+                            await doPublish();
+                        },
+                        '发布',
+                        'primary'
+                    );
+                });
 
-                    if (!content && filesInput.files.length === 0) {
-                        showMessage('请填写内容或上传文件', 'error');
+                // Ctrl+Enter 快捷键快速发布（跳过二次确认？还是保留二次确认？）
+                // 保留二次确认，但 Ctrl+Enter 触发发布按钮点击
+                contentTextarea.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        publishBtn.click();
+                    }
+                });
+
+                // 输入时调整按钮状态（有内容时发布按钮高亮？目前不需要）
+            }
+
+            // ---------- 二次确认弹窗 ----------
+            function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
+                const content = `
+                    <div class="confirm-modal">
+                        <div class="modal-body">${message}</div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="confirmCancelBtn">取消</button>
+                            <button class="btn ${confirmType === 'danger' ? 'btn-danger' : 'btn-primary'}" id="confirmOkBtn">${confirmText}</button>
+                        </div>
+                    </div>
+                `;
+
+                const modal = openModal(title, content);
+
+                // 取消按钮 -> 关闭弹窗
+                modal.querySelector('#confirmCancelBtn').addEventListener('click', () => {
+                    modal.closest('.modal-overlay').remove();
+                });
+
+                // 确认按钮 -> 执行回调
+                modal.querySelector('#confirmOkBtn').addEventListener('click', async () => {
+                    // 先关闭弹窗
+                    modal.closest('.modal-overlay').remove();
+                    // 执行确认回调
+                    if (typeof onConfirm === 'function') {
+                        await onConfirm();
+                    }
+                });
+
+                // 点击遮罩关闭
+                const overlay = modal.closest('.modal-overlay');
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.remove();
+                    }
+                });
+            }
+
+            // ---------- 执行发布 ----------
+            async function doPublish() {
+                const content = contentTextarea.value.trim();
+                if (!content) {
+                    showToast('请输入内容', 'error');
+                    return;
+                }
+
+                // 发布前禁用按钮，防止重复点击
+                publishBtn.disabled = true;
+                publishBtn.textContent = '发布中...';
+
+                try {
+                    // 生成公共 ID
+                    const publicId = generatePublicId();
+
+                    const { data: newPost, error } = await supabaseClient
+                        .from('posts')
+                        .insert({
+                            user_id: currentUser.id,
+                            content: content,
+                            public_id: publicId,
+                            // 后续可扩展：media, tags 等
+                        })
+                        .select()
+                        .single();
+
+                    if (error) {
+                        showToast('发布失败: ' + error.message, 'error');
+                        publishBtn.disabled = false;
+                        publishBtn.textContent = '发布';
                         return;
                     }
 
-                    // 上传文件
-                    let media = [];
-                    if (filesInput.files.length > 0) {
-                        try {
-                            showToast('文件上传中...', 'info');
-                            media = await uploadFiles(filesInput.files, 'posts', 'posts');
-                        } catch (e) {
-                            showMessage('文件上传失败: ' + e.message, 'error');
-                            return;
-                        }
-                    }
+                    showToast('发布成功！', 'success');
 
-                    // 解析标签
-                    const tags = tagsInput ? tagsInput.split(/\s+/).map(t => t.startsWith('#') ? t.slice(1) : t) : [];
-
-                    // 生成 public_id
-                    let publicId = generatePublicId();
-                    let insertError;
-                    let postData;
-                    // 最多尝试 3 次，避免 public_id 冲突
-                    for (let attempt = 0; attempt < 3; attempt++) {
-                        const { data, error } = await supabaseClient
-                            .from('posts')
-                            .insert({
-                                user_id: currentUser.id,
-                                content,
-                                media,
-                                tags,
-                                public_id: publicId
-                            })
-                            .select()
-                            .single();
-                        if (error) {
-                            if (error.message.includes('duplicate key') && error.message.includes('public_id')) {
-                                publicId = generatePublicId();
-                                continue;
-                            }
-                            insertError = error;
-                            break;
-                        }
-                        postData = data;
-                        break;
-                    }
-
-                    if (insertError) {
-                        showMessage('发布失败: ' + insertError.message, 'error');
-                        return;
-                    }
-
-                    showMessage('发布成功，正在跳转...', 'success');
+                    // 延迟跳转，让用户看到成功提示
                     setTimeout(() => {
                         window.location.href = 'app.html';
-                    }, 1500);
-                });
+                    }, 800);
+
+                } catch (e) {
+                    console.error('发布异常', e);
+                    showToast('发布失败: ' + e.message, 'error');
+                    publishBtn.disabled = false;
+                    publishBtn.textContent = '发布';
+                }
             }
 
-            function showMessage(text, type) {
-                const el = document.getElementById('postMessage');
-                el.textContent = text;
-                el.className = 'message ' + (type || 'error');
-            }
-
+            // ---------- 生成公共 ID ----------
             function generatePublicId() {
                 const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
                 let result = '';
@@ -183,7 +439,8 @@
                 return result;
             }
 
-            initPostPage();
+            // ---------- 启动 ----------
+            init();
         })();
     </script>
 </body>
