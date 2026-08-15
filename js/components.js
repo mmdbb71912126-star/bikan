@@ -37,7 +37,6 @@
         logo: (size = 160) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size * 0.68}" viewBox="0 0 1000 680"><path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="black" fill-rule="evenodd" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="484" y="273" width="32" height="100" rx="10" fill="black" /><rect x="488" y="383" width="24" height="24" rx="8" fill="black" /></svg>`,
         more: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>`,
         lock: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`,
-        // 媒体文件图标
         image: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
         video: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
         audio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>`,
@@ -134,13 +133,12 @@
         }, 3500);
     }
 
-    // ---------- 文件卡片（黄色长条 3:1） ----------
+    // ---------- 文件卡片 ----------
     function renderFileCard(file) {
         const card = document.createElement('div');
         card.className = 'file-card';
         card.dataset.fileId = file.id;
 
-        // 根据文件类型选择图标
         let icon = Icons.file;
         if (file.file_type) {
             if (file.file_type.startsWith('image/')) icon = Icons.image;
@@ -159,7 +157,6 @@
             <a href="${file.file_url}" download class="file-card-download" title="下载文件">${Icons.download}</a>
         `;
 
-        // 如果是图片/视频/音频，点击卡片预览
         if (file.file_type && file.file_type.startsWith('image/')) {
             card.style.cursor = 'pointer';
             card.addEventListener('click', (e) => {
@@ -189,7 +186,6 @@
 
         let html = content;
 
-        // 替换 [img]fileId[/img]
         html = html.replace(/\[img\]([^\]]+)\[\/img\]/g, (match, id) => {
             const file = fileMap[id];
             if (file) {
@@ -198,7 +194,6 @@
             return `<span class="media-placeholder">🖼️ 图片未找到 (${id})</span>`;
         });
 
-        // 替换 [video]fileId[/video]
         html = html.replace(/\[video\]([^\]]+)\[\/video\]/g, (match, id) => {
             const file = fileMap[id];
             if (file) {
@@ -207,7 +202,6 @@
             return `<span class="media-placeholder">🎬 视频未找到 (${id})</span>`;
         });
 
-        // 替换 [audio]fileId[/audio]
         html = html.replace(/\[audio\]([^\]]+)\[\/audio\]/g, (match, id) => {
             const file = fileMap[id];
             if (file) {
@@ -216,11 +210,9 @@
             return `<span class="media-placeholder">🎵 音频未找到 (${id})</span>`;
         });
 
-        // 替换 [file]fileId[/file]
         html = html.replace(/\[file\]([^\]]+)\[\/file\]/g, (match, id) => {
             const file = fileMap[id];
             if (file) {
-                // 使用文件卡片渲染
                 const card = renderFileCard(file);
                 return card.outerHTML;
             }
@@ -230,7 +222,7 @@
         return html;
     }
 
-    // ---------- 提取帖子中的所有文件ID ----------
+    // ---------- 提取文件ID ----------
     function extractFileIdsFromContent(content) {
         if (!content) return [];
         const ids = [];
@@ -242,9 +234,7 @@
         return [...new Set(ids)];
     }
 
-    // ============================================================
-    // 渲染帖子卡片（兼容原有功能 + 媒体渲染）
-    // ============================================================
+    // ---------- 渲染帖子卡片 ----------
     function renderPostCard(post, options = {}) {
         if (!post) return document.createElement('div');
         const { showActions = true, isDetail = false } = options;
@@ -253,7 +243,7 @@
         card.className = 'post-card';
         card.dataset.postId = post.id;
 
-        // ---------- 头部 ----------
+        // 头部
         const header = document.createElement('div');
         header.className = 'post-header';
 
@@ -301,7 +291,7 @@
 
         card.appendChild(header);
 
-        // ---------- 话题标签（在内容上方） ----------
+        // 话题标签（在内容上方）
         if (post.content) {
             const tagRegex = /#\w+/g;
             const tags = post.content.match(tagRegex);
@@ -319,26 +309,17 @@
             }
         }
 
-        // ---------- 内容 ----------
+        // 内容
         const contentDiv = document.createElement('div');
         contentDiv.className = 'post-content';
-        // 如果有文件映射，渲染媒体
         if (post.fileMap) {
             contentDiv.innerHTML = renderPostContentWithMedia(post.content, post.fileMap);
         } else {
-            // 简单处理：如果内容包含媒体语法但没文件映射，显示占位
-            const hasMediaSyntax = /\[(img|video|audio|file)\]/.test(post.content);
-            if (hasMediaSyntax) {
-                // 尝试从内容中提取文件ID，需要异步加载文件信息
-                // 这里暂时只显示文本，后续在app.js中处理
-                contentDiv.textContent = post.content || '';
-            } else {
-                contentDiv.textContent = post.content || '';
-            }
+            contentDiv.textContent = post.content || '';
         }
         card.appendChild(contentDiv);
 
-        // ---------- 旧版标签兼容 ----------
+        // 旧版标签兼容
         if (post.tags && post.tags.length && !post.content?.match(/#\w+/g)) {
             const tagsDiv = document.createElement('div');
             tagsDiv.className = 'post-tags';
@@ -352,7 +333,7 @@
             card.appendChild(tagsDiv);
         }
 
-        // ---------- 旧版媒体 ----------
+        // 旧版媒体
         if (post.media && post.media.length) {
             const mediaGrid = document.createElement('div');
             mediaGrid.className = 'post-media-grid';
@@ -392,7 +373,7 @@
             card.appendChild(mediaGrid);
         }
 
-        // ---------- 操作按钮 ----------
+        // 操作按钮
         if (showActions) {
             const actions = document.createElement('div');
             actions.className = 'post-actions';
@@ -458,6 +439,301 @@
         }
 
         return card;
+    }
+
+    // ---------- 渲染评论项 ----------
+    function renderCommentItem(comment, options = {}) {
+        const { isReply = false } = options;
+        const item = document.createElement('div');
+        item.className = 'comment-item';
+
+        const header = document.createElement('div');
+        header.className = 'comment-header';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar-sm';
+        avatar.dataset.userId = comment.user_id;
+        avatar.dataset.action = 'view-profile';
+        avatar.style.cursor = 'pointer';
+        const avatarImg = document.createElement('img');
+        const avatarUrl = comment.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.profiles?.username || 'U')}&background=667eea&color=fff&size=32`;
+        avatarImg.src = avatarUrl;
+        avatarImg.alt = comment.profiles?.username || 'avatar';
+        avatar.appendChild(avatarImg);
+        header.appendChild(avatar);
+
+        const userInfo = document.createElement('span');
+        userInfo.className = 'comment-user';
+        userInfo.textContent = getUserDisplayName(comment.profiles);
+        userInfo.dataset.userId = comment.user_id;
+        userInfo.dataset.action = 'view-profile';
+        userInfo.style.cursor = 'pointer';
+        header.appendChild(userInfo);
+
+        if (comment.reply_to_user) {
+            const replyTo = document.createElement('span');
+            replyTo.className = 'comment-reply-to';
+            replyTo.textContent = '→ ' + getUserDisplayName(comment.reply_to_user);
+            header.appendChild(replyTo);
+        }
+
+        const time = document.createElement('span');
+        time.style.cssText = 'font-size:12px;color:var(--text-light);margin-left:auto;';
+        time.textContent = new Date(comment.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        header.appendChild(time);
+
+        item.appendChild(header);
+
+        const content = document.createElement('div');
+        content.className = 'comment-content';
+        content.textContent = comment.content || '';
+        item.appendChild(content);
+
+        const actions = document.createElement('div');
+        actions.className = 'comment-actions';
+
+        const likeBtn = document.createElement('button');
+        likeBtn.className = 'action-btn';
+        likeBtn.dataset.action = 'like-comment';
+        likeBtn.dataset.commentId = comment.id;
+        likeBtn.innerHTML = Icons.heart;
+        actions.appendChild(likeBtn);
+
+        const replyBtn = document.createElement('button');
+        replyBtn.className = 'action-btn';
+        replyBtn.dataset.action = 'reply-comment';
+        replyBtn.dataset.commentId = comment.id;
+        replyBtn.textContent = '回复';
+        actions.appendChild(replyBtn);
+
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'action-btn';
+        shareBtn.dataset.action = 'share-comment';
+        shareBtn.dataset.commentId = comment.id;
+        shareBtn.textContent = '分享';
+        actions.appendChild(shareBtn);
+
+        if (!comment.is_owner) {
+            const reportBtn = document.createElement('button');
+            reportBtn.className = 'action-btn';
+            reportBtn.dataset.action = 'report-comment';
+            reportBtn.dataset.commentId = comment.id;
+            reportBtn.textContent = '举报';
+            actions.appendChild(reportBtn);
+        }
+
+        item.appendChild(actions);
+
+        return item;
+    }
+
+    // ---------- 渲染通知 ----------
+    function renderNotificationItem(notification) {
+        const item = document.createElement('div');
+        item.className = 'notification-card';
+        if (!notification.is_read) {
+            item.style.borderLeft = '4px solid var(--primary)';
+        }
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar-sm';
+        avatarDiv.dataset.userId = notification.actor_id;
+        avatarDiv.dataset.action = 'view-profile';
+        avatarDiv.style.cursor = 'pointer';
+        const avatarImg = document.createElement('img');
+        const avatarUrl = notification.actor?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.actor?.username || 'U')}&background=667eea&color=fff&size=32`;
+        avatarImg.src = avatarUrl;
+        avatarImg.alt = 'actor';
+        avatarDiv.appendChild(avatarImg);
+        item.appendChild(avatarDiv);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'notification-content';
+
+        const text = document.createElement('div');
+        text.className = 'notification-text';
+        let displayText = notification.content || '';
+        if (notification.type === 'like') {
+            displayText = `${getUserDisplayName(notification.actor)} 点赞了你的帖子`;
+        } else if (notification.type === 'comment') {
+            displayText = `${getUserDisplayName(notification.actor)} 评论了你的帖子`;
+        } else if (notification.type === 'follow') {
+            displayText = `${getUserDisplayName(notification.actor)} 关注了你`;
+        } else if (notification.type === 'friend_request') {
+            displayText = `${getUserDisplayName(notification.actor)} 向你发送了好友请求`;
+        } else if (notification.type === 'admin_action') {
+            displayText = `管理员: ${notification.content}`;
+        } else if (notification.type === 'system') {
+            displayText = notification.content;
+        }
+        text.textContent = displayText;
+        contentDiv.appendChild(text);
+
+        const time = document.createElement('div');
+        time.className = 'notification-time';
+        time.textContent = new Date(notification.created_at).toLocaleString();
+        contentDiv.appendChild(time);
+
+        item.appendChild(contentDiv);
+
+        if (!notification.is_read) {
+            const dot = document.createElement('div');
+            dot.className = 'unread-dot';
+            item.appendChild(dot);
+        }
+
+        return item;
+    }
+
+    // ---------- 渲染用户卡片 ----------
+    function renderUserCard(user, options = {}) {
+        const { showFollowBtn = false, isFollowing = false, showBlockBtn = false } = options;
+
+        const card = document.createElement('div');
+        card.className = 'user-card';
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar';
+        avatarDiv.dataset.userId = user.id;
+        avatarDiv.dataset.action = 'view-profile';
+        avatarDiv.style.cursor = 'pointer';
+        const avatarImg = document.createElement('img');
+        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=667eea&color=fff&size=64`;
+        avatarImg.src = avatarUrl;
+        avatarImg.alt = user.username || 'avatar';
+        avatarDiv.appendChild(avatarImg);
+        card.appendChild(avatarDiv);
+
+        const info = document.createElement('div');
+        info.className = 'user-card-info';
+        info.dataset.userId = user.id;
+        info.dataset.action = 'view-profile';
+        info.style.cursor = 'pointer';
+
+        const name = document.createElement('div');
+        name.className = 'post-user-name';
+        name.textContent = getUserDisplayName(user);
+        info.appendChild(name);
+
+        const handle = document.createElement('div');
+        handle.className = 'post-user-id';
+        handle.textContent = getUserHandle(user);
+        info.appendChild(handle);
+
+        if (user.bio) {
+            const bio = document.createElement('div');
+            bio.style.cssText = 'font-size:13px;color:var(--text-secondary);margin-top:4px;';
+            bio.textContent = user.bio;
+            info.appendChild(bio);
+        }
+
+        card.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'user-card-actions';
+
+        if (showFollowBtn) {
+            const followBtn = document.createElement('button');
+            followBtn.className = `btn ${isFollowing ? 'btn-secondary' : 'btn-primary'} btn-sm`;
+            followBtn.dataset.action = isFollowing ? 'unfollow' : 'follow';
+            followBtn.dataset.userId = user.id;
+            followBtn.textContent = isFollowing ? '已关注' : '关注';
+            actions.appendChild(followBtn);
+        }
+
+        if (showBlockBtn) {
+            const blockBtn = document.createElement('button');
+            blockBtn.className = 'btn btn-secondary btn-sm';
+            blockBtn.dataset.action = 'block';
+            blockBtn.dataset.userId = user.id;
+            blockBtn.textContent = '拉黑';
+            actions.appendChild(blockBtn);
+        }
+
+        card.appendChild(actions);
+
+        return card;
+    }
+
+    // ---------- 渲染话题卡片 ----------
+    function renderTopicCard(topic, options = {}) {
+        const { showJoin = false } = options;
+
+        const card = document.createElement('div');
+        card.className = 'topic-card';
+
+        const name = document.createElement('div');
+        name.className = 'topic-name';
+        name.textContent = topic.name;
+        card.appendChild(name);
+
+        if (topic.description) {
+            const desc = document.createElement('div');
+            desc.className = 'topic-desc';
+            desc.textContent = topic.description;
+            card.appendChild(desc);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'topic-meta';
+        const creator = document.createElement('span');
+        creator.textContent = '创建者: ' + getUserDisplayName(topic.creator);
+        meta.appendChild(creator);
+
+        const time = document.createElement('span');
+        time.textContent = new Date(topic.created_at).toLocaleDateString();
+        meta.appendChild(time);
+
+        card.appendChild(meta);
+
+        if (showJoin) {
+            const joinBtn = document.createElement('button');
+            joinBtn.className = 'btn btn-primary btn-sm';
+            joinBtn.dataset.action = 'join-topic';
+            joinBtn.dataset.topicId = topic.id;
+            joinBtn.textContent = '加入讨论';
+            card.appendChild(joinBtn);
+        }
+
+        return card;
+    }
+
+    // ---------- 渲染文件详情（旧版兼容） ----------
+    function renderFileDetail(file) {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+
+        const icon = document.createElement('div');
+        icon.className = 'file-icon';
+        icon.innerHTML = Icons.file;
+        div.appendChild(icon);
+
+        const info = document.createElement('div');
+        info.className = 'file-info';
+
+        const name = document.createElement('div');
+        name.className = 'file-name';
+        name.textContent = file.file_name || '文件';
+        info.appendChild(name);
+
+        if (file.file_size) {
+            const size = document.createElement('div');
+            size.className = 'file-size';
+            size.textContent = formatFileSize(file.file_size);
+            info.appendChild(size);
+        }
+
+        div.appendChild(info);
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'file-download-btn';
+        downloadBtn.textContent = '下载';
+        downloadBtn.addEventListener('click', () => {
+            window.open(file.url, '_blank');
+        });
+        div.appendChild(downloadBtn);
+
+        return div;
     }
 
     // ---------- 导出 ----------
