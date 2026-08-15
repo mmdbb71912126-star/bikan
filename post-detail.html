@@ -9,13 +9,12 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 全屏详情页样式 ===== */
+        /* ===== 样式与之前相同 ===== */
         .app-container {
             display: block !important;
             height: 100vh !important;
             overflow: hidden !important;
         }
-
         .main-content {
             max-width: 100% !important;
             padding: 16px 24px !important;
@@ -23,241 +22,51 @@
             overflow-y: auto !important;
             background: var(--bg-light) !important;
         }
-
-        .modal .avatar-sm {
-            width: 32px !important;
-            height: 32px !important;
-        }
-        .modal .avatar-sm img {
-            width: 32px !important;
-            height: 32px !important;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .comments-section {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-        }
-        #commentsList {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 12px;
-        }
-
-        .comment-item {
-            margin-bottom: 16px;
-        }
-        .comment-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-        .comment-user {
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .comment-user:hover {
-            color: var(--primary);
-        }
-        .comment-reply-to {
-            color: var(--text-light);
-            font-size: 13px;
-        }
-        .comment-content {
-            font-size: 14px;
-            margin-bottom: 6px;
-            word-break: break-word;
-        }
-        .comment-actions {
-            display: flex;
-            gap: 16px;
-        }
-        .comment-actions .action-btn {
-            font-size: 13px;
-        }
-        .comment-reply-form {
-            margin-top: 8px;
-            margin-left: 20px;
-            display: flex;
-            gap: 8px;
-        }
-        .comment-reply-form input {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 13px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            outline: none;
-        }
-        .comment-reply-form input:focus {
-            border-color: var(--primary);
-        }
-
-        /* ===== 引用摘要样式 ===== */
-        .comment-ref {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
+        .modal .avatar-sm { width: 32px !important; height: 32px !important; }
+        .modal .avatar-sm img { width: 32px !important; height: 32px !important; border-radius: 50%; object-fit: cover; }
+        .comments-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        #commentsList { max-height: 400px; overflow-y: auto; margin-bottom: 12px; }
+        .comment-item { margin-bottom: 16px; }
+        .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .comment-user { font-weight: 600; font-size: 14px; cursor: pointer; }
+        .comment-user:hover { color: var(--primary); }
+        .comment-reply-to { color: var(--text-light); font-size: 13px; }
+        .comment-content { font-size: 14px; margin-bottom: 6px; word-break: break-word; }
+        .comment-actions { display: flex; gap: 16px; }
+        .comment-actions .action-btn { font-size: 13px; }
+        .comment-reply-form { margin-top: 8px; margin-left: 20px; display: flex; gap: 8px; }
+        .comment-reply-form input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; }
+        .comment-reply-form input:focus { border-color: var(--primary); }
+        /* 引用回复的样式 */
+        .reply-quote {
             background: var(--bg-light);
+            padding: 6px 10px;
             border-radius: 6px;
             font-size: 13px;
             color: var(--text-secondary);
+            margin-bottom: 6px;
             border-left: 3px solid var(--primary);
-            cursor: pointer;
-            transition: var(--transition);
-            margin: 4px 0;
         }
-        .comment-ref:hover {
-            background: var(--bg-hover);
-            color: var(--text-main);
-        }
-        .comment-ref .ref-user {
-            font-weight: 600;
-            color: var(--text-main);
-        }
-        .comment-ref .ref-target {
-            color: var(--text-light);
-        }
-        .comment-ref .ref-snippet {
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-        .comment-ref .ref-jump {
-            margin-left: auto;
-            font-size: 12px;
-            color: var(--primary);
-        }
+        .reply-quote strong { color: var(--text-main); }
+        .comment-item.level-1 { margin-left: 0; }
+        .comment-item.level-2 { margin-left: 24px; border-left: 2px solid var(--border); padding-left: 8px; }
 
-        .post-content .file-card {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #FCD34D;
-            border-radius: 8px;
-            padding: 10px 16px;
-            margin: 8px 0;
-            min-height: 60px;
-            width: 100%;
-            aspect-ratio: 3 / 1;
-            border: 1px solid #F59E0B;
-        }
-        .post-content .file-card .file-card-icon {
-            flex-shrink: 0;
-            color: #92400E;
-        }
-        .post-content .file-card .file-card-icon svg {
-            width: 32px;
-            height: 32px;
-        }
-        .post-content .file-card .file-card-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .post-content .file-card .file-card-name {
-            font-weight: 500;
-            font-size: 14px;
-            color: #78350F;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .post-content .file-card .file-card-size {
-            font-size: 13px;
-            color: #92400E;
-        }
-        .post-content .file-card .file-card-download {
-            flex-shrink: 0;
-            color: #78350F;
-            transition: var(--transition);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .post-content .file-card .file-card-download:hover {
-            background: rgba(0, 0, 0, 0.05);
-            transform: scale(1.1);
-        }
-        .post-content .file-card .file-card-download svg {
-            width: 22px;
-            height: 22px;
-        }
-        .post-content .post-media-wrapper {
-            margin: 8px 0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .post-content .post-media-wrapper img {
-            max-width: 100%;
-            max-height: 600px;
-            border-radius: 8px;
-            object-fit: contain;
-        }
-        .post-content .post-media-wrapper video {
-            max-width: 100%;
-            max-height: 600px;
-            border-radius: 8px;
-        }
-        .post-content .post-media-wrapper audio {
-            width: 100%;
-        }
-        .post-content .media-placeholder {
-            display: inline-block;
-            padding: 4px 12px;
-            background: var(--bg-light);
-            color: var(--text-light);
-            border-radius: 4px;
-            font-size: 13px;
-            border: 1px dashed var(--border);
-        }
-
-        #backBtn {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: var(--bg-light);
-            margin-bottom: 12px;
-        }
-
-        @media (max-width: 640px) {
-            .main-content {
-                padding: 10px 12px !important;
-            }
-            .post-content .file-card {
-                padding: 6px 12px;
-                min-height: 44px;
-            }
-            .post-content .file-card .file-card-icon svg {
-                width: 24px;
-                height: 24px;
-            }
-            .post-content .file-card .file-card-name {
-                font-size: 13px;
-            }
-            .post-content .file-card .file-card-size {
-                font-size: 12px;
-            }
-            .post-content .file-card .file-card-download svg {
-                width: 18px;
-                height: 18px;
-            }
-            #commentsList {
-                max-height: 300px;
-            }
-            .comment-ref {
-                font-size: 12px;
-                padding: 3px 6px;
-            }
-        }
+        .post-content .file-card { display: flex; align-items: center; gap: 12px; background: #FCD34D; border-radius: 8px; padding: 10px 16px; margin: 8px 0; min-height: 60px; width: 100%; aspect-ratio: 3 / 1; border: 1px solid #F59E0B; }
+        .post-content .file-card .file-card-icon { flex-shrink: 0; color: #92400E; }
+        .post-content .file-card .file-card-icon svg { width: 32px; height: 32px; }
+        .post-content .file-card .file-card-info { flex: 1; min-width: 0; }
+        .post-content .file-card .file-card-name { font-weight: 500; font-size: 14px; color: #78350F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .post-content .file-card .file-card-size { font-size: 13px; color: #92400E; }
+        .post-content .file-card .file-card-download { flex-shrink: 0; color: #78350F; transition: var(--transition); background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .post-content .file-card .file-card-download:hover { background: rgba(0,0,0,0.05); transform: scale(1.1); }
+        .post-content .file-card .file-card-download svg { width: 22px; height: 22px; }
+        .post-content .post-media-wrapper { margin: 8px 0; border-radius: 8px; overflow: hidden; }
+        .post-content .post-media-wrapper img { max-width: 100%; max-height: 600px; border-radius: 8px; object-fit: contain; }
+        .post-content .post-media-wrapper video { max-width: 100%; max-height: 600px; border-radius: 8px; }
+        .post-content .post-media-wrapper audio { width: 100%; }
+        .post-content .media-placeholder { display: inline-block; padding: 4px 12px; background: var(--bg-light); color: var(--text-light); border-radius: 4px; font-size: 13px; border: 1px dashed var(--border); }
+        #backBtn { position: sticky; top: 0; z-index: 10; background: var(--bg-light); margin-bottom: 12px; }
+        @media (max-width:640px) { .main-content { padding: 10px 12px !important; } .post-content .file-card { padding: 6px 12px; min-height: 44px; } .post-content .file-card .file-card-icon svg { width: 24px; height: 24px; } .post-content .file-card .file-card-name { font-size: 13px; } .post-content .file-card .file-card-size { font-size: 12px; } .post-content .file-card .file-card-download svg { width: 18px; height: 18px; } #commentsList { max-height: 300px; } }
     </style>
 </head>
 <body>
@@ -408,7 +217,6 @@
 
             function setupRealtime() {
                 if (!supabaseClient || !id) return;
-
                 if (type === 'post') {
                     supabaseClient
                         .channel('post-detail-realtime-' + id)
@@ -419,7 +227,6 @@
                             }
                         })
                         .subscribe();
-
                     supabaseClient
                         .channel('post-detail-counts-' + id)
                         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
@@ -440,7 +247,6 @@
                         })
                         .subscribe();
                 }
-
                 if (type === 'topic') {
                     supabaseClient
                         .channel('topic-detail-realtime-' + id)
@@ -510,7 +316,7 @@
             }
 
             // ============================================================
-            // 递归渲染评论（嵌套最多2层，超过2层显示引用摘要）
+            // 核心：只显示两层嵌套，深层回复显示为引用
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -538,13 +344,10 @@
                 // 构建评论树
                 const commentMap = {};
                 const roots = [];
-
                 data.forEach(c => {
                     commentMap[c.id] = c;
                     c.children = [];
-                    c._replyToContent = '';
                 });
-
                 data.forEach(c => {
                     if (c.parent_id && commentMap[c.parent_id]) {
                         commentMap[c.parent_id].children.push(c);
@@ -553,105 +356,86 @@
                     }
                 });
 
-                // 建立被回复内容的映射
-                data.forEach(c => {
-                    if (c.reply_to_user_id && commentMap[c.parent_id]) {
-                        const parent = commentMap[c.parent_id];
-                        c._replyToContent = parent.content || '';
-                    }
+                // 排序
+                roots.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                roots.forEach(root => {
+                    if (root.children) root.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 });
 
-                // 截取内容摘要
-                function truncate(text, len = 20) {
-                    if (!text) return '';
-                    text = text.replace(/\n/g, ' ');
-                    return text.length > len ? text.substring(0, len) + '...' : text;
-                }
-
-                // 递归渲染函数
+                // 渲染函数（只嵌套两层）
                 function renderCommentNode(comment, depth = 0) {
                     comment.currentUserId = currentUser.id;
                     comment.is_owner = comment.user_id === postAuthorId;
 
-                    // 如果深度 >= 2，渲染为引用摘要（不展开完整评论）
-                    if (depth >= 2) {
-                        const replyToUser = comment.reply_to_user || comment.profiles;
-                        const replyToName = replyToUser ? getUserDisplayName(replyToUser) : '未知用户';
-                        const snippet = truncate(comment._replyToContent || comment.content || '', 25);
-
-                        const refEl = document.createElement('div');
-                        refEl.className = 'comment-ref';
-                        refEl.dataset.targetCommentId = comment.parent_id;
-                        refEl.dataset.commentId = comment.id;
-                        refEl.style.marginLeft = Math.min(depth * 20, 40) + 'px';
-
-                        refEl.innerHTML = `
-                            <span class="ref-user">${getUserDisplayName(comment.profiles)}</span>
-                            <span class="ref-target">回复了</span>
-                            <span class="ref-user">${replyToName}</span>
-                            <span class="ref-snippet">"${snippet}"</span>
-                            <span class="ref-jump">↩ 跳转</span>
-                        `;
-
-                        // 点击跳转到被回复的评论
-                        refEl.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const targetId = refEl.dataset.targetCommentId;
-                            if (targetId) {
-                                const targetEl = document.getElementById('comment-' + targetId);
-                                if (targetEl) {
-                                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    targetEl.style.backgroundColor = 'var(--primary-light)';
-                                    setTimeout(() => {
-                                        targetEl.style.backgroundColor = '';
-                                    }, 2000);
-                                } else {
-                                    showToast('被回复的评论已不存在', 'error');
-                                }
-                            }
+                    // 深度0 或 1：正常渲染
+                    if (depth <= 1) {
+                        const el = comp.renderCommentItem(comment, {
+                            isReply: depth > 0,
+                            isAdmin: isAdmin
                         });
+                        if (depth > 0) {
+                            el.style.marginLeft = '24px';
+                            el.style.borderLeft = '2px solid var(--border)';
+                            el.style.paddingLeft = '8px';
+                        }
 
-                        // 不递归渲染子评论（深度>=2的子评论不再显示）
-                        return refEl;
+                        // 如果是深度1，处理其子评论（深度2）作为引用
+                        if (depth === 1 && comment.children && comment.children.length > 0) {
+                            const children = comment.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                            children.forEach(child => {
+                                // 构造引用项
+                                const parentNickname = getUserDisplayName(comment.profiles);
+                                const parentContent = comment.content || '';
+                                const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
+
+                                // 为子评论构造一个 reply_to_user 对象，让 renderCommentItem 显示引用
+                                child.reply_to_user = {
+                                    id: comment.user_id,
+                                    username: comment.profiles?.username || '用户',
+                                    nickname: parentNickname,
+                                };
+                                // 修改 content，在开头加上引用提示
+                                // 但更好的方式是在渲染后添加引用块，我们使用 renderCommentItem 并设置 isReply=true
+                                // 但 renderCommentItem 会根据 reply_to_user 显示“→ 昵称”，但不会显示内容预览。
+                                // 所以我们额外加一个引用块
+                                const childEl = comp.renderCommentItem(child, {
+                                    isReply: true,
+                                    isAdmin: isAdmin
+                                });
+                                // 添加一个引用块在 content 之前
+                                const quoteDiv = document.createElement('div');
+                                quoteDiv.className = 'reply-quote';
+                                quoteDiv.innerHTML = `<strong>${getUserDisplayName(child.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的评论：<span style="color:var(--text-light);">“${preview}”</span>`;
+                                childEl.prepend(quoteDiv);
+                                // 缩进与深度1对齐
+                                childEl.style.marginLeft = '24px';
+                                childEl.style.borderLeft = '2px solid var(--border)';
+                                childEl.style.paddingLeft = '8px';
+                                // 去除原回复中的“→ 昵称”显示，因为我们用 quoteDiv 代替
+                                // 但 renderCommentItem 内部会显示 reply_to_user，我们可以在渲染后移除
+                                // 简单方法：隐藏原有的 .comment-reply-to
+                                const replyToSpan = childEl.querySelector('.comment-reply-to');
+                                if (replyToSpan) replyToSpan.style.display = 'none';
+                                el.appendChild(childEl);
+                            });
+                        }
+                        return el;
+                    } else {
+                        // 深度 >= 2 不应发生（因为递归限制）
+                        return null;
                     }
-
-                    // 深度 0 或 1：完整渲染评论
-                    const el = comp.renderCommentItem(comment, {
-                        isReply: depth > 0,
-                        isAdmin: isAdmin
-                    });
-
-                    // 设置ID便于跳转
-                    el.id = 'comment-' + comment.id;
-
-                    // 缩进
-                    if (depth > 0) {
-                        el.style.marginLeft = Math.min(depth * 24, 40) + 'px';
-                        el.style.borderLeft = '2px solid var(--border)';
-                        el.style.paddingLeft = '8px';
-                    }
-
-                    // 递归渲染子评论（深度+1）
-                    if (comment.children && comment.children.length > 0) {
-                        comment.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                        const childContainer = document.createElement('div');
-                        childContainer.style.marginTop = '4px';
-                        comment.children.forEach(child => {
-                            const childEl = renderCommentNode(child, depth + 1);
-                            childContainer.appendChild(childEl);
-                        });
-                        el.appendChild(childContainer);
-                    }
-
-                    return el;
                 }
 
-                roots.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
+                // 渲染根评论
                 roots.forEach(root => {
                     const el = renderCommentNode(root, 0);
-                    listDiv.appendChild(el);
+                    if (el) listDiv.appendChild(el);
                 });
+            }
+
+            // 旧函数保留以防调用
+            function renderCommentWithDelete(comment, isReply, isAdmin) {
+                return comp.renderCommentItem(comment, { isReply, isAdmin: isAdmin });
             }
 
             function bindPostActions(postId, postAuthorId, container) {
