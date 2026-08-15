@@ -25,29 +25,19 @@
         .modal .avatar-sm img { width: 32px !important; height: 32px !important; border-radius: 50%; object-fit: cover; }
         .comments-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
         #commentsList { max-height: 400px; overflow-y: auto; margin-bottom: 12px; }
-        .comment-item { margin-bottom: 16px; }
-        .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .comment-item { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .comment-item:last-child { border-bottom: none; }
+        .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
         .comment-user { font-weight: 600; font-size: 14px; cursor: pointer; }
         .comment-user:hover { color: var(--primary); }
         .comment-reply-to { color: var(--text-light); font-size: 13px; }
         .comment-content { font-size: 14px; margin-bottom: 6px; word-break: break-word; }
         .comment-actions { display: flex; gap: 16px; }
         .comment-actions .action-btn { font-size: 13px; }
-        .comment-reply-form { margin-top: 8px; margin-left: 20px; display: flex; gap: 8px; }
+        .comment-reply-form { margin-top: 8px; display: flex; gap: 8px; }
         .comment-reply-form input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; }
         .comment-reply-form input:focus { border-color: var(--primary); }
-        .reply-quote {
-            background: var(--bg-light);
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-            border-left: 3px solid var(--primary);
-        }
-        .reply-quote strong { color: var(--text-main); }
-        .comment-item.level-1 { margin-left: 0; }
-        .comment-item.level-2 { margin-left: 24px; border-left: 2px solid var(--border); padding-left: 8px; }
+        .reply-quote { display: none; }
 
         .post-content .file-card { display: flex; align-items: center; gap: 12px; background: #FCD34D; border-radius: 8px; padding: 10px 16px; margin: 8px 0; min-height: 60px; width: 100%; aspect-ratio: 3 / 1; border: 1px solid #F59E0B; }
         .post-content .file-card .file-card-icon { flex-shrink: 0; color: #92400E; }
@@ -314,7 +304,7 @@
             }
 
             // ============================================================
-            // 核心：只显示两层嵌套，深层回复显示为引用
+            // 抖音/快手风格：全部平铺，不嵌套
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -324,7 +314,7 @@
                     .from('comments')
                     .select('*, profiles:user_id(id, username, nickname, avatar_url, is_banned), reply_to_user:reply_to_user_id(id, username, nickname, is_banned)')
                     .eq('post_id', postId)
-                    .order('created_at', { ascending: true });
+                    .order('created_at', { ascending: false });  // 最新在前
                 if (error) {
                     listDiv.innerHTML = '<p>加载评论失败</p>';
                     return;
@@ -339,81 +329,37 @@
 
                 const isAdmin = currentUser.is_admin === true;
 
-                // 构建评论树
-                const commentMap = {};
-                const roots = [];
-                data.forEach(c => {
-                    commentMap[c.id] = c;
-                    c.children = [];
-                });
-                data.forEach(c => {
-                    if (c.parent_id && commentMap[c.parent_id]) {
-                        commentMap[c.parent_id].children.push(c);
-                    } else {
-                        roots.push(c);
-                    }
-                });
-
-                // 排序
-                roots.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                roots.forEach(root => {
-                    if (root.children) root.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                });
-
-                // 渲染函数：只嵌套两层
-                function renderCommentNode(comment, depth = 0) {
+                data.forEach(comment => {
                     comment.currentUserId = currentUser.id;
                     comment.is_owner = comment.user_id === postAuthorId;
 
-                    // 深度0：根评论
-                    if (depth === 0) {
-                        const el = comp.renderCommentItem(comment, {
-                            isReply: false,
-                            isAdmin: isAdmin
-                        });
-                        // 如果有子评论，处理它们（深度1）
-                        if (comment.children && comment.children.length > 0) {
-                            comment.children.forEach(child => {
-                                // 对每个子评论，创建一个引用回复元素
-                                const parentNickname = getUserDisplayName(comment.profiles);
-                                const parentContent = comment.content || '';
-                                const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
+                    // 平铺渲染，不缩进
+                    const el = comp.renderCommentItem(comment, {
+                        isReply: false,
+                        isAdmin: isAdmin
+                    });
 
-                                // 渲染子评论（深度1）
-                                const childEl = comp.renderCommentItem(child, {
-                                    isReply: true,
-                                    isAdmin: isAdmin
-                                });
-                                // 添加引用块
-                                const quoteDiv = document.createElement('div');
-                                quoteDiv.className = 'reply-quote';
-                                quoteDiv.innerHTML = `<strong>${getUserDisplayName(child.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的评论：<span style="color:var(--text-light);">“${preview}”</span>`;
-                                childEl.prepend(quoteDiv);
-                                // 样式：缩进
-                                childEl.style.marginLeft = '24px';
-                                childEl.style.borderLeft = '2px solid var(--border)';
-                                childEl.style.paddingLeft = '8px';
-                                // 隐藏原有的 reply-to 提示（如果有）
-                                const replyToSpan = childEl.querySelector('.comment-reply-to');
-                                if (replyToSpan) replyToSpan.style.display = 'none';
-                                el.appendChild(childEl);
-                            });
+                    // 如果是回复，显示 → @昵称
+                    if (comment.reply_to_user) {
+                        const replyToSpan = el.querySelector('.comment-reply-to');
+                        if (replyToSpan) {
+                            replyToSpan.textContent = `→ @${getUserDisplayName(comment.reply_to_user)}`;
+                            replyToSpan.style.display = 'inline';
+                        } else {
+                            const header = el.querySelector('.comment-header');
+                            if (header) {
+                                const span = document.createElement('span');
+                                span.className = 'comment-reply-to';
+                                span.textContent = `→ @${getUserDisplayName(comment.reply_to_user)}`;
+                                header.appendChild(span);
+                            }
                         }
-                        return el;
                     }
 
-                    // 其他深度不再递归
-                    return null;
-                }
-
-                // 渲染所有根评论
-                roots.forEach(root => {
-                    const el = renderCommentNode(root, 0);
-                    if (el) listDiv.appendChild(el);
+                    listDiv.appendChild(el);
                 });
             }
 
-            // 兼容旧函数
             function renderCommentWithDelete(comment, isReply, isAdmin) {
                 return comp.renderCommentItem(comment, { isReply, isAdmin: isAdmin });
             }
@@ -446,11 +392,15 @@
                         }
                     } else if (action === 'like-comment' && commentId) await toggleCommentLike(commentId, target);
                     else if (action === 'reply-comment' && commentId) {
+                        // 点击回复：聚焦输入框，带上 @昵称
                         const commentInput = document.getElementById('commentInput');
                         commentInput.focus();
                         commentInput.dataset.parentId = commentId;
-                        const { data: cmt } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
-                        if (cmt) commentInput.dataset.replyToUserId = cmt.user_id;
+                        const { data: cmt } = await supabaseClient.from('comments').select('user_id, profiles!inner(nickname)').eq('id', commentId).single();
+                        if (cmt && cmt.profiles) {
+                            commentInput.dataset.replyToUserId = cmt.user_id;
+                            commentInput.placeholder = `回复 @${cmt.profiles.nickname || '用户'}...`;
+                        }
                     } else if (action === 'share-comment' && commentId) await shareComment(commentId);
                     else if (action === 'report-comment' && commentId) showReportModal('comment', commentId);
                     else if (action === 'delete-comment' && commentId) {
@@ -481,6 +431,7 @@
                     const { error } = await supabaseClient.from('comments').insert(insertData);
                     if (error) return showToast('评论失败: ' + error.message, 'error');
                     input.value = '';
+                    input.placeholder = '写下你的评论...';
                     delete input.dataset.parentId;
                     delete input.dataset.replyToUserId;
                     await loadComments(postId, postAuthorId);
