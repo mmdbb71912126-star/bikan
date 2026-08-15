@@ -8,16 +8,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 发帖页面专用样式 ===== */
+        /* ===== 重置 ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             overflow: hidden;
+            /* 防止页面本身滚动，由内容区控制滚动 */;
         }
 
         .post-container {
@@ -28,7 +30,7 @@
             position: relative;
         }
 
-        /* 顶部工具栏 */
+        /* ===== 顶部工具栏（预留） ===== */
         .post-toolbar {
             display: flex;
             align-items: center;
@@ -38,6 +40,7 @@
             background: white;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
+            z-index: 10;
         }
         .post-toolbar .toolbar-placeholder {
             font-size: 13px;
@@ -65,18 +68,21 @@
             height: 20px;
         }
 
-        /* 内容输入区 */
+        /* ===== 内容区（可滚动） ===== */
         .post-content-area {
             flex: 1;
-            padding: 16px 20px;
             overflow-y: auto;
+            padding: 16px 20px 12px;
             background: white;
+            display: flex;
+            flex-direction: column;
         }
+
+        /* ===== 输入框（无边框） ===== */
         .post-content-area textarea {
             width: 100%;
-            height: 100%;
-            border: none;
-            outline: none;
+            border: none !important;
+            outline: none !important;
             resize: none;
             font-size: 18px;
             line-height: 1.7;
@@ -84,21 +90,29 @@
             color: var(--text-main);
             background: transparent;
             padding: 0;
-            min-height: 200px;
+            min-height: 180px;
+            flex-shrink: 0;
+            /* 高度由 JS 控制，初始占满剩余空间 */;
         }
         .post-content-area textarea::placeholder {
             color: var(--text-light);
             font-size: 18px;
         }
 
-        /* 底部操作栏（右下角固定） */
+        /* ===== 分界线 ===== */
+        .post-divider {
+            border-top: 1px solid var(--border);
+            margin: 12px 0 14px;
+            flex-shrink: 0;
+        }
+
+        /* ===== 底部按钮区域 ===== */
         .post-actions {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
             display: flex;
+            justify-content: flex-end;
             gap: 12px;
-            z-index: 100;
+            padding: 4px 0 16px;
+            flex-shrink: 0;
         }
         .post-actions .btn {
             padding: 10px 28px;
@@ -133,7 +147,7 @@
             transform: none;
         }
 
-        /* 二次确认弹窗（复用 modal 样式） */
+        /* ===== 二次确认弹窗 ===== */
         .confirm-modal .modal {
             max-width: 400px;
         }
@@ -180,56 +194,55 @@
             background: var(--primary-dark);
         }
 
-        /* 响应式 */
+        /* ===== 响应式 ===== */
         @media (max-width: 640px) {
             .post-toolbar {
                 padding: 6px 12px;
                 min-height: 44px;
             }
             .post-content-area {
-                padding: 12px 16px;
+                padding: 12px 16px 8px;
             }
             .post-content-area textarea {
                 font-size: 16px;
+                min-height: 140px;
             }
             .post-content-area textarea::placeholder {
                 font-size: 16px;
-            }
-            .post-actions {
-                bottom: 20px;
-                right: 20px;
-                gap: 8px;
             }
             .post-actions .btn {
                 padding: 8px 20px;
                 font-size: 14px;
                 min-width: 60px;
             }
+            .post-divider {
+                margin: 8px 0 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="post-container">
-        <!-- 顶部工具栏（预留，后续添加按钮） -->
+        <!-- ===== 顶部工具栏（预留） ===== -->
         <div class="post-toolbar" id="toolbar">
             <span class="toolbar-placeholder">工具栏（后续添加）</span>
-            <!-- 后续可添加：加粗、斜体、插入图片、插入链接、表情等 -->
         </div>
 
-        <!-- 内容输入区 -->
-        <div class="post-content-area">
+        <!-- ===== 内容区 ===== -->
+        <div class="post-content-area" id="contentArea">
+            <!-- 输入框 -->
             <textarea id="postContent" placeholder="写点什么..." autofocus></textarea>
-        </div>
 
-        <!-- 右下角操作按钮 -->
-        <div class="post-actions">
-            <button class="btn btn-cancel" id="cancelBtn">取消</button>
-            <button class="btn btn-publish" id="publishBtn">发布</button>
+            <!-- 分界线 -->
+            <div class="post-divider"></div>
+
+            <!-- 底部按钮 -->
+            <div class="post-actions">
+                <button class="btn btn-cancel" id="cancelBtn">取消</button>
+                <button class="btn btn-publish" id="publishBtn">发布</button>
+            </div>
         </div>
     </div>
-
-    <!-- 二次确认弹窗（由 JS 动态生成） -->
-    <div id="confirmModal" style="display:none;"></div>
 
     <script src="js/config.js"></script>
     <script src="js/components.js"></script>
@@ -241,11 +254,14 @@
             const { openModal } = comp;
 
             let currentUser = null;
-            const contentTextarea = document.getElementById('postContent');
+            const textarea = document.getElementById('postContent');
+            const contentArea = document.getElementById('contentArea');
             const cancelBtn = document.getElementById('cancelBtn');
             const publishBtn = document.getElementById('publishBtn');
 
-            // ---------- 初始化 ----------
+            // ============================================================
+            // 1. 初始化
+            // ============================================================
             async function init() {
                 if (!sdkReady) {
                     showToast('Supabase 未初始化', 'error');
@@ -276,11 +292,14 @@
                         return;
                     }
 
+                    // 初始调整输入框高度
+                    adjustTextareaHeight();
+
                     // 绑定事件
                     bindEvents();
 
-                    // 自动聚焦
-                    contentTextarea.focus();
+                    // 聚焦输入框
+                    textarea.focus();
 
                 } catch (e) {
                     console.error('初始化失败', e);
@@ -288,41 +307,105 @@
                 }
             }
 
-            // ---------- 绑定事件 ----------
+            // ============================================================
+            // 2. 调整输入框高度（占满剩余空间 + 随内容扩展）
+            // ============================================================
+            function adjustTextareaHeight() {
+                // 先重置为 auto，获取内容实际高度
+                textarea.style.height = 'auto';
+
+                // 计算剩余空间
+                const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight;
+                const dividerHeight = document.querySelector('.post-divider').offsetHeight;
+                const actionsHeight = document.querySelector('.post-actions').offsetHeight;
+                const contentPadding = 16 + 12; // padding-top + padding-bottom
+                const gap = 12 + 14; // margin-top + margin-bottom (分界线)
+
+                // 内容区可用高度 = 视口高度 - 工具栏 - 分界线 - 按钮 - 内边距 - 间距
+                const availableHeight = window.innerHeight - toolbarHeight - dividerHeight - actionsHeight - contentPadding - gap;
+
+                // 内容实际高度
+                const contentHeight = textarea.scrollHeight;
+
+                // 取较大值：至少占满可用空间，但不超过实际内容高度（防止内容被裁剪）
+                // 但如果内容高度小于可用空间，就拉伸到可用空间
+                const targetHeight = Math.max(contentHeight, availableHeight, 180);
+
+                textarea.style.height = targetHeight + 'px';
+            }
+
+            // ============================================================
+            // 3. 输入时自动调整高度
+            // ============================================================
+            function onInput() {
+                // 先重置为 auto，让 scrollHeight 反映真实内容高度
+                textarea.style.height = 'auto';
+
+                // 获取内容实际高度
+                const contentHeight = textarea.scrollHeight;
+
+                // 获取最小高度（占满可用空间）
+                const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight;
+                const dividerHeight = document.querySelector('.post-divider').offsetHeight;
+                const actionsHeight = document.querySelector('.post-actions').offsetHeight;
+                const contentPadding = 16 + 12;
+                const gap = 12 + 14;
+                const minHeight = Math.max(
+                    window.innerHeight - toolbarHeight - dividerHeight - actionsHeight - contentPadding - gap,
+                    180
+                );
+
+                // 取较大值
+                textarea.style.height = Math.max(contentHeight, minHeight) + 'px';
+            }
+
+            // ============================================================
+            // 4. 窗口变化时重新调整
+            // ============================================================
+            function onResize() {
+                adjustTextareaHeight();
+            }
+
+            // ============================================================
+            // 5. 事件绑定
+            // ============================================================
             function bindEvents() {
+                // 输入时调整高度
+                textarea.addEventListener('input', onInput);
+
+                // 窗口大小变化时调整
+                window.addEventListener('resize', onResize);
+
                 // 取消按钮 -> 二次确认
                 cancelBtn.addEventListener('click', () => {
-                    const content = contentTextarea.value.trim();
+                    const content = textarea.value.trim();
                     if (content) {
                         showConfirmModal(
                             '取消发布',
                             '确定要取消发布吗？输入的内容将丢失。',
                             () => {
-                                // 确认取消
                                 window.location.href = 'app.html';
                             },
                             '取消发布',
                             'danger'
                         );
                     } else {
-                        // 没有内容，直接返回
                         window.location.href = 'app.html';
                     }
                 });
 
                 // 发布按钮 -> 二次确认
                 publishBtn.addEventListener('click', () => {
-                    const content = contentTextarea.value.trim();
+                    const content = textarea.value.trim();
                     if (!content) {
                         showToast('请输入内容', 'error');
-                        contentTextarea.focus();
+                        textarea.focus();
                         return;
                     }
                     showConfirmModal(
                         '发布帖子',
                         '确定发布此帖吗？发布后所有人都能看到。',
                         async () => {
-                            // 确认发布
                             await doPublish();
                         },
                         '发布',
@@ -330,19 +413,18 @@
                     );
                 });
 
-                // Ctrl+Enter 快捷键快速发布（跳过二次确认？还是保留二次确认？）
-                // 保留二次确认，但 Ctrl+Enter 触发发布按钮点击
-                contentTextarea.addEventListener('keydown', (e) => {
+                // Ctrl+Enter 快速发布
+                textarea.addEventListener('keydown', (e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                         e.preventDefault();
                         publishBtn.click();
                     }
                 });
-
-                // 输入时调整按钮状态（有内容时发布按钮高亮？目前不需要）
             }
 
-            // ---------- 二次确认弹窗 ----------
+            // ============================================================
+            // 6. 二次确认弹窗
+            // ============================================================
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
                     <div class="confirm-modal">
@@ -356,16 +438,14 @@
 
                 const modal = openModal(title, content);
 
-                // 取消按钮 -> 关闭弹窗
+                // 取消 -> 关闭弹窗
                 modal.querySelector('#confirmCancelBtn').addEventListener('click', () => {
                     modal.closest('.modal-overlay').remove();
                 });
 
-                // 确认按钮 -> 执行回调
+                // 确认 -> 执行回调
                 modal.querySelector('#confirmOkBtn').addEventListener('click', async () => {
-                    // 先关闭弹窗
                     modal.closest('.modal-overlay').remove();
-                    // 执行确认回调
                     if (typeof onConfirm === 'function') {
                         await onConfirm();
                     }
@@ -380,20 +460,20 @@
                 });
             }
 
-            // ---------- 执行发布 ----------
+            // ============================================================
+            // 7. 执行发布
+            // ============================================================
             async function doPublish() {
-                const content = contentTextarea.value.trim();
+                const content = textarea.value.trim();
                 if (!content) {
                     showToast('请输入内容', 'error');
                     return;
                 }
 
-                // 发布前禁用按钮，防止重复点击
                 publishBtn.disabled = true;
                 publishBtn.textContent = '发布中...';
 
                 try {
-                    // 生成公共 ID
                     const publicId = generatePublicId();
 
                     const { data: newPost, error } = await supabaseClient
@@ -402,7 +482,6 @@
                             user_id: currentUser.id,
                             content: content,
                             public_id: publicId,
-                            // 后续可扩展：media, tags 等
                         })
                         .select()
                         .single();
@@ -416,7 +495,6 @@
 
                     showToast('发布成功！', 'success');
 
-                    // 延迟跳转，让用户看到成功提示
                     setTimeout(() => {
                         window.location.href = 'app.html';
                     }, 800);
@@ -429,7 +507,9 @@
                 }
             }
 
-            // ---------- 生成公共 ID ----------
+            // ============================================================
+            // 8. 工具函数
+            // ============================================================
             function generatePublicId() {
                 const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
                 let result = '';
@@ -439,8 +519,15 @@
                 return result;
             }
 
-            // ---------- 启动 ----------
-            init();
+            // ============================================================
+            // 9. 启动
+            // ============================================================
+            // DOM 加载完成后执行
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
         })();
     </script>
 </body>
