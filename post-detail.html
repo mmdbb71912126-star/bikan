@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 样式与之前相同 ===== */
         .app-container {
             display: block !important;
             height: 100vh !important;
@@ -37,7 +36,6 @@
         .comment-reply-form { margin-top: 8px; margin-left: 20px; display: flex; gap: 8px; }
         .comment-reply-form input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; }
         .comment-reply-form input:focus { border-color: var(--primary); }
-        /* 引用回复的样式 */
         .reply-quote {
             background: var(--bg-light);
             padding: 6px 10px;
@@ -362,78 +360,60 @@
                     if (root.children) root.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 });
 
-                // 渲染函数（只嵌套两层）
+                // 渲染函数：只嵌套两层
                 function renderCommentNode(comment, depth = 0) {
                     comment.currentUserId = currentUser.id;
                     comment.is_owner = comment.user_id === postAuthorId;
 
-                    // 深度0 或 1：正常渲染
-                    if (depth <= 1) {
+                    // 深度0：根评论
+                    if (depth === 0) {
                         const el = comp.renderCommentItem(comment, {
-                            isReply: depth > 0,
+                            isReply: false,
                             isAdmin: isAdmin
                         });
-                        if (depth > 0) {
-                            el.style.marginLeft = '24px';
-                            el.style.borderLeft = '2px solid var(--border)';
-                            el.style.paddingLeft = '8px';
-                        }
-
-                        // 如果是深度1，处理其子评论（深度2）作为引用
-                        if (depth === 1 && comment.children && comment.children.length > 0) {
-                            const children = comment.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                            children.forEach(child => {
-                                // 构造引用项
+                        // 如果有子评论，处理它们（深度1）
+                        if (comment.children && comment.children.length > 0) {
+                            comment.children.forEach(child => {
+                                // 对每个子评论，创建一个引用回复元素
                                 const parentNickname = getUserDisplayName(comment.profiles);
                                 const parentContent = comment.content || '';
                                 const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
 
-                                // 为子评论构造一个 reply_to_user 对象，让 renderCommentItem 显示引用
-                                child.reply_to_user = {
-                                    id: comment.user_id,
-                                    username: comment.profiles?.username || '用户',
-                                    nickname: parentNickname,
-                                };
-                                // 修改 content，在开头加上引用提示
-                                // 但更好的方式是在渲染后添加引用块，我们使用 renderCommentItem 并设置 isReply=true
-                                // 但 renderCommentItem 会根据 reply_to_user 显示“→ 昵称”，但不会显示内容预览。
-                                // 所以我们额外加一个引用块
+                                // 渲染子评论（深度1）
                                 const childEl = comp.renderCommentItem(child, {
                                     isReply: true,
                                     isAdmin: isAdmin
                                 });
-                                // 添加一个引用块在 content 之前
+                                // 添加引用块
                                 const quoteDiv = document.createElement('div');
                                 quoteDiv.className = 'reply-quote';
                                 quoteDiv.innerHTML = `<strong>${getUserDisplayName(child.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的评论：<span style="color:var(--text-light);">“${preview}”</span>`;
                                 childEl.prepend(quoteDiv);
-                                // 缩进与深度1对齐
+                                // 样式：缩进
                                 childEl.style.marginLeft = '24px';
                                 childEl.style.borderLeft = '2px solid var(--border)';
                                 childEl.style.paddingLeft = '8px';
-                                // 去除原回复中的“→ 昵称”显示，因为我们用 quoteDiv 代替
-                                // 但 renderCommentItem 内部会显示 reply_to_user，我们可以在渲染后移除
-                                // 简单方法：隐藏原有的 .comment-reply-to
+                                // 隐藏原有的 reply-to 提示（如果有）
                                 const replyToSpan = childEl.querySelector('.comment-reply-to');
                                 if (replyToSpan) replyToSpan.style.display = 'none';
                                 el.appendChild(childEl);
                             });
                         }
                         return el;
-                    } else {
-                        // 深度 >= 2 不应发生（因为递归限制）
-                        return null;
                     }
+
+                    // 其他深度不再递归
+                    return null;
                 }
 
-                // 渲染根评论
+                // 渲染所有根评论
                 roots.forEach(root => {
                     const el = renderCommentNode(root, 0);
                     if (el) listDiv.appendChild(el);
                 });
             }
 
-            // 旧函数保留以防调用
+            // 兼容旧函数
             function renderCommentWithDelete(comment, isReply, isAdmin) {
                 return comp.renderCommentItem(comment, { isReply, isAdmin: isAdmin });
             }
