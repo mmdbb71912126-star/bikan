@@ -6,6 +6,8 @@
     <title>必看 - 发帖</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- marked.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
         /* ===== 重置 ===== */
@@ -29,26 +31,23 @@
             position: relative;
         }
 
-        /* ===== 顶部工具栏（预留） ===== */
+        /* ===== 顶部工具栏 ===== */
         .post-toolbar {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
+            gap: 6px;
+            padding: 6px 16px;
             min-height: 48px;
             background: white;
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
             z-index: 10;
-        }
-        .post-toolbar .toolbar-placeholder {
-            font-size: 13px;
-            color: var(--text-light);
+            flex-wrap: wrap;
         }
         .post-toolbar .toolbar-btn {
             background: none;
             border: none;
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             color: var(--text-secondary);
@@ -57,17 +56,30 @@
             align-items: center;
             gap: 4px;
             font-size: 13px;
+            white-space: nowrap;
         }
         .post-toolbar .toolbar-btn:hover {
             background: var(--bg-hover);
             color: var(--text-main);
         }
         .post-toolbar .toolbar-btn svg {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
+        }
+        .post-toolbar .toolbar-btn.active {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .post-toolbar .toolbar-spacer {
+            flex: 1;
+        }
+        .post-toolbar .toolbar-label {
+            font-size: 12px;
+            color: var(--text-light);
+            padding: 0 4px;
         }
 
-        /* ===== 内容区（可滚动） ===== */
+        /* ===== 内容区 ===== */
         .post-content-area {
             flex: 1;
             overflow-y: auto;
@@ -92,7 +104,6 @@
             padding: 0;
             min-height: 180px;
             flex-shrink: 0;
-            /* 覆盖全局样式 */;
         }
         .post-content-area #postContent:focus {
             border: none !important;
@@ -104,6 +115,89 @@
             font-size: 18px;
         }
 
+        /* ===== Markdown 预览 ===== */
+        .post-content-area .markdown-preview {
+            display: none;
+            width: 100%;
+            min-height: 180px;
+            font-size: 17px;
+            line-height: 1.8;
+            color: var(--text-main);
+            padding: 0;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .post-content-area .markdown-preview.active {
+            display: block;
+        }
+        .post-content-area .markdown-preview h1,
+        .post-content-area .markdown-preview h2,
+        .post-content-area .markdown-preview h3,
+        .post-content-area .markdown-preview h4 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .post-content-area .markdown-preview h1 {
+            font-size: 28px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+        .post-content-area .markdown-preview h2 {
+            font-size: 24px;
+        }
+        .post-content-area .markdown-preview h3 {
+            font-size: 20px;
+        }
+        .post-content-area .markdown-preview h4 {
+            font-size: 18px;
+        }
+        .post-content-area .markdown-preview p {
+            margin-bottom: 12px;
+        }
+        .post-content-area .markdown-preview ul,
+        .post-content-area .markdown-preview ol {
+            padding-left: 28px;
+            margin-bottom: 12px;
+        }
+        .post-content-area .markdown-preview li {
+            margin-bottom: 4px;
+        }
+        .post-content-area .markdown-preview blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 16px;
+            margin: 12px 0;
+            color: var(--text-secondary);
+        }
+        .post-content-area .markdown-preview code {
+            background: var(--bg-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: monospace;
+        }
+        .post-content-area .markdown-preview pre {
+            background: var(--bg-light);
+            padding: 12px 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 12px 0;
+        }
+        .post-content-area .markdown-preview pre code {
+            background: transparent;
+            padding: 0;
+        }
+        .post-content-area .markdown-preview a {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        .post-content-area .markdown-preview img {
+            max-width: 100%;
+            border-radius: var(--radius);
+            margin: 8px 0;
+        }
+
         /* ===== 分界线 ===== */
         .post-divider {
             border-top: 1px solid var(--border);
@@ -111,7 +205,7 @@
             flex-shrink: 0;
         }
 
-        /* ===== 底部按钮区域 ===== */
+        /* ===== 底部按钮 ===== */
         .post-actions {
             display: flex;
             justify-content: flex-end;
@@ -199,11 +293,54 @@
             background: var(--primary-dark);
         }
 
+        /* ===== Markdown 帮助弹窗 ===== */
+        .help-modal .modal {
+            max-width: 560px;
+        }
+        .help-modal .modal-body {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        .help-modal .modal-body code {
+            background: var(--bg-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .help-modal .modal-body .help-row {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            padding: 6px 0;
+        }
+        .help-modal .modal-body .help-row:last-child {
+            border-bottom: none;
+        }
+        .help-modal .modal-body .help-syntax {
+            width: 120px;
+            font-weight: 500;
+            color: var(--text-main);
+            flex-shrink: 0;
+        }
+        .help-modal .modal-body .help-desc {
+            color: var(--text-secondary);
+        }
+
         /* ===== 响应式 ===== */
         @media (max-width: 640px) {
             .post-toolbar {
-                padding: 6px 12px;
-                min-height: 44px;
+                padding: 4px 10px;
+                min-height: 40px;
+                gap: 4px;
+            }
+            .post-toolbar .toolbar-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            .post-toolbar .toolbar-btn svg {
+                width: 16px;
+                height: 16px;
             }
             .post-content-area {
                 padding: 12px 16px 8px;
@@ -215,6 +352,10 @@
             .post-content-area #postContent::placeholder {
                 font-size: 16px;
             }
+            .post-content-area .markdown-preview {
+                font-size: 15px;
+                min-height: 140px;
+            }
             .post-actions .btn {
                 padding: 8px 20px;
                 font-size: 14px;
@@ -223,20 +364,40 @@
             .post-divider {
                 margin: 8px 0 10px;
             }
+            .help-modal .modal-body .help-syntax {
+                width: 80px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="post-container">
-        <!-- ===== 顶部工具栏（预留） ===== -->
+        <!-- ===== 顶部工具栏 ===== -->
         <div class="post-toolbar" id="toolbar">
-            <span class="toolbar-placeholder">工具栏（后续添加）</span>
+            <!-- 预览切换按钮 -->
+            <button class="toolbar-btn" id="previewToggle" title="切换 Markdown 预览">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="previewLabel">预览</span>
+            </button>
+
+            <!-- 帮助按钮 -->
+            <button class="toolbar-btn" id="helpBtn" title="Markdown 使用帮助">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                帮助
+            </button>
+
+            <span class="toolbar-spacer"></span>
+            <span class="toolbar-label">Markdown 已启用</span>
         </div>
 
         <!-- ===== 内容区 ===== -->
         <div class="post-content-area" id="contentArea">
             <!-- 输入框 -->
-            <textarea id="postContent" placeholder="写点什么..." autofocus></textarea>
+            <textarea id="postContent" placeholder="写点什么... 支持 Markdown 语法" autofocus></textarea>
+
+            <!-- Markdown 预览区 -->
+            <div class="markdown-preview" id="markdownPreview"></div>
 
             <!-- 分界线 -->
             <div class="post-divider"></div>
@@ -260,9 +421,15 @@
 
             let currentUser = null;
             const textarea = document.getElementById('postContent');
+            const previewDiv = document.getElementById('markdownPreview');
             const contentArea = document.getElementById('contentArea');
             const cancelBtn = document.getElementById('cancelBtn');
             const publishBtn = document.getElementById('publishBtn');
+            const previewToggle = document.getElementById('previewToggle');
+            const previewLabel = document.getElementById('previewLabel');
+            const helpBtn = document.getElementById('helpBtn');
+
+            let isPreviewMode = false;
 
             // ============================================================
             // 1. 初始化
@@ -297,13 +464,9 @@
                         return;
                     }
 
-                    // 初始调整输入框高度
+                    // 初始调整
                     adjustTextareaHeight();
-
-                    // 绑定事件
                     bindEvents();
-
-                    // 聚焦输入框
                     textarea.focus();
 
                 } catch (e) {
@@ -313,43 +476,27 @@
             }
 
             // ============================================================
-            // 2. 调整输入框高度（占满剩余空间 + 随内容扩展）
+            // 2. 调整输入框高度
             // ============================================================
             function adjustTextareaHeight() {
-                // 先重置为 auto，获取内容实际高度
                 textarea.style.height = 'auto';
-
-                // 计算剩余空间
                 const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight;
                 const dividerHeight = document.querySelector('.post-divider').offsetHeight;
                 const actionsHeight = document.querySelector('.post-actions').offsetHeight;
-                const contentPadding = 16 + 12; // padding-top + padding-bottom
-                const gap = 12 + 14; // margin-top + margin-bottom (分界线)
-
-                // 内容区可用高度 = 视口高度 - 工具栏 - 分界线 - 按钮 - 内边距 - 间距
+                const contentPadding = 16 + 12;
+                const gap = 12 + 14;
                 const availableHeight = window.innerHeight - toolbarHeight - dividerHeight - actionsHeight - contentPadding - gap;
-
-                // 内容实际高度
                 const contentHeight = textarea.scrollHeight;
-
-                // 取较大值：至少占满可用空间，但不超过实际内容高度（防止内容被裁剪）
-                // 但如果内容高度小于可用空间，就拉伸到可用空间
                 const targetHeight = Math.max(contentHeight, availableHeight, 180);
-
                 textarea.style.height = targetHeight + 'px';
+
+                // 预览区高度同步
+                previewDiv.style.minHeight = targetHeight + 'px';
             }
 
-            // ============================================================
-            // 3. 输入时自动调整高度
-            // ============================================================
             function onInput() {
-                // 先重置为 auto，让 scrollHeight 反映真实内容高度
                 textarea.style.height = 'auto';
-
-                // 获取内容实际高度
                 const contentHeight = textarea.scrollHeight;
-
-                // 获取最小高度（占满可用空间）
                 const toolbarHeight = document.querySelector('.post-toolbar').offsetHeight;
                 const dividerHeight = document.querySelector('.post-divider').offsetHeight;
                 const actionsHeight = document.querySelector('.post-actions').offsetHeight;
@@ -359,38 +506,106 @@
                     window.innerHeight - toolbarHeight - dividerHeight - actionsHeight - contentPadding - gap,
                     180
                 );
+                const targetHeight = Math.max(contentHeight, minHeight);
+                textarea.style.height = targetHeight + 'px';
+                previewDiv.style.minHeight = targetHeight + 'px';
 
-                // 取较大值
-                textarea.style.height = Math.max(contentHeight, minHeight) + 'px';
+                // 预览模式下实时渲染
+                if (isPreviewMode) {
+                    renderMarkdown();
+                }
             }
 
-            // ============================================================
-            // 4. 窗口变化时重新调整
-            // ============================================================
             function onResize() {
                 adjustTextareaHeight();
             }
 
             // ============================================================
-            // 5. 事件绑定
+            // 3. Markdown 渲染
+            // ============================================================
+            function renderMarkdown() {
+                const raw = textarea.value || '';
+                try {
+                    const html = marked.parse(raw);
+                    previewDiv.innerHTML = html;
+                } catch (e) {
+                    previewDiv.innerHTML = '<p style="color:var(--danger);">渲染出错，请检查 Markdown 语法</p>';
+                }
+            }
+
+            // ============================================================
+            // 4. 切换预览模式
+            // ============================================================
+            function togglePreview() {
+                isPreviewMode = !isPreviewMode;
+
+                if (isPreviewMode) {
+                    // 切换到预览
+                    textarea.style.display = 'none';
+                    previewDiv.classList.add('active');
+                    renderMarkdown();
+                    previewLabel.textContent = '编辑';
+                    previewToggle.classList.add('active');
+                } else {
+                    // 切回编辑
+                    textarea.style.display = 'block';
+                    previewDiv.classList.remove('active');
+                    previewLabel.textContent = '预览';
+                    previewToggle.classList.remove('active');
+                    // 恢复输入框高度
+                    setTimeout(adjustTextareaHeight, 50);
+                }
+            }
+
+            // ============================================================
+            // 5. Markdown 帮助
+            // ============================================================
+            function showHelp() {
+                const helpContent = `
+                    <div class="help-modal">
+                        <div style="margin-bottom:12px;font-size:15px;font-weight:600;color:var(--text-main);">Markdown 语法速查</div>
+                        <div class="help-row"><span class="help-syntax"><code># 标题</code></span><span class="help-desc">一级标题（最多支持 ###### 六级）</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>**粗体**</code></span><span class="help-desc">加粗文本</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>*斜体*</code></span><span class="help-desc">斜体文本</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>~~删除线~~</code></span><span class="help-desc">删除线</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>[链接](url)</code></span><span class="help-desc">插入超链接</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>![图片](url)</code></span><span class="help-desc">插入图片</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>- 列表项</code></span><span class="help-desc">无序列表（支持 + 和 *）</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>1. 列表项</code></span><span class="help-desc">有序列表</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>> 引用</code></span><span class="help-desc">引用块</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>`code`</code></span><span class="help-desc">行内代码</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>```代码块```</code></span><span class="help-desc">多行代码块（可指定语言）</span></div>
+                        <div class="help-row"><span class="help-syntax"><code>---</code></span><span class="help-desc">分隔线</span></div>
+                        <div style="margin-top:12px;font-size:13px;color:var(--text-light);">提示：发布后帖子内容将以 Markdown 格式渲染显示</div>
+                    </div>
+                `;
+
+                const modal = openModal('Markdown 帮助', helpContent);
+                // 给 modal 添加类用于样式
+                modal.closest('.modal-overlay').classList.add('help-modal');
+            }
+
+            // ============================================================
+            // 6. 事件绑定
             // ============================================================
             function bindEvents() {
-                // 输入时调整高度
                 textarea.addEventListener('input', onInput);
-
-                // 窗口大小变化时调整
                 window.addEventListener('resize', onResize);
 
-                // 取消按钮 -> 二次确认
+                // 预览切换
+                previewToggle.addEventListener('click', togglePreview);
+
+                // 帮助
+                helpBtn.addEventListener('click', showHelp);
+
+                // 取消
                 cancelBtn.addEventListener('click', () => {
                     const content = textarea.value.trim();
                     if (content) {
                         showConfirmModal(
                             '取消发布',
                             '确定要取消发布吗？输入的内容将丢失。',
-                            () => {
-                                window.location.href = 'app.html';
-                            },
+                            () => { window.location.href = 'app.html'; },
                             '取消发布',
                             'danger'
                         );
@@ -399,7 +614,7 @@
                     }
                 });
 
-                // 发布按钮 -> 二次确认
+                // 发布
                 publishBtn.addEventListener('click', () => {
                     const content = textarea.value.trim();
                     if (!content) {
@@ -410,15 +625,13 @@
                     showConfirmModal(
                         '发布帖子',
                         '确定发布此帖吗？发布后所有人都能看到。',
-                        async () => {
-                            await doPublish();
-                        },
+                        async () => { await doPublish(); },
                         '发布',
                         'primary'
                     );
                 });
 
-                // Ctrl+Enter 快速发布
+                // Ctrl+Enter
                 textarea.addEventListener('keydown', (e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                         e.preventDefault();
@@ -428,7 +641,7 @@
             }
 
             // ============================================================
-            // 6. 二次确认弹窗
+            // 7. 二次确认弹窗
             // ============================================================
             function showConfirmModal(title, message, onConfirm, confirmText, confirmType = 'primary') {
                 const content = `
@@ -443,12 +656,10 @@
 
                 const modal = openModal(title, content);
 
-                // 取消 -> 关闭弹窗
                 modal.querySelector('#confirmCancelBtn').addEventListener('click', () => {
                     modal.closest('.modal-overlay').remove();
                 });
 
-                // 确认 -> 执行回调
                 modal.querySelector('#confirmOkBtn').addEventListener('click', async () => {
                     modal.closest('.modal-overlay').remove();
                     if (typeof onConfirm === 'function') {
@@ -456,7 +667,6 @@
                     }
                 });
 
-                // 点击遮罩关闭
                 const overlay = modal.closest('.modal-overlay');
                 overlay.addEventListener('click', (e) => {
                     if (e.target === overlay) {
@@ -466,7 +676,7 @@
             }
 
             // ============================================================
-            // 7. 执行发布
+            // 8. 执行发布
             // ============================================================
             async function doPublish() {
                 const content = textarea.value.trim();
@@ -481,12 +691,14 @@
                 try {
                     const publicId = generatePublicId();
 
+                    // 保存原始 Markdown 内容（不转换）
                     const { data: newPost, error } = await supabaseClient
                         .from('posts')
                         .insert({
                             user_id: currentUser.id,
-                            content: content,
+                            content: content, // 存 Markdown 源码
                             public_id: publicId,
+                            // 后续可加字段: is_markdown: true
                         })
                         .select()
                         .single();
@@ -499,7 +711,6 @@
                     }
 
                     showToast('发布成功！', 'success');
-
                     setTimeout(() => {
                         window.location.href = 'app.html';
                     }, 800);
@@ -513,7 +724,7 @@
             }
 
             // ============================================================
-            // 8. 工具函数
+            // 9. 工具函数
             // ============================================================
             function generatePublicId() {
                 const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -525,7 +736,7 @@
             }
 
             // ============================================================
-            // 9. 启动
+            // 10. 启动
             // ============================================================
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
