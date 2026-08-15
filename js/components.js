@@ -37,6 +37,11 @@
         logo: (size = 160) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size * 0.68}" viewBox="0 0 1000 680"><path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="black" fill-rule="evenodd" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="484" y="273" width="32" height="100" rx="10" fill="black" /><rect x="488" y="383" width="24" height="24" rx="8" fill="black" /></svg>`,
         more: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>`,
         lock: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`,
+        // 媒体文件图标
+        image: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+        video: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+        audio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>`,
+        download: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
     };
 
     // ---------- 工具函数 ----------
@@ -56,6 +61,14 @@
         }
         const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=667eea&color=fff&size=64`;
         return `<div class="${size}" data-user-id="${user.id}" data-action="view-profile" style="cursor:pointer;"><img src="${avatarUrl}" alt="${user.username}" /></div>`;
+    }
+
+    function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     // ---------- 弹窗 ----------
@@ -121,7 +134,117 @@
         }, 3500);
     }
 
-    // ---------- 渲染帖子卡片 ----------
+    // ---------- 文件卡片（黄色长条 3:1） ----------
+    function renderFileCard(file) {
+        const card = document.createElement('div');
+        card.className = 'file-card';
+        card.dataset.fileId = file.id;
+
+        // 根据文件类型选择图标
+        let icon = Icons.file;
+        if (file.file_type) {
+            if (file.file_type.startsWith('image/')) icon = Icons.image;
+            else if (file.file_type.startsWith('video/')) icon = Icons.video;
+            else if (file.file_type.startsWith('audio/')) icon = Icons.audio;
+        }
+
+        const sizeText = formatFileSize(file.file_size);
+
+        card.innerHTML = `
+            <div class="file-card-icon">${icon}</div>
+            <div class="file-card-info">
+                <div class="file-card-name">${file.file_name}</div>
+                <div class="file-card-size">${sizeText}</div>
+            </div>
+            <a href="${file.file_url}" download class="file-card-download" title="下载文件">${Icons.download}</a>
+        `;
+
+        // 如果是图片/视频/音频，点击卡片预览
+        if (file.file_type && file.file_type.startsWith('image/')) {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.file-card-download')) return;
+                openModal('图片预览', `<img src="${file.file_url}" style="max-width:100%;max-height:80vh;border-radius:8px;" />`);
+            });
+        } else if (file.file_type && file.file_type.startsWith('video/')) {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.file-card-download')) return;
+                openModal('视频预览', `<video src="${file.file_url}" controls style="max-width:100%;max-height:80vh;border-radius:8px;"></video>`);
+            });
+        } else if (file.file_type && file.file_type.startsWith('audio/')) {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.file-card-download')) return;
+                openModal('音频播放', `<audio src="${file.file_url}" controls style="width:100%;"></audio>`);
+            });
+        }
+
+        return card;
+    }
+
+    // ---------- 渲染帖子内容中的自定义媒体语法 ----------
+    function renderPostContentWithMedia(content, fileMap = {}) {
+        if (!content) return '';
+
+        let html = content;
+
+        // 替换 [img]fileId[/img]
+        html = html.replace(/\[img\]([^\]]+)\[\/img\]/g, (match, id) => {
+            const file = fileMap[id];
+            if (file) {
+                return `<div class="post-media-wrapper"><img src="${file.file_url}" alt="${file.file_name}" class="post-media-img" loading="lazy" /></div>`;
+            }
+            return `<span class="media-placeholder">🖼️ 图片未找到 (${id})</span>`;
+        });
+
+        // 替换 [video]fileId[/video]
+        html = html.replace(/\[video\]([^\]]+)\[\/video\]/g, (match, id) => {
+            const file = fileMap[id];
+            if (file) {
+                return `<div class="post-media-wrapper"><video src="${file.file_url}" controls class="post-media-video" preload="metadata"></video></div>`;
+            }
+            return `<span class="media-placeholder">🎬 视频未找到 (${id})</span>`;
+        });
+
+        // 替换 [audio]fileId[/audio]
+        html = html.replace(/\[audio\]([^\]]+)\[\/audio\]/g, (match, id) => {
+            const file = fileMap[id];
+            if (file) {
+                return `<div class="post-media-wrapper"><audio src="${file.file_url}" controls class="post-media-audio" preload="metadata"></audio></div>`;
+            }
+            return `<span class="media-placeholder">🎵 音频未找到 (${id})</span>`;
+        });
+
+        // 替换 [file]fileId[/file]
+        html = html.replace(/\[file\]([^\]]+)\[\/file\]/g, (match, id) => {
+            const file = fileMap[id];
+            if (file) {
+                // 使用文件卡片渲染
+                const card = renderFileCard(file);
+                return card.outerHTML;
+            }
+            return `<span class="media-placeholder">📄 文件未找到 (${id})</span>`;
+        });
+
+        return html;
+    }
+
+    // ---------- 提取帖子中的所有文件ID ----------
+    function extractFileIdsFromContent(content) {
+        if (!content) return [];
+        const ids = [];
+        const regex = /\[(img|video|audio|file)\]([^\]]+)\[\/\1\]/g;
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+            ids.push(match[2]);
+        }
+        return [...new Set(ids)];
+    }
+
+    // ============================================================
+    // 渲染帖子卡片（兼容原有功能 + 媒体渲染）
+    // ============================================================
     function renderPostCard(post, options = {}) {
         if (!post) return document.createElement('div');
         const { showActions = true, isDetail = false } = options;
@@ -130,6 +253,7 @@
         card.className = 'post-card';
         card.dataset.postId = post.id;
 
+        // ---------- 头部 ----------
         const header = document.createElement('div');
         header.className = 'post-header';
 
@@ -177,12 +301,45 @@
 
         card.appendChild(header);
 
+        // ---------- 话题标签（在内容上方） ----------
+        if (post.content) {
+            const tagRegex = /#\w+/g;
+            const tags = post.content.match(tagRegex);
+            if (tags && tags.length > 0) {
+                const tagsDiv = document.createElement('div');
+                tagsDiv.className = 'post-tags';
+                tags.forEach(tag => {
+                    const tagEl = document.createElement('span');
+                    tagEl.className = 'tag';
+                    tagEl.dataset.tag = tag.substring(1);
+                    tagEl.textContent = tag;
+                    tagsDiv.appendChild(tagEl);
+                });
+                card.appendChild(tagsDiv);
+            }
+        }
+
+        // ---------- 内容 ----------
         const contentDiv = document.createElement('div');
         contentDiv.className = 'post-content';
-        contentDiv.textContent = post.content || '';
+        // 如果有文件映射，渲染媒体
+        if (post.fileMap) {
+            contentDiv.innerHTML = renderPostContentWithMedia(post.content, post.fileMap);
+        } else {
+            // 简单处理：如果内容包含媒体语法但没文件映射，显示占位
+            const hasMediaSyntax = /\[(img|video|audio|file)\]/.test(post.content);
+            if (hasMediaSyntax) {
+                // 尝试从内容中提取文件ID，需要异步加载文件信息
+                // 这里暂时只显示文本，后续在app.js中处理
+                contentDiv.textContent = post.content || '';
+            } else {
+                contentDiv.textContent = post.content || '';
+            }
+        }
         card.appendChild(contentDiv);
 
-        if (post.tags && post.tags.length) {
+        // ---------- 旧版标签兼容 ----------
+        if (post.tags && post.tags.length && !post.content?.match(/#\w+/g)) {
             const tagsDiv = document.createElement('div');
             tagsDiv.className = 'post-tags';
             post.tags.forEach(tag => {
@@ -195,6 +352,7 @@
             card.appendChild(tagsDiv);
         }
 
+        // ---------- 旧版媒体 ----------
         if (post.media && post.media.length) {
             const mediaGrid = document.createElement('div');
             mediaGrid.className = 'post-media-grid';
@@ -234,11 +392,11 @@
             card.appendChild(mediaGrid);
         }
 
+        // ---------- 操作按钮 ----------
         if (showActions) {
             const actions = document.createElement('div');
             actions.className = 'post-actions';
 
-            // 点赞
             const likeBtn = document.createElement('button');
             likeBtn.className = `action-btn ${post.liked_by_me ? 'liked' : ''}`;
             likeBtn.dataset.action = 'like';
@@ -246,7 +404,6 @@
             likeBtn.innerHTML = `${post.liked_by_me ? Icons.heartFilled : Icons.heart}<span class="count">${post.like_count || 0}</span>`;
             actions.appendChild(likeBtn);
 
-            // 评论
             const commentBtn = document.createElement('button');
             commentBtn.className = 'action-btn';
             commentBtn.dataset.action = 'comment';
@@ -260,7 +417,6 @@
             }
             actions.appendChild(commentBtn);
 
-            // 收藏
             const favBtn = document.createElement('button');
             favBtn.className = `action-btn ${post.favorited_by_me ? 'favorited' : ''}`;
             favBtn.dataset.action = 'favorite';
@@ -268,15 +424,13 @@
             favBtn.innerHTML = `${post.favorited_by_me ? Icons.bookmarkFilled : Icons.bookmark}<span class="count">${post.favorite_count || 0}</span>`;
             actions.appendChild(favBtn);
 
-            // 分享（不显示计数）
             const shareBtn = document.createElement('button');
             shareBtn.className = 'action-btn';
             shareBtn.dataset.action = 'share';
             shareBtn.dataset.postId = post.id;
-            shareBtn.innerHTML = `${Icons.share}`;
+            shareBtn.innerHTML = Icons.share;
             actions.appendChild(shareBtn);
 
-            // 更多操作
             if (post.is_owner) {
                 const editBtn = document.createElement('button');
                 editBtn.className = 'action-btn';
@@ -306,325 +460,24 @@
         return card;
     }
 
-    // ---------- 渲染评论项 ----------
-    function renderCommentItem(comment, options = {}) {
-        const { isReply = false } = options;
-        const item = document.createElement('div');
-        item.className = 'comment-item';
-
-        const header = document.createElement('div');
-        header.className = 'comment-header';
-
-        const avatar = document.createElement('div');
-        avatar.className = 'avatar-sm';
-        avatar.dataset.userId = comment.user_id;
-        avatar.dataset.action = 'view-profile';
-        avatar.style.cursor = 'pointer';
-        const avatarImg = document.createElement('img');
-        const avatarUrl = comment.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.profiles?.username || 'U')}&background=667eea&color=fff&size=32`;
-        avatarImg.src = avatarUrl;
-        avatarImg.alt = comment.profiles?.username || 'avatar';
-        avatar.appendChild(avatarImg);
-        header.appendChild(avatar);
-
-        const userInfo = document.createElement('span');
-        userInfo.className = 'comment-user';
-        userInfo.textContent = getUserDisplayName(comment.profiles);
-        userInfo.dataset.userId = comment.user_id;
-        userInfo.dataset.action = 'view-profile';
-        userInfo.style.cursor = 'pointer';
-        header.appendChild(userInfo);
-
-        if (comment.reply_to_user) {
-            const replyTo = document.createElement('span');
-            replyTo.className = 'comment-reply-to';
-            replyTo.textContent = '→ ' + getUserDisplayName(comment.reply_to_user);
-            header.appendChild(replyTo);
-        }
-
-        const time = document.createElement('span');
-        time.style.cssText = 'font-size:12px;color:var(--text-light);margin-left:auto;';
-        time.textContent = new Date(comment.created_at).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        header.appendChild(time);
-
-        item.appendChild(header);
-
-        const content = document.createElement('div');
-        content.className = 'comment-content';
-        content.textContent = comment.content || '';
-        item.appendChild(content);
-
-        const actions = document.createElement('div');
-        actions.className = 'comment-actions';
-
-        const likeBtn = document.createElement('button');
-        likeBtn.className = 'action-btn';
-        likeBtn.dataset.action = 'like-comment';
-        likeBtn.dataset.commentId = comment.id;
-        likeBtn.innerHTML = Icons.heart;
-        actions.appendChild(likeBtn);
-
-        const replyBtn = document.createElement('button');
-        replyBtn.className = 'action-btn';
-        replyBtn.dataset.action = 'reply-comment';
-        replyBtn.dataset.commentId = comment.id;
-        replyBtn.textContent = '回复';
-        actions.appendChild(replyBtn);
-
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'action-btn';
-        shareBtn.dataset.action = 'share-comment';
-        shareBtn.dataset.commentId = comment.id;
-        shareBtn.textContent = '分享';
-        actions.appendChild(shareBtn);
-
-        if (!comment.is_owner) {
-            const reportBtn = document.createElement('button');
-            reportBtn.className = 'action-btn';
-            reportBtn.dataset.action = 'report-comment';
-            reportBtn.dataset.commentId = comment.id;
-            reportBtn.textContent = '举报';
-            actions.appendChild(reportBtn);
-        }
-
-        item.appendChild(actions);
-
-        return item;
-    }
-
-    // ---------- 渲染通知 ----------
-    function renderNotificationItem(notification) {
-        const item = document.createElement('div');
-        item.className = 'notification-card';
-        if (!notification.is_read) {
-            item.style.borderLeft = '4px solid var(--primary)';
-        }
-
-        const avatarDiv = document.createElement('div');
-        avatarDiv.className = 'avatar-sm';
-        avatarDiv.dataset.userId = notification.actor_id;
-        avatarDiv.dataset.action = 'view-profile';
-        avatarDiv.style.cursor = 'pointer';
-        const avatarImg = document.createElement('img');
-        const avatarUrl = notification.actor?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.actor?.username || 'U')}&background=667eea&color=fff&size=32`;
-        avatarImg.src = avatarUrl;
-        avatarImg.alt = 'actor';
-        avatarDiv.appendChild(avatarImg);
-        item.appendChild(avatarDiv);
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'notification-content';
-
-        const text = document.createElement('div');
-        text.className = 'notification-text';
-        let displayText = notification.content || '';
-        if (notification.type === 'like') {
-            displayText = `${getUserDisplayName(notification.actor)} 点赞了你的帖子`;
-        } else if (notification.type === 'comment') {
-            displayText = `${getUserDisplayName(notification.actor)} 评论了你的帖子`;
-        } else if (notification.type === 'follow') {
-            displayText = `${getUserDisplayName(notification.actor)} 关注了你`;
-        } else if (notification.type === 'friend_request') {
-            displayText = `${getUserDisplayName(notification.actor)} 向你发送了好友请求`;
-        } else if (notification.type === 'admin_action') {
-            displayText = `管理员: ${notification.content}`;
-        } else if (notification.type === 'system') {
-            displayText = notification.content;
-        }
-        text.textContent = displayText;
-        contentDiv.appendChild(text);
-
-        const time = document.createElement('div');
-        time.className = 'notification-time';
-        time.textContent = new Date(notification.created_at).toLocaleString();
-        contentDiv.appendChild(time);
-
-        item.appendChild(contentDiv);
-
-        if (!notification.is_read) {
-            const dot = document.createElement('div');
-            dot.className = 'unread-dot';
-            item.appendChild(dot);
-        }
-
-        return item;
-    }
-
-    // ---------- 渲染用户卡片 ----------
-    function renderUserCard(user, options = {}) {
-        const { showFollowBtn = false, isFollowing = false, showBlockBtn = false } = options;
-
-        const card = document.createElement('div');
-        card.className = 'user-card';
-
-        const avatarDiv = document.createElement('div');
-        avatarDiv.className = 'avatar';
-        avatarDiv.dataset.userId = user.id;
-        avatarDiv.dataset.action = 'view-profile';
-        avatarDiv.style.cursor = 'pointer';
-        const avatarImg = document.createElement('img');
-        const avatarUrl = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'U')}&background=667eea&color=fff&size=64`;
-        avatarImg.src = avatarUrl;
-        avatarImg.alt = user.username || 'avatar';
-        avatarDiv.appendChild(avatarImg);
-        card.appendChild(avatarDiv);
-
-        const info = document.createElement('div');
-        info.className = 'user-card-info';
-        info.dataset.userId = user.id;
-        info.dataset.action = 'view-profile';
-        info.style.cursor = 'pointer';
-
-        const name = document.createElement('div');
-        name.className = 'post-user-name';
-        name.textContent = getUserDisplayName(user);
-        info.appendChild(name);
-
-        const handle = document.createElement('div');
-        handle.className = 'post-user-id';
-        handle.textContent = getUserHandle(user);
-        info.appendChild(handle);
-
-        if (user.bio) {
-            const bio = document.createElement('div');
-            bio.style.cssText = 'font-size:13px;color:var(--text-secondary);margin-top:4px;';
-            bio.textContent = user.bio;
-            info.appendChild(bio);
-        }
-
-        card.appendChild(info);
-
-        const actions = document.createElement('div');
-        actions.className = 'user-card-actions';
-
-        if (showFollowBtn) {
-            const followBtn = document.createElement('button');
-            followBtn.className = `btn ${isFollowing ? 'btn-secondary' : 'btn-primary'} btn-sm`;
-            followBtn.dataset.action = isFollowing ? 'unfollow' : 'follow';
-            followBtn.dataset.userId = user.id;
-            followBtn.textContent = isFollowing ? '已关注' : '关注';
-            actions.appendChild(followBtn);
-        }
-
-        if (showBlockBtn) {
-            const blockBtn = document.createElement('button');
-            blockBtn.className = 'btn btn-secondary btn-sm';
-            blockBtn.dataset.action = 'block';
-            blockBtn.dataset.userId = user.id;
-            blockBtn.textContent = '拉黑';
-            actions.appendChild(blockBtn);
-        }
-
-        card.appendChild(actions);
-
-        return card;
-    }
-
-    // ---------- 渲染话题卡片 ----------
-    function renderTopicCard(topic, options = {}) {
-        const { showJoin = false } = options;
-
-        const card = document.createElement('div');
-        card.className = 'topic-card';
-
-        const name = document.createElement('div');
-        name.className = 'topic-name';
-        name.textContent = topic.name;
-        card.appendChild(name);
-
-        if (topic.description) {
-            const desc = document.createElement('div');
-            desc.className = 'topic-desc';
-            desc.textContent = topic.description;
-            card.appendChild(desc);
-        }
-
-        const meta = document.createElement('div');
-        meta.className = 'topic-meta';
-        const creator = document.createElement('span');
-        creator.textContent = '创建者: ' + getUserDisplayName(topic.creator);
-        meta.appendChild(creator);
-
-        const time = document.createElement('span');
-        time.textContent = new Date(topic.created_at).toLocaleDateString();
-        meta.appendChild(time);
-
-        card.appendChild(meta);
-
-        if (showJoin) {
-            const joinBtn = document.createElement('button');
-            joinBtn.className = 'btn btn-primary btn-sm';
-            joinBtn.dataset.action = 'join-topic';
-            joinBtn.dataset.topicId = topic.id;
-            joinBtn.textContent = '加入讨论';
-            card.appendChild(joinBtn);
-        }
-
-        return card;
-    }
-
-    // ---------- 渲染文件详情 ----------
-    function renderFileDetail(file) {
-        const div = document.createElement('div');
-        div.className = 'file-item';
-
-        const icon = document.createElement('div');
-        icon.className = 'file-icon';
-        icon.innerHTML = Icons.file;
-        div.appendChild(icon);
-
-        const info = document.createElement('div');
-        info.className = 'file-info';
-
-        const name = document.createElement('div');
-        name.className = 'file-name';
-        name.textContent = file.file_name || '文件';
-        info.appendChild(name);
-
-        if (file.file_size) {
-            const size = document.createElement('div');
-            size.className = 'file-size';
-            size.textContent = formatFileSize(file.file_size);
-            info.appendChild(size);
-        }
-
-        div.appendChild(info);
-
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'file-download-btn';
-        downloadBtn.textContent = '下载';
-        downloadBtn.addEventListener('click', () => {
-            window.open(file.url, '_blank');
-        });
-        div.appendChild(downloadBtn);
-
-        return div;
-    }
-
-    // ---------- 辅助函数 ----------
-    function formatFileSize(bytes) {
-        if (!bytes || bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
     // ---------- 导出 ----------
     window.BikanComponents = {
         Icons,
         getUserDisplayName,
         getUserHandle,
         getUserAvatarHTML,
+        formatFileSize,
         openModal,
         showToast,
+        renderFileCard,
+        renderPostContentWithMedia,
+        extractFileIdsFromContent,
         renderPostCard,
         renderCommentItem,
         renderNotificationItem,
         renderUserCard,
         renderTopicCard,
         renderFileDetail,
-        formatFileSize,
     };
 
 })();
