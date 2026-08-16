@@ -4,30 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 - 主页</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <!-- 加载 Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 加载 Marked 库（Markdown 渲染） -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 加载样式 -->
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
     <div class="app-container">
+        <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <svg class="sidebar-logo" xmlns="http://www.w3.org/2000/svg" viewBox="280 140 440 400">
+                <!-- 使用内联 SVG 作为 logo -->
+                <svg class="sidebar-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680">
                     <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="black" fill-rule="evenodd" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <rect x="484" y="273" width="32" height="100" rx="10" fill="black" />
                     <rect x="488" y="383" width="24" height="24" rx="8" fill="black" />
                 </svg>
                 <span class="sidebar-title">必看</span>
+                <!-- 通知徽章，由 app.js 更新 -->
                 <span id="navBadge" class="nav-badge hidden"></span>
             </div>
-
+            <!-- 导航菜单由 app.js 渲染 -->
             <nav id="sidebarNav"></nav>
-            <!-- 侧边栏底部不再显示用户信息和退出按钮，退出按钮在“个人与设置”页面内 -->
         </aside>
 
-        <main class="main-content" id="mainContent"></main>
+        <!-- 主内容区域 -->
+        <main class="main-content" id="mainContent">
+            <!-- 内容由 app.js 渲染 -->
+        </main>
     </div>
 
+    <!-- 加载 JS 文件（顺序重要） -->
     <script src="js/config.js"></script>
     <script src="js/components.js"></script>
     <script src="js/app.js"></script>
