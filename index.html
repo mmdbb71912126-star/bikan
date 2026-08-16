@@ -6,8 +6,7 @@
     <title>必看 - 登录注册</title>
 
     <!-- Supabase JS SDK (CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         /* ========== 全局样式 ========== */
@@ -122,7 +121,6 @@
             margin-bottom: 14px;
             box-shadow: 0 8px 24px rgba(62, 207, 142, 0.3);
             color: #ffffff;
-            /* 让内部SVG填充白色 */
         }
         .logo-icon svg {
             width: 44px;
@@ -166,6 +164,7 @@
             background: transparent;
             position: relative;
             outline: none;
+            pointer-events: auto; /* 确保可点击 */
         }
         .tab:hover {
             color: var(--text-primary);
@@ -326,12 +325,6 @@
             height: 20px;
             margin-top: 2px;
         }
-        .alert-error .alert-icon svg {
-            fill: #ffb3b3;
-        }
-        .alert-success .alert-icon svg {
-            fill: #a8e6c9;
-        }
         .alert-message {
             flex: 1;
         }
@@ -445,13 +438,10 @@
 </head>
 <body>
 
-    <!-- ==================== 认证卡片 ==================== -->
     <div class="auth-card" id="authCard">
-
-        <!-- Logo 区域：网站名称“必看”和自定义 SVG 图标 -->
+        <!-- Logo 区域 -->
         <div class="logo-area">
             <div class="logo-icon">
-                <!-- 用户提供的网站图标 SVG（去除背景矩形，使用 currentColor 填充） -->
                 <svg viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                     <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill-rule="evenodd" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     <rect x="484" y="273" width="32" height="100" rx="10" />
@@ -462,19 +452,21 @@
             <p class="logo-subtitle" id="logoSubtitle">使用 Supabase 安全登录</p>
         </div>
 
-        <!-- 登录/注册切换标签 -->
+        <!-- 登录/注册切换标签（使用内联 onclick 确保触发） -->
         <div class="tabs" role="tablist">
-            <button class="tab active" id="tabLogin" role="tab" aria-selected="true" type="button">登录</button>
-            <button class="tab" id="tabRegister" role="tab" aria-selected="false" type="button">注册</button>
+            <button class="tab active" id="tabLogin" role="tab" aria-selected="true" type="button"
+                    onclick="setMode('login')">登录</button>
+            <button class="tab" id="tabRegister" role="tab" aria-selected="false" type="button"
+                    onclick="setMode('register')">注册</button>
         </div>
 
-        <!-- 提示信息框（动态插入 SVG 图标 + 文本） -->
+        <!-- 提示信息框 -->
         <div class="alert alert-error" id="alertBox" role="alert">
             <span class="alert-icon" id="alertIcon"></span>
             <span class="alert-message" id="alertMessage"></span>
         </div>
 
-        <!-- 登录/注册表单 -->
+        <!-- 表单 -->
         <form id="authForm" novalidate>
             <div class="form-group">
                 <label class="form-label" for="email">邮箱地址</label>
@@ -482,7 +474,8 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="password">密码</label>
-                <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" />
+                <!-- 移除 minlength 属性，避免原生验证干扰，改用自定义验证 -->
+                <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" required />
             </div>
 
             <button class="btn btn-primary" type="submit" id="submitBtn">
@@ -494,7 +487,7 @@
         <!-- 分隔线 -->
         <div class="divider">或</div>
 
-        <!-- Google 登录按钮（内联 SVG 图标） -->
+        <!-- Google 登录按钮 -->
         <button class="btn btn-google" type="button" id="googleBtn">
             <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81z"/>
@@ -505,7 +498,7 @@
             <span class="btn-text">使用 Google 登录</span>
         </button>
 
-        <!-- 登录后用户面板（默认隐藏） -->
+        <!-- 用户面板 -->
         <div class="user-panel" id="userPanel">
             <img class="user-avatar" id="userAvatar" src="" alt="用户头像" />
             <p class="user-name" id="userName"></p>
@@ -520,16 +513,13 @@
         </p>
     </div>
 
-    <!-- ==================== 脚本 ==================== -->
     <script>
         // =============================================
         //  ⚠️ 请替换为你的 Supabase 项目凭据！
-        //  在 Supabase Dashboard → Settings → API 中获取
         // =============================================
         const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
         const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
 
-        // 初始化 Supabase 客户端
         let supabase;
         try {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -539,7 +529,7 @@
             showAlert('error', 'Supabase 配置错误，请检查 URL 和 anon key。');
         }
 
-        // ============ DOM 元素 ============
+        // DOM 元素
         const tabLogin = document.getElementById('tabLogin');
         const tabRegister = document.getElementById('tabRegister');
         const authForm = document.getElementById('authForm');
@@ -560,35 +550,20 @@
         const logoTitle = document.getElementById('logoTitle');
         const logoSubtitle = document.getElementById('logoSubtitle');
 
-        // ============ 状态 ============
-        let currentMode = 'login'; // 'login' | 'register'
+        // 状态
+        let currentMode = 'login';
         let isLoading = false;
 
-        // ============ SVG 图标模板（替代所有 emoji） ============
+        // SVG 图标
         const icons = {
-            error: `
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-            `,
-            success: `
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-            `
+            error: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
+            success: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`
         };
 
-        // ============ 工具函数 ============
+        // 提示函数
         function showAlert(type, message) {
             alertBox.className = `alert alert-${type} show`;
-            // 插入对应的 SVG 图标
-            if (type === 'error') {
-                alertIcon.innerHTML = icons.error;
-            } else if (type === 'success') {
-                alertIcon.innerHTML = icons.success;
-            } else {
-                alertIcon.innerHTML = '';
-            }
+            alertIcon.innerHTML = type === 'error' ? icons.error : icons.success;
             alertMessage.textContent = message;
             clearTimeout(alertBox._hideTimer);
             alertBox._hideTimer = setTimeout(() => {
@@ -618,15 +593,15 @@
             setTimeout(() => input.classList.remove('error'), 2000);
         }
 
-        // ============ 切换登录/注册模式（修复 bug） ============
-        function setMode(mode) {
-            // 强制类型检查
+        // 核心：切换模式函数（全局暴露给内联 onclick）
+        window.setMode = function(mode) {
+            // 仅允许 login / register
             if (mode !== 'login' && mode !== 'register') return;
 
             currentMode = mode;
-            console.log('当前模式切换为:', currentMode);
+            console.log('模式切换为:', currentMode);
 
-            // 切换 tab 样式
+            // 更新标签样式
             if (mode === 'login') {
                 tabLogin.classList.add('active');
                 tabRegister.classList.remove('active');
@@ -636,7 +611,6 @@
                 passwordInput.autocomplete = 'current-password';
                 logoTitle.textContent = '必看';
                 logoSubtitle.textContent = '使用 Supabase 安全登录';
-                // 移除卡片额外类，恢复默认按钮颜色
                 authCard.classList.remove('tab-register-mode');
             } else {
                 tabRegister.classList.add('active');
@@ -647,7 +621,6 @@
                 passwordInput.autocomplete = 'new-password';
                 logoTitle.textContent = '创建账户';
                 logoSubtitle.textContent = '加入必看，开始使用';
-                // 给卡片添加额外类，改变活动 tab 颜色
                 authCard.classList.add('tab-register-mode');
             }
 
@@ -655,12 +628,10 @@
             passwordInput.value = '';
             passwordInput.classList.remove('error');
             emailInput.classList.remove('error');
-
-            // 隐藏任何残留提示
             hideAlert();
-        }
+        };
 
-        // ============ 显示登录后的用户信息 ============
+        // 显示用户面板
         function showUserPanel(user) {
             authForm.style.display = 'none';
             googleBtn.style.display = 'none';
@@ -693,7 +664,7 @@
             userPanel.style.display = 'none';
         }
 
-        // ============ 邮箱密码认证 ============
+        // 表单提交（自定义验证，移除原生干扰）
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             hideAlert();
@@ -701,6 +672,7 @@
             const email = emailInput.value.trim();
             const password = passwordInput.value;
 
+            // 自定义验证
             if (!email || !email.includes('@')) {
                 showAlert('error', '请输入有效的邮箱地址。');
                 markError(emailInput);
@@ -759,7 +731,7 @@
             }
         });
 
-        // ============ Google OAuth 登录 ============
+        // Google 登录
         googleBtn.addEventListener('click', async () => {
             hideAlert();
             setLoading(googleBtn, true);
@@ -780,7 +752,7 @@
             }
         });
 
-        // ============ 退出登录 ============
+        // 退出登录
         logoutBtn.addEventListener('click', async () => {
             setLoading(logoutBtn, true);
             try {
@@ -798,17 +770,7 @@
             }
         });
 
-        // ============ Tab 切换事件（修复 bug 的强化绑定） ============
-        tabLogin.addEventListener('click', function(e) {
-            e.preventDefault();
-            setMode('login');
-        });
-        tabRegister.addEventListener('click', function(e) {
-            e.preventDefault();
-            setMode('register');
-        });
-
-        // ============ 输入时清除错误 ============
+        // 输入时清除错误
         emailInput.addEventListener('input', () => {
             emailInput.classList.remove('error');
             hideAlert();
@@ -818,7 +780,7 @@
             hideAlert();
         });
 
-        // ============ 自动检测已登录状态 ============
+        // 自动检测已登录状态
         async function checkAuthState() {
             try {
                 const { data: { user }, error } = await supabase.auth.getUser();
@@ -830,7 +792,7 @@
             }
         }
 
-        // Supabase 的 onAuthStateChange 监听（处理 OAuth 回调）
+        // Supabase 认证状态监听
         if (supabase) {
             supabase.auth.onAuthStateChange((event, session) => {
                 console.log('认证状态变化:', event);
@@ -843,15 +805,12 @@
                     showUserPanel(session.user);
                 }
             });
-            // 页面加载时检查
             checkAuthState();
         }
 
-        // ============ 控制台配置提醒 ============
-        console.log('%c必看 认证页面已加载', 'font-size:16px; font-weight:bold; color:#3ecf8e;');
+        // 控制台提醒
         if (SUPABASE_URL.includes('YOUR-PROJECT') || SUPABASE_ANON_KEY.includes('YOUR-ANON')) {
             console.warn('%c请先在代码中替换你的 Supabase URL 和 anon key！', 'font-size:14px; color:#ffb3b3;');
-            console.warn('%c获取位置：Supabase Dashboard → Settings → API', 'font-size:12px; color:#ffb3b3;');
         }
     </script>
 </body>
