@@ -457,6 +457,10 @@
             <button class="toolbar-btn danger" id="publishBtn" title="发布">
                 <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
+            <!-- 新增退出按钮 -->
+            <button class="toolbar-btn" id="logoutBtn" title="退出登录" onclick="logout()">
+                <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+            </button>
         </div>
     </div>
 
@@ -568,6 +572,20 @@
                     toast.classList.remove('show');
                 }, 2000);
             }
+
+            // 退出登录
+            async function logout() {
+                try {
+                    if (supabase) {
+                        await supabase.auth.signOut();
+                    }
+                } catch (err) {
+                    console.error('退出失败:', err);
+                } finally {
+                    window.location.href = 'index.html';
+                }
+            }
+            window.logout = logout; // 挂载到全局
 
             function openSettings() {
                 cardTitleInput.value = cardMeta.title || '';
@@ -743,7 +761,6 @@
 
             async function confirmPublish() {
                 try {
-                    // 获取当前用户
                     const { data: { user } } = await supabase.auth.getUser();
                     if (!user) {
                         showToast('请先登录');
@@ -751,7 +768,8 @@
                         return;
                     }
 
-                    // 插入数据库
+                    const submitterName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '用户';
+
                     const { error } = await supabase
                         .from('websites')
                         .insert({
@@ -759,6 +777,7 @@
                             description: cardMeta.description,
                             content: editor.value,
                             submitter_id: user.id,
+                            submitter_name: submitterName,
                             is_anonymous: cardMeta.isAnonymous,
                             status: 'pending'
                         });
@@ -769,7 +788,6 @@
                     showToast('已提交审核，感谢分享！');
                     editor.value = '';
                     cardMeta = { title: '', description: '', isAnonymous: false };
-                    // 清除草稿（可选）
                     localStorage.removeItem('draft_website_post');
                     setTimeout(() => {
                         window.location.href = 'home.html';
