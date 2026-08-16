@@ -302,7 +302,6 @@
                     container.appendChild(idTag);
                 }
 
-                // 移除 isAdmin 参数
                 container.appendChild(comp.renderPostCard(enrichedPost, { showActions: true, isDetail: true }));
 
                 if (enrichedPost.media && enrichedPost.media.length) {
@@ -325,7 +324,7 @@
             }
 
             // ============================================================
-            // 评论渲染（只嵌套一层，深层回复显示引用行，移除 isAdmin）
+            // 评论渲染（只嵌套一层，深层回复显示引用行）
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -493,7 +492,6 @@
                     else if (action === 'report') showReportModal('post', postId);
                     else if (action === 'edit') showEditPostModal(postId);
                     else if (action === 'delete') {
-                        // 删除帖子：仅作者，移除管理员权限
                         if (target.dataset.postId !== postId) return;
                         if (currentUser.id !== postAuthorId) {
                             showToast('你没有权限删除此帖', 'error');
@@ -525,7 +523,6 @@
                     } else if (action === 'share-comment' && commentId) await shareComment(commentId);
                     else if (action === 'report-comment' && commentId) showReportModal('comment', commentId);
                     else if (action === 'delete-comment' && commentId) {
-                        // 删除评论：评论作者 或 帖子作者，移除管理员权限
                         const { data: comment } = await supabaseClient.from('comments').select('user_id').eq('id', commentId).single();
                         if (!comment) return showToast('评论不存在', 'error');
                         const canDelete = comment.user_id === currentUser.id || postAuthorId === currentUser.id;
@@ -865,7 +862,6 @@
                     post.liked_by_me = !!likeRes.data;
                     post.favorited_by_me = !!favRes.data;
                     post.is_owner = post.user_id === currentUser.id;
-                    // 移除 isAdmin
                     postsDiv.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
                 }
                 postsDiv.addEventListener('click', (e) => {
@@ -884,9 +880,18 @@
                 container.innerHTML = '加载中...';
                 const { data: ann, error } = await supabaseClient.from('announcements').select('*').eq('id', announcementId).single();
                 if (error || !ann) return container.innerHTML = '<p>公告不存在</p>';
+
+                // 公告内容支持 Markdown
+                let contentHtml = ann.content || '';
+                if (typeof window.marked !== 'undefined' && window.marked.parse) {
+                    try {
+                        contentHtml = window.marked.parse(contentHtml, { html: true, breaks: true });
+                    } catch (e) {}
+                }
+
                 container.innerHTML = `
                     <h2>${ann.title}</h2>
-                    <div class="post-content">${ann.content || ''}</div>
+                    <div class="post-content">${contentHtml}</div>
                     <div style="font-size:13px;color:var(--text-light); margin-bottom:16px;">${timeAgo(ann.created_at)}</div>
                 `;
                 if (ann.files?.length) {
