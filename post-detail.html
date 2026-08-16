@@ -36,22 +36,29 @@
         .comment-reply-form { margin-top: 8px; margin-left: 20px; display: flex; gap: 8px; }
         .comment-reply-form input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; }
         .comment-reply-form input:focus { border-color: var(--primary); }
+
         .replies-container { margin-top: 8px; }
         .replies-list { margin-left: 24px; border-left: 2px solid var(--border); padding-left: 8px; }
-        .toggle-replies { margin-bottom: 4px; font-size: 13px; padding: 2px 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer; }
-        .toggle-replies:hover { color: var(--primary); }
-        .reply-quote {
-            background: var(--bg-light);
-            padding: 6px 10px;
-            border-radius: 6px;
+        .toggle-replies {
+            margin-bottom: 4px;
             font-size: 13px;
+            padding: 2px 12px;
+            background: none;
+            border: none;
             color: var(--text-secondary);
-            margin-bottom: 6px;
-            border-left: 3px solid var(--primary);
+            cursor: pointer;
         }
-        .reply-quote strong { color: var(--text-main); }
+        .toggle-replies:hover { color: var(--primary); }
+
+        .reply-quote-line {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+        .reply-quote-line strong { color: var(--text-main); }
+
         .comment-item.level-0 { margin-left: 0; }
-        .comment-item.level-1 { margin-left: 24px; border-left: 2px solid var(--border); padding-left: 8px; }
+        .comment-item.level-1 { margin-left: 0; border-left: none; padding-left: 0; }
 
         .post-content .file-card { display: flex; align-items: center; gap: 12px; background: #FCD34D; border-radius: 8px; padding: 10px 16px; margin: 8px 0; min-height: 60px; width: 100%; aspect-ratio: 3 / 1; border: 1px solid #F59E0B; }
         .post-content .file-card .file-card-icon { flex-shrink: 0; color: #92400E; }
@@ -318,7 +325,7 @@
             }
 
             // ============================================================
-            // 核心：只嵌套1层，每个根评论只有一个折叠按钮
+            // 核心：评论渲染（只嵌套一层，深层显示为引用块）
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -365,7 +372,7 @@
                 });
 
                 // ============================================================
-                // 渲染根评论（嵌套深度只到1层）
+                // 渲染根评论
                 // ============================================================
                 function renderRootComment(root) {
                     // 根评论主体
@@ -378,7 +385,7 @@
                     });
                     rootEl.appendChild(rootCommentEl);
 
-                    // 获取直接子评论（深度1）
+                    // 获取直接子评论（第一层回复）
                     const directReplies = root.children || [];
 
                     if (directReplies.length > 0) {
@@ -404,17 +411,15 @@
                             // 检查该回复是否有子回复（深度2+）
                             const deeperReplies = reply.children || [];
 
-                            // 如果有深层回复，构建引用块
-                            let quoteHtml = '';
+                            // 如果有深层回复，构建引用行（放在评论内容之前）
+                            let quoteLineHtml = '';
                             if (deeperReplies.length > 0) {
-                                // 取最深层的第一个回复作为引用来源（也可以取所有）
-                                // 这里取第一个子回复
+                                // 取第一个深层回复作为引用来源
                                 const firstDeep = deeperReplies[0];
                                 const parentNickname = getUserDisplayName(reply.profiles);
                                 const parentContent = reply.content || '';
                                 const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
-                                const deepNickname = getUserDisplayName(firstDeep.profiles);
-                                quoteHtml = `<div class="reply-quote"><strong>${deepNickname}</strong> 回复了 <strong>${parentNickname}</strong> 的评论：<span style="color:var(--text-light);">“${preview}”</span></div>`;
+                                quoteLineHtml = `<div class="reply-quote-line"><strong>${getUserDisplayName(firstDeep.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的“${preview}”</div>`;
                             }
 
                             // 渲染回复本身
@@ -424,9 +429,9 @@
                             });
 
                             // 如果有引用，插入到评论内容之前
-                            if (quoteHtml) {
+                            if (quoteLineHtml) {
                                 const quoteDiv = document.createElement('div');
-                                quoteDiv.innerHTML = quoteHtml;
+                                quoteDiv.innerHTML = quoteLineHtml;
                                 replyEl.appendChild(quoteDiv);
                             }
                             replyEl.appendChild(replyCommentEl);
