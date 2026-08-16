@@ -41,7 +41,6 @@
         video: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
         audio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>`,
         download: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
-        // ===== 新增：回复图标 =====
         reply: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><line x1="3" y1="23" x2="21" y2="23"/></svg>`,
     };
 
@@ -278,10 +277,10 @@
         return [...new Set(ids)];
     }
 
-    // ---------- 渲染帖子卡片 ----------
+    // ---------- 渲染帖子卡片（删除权限：仅作者） ----------
     function renderPostCard(post, options = {}) {
         if (!post) return document.createElement('div');
-        const { showActions = true, isDetail = false, isAdmin = false } = options;
+        const { showActions = true, isDetail = false } = options;
 
         const card = document.createElement('div');
         card.className = 'post-card';
@@ -450,8 +449,8 @@
             shareBtn.innerHTML = Icons.share;
             actions.appendChild(shareBtn);
 
-            // 删除按钮：作者 或 管理员
-            if (post.is_owner || isAdmin) {
+            // ===== 删除权限：仅作者，移除管理员 =====
+            if (post.is_owner) {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'action-btn';
                 deleteBtn.dataset.action = 'delete';
@@ -473,9 +472,9 @@
         return card;
     }
 
-    // ---------- 渲染评论项（全部 SVG 图标） ----------
+    // ---------- 渲染评论项（删除权限：评论作者或帖子作者） ----------
     function renderCommentItem(comment, options = {}) {
-        const { isReply = false, isAdmin = false } = options;
+        const { isReply = false } = options;
         const item = document.createElement('div');
         item.className = 'comment-item';
 
@@ -524,7 +523,6 @@
         const actions = document.createElement('div');
         actions.className = 'comment-actions';
 
-        // 点赞（SVG）
         const likeBtn = document.createElement('button');
         likeBtn.className = 'action-btn';
         likeBtn.dataset.action = 'like-comment';
@@ -532,7 +530,6 @@
         likeBtn.innerHTML = Icons.heart;
         actions.appendChild(likeBtn);
 
-        // 回复（SVG）
         const replyBtn = document.createElement('button');
         replyBtn.className = 'action-btn';
         replyBtn.dataset.action = 'reply-comment';
@@ -540,7 +537,6 @@
         replyBtn.innerHTML = Icons.reply;
         actions.appendChild(replyBtn);
 
-        // 分享（SVG）
         const shareBtn = document.createElement('button');
         shareBtn.className = 'action-btn';
         shareBtn.dataset.action = 'share-comment';
@@ -548,8 +544,8 @@
         shareBtn.innerHTML = Icons.share;
         actions.appendChild(shareBtn);
 
-        // 删除或举报
-        const canDelete = comment.user_id === comment.currentUserId || isAdmin || comment.is_owner;
+        // ===== 删除权限：评论作者 或 帖子作者，移除管理员 =====
+        const canDelete = comment.user_id === comment.currentUserId || comment.is_owner;
         if (canDelete) {
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'action-btn';
