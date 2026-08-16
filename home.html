@@ -54,7 +54,6 @@
             overflow-x: hidden;
         }
 
-        /* ========== 侧边栏 ========== */
         .sidebar {
             position: fixed;
             top: 0;
@@ -264,7 +263,6 @@
             display: none;
         }
 
-        /* ========== 主内容区 ========== */
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
@@ -345,7 +343,6 @@
             fill: #0f0c29;
         }
 
-        /* ========== 卡片列表 ========== */
         .card-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -524,7 +521,6 @@
                 <span>设置</span>
             </a>
 
-            <!-- 管理员审核入口（仅管理员可见） -->
             <a class="nav-item" id="adminReviewItem" style="display: none;" href="#">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 <span>审核分区</span>
@@ -546,7 +542,6 @@
         </div>
     </aside>
 
-    <!-- 主内容区 -->
     <main class="main-content" id="mainContent">
         <div class="top-bar">
             <div class="search-box">
@@ -565,252 +560,248 @@
     </main>
 
     <script>
-        // Supabase 配置
-        const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+        (function() {
+            // Supabase 配置（局部变量，避免全局冲突）
+            const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
 
-        const ADMIN_EMAIL = '3948677391@qq.com';
+            const ADMIN_EMAIL = '3948677391@qq.com';
 
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (err) {
-            console.error('Supabase 初始化失败:', err);
-            // 即使初始化失败，也尝试继续渲染 mock 数据，但用户信息可能无法加载
-        }
-
-        let currentUser = null;
-
-        // 侧边栏折叠
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('mainContent');
-            sidebar.classList.toggle('collapsed');
-            main.classList.toggle('expanded');
-        }
-
-        // 退出登录
-        async function logout() {
+            let supabase;
             try {
-                if (supabase) {
-                    await supabase.auth.signOut();
-                }
-                window.location.href = 'index.html';
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             } catch (err) {
-                console.error('退出失败:', err);
-                // 即使退出失败也强制跳转
-                window.location.href = 'index.html';
+                console.error('Supabase 初始化失败:', err);
             }
-        }
 
-        // 检查管理员
-        function isAdmin(email) {
-            return email === ADMIN_EMAIL;
-        }
+            let currentUser = null;
 
-        // 更新侧边栏用户信息
-        function updateUserUI(user) {
-            const avatar = document.getElementById('userAvatar');
-            const userName = document.getElementById('sidebarUserName');
-            const userEmail = document.getElementById('sidebarUserEmail');
-            const adminItem = document.getElementById('adminReviewItem');
-
-            if (user) {
-                const email = user.email || '';
-                const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0] || '用户';
-                userName.textContent = name;
-                userEmail.textContent = email;
-                avatar.textContent = name.charAt(0).toUpperCase();
-
-                // 显示/隐藏审核入口
-                if (isAdmin(email)) {
-                    adminItem.style.display = 'flex';
-                } else {
-                    adminItem.style.display = 'none';
-                }
-            } else {
-                userName.textContent = '未登录';
-                userEmail.textContent = '';
-                avatar.textContent = '?';
-                adminItem.style.display = 'none';
+            // 侧边栏折叠
+            function toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const main = document.getElementById('mainContent');
+                sidebar.classList.toggle('collapsed');
+                main.classList.toggle('expanded');
             }
-        }
 
-        // 加载示例数据（后续可替换为 Supabase 查询）
-        function getMockData() {
-            return [
-                {
-                    id: 1,
-                    title: 'Supabase 官方文档',
-                    url: 'https://supabase.com/docs',
-                    description: 'Supabase 是开源的 Firebase 替代品，提供数据库、认证、存储等后端服务。',
-                    tags: ['技术', '工具'],
-                    submitter: '张小明',
-                    avatar: '张',
-                    date: '2026-08-15',
-                    anonymous: false,
-                },
-                {
-                    id: 2,
-                    title: 'Dribbble - 设计灵感',
-                    url: 'https://dribbble.com',
-                    description: '全球设计师作品分享平台，发现优秀的 UI/UX 设计灵感。',
-                    tags: ['设计'],
-                    submitter: '匿名用户',
-                    avatar: '匿',
-                    date: '2026-08-14',
-                    anonymous: true,
-                },
-                {
-                    id: 3,
-                    title: 'Canva - 在线设计工具',
-                    url: 'https://www.canva.com',
-                    description: '简单易用的在线平面设计工具，海量模板。',
-                    tags: ['设计', '工具'],
-                    submitter: '李思思',
-                    avatar: '李',
-                    date: '2026-08-13',
-                    anonymous: false,
-                },
-                {
-                    id: 4,
-                    title: 'GitHub - 代码托管平台',
-                    url: 'https://github.com',
-                    description: '全球最大的代码托管平台，协作开发首选。',
-                    tags: ['技术', '工具'],
-                    submitter: '匿名用户',
-                    avatar: '匿',
-                    date: '2026-08-12',
-                    anonymous: true,
-                },
-                {
-                    id: 5,
-                    title: 'Awwwards - 网页设计奖项',
-                    url: 'https://www.awwwards.com',
-                    description: '全球最优秀的网页设计作品展示与评选。',
-                    tags: ['设计'],
-                    submitter: '王五',
-                    avatar: '王',
-                    date: '2026-08-11',
-                    anonymous: false,
-                },
-                {
-                    id: 6,
-                    title: 'Figma - 协作设计工具',
-                    url: 'https://www.figma.com',
-                    description: '基于浏览器的实时协作设计工具。',
-                    tags: ['设计', '工具'],
-                    submitter: '匿名用户',
-                    avatar: '匿',
-                    date: '2026-08-10',
-                    anonymous: true,
-                },
-            ];
-        }
-
-        // 渲染卡片
-        function renderCards(data) {
-            const container = document.getElementById('cardList');
-            if (data.length === 0) {
-                container.innerHTML = `<div class="empty-state">暂无符合条件的网址，快去发布第一个吧！</div>`;
-                return;
-            }
-            container.innerHTML = data.map(item => {
-                const tagsHtml = item.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-                const submitterDisplay = item.anonymous ? '匿名用户' : item.submitter;
-                const avatarText = item.anonymous ? '匿' : (item.avatar || item.submitter.charAt(0));
-                return `
-                <div class="url-card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title"><a href="${item.url}" target="_blank">${item.title}</a></div>
-                            <div class="card-domain">${new URL(item.url).hostname}</div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="card-action-btn" title="收藏">
-                                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                            </button>
-                            <button class="card-action-btn" title="复制链接">
-                                <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-description">${item.description}</div>
-                    <div class="card-footer">
-                        <div class="card-submitter">
-                            <div class="submitter-avatar">${avatarText}</div>
-                            <span>${submitterDisplay}</span>
-                            <span>·</span>
-                            <span>${item.date}</span>
-                        </div>
-                        <div class="card-tags">${tagsHtml}</div>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
-
-        // 搜索功能
-        document.getElementById('searchInput').addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
-            const allData = getMockData();
-            if (!query) {
-                renderCards(allData);
-                return;
-            }
-            const filtered = allData.filter(item => 
-                item.title.toLowerCase().includes(query) || 
-                item.description.toLowerCase().includes(query) ||
-                item.tags.some(tag => tag.toLowerCase().includes(query))
-            );
-            renderCards(filtered);
-        });
-
-        // 页面加载逻辑
-        async function init() {
-            // 尝试获取用户
-            try {
-                if (supabase) {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    currentUser = user;
-                    updateUserUI(user);
-                    if (!user) {
-                        window.location.href = 'index.html';
-                        return;
+            // 退出登录
+            async function logout() {
+                try {
+                    if (supabase) {
+                        await supabase.auth.signOut();
                     }
-                } else {
-                    // Supabase 初始化失败，使用默认用户（仅用于演示）
-                    updateUserUI(null);
-                }
-                // 渲染初始数据
-                renderCards(getMockData());
-            } catch (err) {
-                console.error('认证检查失败:', err);
-                // 如果获取用户失败，仍渲染数据但显示未登录
-                updateUserUI(null);
-                renderCards(getMockData());
-            }
-        }
-
-        // 监听认证状态变化
-        if (supabase) {
-            supabase.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_OUT') {
+                } catch (err) {
+                    console.error('退出失败:', err);
+                } finally {
+                    // 无论成功失败，都跳转登录页
                     window.location.href = 'index.html';
                 }
-                if (event === 'SIGNED_IN' && session?.user) {
-                    currentUser = session.user;
-                    updateUserUI(session.user);
+            }
+
+            // 检查管理员
+            function isAdmin(email) {
+                return email === ADMIN_EMAIL;
+            }
+
+            // 更新侧边栏用户信息
+            function updateUserUI(user) {
+                const avatar = document.getElementById('userAvatar');
+                const userName = document.getElementById('sidebarUserName');
+                const userEmail = document.getElementById('sidebarUserEmail');
+                const adminItem = document.getElementById('adminReviewItem');
+
+                if (user) {
+                    const email = user.email || '';
+                    const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0] || '用户';
+                    userName.textContent = name;
+                    userEmail.textContent = email;
+                    avatar.textContent = name.charAt(0).toUpperCase();
+
+                    if (isAdmin(email)) {
+                        adminItem.style.display = 'flex';
+                    } else {
+                        adminItem.style.display = 'none';
+                    }
+                } else {
+                    userName.textContent = '未登录';
+                    userEmail.textContent = '';
+                    avatar.textContent = '?';
+                    adminItem.style.display = 'none';
                 }
+            }
+
+            // 模拟数据
+            function getMockData() {
+                return [
+                    {
+                        id: 1,
+                        title: 'Supabase 官方文档',
+                        url: 'https://supabase.com/docs',
+                        description: 'Supabase 是开源的 Firebase 替代品，提供数据库、认证、存储等后端服务。',
+                        tags: ['技术', '工具'],
+                        submitter: '张小明',
+                        avatar: '张',
+                        date: '2026-08-15',
+                        anonymous: false,
+                    },
+                    {
+                        id: 2,
+                        title: 'Dribbble - 设计灵感',
+                        url: 'https://dribbble.com',
+                        description: '全球设计师作品分享平台，发现优秀的 UI/UX 设计灵感。',
+                        tags: ['设计'],
+                        submitter: '匿名用户',
+                        avatar: '匿',
+                        date: '2026-08-14',
+                        anonymous: true,
+                    },
+                    {
+                        id: 3,
+                        title: 'Canva - 在线设计工具',
+                        url: 'https://www.canva.com',
+                        description: '简单易用的在线平面设计工具，海量模板。',
+                        tags: ['设计', '工具'],
+                        submitter: '李思思',
+                        avatar: '李',
+                        date: '2026-08-13',
+                        anonymous: false,
+                    },
+                    {
+                        id: 4,
+                        title: 'GitHub - 代码托管平台',
+                        url: 'https://github.com',
+                        description: '全球最大的代码托管平台，协作开发首选。',
+                        tags: ['技术', '工具'],
+                        submitter: '匿名用户',
+                        avatar: '匿',
+                        date: '2026-08-12',
+                        anonymous: true,
+                    },
+                    {
+                        id: 5,
+                        title: 'Awwwards - 网页设计奖项',
+                        url: 'https://www.awwwards.com',
+                        description: '全球最优秀的网页设计作品展示与评选。',
+                        tags: ['设计'],
+                        submitter: '王五',
+                        avatar: '王',
+                        date: '2026-08-11',
+                        anonymous: false,
+                    },
+                    {
+                        id: 6,
+                        title: 'Figma - 协作设计工具',
+                        url: 'https://www.figma.com',
+                        description: '基于浏览器的实时协作设计工具。',
+                        tags: ['设计', '工具'],
+                        submitter: '匿名用户',
+                        avatar: '匿',
+                        date: '2026-08-10',
+                        anonymous: true,
+                    },
+                ];
+            }
+
+            // 渲染卡片
+            function renderCards(data) {
+                const container = document.getElementById('cardList');
+                if (data.length === 0) {
+                    container.innerHTML = `<div class="empty-state">暂无符合条件的网址，快去发布第一个吧！</div>`;
+                    return;
+                }
+                container.innerHTML = data.map(item => {
+                    const tagsHtml = item.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+                    const submitterDisplay = item.anonymous ? '匿名用户' : item.submitter;
+                    const avatarText = item.anonymous ? '匿' : (item.avatar || item.submitter.charAt(0));
+                    return `
+                    <div class="url-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title"><a href="${item.url}" target="_blank">${item.title}</a></div>
+                                <div class="card-domain">${new URL(item.url).hostname}</div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="card-action-btn" title="收藏">
+                                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                </button>
+                                <button class="card-action-btn" title="复制链接">
+                                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-description">${item.description}</div>
+                        <div class="card-footer">
+                            <div class="card-submitter">
+                                <div class="submitter-avatar">${avatarText}</div>
+                                <span>${submitterDisplay}</span>
+                                <span>·</span>
+                                <span>${item.date}</span>
+                            </div>
+                            <div class="card-tags">${tagsHtml}</div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            }
+
+            // 搜索功能
+            document.getElementById('searchInput').addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                const allData = getMockData();
+                if (!query) {
+                    renderCards(allData);
+                    return;
+                }
+                const filtered = allData.filter(item => 
+                    item.title.toLowerCase().includes(query) || 
+                    item.description.toLowerCase().includes(query) ||
+                    item.tags.some(tag => tag.toLowerCase().includes(query))
+                );
+                renderCards(filtered);
             });
-        }
 
-        // 启动
-        init();
+            // 初始化
+            async function init() {
+                try {
+                    if (supabase) {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        currentUser = user;
+                        updateUserUI(user);
+                        if (!user) {
+                            window.location.href = 'index.html';
+                            return;
+                        }
+                    } else {
+                        updateUserUI(null);
+                    }
+                    renderCards(getMockData());
+                } catch (err) {
+                    console.error('认证检查失败:', err);
+                    updateUserUI(null);
+                    renderCards(getMockData());
+                }
+            }
 
-        // 将函数暴露到全局（确保内联 onclick 可调用）
-        window.toggleSidebar = toggleSidebar;
-        window.logout = logout;
+            // 监听认证状态
+            if (supabase) {
+                supabase.auth.onAuthStateChange((event, session) => {
+                    if (event === 'SIGNED_OUT') {
+                        window.location.href = 'index.html';
+                    }
+                    if (event === 'SIGNED_IN' && session?.user) {
+                        currentUser = session.user;
+                        updateUserUI(session.user);
+                    }
+                });
+            }
+
+            // 将函数暴露到全局
+            window.toggleSidebar = toggleSidebar;
+            window.logout = logout;
+
+            // 启动
+            init();
+        })();
     </script>
 </body>
 </html>
