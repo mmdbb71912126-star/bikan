@@ -10,6 +10,8 @@
 
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Markdown 渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         :root {
@@ -28,9 +30,6 @@
             --input-focus: #3ecf8e;
             --error: #ff6b6b;
             --success: #3ecf8e;
-            --google-bg: #ffffff;
-            --google-text: #3c4043;
-            --google-hover: #f8f9fa;
             --sidebar-width: 240px;
             --sidebar-collapsed-width: 64px;
             --radius: 16px;
@@ -38,11 +37,7 @@
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
@@ -56,596 +51,220 @@
 
         /* ========== 侧边栏 ========== */
         .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
+            position: fixed; top: 0; left: 0; height: 100vh;
             width: var(--sidebar-width);
             background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
             border-right: 1px solid var(--card-border);
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             padding: 20px 12px;
             transition: width var(--transition), padding var(--transition);
-            z-index: 100;
-            overflow: hidden;
+            z-index: 100; overflow: hidden;
         }
-
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-            padding: 20px 8px;
-        }
-
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            padding: 0 8px;
-            min-height: 40px;
-        }
-
+        .sidebar.collapsed { width: var(--sidebar-collapsed-width); padding: 20px 8px; }
+        .sidebar-header { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; padding: 0 8px; min-height: 40px; }
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
+            width: 40px; height: 40px; border-radius: 12px;
             background: linear-gradient(135deg, var(--primary), #38bdf8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(62, 207, 142, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; box-shadow: 0 4px 12px rgba(62, 207, 142, 0.3);
         }
-        .logo-icon svg {
-            width: 26px;
-            height: 18px;
-            fill: #000;
-        }
-        .logo-text {
-            font-size: 20px;
-            font-weight: 700;
-            white-space: nowrap;
-            opacity: 1;
-            transition: opacity 0.2s ease;
-        }
-        .sidebar.collapsed .logo-text {
-            opacity: 0;
-            width: 0;
-        }
-
+        .logo-icon svg { width: 26px; height: 18px; fill: #000; }
+        .logo-text { font-size: 20px; font-weight: 700; white-space: nowrap; opacity: 1; transition: opacity 0.2s ease; }
+        .sidebar.collapsed .logo-text { opacity: 0; width: 0; }
         .sidebar-toggle {
-            position: absolute;
-            top: 20px;
-            right: -12px;
-            width: 24px;
-            height: 24px;
-            background: var(--primary);
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: transform var(--transition);
-            z-index: 101;
+            position: absolute; top: 20px; right: -12px; width: 24px; height: 24px;
+            background: var(--primary); border: none; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: transform var(--transition); z-index: 101;
         }
-        .sidebar-toggle svg {
-            width: 14px;
-            height: 14px;
-            fill: #0f0c29;
-            transition: transform 0.3s ease;
-        }
-        .sidebar.collapsed .sidebar-toggle svg {
-            transform: rotate(180deg);
-        }
+        .sidebar-toggle svg { width: 14px; height: 14px; fill: #0f0c29; transition: transform 0.3s ease; }
+        .sidebar.collapsed .sidebar-toggle svg { transform: rotate(180deg); }
 
-        .nav-section {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            flex: 1;
-        }
-
+        .nav-section { display: flex; flex-direction: column; gap: 6px; flex: 1; }
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: var(--radius-sm);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all var(--transition);
-            white-space: nowrap;
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; border-radius: var(--radius-sm);
+            color: var(--text-secondary); cursor: pointer; transition: all var(--transition);
+            white-space: nowrap; text-decoration: none; font-size: 15px; font-weight: 500;
+            border: none; background: none; width: 100%; text-align: left;
         }
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-primary);
-        }
-        .nav-item.active {
-            background: rgba(62, 207, 142, 0.15);
-            color: var(--primary);
-            box-shadow: inset 0 0 0 1px rgba(62, 207, 142, 0.3);
-        }
-        .nav-item svg {
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-            fill: currentColor;
-        }
-        .sidebar.collapsed .nav-item span {
-            opacity: 0;
-            width: 0;
-        }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+        .nav-item.active { background: rgba(62,207,142,0.15); color: var(--primary); box-shadow: inset 0 0 0 1px rgba(62,207,142,0.3); }
+        .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; fill: currentColor; }
+        .sidebar.collapsed .nav-item span { opacity: 0; width: 0; }
 
-        .sidebar-footer {
-            border-top: 1px solid var(--card-border);
-            padding-top: 16px;
-            margin-top: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            background: rgba(255, 255, 255, 0.04);
-        }
+        .sidebar-footer { border-top: 1px solid var(--card-border); padding-top: 16px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .user-info { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.04); }
         .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-            flex-shrink: 0;
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 700;
-            color: #0f0c29;
+            width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+            background: var(--primary); display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; color: #0f0c29;
         }
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .user-name {
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .user-email {
-            font-size: 11px;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .sidebar.collapsed .user-details {
-            display: none;
-        }
-
+        .user-details { display: flex; flex-direction: column; overflow: hidden; }
+        .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar.collapsed .user-details { display: none; }
         .logout-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            border-radius: var(--radius-sm);
-            color: var(--text-secondary);
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            transition: all var(--transition);
-            font-size: 14px;
+            display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+            border-radius: var(--radius-sm); color: var(--text-secondary);
+            background: transparent; border: none; cursor: pointer; transition: all var(--transition); font-size: 14px;
         }
-        .logout-btn:hover {
-            background: rgba(255, 107, 107, 0.12);
-            color: #ffb3b3;
-        }
-        .logout-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-            flex-shrink: 0;
-        }
-        .sidebar.collapsed .logout-btn span {
-            display: none;
-        }
+        .logout-btn:hover { background: rgba(255,107,107,0.12); color: #ffb3b3; }
+        .logout-btn svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+        .sidebar.collapsed .logout-btn span { display: none; }
 
         /* ========== 主内容区 ========== */
         .main-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: 30px 36px;
-            transition: margin-left var(--transition);
-            min-height: 100vh;
+            flex: 1; margin-left: var(--sidebar-width); padding: 30px 36px;
+            transition: margin-left var(--transition); min-height: 100vh;
             width: calc(100% - var(--sidebar-width));
         }
-        .main-content.expanded {
-            margin-left: var(--sidebar-collapsed-width);
-            width: calc(100% - var(--sidebar-collapsed-width));
-        }
+        .main-content.expanded { margin-left: var(--sidebar-collapsed-width); width: calc(100% - var(--sidebar-collapsed-width)); }
 
-        /* 顶部栏 */
-        .top-bar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 32px;
-            flex-wrap: wrap;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-            position: relative;
-        }
+        .top-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+        .search-box { flex: 1; min-width: 200px; position: relative; }
         .search-box input {
-            width: 100%;
-            padding: 13px 16px 13px 42px;
-            font-size: 14px;
-            color: var(--text-primary);
-            background: var(--input-bg);
-            border: 1.5px solid var(--input-border);
-            border-radius: var(--radius-sm);
-            outline: none;
-            transition: all var(--transition);
+            width: 100%; padding: 13px 16px 13px 42px; font-size: 14px;
+            color: var(--text-primary); background: var(--input-bg);
+            border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
+            outline: none; transition: all var(--transition);
         }
-        .search-box input::placeholder {
-            color: var(--text-muted);
-        }
+        .search-box input::placeholder { color: var(--text-muted); }
         .search-box input:focus {
-            border-color: var(--input-focus);
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.15);
+            border-color: var(--input-focus); background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 4px rgba(62,207,142,0.15);
         }
-        .search-box svg {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 18px;
-            height: 18px;
-            fill: var(--text-muted);
-        }
-
+        .search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: var(--text-muted); }
         .submit-btn {
-            padding: 10px 22px;
-            border-radius: 20px;
+            padding: 10px 22px; border-radius: 20px;
             background: linear-gradient(135deg, var(--primary), #2bb673);
-            color: #0f0c29;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all var(--transition);
-            box-shadow: 0 4px 12px rgba(62, 207, 142, 0.3);
-            white-space: nowrap;
+            color: #0f0c29; font-weight: 600; border: none; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; transition: all var(--transition);
+            box-shadow: 0 4px 12px rgba(62,207,142,0.3); white-space: nowrap;
         }
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(62, 207, 142, 0.5);
-        }
-        .submit-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: #0f0c29;
-        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(62,207,142,0.5); }
+        .submit-btn svg { width: 16px; height: 16px; fill: #0f0c29; }
 
-        /* 视图容器 */
-        .view {
-            display: none;
-        }
-        .view.active {
-            display: block;
-        }
+        .view { display: none; }
+        .view.active { display: block; }
 
         /* 卡片列表 */
-        .card-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-        }
-
+        .card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .url-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius);
-            padding: 22px;
-            transition: all var(--transition);
-            animation: fadeInUp 0.4s ease-out;
-            display: flex;
-            flex-direction: column;
+            background: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border); border-radius: var(--radius); padding: 22px;
+            transition: all var(--transition); animation: fadeInUp 0.4s ease-out;
+            display: flex; flex-direction: column;
         }
-        .url-card:hover {
-            border-color: rgba(62, 207, 142, 0.4);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .card-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: var(--text-primary);
-            line-height: 1.3;
-        }
-        .card-title a {
-            color: inherit;
-            text-decoration: none;
-            transition: color var(--transition);
-        }
-        .card-title a:hover {
-            color: var(--primary);
-        }
-        .card-domain {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-        .card-actions {
-            display: flex;
-            gap: 6px;
-        }
+        .url-card:hover { border-color: rgba(62,207,142,0.4); transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+        .card-title { font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+        .card-title a { color: inherit; text-decoration: none; transition: color var(--transition); }
+        .card-title a:hover { color: var(--primary); }
+        .card-domain { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .card-actions { display: flex; gap: 6px; }
         .card-action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background var(--transition);
+            background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; transition: background var(--transition);
             color: var(--text-muted);
         }
-        .card-action-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--primary);
-        }
-        .card-action-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-        .card-action-btn.active {
-            color: var(--primary);
-        }
+        .card-action-btn:hover { background: rgba(255,255,255,0.08); color: var(--primary); }
+        .card-action-btn svg { width: 18px; height: 18px; fill: currentColor; }
+        .card-action-btn.active { color: var(--primary); }
+        .card-description { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: var(--text-muted); }
+        .card-submitter { display: flex; align-items: center; gap: 6px; }
+        .submitter-avatar { width: 20px; height: 20px; border-radius: 50%; background: rgba(62,207,142,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--primary); }
+        .card-tags { display: flex; gap: 6px; }
+        .tag { padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,0.06); font-size: 11px; color: var(--text-secondary); }
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 15px; }
 
-        .card-description {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 16px;
-            flex: 1;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        /* 草稿列表 */
+        .draft-list { display: flex; flex-direction: column; gap: 12px; }
+        .draft-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); }
+        .draft-info { flex: 1; }
+        .draft-title { font-weight: 600; margin-bottom: 4px; }
+        .draft-time { font-size: 12px; color: var(--text-muted); }
+        .draft-actions { display: flex; gap: 8px; }
 
-        .card-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .card-submitter {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .submitter-avatar {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: rgba(62, 207, 142, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        .card-tags {
-            display: flex;
-            gap: 6px;
-        }
-        .tag {
-            padding: 2px 8px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.06);
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-            font-size: 15px;
-        }
-
-        /* 草稿列表样式 */
-        .draft-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .draft-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-sm);
-        }
-        .draft-info {
-            flex: 1;
-        }
-        .draft-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        .draft-time {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .draft-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* 设置表单 */
+        /* 设置表单（优化样式） */
         .settings-form {
             max-width: 480px;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: var(--radius);
             padding: 24px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
         }
-        .avatar-upload {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
+        .avatar-upload { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
         .avatar-preview {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--primary);
+            width: 80px; height: 80px; border-radius: 50%;
+            object-fit: cover; border: 2px solid var(--primary);
+            background: rgba(255,255,255,0.08);
         }
         .avatar-upload-btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px dashed var(--primary);
-            background: none;
-            color: var(--primary);
-            cursor: pointer;
+            padding: 8px 16px; border-radius: 8px;
+            border: 1px dashed var(--primary); background: none;
+            color: var(--primary); cursor: pointer; transition: all var(--transition);
         }
+        .avatar-upload-btn:hover { background: rgba(62,207,142,0.1); }
+
+        .settings-form .form-group { margin-bottom: 18px; }
+        .settings-form .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        .settings-form .form-input {
+            width: 100%; padding: 12px 16px; font-size: 15px;
+            color: var(--text-primary); background: var(--input-bg);
+            border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
+            outline: none; transition: all var(--transition);
+        }
+        .settings-form .form-input:focus {
+            border-color: var(--input-focus); background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 4px rgba(62,207,142,0.15);
+        }
+        .btn {
+            padding: 10px 24px; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+            transition: all var(--transition); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2bb673);
+            color: #0f0c29; box-shadow: 0 4px 12px rgba(62,207,142,0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 6px 18px rgba(62,207,142,0.5); transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.15); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        .btn-danger { background: rgba(255,107,107,0.15); color: #ffb3b3; border: 1px solid rgba(255,107,107,0.3); }
+        .btn-danger:hover { background: rgba(255,107,107,0.25); }
+        .btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 6px; }
 
         /* 审核视图 */
-        .admin-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .admin-tab {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid var(--input-border);
-            background: none;
-            color: var(--text-secondary);
-            cursor: pointer;
+            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--input-border);
+            background: none; color: var(--text-secondary); cursor: pointer; transition: all var(--transition);
         }
-        .admin-tab.active {
-            background: var(--primary);
-            color: #0f0c29;
-            border-color: var(--primary);
-        }
-        .admin-post-item {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-sm);
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-        .admin-post-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .admin-post-title {
-            font-weight: 600;
-        }
-        .admin-post-actions {
-            display: flex;
-            gap: 8px;
-        }
-        .btn-sm {
-            padding: 6px 14px;
-            font-size: 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-approve {
-            background: var(--primary);
-            color: #0f0c29;
-        }
-        .btn-reject {
-            background: rgba(255, 107, 107, 0.2);
-            color: #ffb3b3;
-        }
-        .btn-detail {
-            background: rgba(255,255,255,0.1);
-            color: var(--text-secondary);
-        }
-        .admin-post-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-        .admin-post-content {
-            margin-top: 10px;
-            padding: 12px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            display: none;
-            max-height: 300px;
-            overflow-y: auto;
-            font-size: 14px;
-        }
-        .admin-post-content.show {
-            display: block;
-        }
+        .admin-tab:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+        .admin-tab.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
+        .admin-post-item { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; }
+        .admin-post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+        .admin-post-title { font-weight: 600; }
+        .admin-post-actions { display: flex; gap: 8px; }
+        .btn-approve { background: var(--primary); color: #0f0c29; }
+        .btn-reject { background: rgba(255,107,107,0.2); color: #ffb3b3; }
+        .btn-detail { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+        .admin-post-desc { font-size: 13px; color: var(--text-secondary); }
+        .admin-post-content { margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; display: none; max-height: 300px; overflow-y: auto; font-size: 14px; }
+        .admin-post-content.show { display: block; }
+        .content-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
+        .content-toggle button { padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 1px solid var(--input-border); background: none; color: var(--text-secondary); cursor: pointer; }
+        .content-toggle button.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
 
         @media (max-width: 480px) {
-            .main-content {
-                padding: 20px 16px;
-            }
-            .sidebar {
-                width: 200px;
-            }
+            .main-content { padding: 20px 16px; }
+            .sidebar { width: 200px; }
         }
     </style>
 </head>
@@ -755,10 +374,10 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">昵称</label>
+                    <label class="form-label" for="nicknameInput">昵称</label>
                     <input class="form-input" type="text" id="nicknameInput" placeholder="输入新昵称" />
                 </div>
-                <button class="btn btn-primary" id="saveProfileBtn" style="width:auto;">保存资料</button>
+                <button class="btn btn-primary" id="saveProfileBtn">保存资料</button>
             </div>
         </div>
 
@@ -781,14 +400,23 @@
             const ADMIN_EMAIL = '3948677391@qq.com';
 
             let supabase;
-            try {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            } catch (err) {
-                console.error('Supabase 初始化失败:', err);
-            }
+            try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
 
             let currentUser = null;
-            let userFavorites = []; // 收藏的 website_id 数组
+            let userFavorites = [];
+            let allAdminPosts = [];
+            let adminCurrentStatus = 'pending';
+
+            // 暴露全局
+            window.toggleSidebar = toggleSidebar;
+            window.logout = logout;
+            window.editDraft = editDraft;
+            window.deleteDraft = deleteDraft;
+            window.toggleAdminContent = toggleAdminContent;
+            window.approvePost = approvePost;
+            window.rejectPost = rejectPost;
+            window.switchView = switchView;
+            window.setAdminStatus = setAdminStatus;
 
             // 侧边栏折叠
             function toggleSidebar() {
@@ -798,13 +426,11 @@
 
             // 退出登录
             async function logout() {
-                try {
-                    if (supabase) await supabase.auth.signOut();
-                } catch (e) { console.error(e); }
+                try { if (supabase) await supabase.auth.signOut(); } catch(e) {}
                 window.location.href = 'index.html';
             }
 
-            // 更新侧边栏用户信息
+            // 更新用户UI
             function updateUserUI(user) {
                 const avatar = document.getElementById('userAvatar');
                 const userName = document.getElementById('sidebarUserName');
@@ -820,6 +446,9 @@
                         avatar.style.backgroundImage = `url(${user.user_metadata.avatar_url})`;
                         avatar.style.backgroundSize = 'cover';
                         avatar.textContent = '';
+                    } else {
+                        avatar.style.backgroundImage = 'none';
+                        avatar.textContent = name.charAt(0).toUpperCase();
                     }
                     adminItem.style.display = (email === ADMIN_EMAIL) ? 'flex' : 'none';
                 } else {
@@ -834,19 +463,13 @@
             async function loadFavorites() {
                 if (!supabase || !currentUser) return [];
                 try {
-                    const { data, error } = await supabase
-                        .from('favorites')
-                        .select('website_id')
-                        .eq('user_id', currentUser.id);
+                    const { data, error } = await supabase.from('favorites').select('website_id').eq('user_id', currentUser.id);
                     if (error) throw error;
                     return data.map(item => item.website_id);
-                } catch (err) {
-                    console.error('加载收藏失败:', err);
-                    return [];
-                }
+                } catch (e) { console.error(e); return []; }
             }
 
-            // 渲染卡片（通用）
+            // 渲染卡片
             function renderCards(data, containerId, favoritesSet) {
                 const container = document.getElementById(containerId);
                 if (!data || data.length === 0) {
@@ -860,7 +483,6 @@
                     const submitterDisplay = isAnonymous ? '匿名用户' : (item.submitter_name || '用户');
                     const avatarText = isAnonymous ? '匿' : (submitterDisplay.charAt(0) || 'U');
                     const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : '';
-                    const tagsHtml = item.tags && item.tags.length ? item.tags.map(t => `<span class="tag">${t}</span>`).join('') : '';
                     const isFav = favoritesSet.has(item.id);
                     return `
                     <div class="url-card">
@@ -885,23 +507,21 @@
                                 <span>${submitterDisplay}</span>
                                 ${date ? `<span>·</span><span>${date}</span>` : ''}
                             </div>
-                            <div class="card-tags">${tagsHtml}</div>
+                            <div class="card-tags"></div>
                         </div>
                     </div>
                     `;
                 }).join('');
 
-                // 绑定收藏按钮事件
                 container.querySelectorAll('.fav-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        e.preventDefault();
+                    btn.addEventListener('click', async () => {
                         const websiteId = btn.dataset.id;
                         await toggleFavorite(websiteId);
                     });
                 });
             }
 
-            // 切换收藏状态
+            // 收藏切换
             async function toggleFavorite(websiteId) {
                 if (!currentUser) return;
                 const isFav = userFavorites.includes(websiteId);
@@ -913,76 +533,47 @@
                         await supabase.from('favorites').insert({ user_id: currentUser.id, website_id: websiteId });
                         userFavorites.push(websiteId);
                     }
-                    // 刷新当前视图
                     const activeView = document.querySelector('.view.active').id;
                     if (activeView === 'view-home') loadHomeWebsites();
                     if (activeView === 'view-favorites') loadFavoriteWebsites();
-                } catch (err) {
-                    console.error('收藏操作失败:', err);
-                    showToast('操作失败');
-                }
+                } catch (e) { console.error(e); showToast('操作失败'); }
             }
 
-            // 加载首页已审核帖子
+            // 加载首页
             async function loadHomeWebsites() {
                 const container = document.getElementById('homeCardList');
                 container.innerHTML = '<div class="empty-state">加载中...</div>';
                 try {
-                    const { data, error } = await supabase
-                        .from('websites')
-                        .select('*')
-                        .eq('status', 'approved')
-                        .order('created_at', { ascending: false });
+                    const { data, error } = await supabase.from('websites').select('*').eq('status', 'approved').order('created_at', { ascending: false });
                     if (error) throw error;
                     renderCards(data, 'homeCardList', new Set(userFavorites));
-                } catch (err) {
-                    console.error('加载首页失败:', err);
-                    container.innerHTML = '<div class="empty-state">加载失败</div>';
-                }
+                } catch (e) { console.error(e); container.innerHTML = '<div class="empty-state">加载失败</div>'; }
             }
 
-            // 加载收藏的帖子
+            // 加载收藏
             async function loadFavoriteWebsites() {
                 const container = document.getElementById('favoritesCardList');
                 container.innerHTML = '<div class="empty-state">加载中...</div>';
-                if (userFavorites.length === 0) {
-                    container.innerHTML = '<div class="empty-state">暂无收藏</div>';
-                    return;
-                }
+                if (userFavorites.length === 0) { container.innerHTML = '<div class="empty-state">暂无收藏</div>'; return; }
                 try {
-                    const { data, error } = await supabase
-                        .from('websites')
-                        .select('*')
-                        .in('id', userFavorites)
-                        .eq('status', 'approved')
-                        .order('created_at', { ascending: false });
+                    const { data, error } = await supabase.from('websites').select('*').in('id', userFavorites).eq('status', 'approved').order('created_at', { ascending: false });
                     if (error) throw error;
                     renderCards(data, 'favoritesCardList', new Set(userFavorites));
-                } catch (err) {
-                    console.error('加载收藏失败:', err);
-                    container.innerHTML = '<div class="empty-state">加载失败</div>';
-                }
+                } catch (e) { console.error(e); container.innerHTML = '<div class="empty-state">加载失败</div>'; }
             }
 
-            // 加载草稿列表
+            // 草稿
             function loadDrafts() {
                 const container = document.getElementById('draftList');
                 const drafts = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
                     if (key.startsWith('draft_')) {
-                        try {
-                            const draft = JSON.parse(localStorage.getItem(key));
-                            draft.id = key;
-                            drafts.push(draft);
-                        } catch (e) {}
+                        try { const draft = JSON.parse(localStorage.getItem(key)); draft.id = key; drafts.push(draft); } catch(e) {}
                     }
                 }
                 drafts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                if (drafts.length === 0) {
-                    container.innerHTML = '<p style="color:var(--text-muted);">暂无草稿</p>';
-                    return;
-                }
+                if (drafts.length === 0) { container.innerHTML = '<p style="color:var(--text-muted);">暂无草稿</p>'; return; }
                 container.innerHTML = drafts.map(d => `
                     <div class="draft-item">
                         <div class="draft-info">
@@ -997,18 +588,10 @@
                 `).join('');
             }
 
-            function editDraft(draftId) {
-                // 跳转 submit.html 并传递 draftId 参数（submit.html 需要支持读取该参数加载草稿）
-                window.location.href = `submit.html?draftId=${draftId}`;
-            }
+            function editDraft(draftId) { window.location.href = `submit.html?draftId=${draftId}`; }
+            function deleteDraft(draftId) { localStorage.removeItem(draftId); loadDrafts(); showToast('草稿已删除'); }
 
-            function deleteDraft(draftId) {
-                localStorage.removeItem(draftId);
-                loadDrafts();
-                showToast('草稿已删除');
-            }
-
-            // 设置视图
+            // 设置
             async function loadSettings() {
                 if (!currentUser) return;
                 document.getElementById('nicknameInput').value = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
@@ -1016,10 +599,7 @@
                 document.getElementById('avatarPreview').src = avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=3ecf8e&color=fff`;
             }
 
-            document.getElementById('avatarUploadBtn').addEventListener('click', () => {
-                document.getElementById('avatarFileInput').click();
-            });
-
+            document.getElementById('avatarUploadBtn').addEventListener('click', () => document.getElementById('avatarFileInput').click());
             document.getElementById('avatarFileInput').addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -1031,16 +611,12 @@
                     const { data: urlData } = supabase.storage.from('media').getPublicUrl(path);
                     const avatarUrl = urlData.publicUrl;
                     document.getElementById('avatarPreview').src = avatarUrl;
-                    // 更新用户元数据
                     const { error: updateError } = await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
                     if (updateError) throw updateError;
                     currentUser = (await supabase.auth.getUser()).data.user;
                     updateUserUI(currentUser);
                     showToast('头像更新成功');
-                } catch (err) {
-                    console.error('头像上传失败:', err);
-                    showToast('头像上传失败');
-                }
+                } catch (err) { console.error(err); showToast('头像上传失败'); }
                 e.target.value = '';
             });
 
@@ -1053,28 +629,19 @@
                     currentUser = (await supabase.auth.getUser()).data.user;
                     updateUserUI(currentUser);
                     showToast('昵称更新成功');
-                } catch (err) {
-                    console.error('昵称更新失败:', err);
-                    showToast('更新失败');
-                }
+                } catch (err) { console.error(err); showToast('更新失败'); }
             });
 
-            // 审核视图
-            let adminCurrentStatus = 'pending';
+            // 审核相关
             async function loadAdminPosts(status) {
+                adminCurrentStatus = status;
                 const container = document.getElementById('adminPostList');
                 container.innerHTML = '<p>加载中...</p>';
                 try {
-                    const { data, error } = await supabase
-                        .from('websites')
-                        .select('*')
-                        .eq('status', status)
-                        .order('created_at', { ascending: false });
+                    const { data, error } = await supabase.from('websites').select('*').eq('status', status).order('created_at', { ascending: false });
                     if (error) throw error;
-                    if (data.length === 0) {
-                        container.innerHTML = '<p style="color:var(--text-muted);">暂无内容</p>';
-                        return;
-                    }
+                    allAdminPosts = data;
+                    if (data.length === 0) { container.innerHTML = '<p style="color:var(--text-muted);">暂无内容</p>'; return; }
                     container.innerHTML = data.map(post => `
                         <div class="admin-post-item">
                             <div class="admin-post-header">
@@ -1087,25 +654,64 @@
                                 </div>
                             </div>
                             <div class="admin-post-desc">${post.description || ''}</div>
-                            <div class="admin-post-content" id="adminContent-${post.id}"></div>
+                            <div class="admin-post-content" id="adminContent-${post.id}">
+                                <div class="content-toggle">
+                                    <button class="active" onclick="setContentMode('${post.id}', 'text')">纯文本</button>
+                                    <button onclick="setContentMode('${post.id}', 'markdown')">Markdown</button>
+                                </div>
+                                <div class="content-body" id="contentBody-${post.id}"></div>
+                            </div>
                         </div>
                     `).join('');
-                } catch (err) {
-                    console.error('加载审核列表失败:', err);
-                    container.innerHTML = '<p>加载失败</p>';
-                }
+                } catch (err) { console.error(err); container.innerHTML = '<p>加载失败</p>'; }
             }
 
             function toggleAdminContent(postId) {
                 const contentDiv = document.getElementById(`adminContent-${postId}`);
-                if (!contentDiv.classList.contains('show')) {
-                    // 加载内容
+                contentDiv.classList.toggle('show');
+                if (contentDiv.classList.contains('show')) {
                     const post = allAdminPosts.find(p => p.id === postId);
-                    if (post && !contentDiv.innerHTML) {
-                        contentDiv.innerHTML = post.content || '无内容';
+                    if (post && !document.getElementById(`contentBody-${postId}`).innerHTML) {
+                        setContentMode(postId, 'text');
                     }
                 }
-                contentDiv.classList.toggle('show');
+            }
+
+            function setContentMode(postId, mode) {
+                const body = document.getElementById(`contentBody-${postId}`);
+                const buttons = document.querySelectorAll(`#adminContent-${postId} .content-toggle button`);
+                buttons.forEach(b => b.classList.remove('active'));
+                if (mode === 'text') {
+                    buttons[0].classList.add('active');
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    body.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${post ? escapeHtml(post.content || '') : ''}</pre>`;
+                } else {
+                    buttons[1].classList.add('active');
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    if (post) {
+                        const processed = preprocessMarkdown(post.content || '');
+                        body.innerHTML = marked.parse(processed);
+                    }
+                }
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // 预处理Markdown（支持自定义语法）
+            function preprocessMarkdown(markdown) {
+                // 自定义图片、视频、音频语法替换
+                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
+                    // 无法获取实际文件URL，显示占位
+                    return `[${type}文件:${id}]`;
+                });
+                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => `<img src="${url}" width="${width}%" alt="${alt}" />`);
+                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => `<video width="${width}%" controls src="${url}">${alt}</video>`);
+                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => `<audio controls src="${url}"></audio>`);
+                return markdown;
             }
 
             async function approvePost(postId) {
@@ -1114,30 +720,29 @@
                     if (error) throw error;
                     showToast('已通过');
                     loadAdminPosts(adminCurrentStatus);
-                } catch (err) {
-                    console.error('审核通过失败:', err);
-                    showToast('操作失败');
-                }
+                } catch (err) { console.error(err); showToast('操作失败'); }
             }
 
             async function rejectPost(postId) {
                 try {
-                    // 删除文件
+                    // 删除关联文件
                     const post = allAdminPosts.find(p => p.id === postId);
                     if (post && post.file_map) {
                         for (const [id, info] of Object.entries(post.file_map)) {
-                            const path = info.url.split('/').pop(); // 需要完整路径，但 file_map 存储的是 url，需要调整
-                            // 这里简化处理，实际需要从 url 提取 bucket 内的路径
+                            const url = info.url;
+                            // 从URL中提取路径：media/xxx
+                            const match = url.match(/\/storage\/v1\/object\/public\/media\/(.+)/);
+                            if (match) {
+                                const path = match[1];
+                                await supabase.storage.from('media').remove([path]);
+                            }
                         }
                     }
                     const { error } = await supabase.from('websites').update({ status: 'rejected' }).eq('id', postId);
                     if (error) throw error;
                     showToast('已拒绝');
                     loadAdminPosts(adminCurrentStatus);
-                } catch (err) {
-                    console.error('审核拒绝失败:', err);
-                    showToast('操作失败');
-                }
+                } catch (err) { console.error(err); showToast('操作失败'); }
             }
 
             // 视图切换
@@ -1146,7 +751,6 @@
                 document.getElementById(`view-${viewName}`).classList.add('active');
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
-                // 根据视图加载数据
                 if (viewName === 'home') loadHomeWebsites();
                 if (viewName === 'favorites') loadFavoriteWebsites();
                 if (viewName === 'drafts') loadDrafts();
@@ -1163,23 +767,19 @@
                 tab.addEventListener('click', () => {
                     document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    adminCurrentStatus = tab.dataset.status;
-                    loadAdminPosts(adminCurrentStatus);
+                    loadAdminPosts(tab.dataset.status);
                 });
             });
 
             // 首页搜索
             document.getElementById('homeSearchInput').addEventListener('input', function() {
                 const query = this.value.trim().toLowerCase();
-                // 简单实现：从已渲染的卡片中过滤（更优方案是重新查询，此处简化）
                 const cards = document.querySelectorAll('#homeCardList .url-card');
                 cards.forEach(card => {
                     const text = card.textContent.toLowerCase();
                     card.style.display = text.includes(query) ? '' : 'none';
                 });
             });
-
-            // 收藏搜索类似
             document.getElementById('favoritesSearchInput').addEventListener('input', function() {
                 const query = this.value.trim().toLowerCase();
                 const cards = document.querySelectorAll('#favoritesCardList .url-card');
@@ -1189,7 +789,6 @@
                 });
             });
 
-            // Toast 提示
             function showToast(message) {
                 const toast = document.createElement('div');
                 toast.textContent = message;
@@ -1200,98 +799,18 @@
 
             // 初始化
             async function init() {
-                if (!supabase) {
-                    window.location.href = 'index.html';
-                    return;
-                }
+                if (!supabase) { window.location.href = 'index.html'; return; }
                 const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
-                    window.location.href = 'index.html';
-                    return;
-                }
+                if (!user) { window.location.href = 'index.html'; return; }
                 currentUser = user;
                 updateUserUI(user);
                 userFavorites = await loadFavorites();
                 await loadHomeWebsites();
-                // 如果管理员，显示审核入口
                 if (user.email === ADMIN_EMAIL) {
                     document.getElementById('adminReviewItem').style.display = 'flex';
                 }
             }
             init();
-
-            // 暴露全局函数
-            window.toggleSidebar = toggleSidebar;
-            window.logout = logout;
-            window.editDraft = editDraft;
-            window.deleteDraft = deleteDraft;
-            window.toggleAdminContent = toggleAdminContent;
-            window.approvePost = approvePost;
-            window.rejectPost = rejectPost;
-            window.switchView = switchView;
-            // 保持 allAdminPosts 全局可访问（用于详情展开）
-            window.allAdminPosts = [];
-            // 更新 allAdminPosts 引用
-            const originalLoadAdminPosts = loadAdminPosts;
-            loadAdminPosts = async function(status) {
-                adminCurrentStatus = status;
-                const container = document.getElementById('adminPostList');
-                container.innerHTML = '<p>加载中...</p>';
-                try {
-                    const { data, error } = await supabase
-                        .from('websites')
-                        .select('*')
-                        .eq('status', status)
-                        .order('created_at', { ascending: false });
-                    if (error) throw error;
-                    allAdminPosts = data;
-                    if (data.length === 0) {
-                        container.innerHTML = '<p style="color:var(--text-muted);">暂无内容</p>';
-                        return;
-                    }
-                    container.innerHTML = data.map(post => `
-                        <div class="admin-post-item">
-                            <div class="admin-post-header">
-                                <div class="admin-post-title">${post.title}</div>
-                                <div class="admin-post-actions">
-                                    <button class="btn btn-sm btn-detail" onclick="toggleAdminContent('${post.id}')">详情</button>
-                                    ${status === 'pending' ? `
-                                    <button class="btn btn-sm btn-approve" onclick="approvePost('${post.id}')">通过</button>
-                                    <button class="btn btn-sm btn-reject" onclick="rejectPost('${post.id}')">拒绝</button>` : ''}
-                                </div>
-                            </div>
-                            <div class="admin-post-desc">${post.description || ''}</div>
-                            <div class="admin-post-content" id="adminContent-${post.id}"></div>
-                        </div>
-                    `).join('');
-                } catch (err) {
-                    console.error('加载审核列表失败:', err);
-                    container.innerHTML = '<p>加载失败</p>';
-                }
-            };
-            // 重新绑定审核标签事件（因为 loadAdminPosts 被重写）
-            document.querySelectorAll('.admin-tab').forEach(tab => {
-                tab.removeEventListener('click', tabClickHandler);
-                tab.addEventListener('click', tabClickHandler);
-            });
-            function tabClickHandler() {
-                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                loadAdminPosts(this.dataset.status);
-            }
-            document.querySelectorAll('.admin-tab').forEach(tab => {
-                tab.addEventListener('click', tabClickHandler);
-            });
-
-            // 确保切换视图时调用 loadAdminPosts
-            const originalSwitchView = switchView;
-            switchView = function(viewName) {
-                originalSwitchView(viewName);
-                if (viewName === 'admin') {
-                    loadAdminPosts(adminCurrentStatus);
-                }
-            };
-            window.switchView = switchView;
         })();
     </script>
 </body>
