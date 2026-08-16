@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>必看 - 审核分区</title>
+
+    <!-- 网站图标（favicon）使用黑色 Logo SVG -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Markdown 渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #3ecf8e;
+            --bg-start: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-end: #24243e;
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --error: #ff6b6b;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            padding: 30px 36px;
+        }
+
+        .admin-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all var(--transition);
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+        }
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .admin-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .admin-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--input-border);
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .admin-tab:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+        .admin-tab.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
+
+        .admin-post-item {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .admin-post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .admin-post-title { font-weight: 600; font-size: 16px; }
+        .admin-post-actions { display: flex; gap: 8px; }
+
+        .btn {
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all var(--transition);
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-approve { background: var(--primary); color: #0f0c29; }
+        .btn-reject { background: rgba(255,107,107,0.2); color: #ffb3b3; }
+        .btn-detail { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+
+        .admin-post-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .admin-post-submitter { font-size: 12px; color: var(--text-muted); }
+
+        .admin-post-content {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        .admin-post-content.show { display: block; }
+
+        .content-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
+        .content-toggle button {
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid var(--input-border);
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .content-toggle button.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 15px; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30,30,50,0.95);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-header">
+        <a class="back-btn" href="home.html">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            返回主页
+        </a>
+        <h1 class="admin-title">审核分区</h1>
+    </div>
+
+    <div class="admin-tabs">
+        <button class="admin-tab active" data-status="pending">待审核</button>
+        <button class="admin-tab" data-status="approved">已通过</button>
+        <button class="admin-tab" data-status="rejected">已拒绝</button>
+    </div>
+
+    <div id="adminPostList"></div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+            const ADMIN_EMAIL = '3948677391@qq.com';
+
+            let supabase;
+            try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
+
+            let currentUser = null;
+            let allAdminPosts = [];
+            let adminCurrentStatus = 'pending';
+
+            function showToast(message) {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function preprocessMarkdown(markdown) {
+                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
+                    return `[${type}文件:${id}]`;
+                });
+                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => `<img src="${url}" width="${width}%" alt="${alt}" />`);
+                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => `<video width="${width}%" controls src="${url}">${alt}</video>`);
+                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => `<audio controls src="${url}"></audio>`);
+                return markdown;
+            }
+
+            async function loadAdminPosts(status) {
+                adminCurrentStatus = status;
+                const container = document.getElementById('adminPostList');
+                container.innerHTML = '<p style="color:var(--text-muted);">加载中...</p>';
+                try {
+                    const { data, error } = await supabase
+                        .from('websites')
+                        .select('*')
+                        .eq('status', status)
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    allAdminPosts = data;
+                    if (data.length === 0) {
+                        container.innerHTML = '<div class="empty-state">暂无内容</div>';
+                        return;
+                    }
+                    container.innerHTML = data.map(post => {
+                        const submitter = post.is_anonymous ? '匿名用户' : (post.submitter_name || '用户');
+                        return `
+                        <div class="admin-post-item">
+                            <div class="admin-post-header">
+                                <div class="admin-post-title">${post.title}</div>
+                                <div class="admin-post-actions">
+                                    <button class="btn btn-detail" onclick="toggleAdminContent('${post.id}')">详情</button>
+                                    ${status === 'pending' ? `
+                                    <button class="btn btn-approve" onclick="approvePost('${post.id}')">通过</button>
+                                    <button class="btn btn-reject" onclick="rejectPost('${post.id}')">拒绝</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="admin-post-desc">${post.description || ''}</div>
+                            <div class="admin-post-submitter">提交者：${submitter} · ${post.created_at ? new Date(post.created_at).toLocaleString() : ''}</div>
+                            <div class="admin-post-content" id="adminContent-${post.id}">
+                                <div class="content-toggle">
+                                    <button class="active" onclick="setContentMode('${post.id}', 'text')">纯文本</button>
+                                    <button onclick="setContentMode('${post.id}', 'markdown')">Markdown</button>
+                                </div>
+                                <div class="content-body" id="contentBody-${post.id}"></div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                } catch (err) {
+                    console.error('加载审核列表失败:', err);
+                    container.innerHTML = '<div class="empty-state">加载失败：' + (err.message || '未知错误') + '</div>';
+                }
+            }
+
+            function toggleAdminContent(postId) {
+                const contentDiv = document.getElementById(`adminContent-${postId}`);
+                contentDiv.classList.toggle('show');
+                if (contentDiv.classList.contains('show')) {
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    if (post && !document.getElementById(`contentBody-${postId}`).innerHTML) {
+                        setContentMode(postId, 'text');
+                    }
+                }
+            }
+
+            function setContentMode(postId, mode) {
+                const body = document.getElementById(`contentBody-${postId}`);
+                const buttons = document.querySelectorAll(`#adminContent-${postId} .content-toggle button`);
+                buttons.forEach(b => b.classList.remove('active'));
+                if (mode === 'text') {
+                    buttons[0].classList.add('active');
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    body.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${post ? escapeHtml(post.content || '') : ''}</pre>`;
+                } else {
+                    buttons[1].classList.add('active');
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    if (post) {
+                        const processed = preprocessMarkdown(post.content || '');
+                        body.innerHTML = marked.parse(processed);
+                    }
+                }
+            }
+
+            async function approvePost(postId) {
+                try {
+                    const { error } = await supabase.from('websites').update({ status: 'approved' }).eq('id', postId);
+                    if (error) throw error;
+                    showToast('已通过');
+                    loadAdminPosts(adminCurrentStatus);
+                } catch (err) {
+                    console.error('审核通过失败:', err);
+                    showToast('操作失败：' + (err.message || '未知错误'));
+                }
+            }
+
+            async function rejectPost(postId) {
+                try {
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    if (post && post.file_map) {
+                        for (const [id, info] of Object.entries(post.file_map)) {
+                            const url = info.url;
+                            const match = url.match(/\/storage\/v1\/object\/public\/media\/(.+)/);
+                            if (match) {
+                                const path = match[1];
+                                await supabase.storage.from('media').remove([path]);
+                            }
+                        }
+                    }
+                    const { error } = await supabase.from('websites').update({ status: 'rejected' }).eq('id', postId);
+                    if (error) throw error;
+                    showToast('已拒绝');
+                    loadAdminPosts(adminCurrentStatus);
+                } catch (err) {
+                    console.error('审核拒绝失败:', err);
+                    showToast('操作失败：' + (err.message || '未知错误'));
+                }
+            }
+
+            // 挂载全局函数
+            window.toggleAdminContent = toggleAdminContent;
+            window.setContentMode = setContentMode;
+            window.approvePost = approvePost;
+            window.rejectPost = rejectPost;
+
+            // 审核标签切换
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    loadAdminPosts(tab.dataset.status);
+                });
+            });
+
+            // 初始化：检查管理员权限
+            async function init() {
+                if (!supabase) {
+                    window.location.href = 'home.html';
+                    return;
+                }
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                if (user.email !== ADMIN_EMAIL) {
+                    showToast('您没有权限访问审核分区');
+                    setTimeout(() => window.location.href = 'home.html', 1500);
+                    return;
+                }
+                currentUser = user;
+                await loadAdminPosts('pending');
+            }
+            init();
+        })();
+    </script>
+</body>
+</html>
