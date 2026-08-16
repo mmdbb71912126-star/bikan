@@ -405,13 +405,13 @@
                             replyEl.className = 'comment-item level-1';
 
                             // =============================================
-                            // 修复：检查该回复是否有 reply_to_user（即它本身是别人的回复）
+                            // 判断该回复是否直接回复根评论（parent_id === root.id）
+                            // 如果是，则不显示引用行；否则显示引用行
                             // =============================================
                             let quoteLineHtml = '';
-                            // 查找该回复的父评论（如果是深层回复）
-                            if (reply.reply_to_user && reply.reply_to_user.id) {
+                            if (reply.parent_id !== root.id) {
+                                // 深层回复（回复了别人的回复）
                                 const parentNickname = getUserDisplayName(reply.reply_to_user);
-                                // 查找父评论内容
                                 const parentComment = data.find(c => c.id === reply.parent_id);
                                 const parentContent = parentComment ? parentComment.content || '' : '';
                                 const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
