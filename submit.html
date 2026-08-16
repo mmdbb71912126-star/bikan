@@ -8,7 +8,7 @@
     <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
-    <!-- Supabase JS SDK (预留，暂未使用数据库) -->
+    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Markdown 渲染库 (marked) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -119,7 +119,6 @@
         .toolbar-btn.primary:hover {
             background: rgba(62, 207, 142, 0.2);
         }
-
         .toolbar-btn.danger {
             color: var(--error);
         }
@@ -136,7 +135,6 @@
             position: relative;
         }
 
-        /* 编辑器文本域 */
         .editor-textarea {
             flex: 1;
             width: 100%;
@@ -159,7 +157,6 @@
             color: var(--text-muted);
         }
 
-        /* 预览区域 */
         .preview-area {
             flex: 1;
             overflow-y: auto;
@@ -349,7 +346,7 @@
             background: rgba(255, 107, 107, 0.25);
         }
 
-        /* 提示消息 */
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -374,7 +371,6 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        /* 响应式 */
         @media (max-width: 600px) {
             .toolbar {
                 padding: 0 12px;
@@ -437,6 +433,10 @@
             <button class="toolbar-btn" id="settingsBtn" title="设置（卡片标题和简介）">
                 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.31.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
             </button>
+            <!-- 草稿列表按钮 -->
+            <button class="toolbar-btn" id="draftListBtn" title="草稿列表">
+                <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm4 12h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V5h8v2z"/></svg>
+            </button>
             <button class="toolbar-btn" id="saveDraftBtn" title="保存草稿">
                 <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
             </button>
@@ -483,12 +483,24 @@
         </div>
     </div>
 
+    <!-- 草稿列表弹窗 -->
+    <div class="modal-overlay" id="draftListModal">
+        <div class="modal">
+            <h3 class="modal-title">草稿列表</h3>
+            <div id="draftListContainer" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                <!-- 草稿项由 JS 动态生成 -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="closeDraftListBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast 提示 -->
     <div class="toast" id="toast"></div>
 
     <script>
         (function() {
-            // Supabase 配置（目前仅用于获取用户，不执行数据库操作）
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
 
@@ -504,10 +516,14 @@
             const previewArea = document.getElementById('previewArea');
             const previewBtn = document.getElementById('previewBtn');
             const settingsBtn = document.getElementById('settingsBtn');
+            const draftListBtn = document.getElementById('draftListBtn');
             const saveDraftBtn = document.getElementById('saveDraftBtn');
             const publishBtn = document.getElementById('publishBtn');
             const settingsModal = document.getElementById('settingsModal');
             const publishModal = document.getElementById('publishModal');
+            const draftListModal = document.getElementById('draftListModal');
+            const draftListContainer = document.getElementById('draftListContainer');
+            const closeDraftListBtn = document.getElementById('closeDraftListBtn');
             const cardTitleInput = document.getElementById('cardTitle');
             const cardDescriptionInput = document.getElementById('cardDescription');
             const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
@@ -516,14 +532,12 @@
             const confirmPublishBtn = document.getElementById('confirmPublishBtn');
             const toast = document.getElementById('toast');
 
-            // 状态
             let isPreviewMode = false;
             let cardMeta = {
                 title: '',
                 description: ''
             };
 
-            // 显示 Toast
             function showToast(message) {
                 toast.textContent = message;
                 toast.classList.add('show');
@@ -533,7 +547,6 @@
                 }, 2000);
             }
 
-            // 打开设置弹窗
             function openSettings() {
                 cardTitleInput.value = cardMeta.title || '';
                 cardDescriptionInput.value = cardMeta.description || '';
@@ -541,12 +554,10 @@
                 cardTitleInput.focus();
             }
 
-            // 关闭设置弹窗
             function closeSettings() {
                 settingsModal.classList.remove('show');
             }
 
-            // 保存设置
             function saveSettings() {
                 const title = cardTitleInput.value.trim();
                 const description = cardDescriptionInput.value.trim();
@@ -566,7 +577,6 @@
                 showToast('设置已保存');
             }
 
-            // 切换预览
             function togglePreview() {
                 isPreviewMode = !isPreviewMode;
                 if (isPreviewMode) {
@@ -584,7 +594,6 @@
                 }
             }
 
-            // 在光标处插入 Markdown 语法
             function insertMarkdown(action) {
                 const start = editor.selectionStart;
                 const end = editor.selectionEnd;
@@ -593,48 +602,17 @@
                 let cursorOffset = 0;
 
                 switch (action) {
-                    case 'heading':
-                        insertion = `# ${selectedText || '标题'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'bold':
-                        insertion = `**${selectedText || '加粗文本'}**`;
-                        cursorOffset = 2;
-                        break;
-                    case 'italic':
-                        insertion = `*${selectedText || '斜体文本'}*`;
-                        cursorOffset = 1;
-                        break;
-                    case 'strike':
-                        insertion = `~~${selectedText || '删除线文本'}~~`;
-                        cursorOffset = 2;
-                        break;
-                    case 'link':
-                        insertion = `[${selectedText || '链接文字'}](https://)`;
-                        cursorOffset = insertion.length - 1;
-                        break;
-                    case 'quote':
-                        insertion = `> ${selectedText || '引用内容'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'code':
-                        insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``;
-                        cursorOffset = 3;
-                        break;
-                    case 'list-ul':
-                        insertion = `\n- ${selectedText || '列表项'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'list-ol':
-                        insertion = `\n1. ${selectedText || '列表项'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'hr':
-                        insertion = `\n---\n`;
-                        cursorOffset = insertion.length;
-                        break;
-                    default:
-                        return;
+                    case 'heading': insertion = `# ${selectedText || '标题'}`; cursorOffset = insertion.length; break;
+                    case 'bold': insertion = `**${selectedText || '加粗文本'}**`; cursorOffset = 2; break;
+                    case 'italic': insertion = `*${selectedText || '斜体文本'}*`; cursorOffset = 1; break;
+                    case 'strike': insertion = `~~${selectedText || '删除线文本'}~~`; cursorOffset = 2; break;
+                    case 'link': insertion = `[${selectedText || '链接文字'}](https://)`; cursorOffset = insertion.length - 1; break;
+                    case 'quote': insertion = `> ${selectedText || '引用内容'}`; cursorOffset = insertion.length; break;
+                    case 'code': insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``; cursorOffset = 3; break;
+                    case 'list-ul': insertion = `\n- ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
+                    case 'list-ol': insertion = `\n1. ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
+                    case 'hr': insertion = `\n---\n`; cursorOffset = insertion.length; break;
+                    default: return;
                 }
 
                 const newValue = editor.value.substring(0, start) + insertion + editor.value.substring(end);
@@ -644,48 +622,80 @@
                 editor.setSelectionRange(newCursorPos, newCursorPos);
             }
 
-            // 工具栏按钮事件
-            document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const action = this.dataset.action;
-                    insertMarkdown(action);
-                });
-            });
+            // 草稿相关
+            function getAllDrafts() {
+                const drafts = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('draft_')) {
+                        try {
+                            const draft = JSON.parse(localStorage.getItem(key));
+                            draft.id = key;
+                            drafts.push(draft);
+                        } catch (e) {}
+                    }
+                }
+                return drafts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
 
-            // 预览按钮
-            previewBtn.addEventListener('click', togglePreview);
+            function renderDraftList() {
+                const drafts = getAllDrafts();
+                if (drafts.length === 0) {
+                    draftListContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center;">暂无草稿</p>';
+                    return;
+                }
+                draftListContainer.innerHTML = drafts.map(draft => `
+                    <div style="background:rgba(255,255,255,0.06); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="flex:1; overflow:hidden;">
+                            <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${draft.meta.title || '未命名草稿'}</div>
+                            <div style="font-size:12px; color:var(--text-muted);">${new Date(draft.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-secondary" style="padding:6px 12px;" onclick="loadDraftById('${draft.id}')">编辑</button>
+                            <button class="btn btn-danger" style="padding:6px 12px;" onclick="deleteDraftById('${draft.id}')">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
 
-            // 设置按钮
-            settingsBtn.addEventListener('click', openSettings);
-            cancelSettingsBtn.addEventListener('click', closeSettings);
-            saveSettingsBtn.addEventListener('click', saveSettings);
-            cardTitleInput.addEventListener('input', () => cardTitleInput.classList.remove('error'));
-            cardDescriptionInput.addEventListener('input', () => cardDescriptionInput.classList.remove('error'));
+            function loadDraftById(id) {
+                const saved = localStorage.getItem(id);
+                if (saved) {
+                    try {
+                        const draft = JSON.parse(saved);
+                        editor.value = draft.content || '';
+                        cardMeta = draft.meta || { title: '', description: '' };
+                        draftListModal.classList.remove('show');
+                        showToast('草稿已加载');
+                    } catch (e) {
+                        console.error('草稿解析失败:', e);
+                    }
+                }
+            }
 
-            // 保存草稿
+            function deleteDraftById(id) {
+                localStorage.removeItem(id);
+                renderDraftList();
+                showToast('草稿已删除');
+            }
+
             function saveDraft() {
                 const draft = {
                     content: editor.value,
                     meta: cardMeta,
                     timestamp: new Date().toISOString()
                 };
-                localStorage.setItem('draft_website_post', JSON.stringify(draft));
+                const draftKey = `draft_${Date.now()}`;
+                localStorage.setItem(draftKey, JSON.stringify(draft));
                 showToast('草稿已保存');
             }
-            saveDraftBtn.addEventListener('click', saveDraft);
 
-            // 加载草稿（如果有）
-            function loadDraft() {
-                const saved = localStorage.getItem('draft_website_post');
-                if (saved) {
-                    try {
-                        const draft = JSON.parse(saved);
-                        editor.value = draft.content || '';
-                        cardMeta = draft.meta || { title: '', description: '' };
-                        showToast('已恢复上次草稿');
-                    } catch (e) {
-                        console.error('草稿解析失败:', e);
-                    }
+            function loadLatestDraft() {
+                const drafts = getAllDrafts();
+                if (drafts.length > 0) {
+                    const latest = drafts[0];
+                    editor.value = latest.content || '';
+                    cardMeta = latest.meta || { title: '', description: '' };
                 }
             }
 
@@ -708,7 +718,6 @@
             }
 
             function confirmPublish() {
-                // 模拟发布操作
                 const postData = {
                     content: editor.value,
                     title: cardMeta.title,
@@ -717,24 +726,40 @@
                     timestamp: new Date().toISOString()
                 };
                 console.log('发布数据:', postData);
-                // 这里将来会调用 Supabase 写入数据库
                 publishModal.classList.remove('show');
                 showToast('已提交审核，感谢分享！');
-                // 清空编辑区和设置，清除草稿
                 editor.value = '';
                 cardMeta = { title: '', description: '' };
                 localStorage.removeItem('draft_website_post');
-                // 跳转回主页
                 setTimeout(() => {
                     window.location.href = 'home.html';
                 }, 1500);
             }
 
+            // 事件绑定
+            document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    insertMarkdown(this.dataset.action);
+                });
+            });
+            previewBtn.addEventListener('click', togglePreview);
+            settingsBtn.addEventListener('click', openSettings);
+            cancelSettingsBtn.addEventListener('click', closeSettings);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            saveDraftBtn.addEventListener('click', saveDraft);
             publishBtn.addEventListener('click', openPublishConfirm);
             cancelPublishBtn.addEventListener('click', cancelPublish);
             confirmPublishBtn.addEventListener('click', confirmPublish);
+            draftListBtn.addEventListener('click', function() {
+                renderDraftList();
+                draftListModal.classList.add('show');
+            });
+            closeDraftListBtn.addEventListener('click', function() {
+                draftListModal.classList.remove('show');
+            });
+            cardTitleInput.addEventListener('input', () => cardTitleInput.classList.remove('error'));
+            cardDescriptionInput.addEventListener('input', () => cardDescriptionInput.classList.remove('error'));
 
-            // 键盘快捷键：Ctrl+S 保存草稿，Ctrl+P 预览
             editor.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.key === 's') {
                     e.preventDefault();
@@ -746,21 +771,14 @@
                 }
             });
 
-            // 初始化：加载草稿
-            loadDraft();
+            // 初始化
+            loadLatestDraft();
 
-            // 自动调整编辑器高度（虽然占满容器，但保留扩展）
-            function adjustEditorHeight() {
-                // 可以在这里添加，但编辑器目前使用flex占满高度，无需额外操作
-            }
-
-            // 获取当前用户（可选）
             async function checkUser() {
                 if (supabase) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
                         if (!user) {
-                            // 如果未登录，跳转登录页
                             window.location.href = 'index.html';
                         }
                     } catch (err) {
@@ -770,7 +788,7 @@
             }
             checkUser();
 
-            // 暴露函数给内联事件（如果有的话）
+            // 将函数挂载到全局以便内联 onclick 使用
             window.togglePreview = togglePreview;
             window.openSettings = openSettings;
             window.saveSettings = saveSettings;
@@ -779,6 +797,8 @@
             window.openPublishConfirm = openPublishConfirm;
             window.cancelPublish = cancelPublish;
             window.confirmPublish = confirmPublish;
+            window.loadDraftById = loadDraftById;
+            window.deleteDraftById = deleteDraftById;
 
         })();
     </script>
