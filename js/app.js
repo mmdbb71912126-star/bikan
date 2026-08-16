@@ -415,7 +415,7 @@
     }
 
     // ============================================================
-    // 加载帖子列表（含文件信息 + isAdmin）
+    // 加载帖子列表（移除 isAdmin 参数）
     // ============================================================
     async function loadPosts(container, type) {
         container.innerHTML = '<p>加载中...</p>';
@@ -430,7 +430,6 @@
         if (!data.length) { container.innerHTML = '<p>暂无帖子</p>'; return; }
 
         const enriched = await enrichPostsWithFiles(data);
-        const isAdmin = currentUser.is_admin === true;
 
         container.innerHTML = '';
         const postsWithState = await Promise.all(enriched.map(async post => {
@@ -444,7 +443,7 @@
             return post;
         }));
         postsWithState.forEach(post => {
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
         });
     }
 
@@ -459,7 +458,6 @@
         if (!posts.length && !topics.length) { container.innerHTML = '<p>暂无推荐内容</p>'; return; }
 
         const enriched = await enrichPostsWithFiles(posts);
-        const isAdmin = currentUser.is_admin === true;
 
         container.innerHTML = '';
         for (const post of enriched) {
@@ -470,7 +468,7 @@
             post.liked_by_me = !!likeRes.data;
             post.favorited_by_me = !!favRes.data;
             post.is_owner = post.user_id === currentUser.id;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
         }
         topics.forEach(topic => container.appendChild(renderTopicCard(topic, { showJoin: true })));
     }
@@ -496,18 +494,17 @@
                 followingIds = follows ? follows.map(f => f.following_id) : [];
             }
             const enrichedPosts = await enrichPostsWithFiles(postRes.data || []);
-            const isAdmin = currentUser.is_admin === true;
-            renderSearchResults(document.getElementById('searchResults'), enrichedPosts, userRes.data, topicRes.data, fileRes.data, followingIds, isAdmin);
+            renderSearchResults(document.getElementById('searchResults'), enrichedPosts, userRes.data, topicRes.data, fileRes.data, followingIds);
         });
     }
 
-    function renderSearchResults(container, posts, users, topics, files, followingIds, isAdmin) {
+    function renderSearchResults(container, posts, users, topics, files, followingIds) {
         let html = '';
         if (posts?.length) {
             html += '<h3>帖子</h3>';
             posts.forEach(post => {
                 post.is_owner = post.user_id === currentUser.id;
-                const card = renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin });
+                const card = renderPostCard(post, { fileMap: post.fileMap || {} });
                 html += card.outerHTML;
             });
         }
@@ -699,17 +696,16 @@
     }
 
     // ============================================================
-    // 个人帖子列表（含文件信息 + isAdmin）
+    // 个人帖子列表（移除 isAdmin 参数）
     // ============================================================
     async function loadUserPosts(container) {
         const { data, error } = await supabaseClient.from('posts').select('*, profiles:user_id(id, username, nickname, avatar_url, is_online, is_banned)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
         if (error || !data.length) return container.innerHTML = '<p>暂无帖子</p>';
         const enriched = await enrichPostsWithFiles(data);
-        const isAdmin = currentUser.is_admin === true;
         container.innerHTML = '';
         enriched.forEach(post => {
             post.is_owner = true;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
         });
     }
 
@@ -718,11 +714,10 @@
         if (error || !data.length) return container.innerHTML = '<p>暂无收藏</p>';
         const posts = data.map(f => f.post).filter(Boolean);
         const enriched = await enrichPostsWithFiles(posts);
-        const isAdmin = currentUser.is_admin === true;
         container.innerHTML = '';
         enriched.forEach(post => {
             post.is_owner = post.user_id === currentUser.id;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
         });
     }
 
@@ -731,11 +726,10 @@
         if (error || !data.length) return container.innerHTML = '<p>暂无历史记录</p>';
         const posts = data.map(h => h.post).filter(Boolean);
         const enriched = await enrichPostsWithFiles(posts);
-        const isAdmin = currentUser.is_admin === true;
         container.innerHTML = '';
         enriched.forEach(post => {
             post.is_owner = post.user_id === currentUser.id;
-            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin }));
+            container.appendChild(renderPostCard(post, { fileMap: post.fileMap || {} }));
         });
     }
 
@@ -927,11 +921,10 @@
         if(postsRes.error||topicsRes.error)return listDiv.innerHTML=`<p>加载失败: ${(postsRes.error||topicsRes.error).message}</p>`;
         const posts=postsRes.data||[],topics=topicsRes.data||[];if(!posts.length&&!topics.length)return listDiv.innerHTML='<p>暂无推荐内容</p>';
         listDiv.innerHTML='';
-        const isAdmin = currentUser.is_admin === true;
         const enriched = await enrichPostsWithFiles(posts);
         enriched.forEach(post=>{
             post.is_owner=post.user_id===currentUser.id;
-            const card=renderPostCard(post, { fileMap: post.fileMap || {}, isAdmin: isAdmin });
+            const card=renderPostCard(post, { fileMap: post.fileMap || {} });
             const btn=document.createElement('button');
             btn.className='btn btn-secondary btn-sm';
             btn.textContent='取消推荐';
@@ -1048,11 +1041,10 @@
             else if (action === 'report' && postId) { showReportModal('post', postId); }
             else if (action === 'edit' && postId) { showEditPostModal(postId); }
             else if (action === 'delete' && postId) {
-                // 删除帖子：作者 或 管理员
+                // ===== 删除帖子：仅作者，移除管理员权限 =====
                 const { data: post } = await supabaseClient.from('posts').select('user_id').eq('id', postId).single();
                 if (!post) return showToast('帖子不存在', 'error');
-                const canDelete = post.user_id === currentUser.id || currentUser.is_admin === true;
-                if (!canDelete) {
+                if (post.user_id !== currentUser.id) {
                     showToast('你没有权限删除此帖', 'error');
                     return;
                 }
@@ -1075,13 +1067,12 @@
             else if (action === 'share-comment' && commentId) { await shareComment(commentId); }
             else if (action === 'report-comment' && commentId) { showReportModal('comment', commentId); }
             else if (action === 'delete-comment' && commentId) {
-                // 删除评论：评论作者 或 帖子作者 或 管理员
+                // ===== 删除评论：评论作者 或 帖子作者，移除管理员权限 =====
                 const { data: comment } = await supabaseClient.from('comments').select('user_id, post_id').eq('id', commentId).single();
                 if (!comment) return showToast('评论不存在', 'error');
                 const { data: post } = await supabaseClient.from('posts').select('user_id').eq('id', comment.post_id).single();
                 const canDelete = comment.user_id === currentUser.id ||
-                    (post && post.user_id === currentUser.id) ||
-                    currentUser.is_admin === true;
+                    (post && post.user_id === currentUser.id);
                 if (!canDelete) {
                     showToast('你没有权限删除此评论', 'error');
                     return;
