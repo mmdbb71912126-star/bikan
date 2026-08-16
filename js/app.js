@@ -120,8 +120,6 @@
             await loadUnreadCounts();
             renderSidebar();
             navigateTo(ROUTES.EXPLORE);
-            // ===== 浮动发帖按钮全局显示（在所有页面可见） =====
-            addFloatingPostButton();
             supabaseClient.auth.onAuthStateChange((event) => {
                 if (event === 'SIGNED_OUT') window.location.href = 'index.html';
             });
@@ -337,6 +335,8 @@
             el.classList.toggle('active', el.dataset.route === route);
         });
         mainContent.innerHTML = '';
+        // 移除浮动发帖按钮（非探索页面）
+        document.querySelector('.floating-post-btn')?.remove();
         switch (route) {
             case ROUTES.EXPLORE: renderExplore(); break;
             case ROUTES.FORUM: renderForum(); break;
@@ -379,7 +379,7 @@
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', () => { currentTab = btn.dataset.tab; renderExplore(); });
         });
-        // 注意：浮动发帖按钮已移到 init 中全局显示，这里不再重复添加
+        addFloatingPostButton();
     }
 
     async function loadHomeAnnouncement() {
@@ -404,7 +404,6 @@
         container.appendChild(card);
     }
 
-    // ===== 浮动发帖按钮（全局显示） =====
     function addFloatingPostButton() {
         const oldBtn = document.querySelector('.floating-post-btn');
         if (oldBtn) oldBtn.remove();
@@ -1044,7 +1043,7 @@
             else if (action === 'report' && postId) { showReportModal('post', postId); }
             else if (action === 'edit' && postId) { showEditPostModal(postId); }
             else if (action === 'delete' && postId) {
-                // ===== 删除帖子：仅作者，移除管理员权限 =====
+                // 删除帖子：仅作者，移除管理员权限
                 const { data: post } = await supabaseClient.from('posts').select('user_id').eq('id', postId).single();
                 if (!post) return showToast('帖子不存在', 'error');
                 if (post.user_id !== currentUser.id) {
@@ -1070,7 +1069,7 @@
             else if (action === 'share-comment' && commentId) { await shareComment(commentId); }
             else if (action === 'report-comment' && commentId) { showReportModal('comment', commentId); }
             else if (action === 'delete-comment' && commentId) {
-                // ===== 删除评论：评论作者 或 帖子作者，移除管理员权限 =====
+                // 删除评论：评论作者 或 帖子作者，移除管理员权限
                 const { data: comment } = await supabaseClient.from('comments').select('user_id, post_id').eq('id', commentId).single();
                 if (!comment) return showToast('评论不存在', 'error');
                 const { data: post } = await supabaseClient.from('posts').select('user_id').eq('id', comment.post_id).single();
