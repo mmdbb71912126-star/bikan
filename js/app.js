@@ -120,6 +120,8 @@
             await loadUnreadCounts();
             renderSidebar();
             navigateTo(ROUTES.EXPLORE);
+            // ===== 浮动发帖按钮全局显示（在所有页面可见） =====
+            addFloatingPostButton();
             supabaseClient.auth.onAuthStateChange((event) => {
                 if (event === 'SIGNED_OUT') window.location.href = 'index.html';
             });
@@ -377,7 +379,7 @@
         document.querySelectorAll('.tab-item').forEach(btn => {
             btn.addEventListener('click', () => { currentTab = btn.dataset.tab; renderExplore(); });
         });
-        addFloatingPostButton();
+        // 注意：浮动发帖按钮已移到 init 中全局显示，这里不再重复添加
     }
 
     async function loadHomeAnnouncement() {
@@ -402,6 +404,7 @@
         container.appendChild(card);
     }
 
+    // ===== 浮动发帖按钮（全局显示） =====
     function addFloatingPostButton() {
         const oldBtn = document.querySelector('.floating-post-btn');
         if (oldBtn) oldBtn.remove();
