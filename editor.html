@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>必看 · 剪辑 · 编辑</title>
     <style>
+        /* ============================================================
+                   全局重置
+                   ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -14,72 +17,123 @@
         body {
             background: #0a0f0a;
             color: #e2e8e0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
-        /* 顶部导航（极简，只放返回按钮和项目名） */
+        /* ============================================================
+                   顶部导航
+                   ============================================================ */
         .editor-header {
             display: flex;
             align-items: center;
-            gap: 16px;
+            justify-content: space-between;
             padding: 8px 20px;
-            background: #111811;
-            border-bottom: 1px solid #1a2a1a;
+            background: rgba(17, 24, 17, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(26, 42, 26, 0.5);
             flex-shrink: 0;
-            min-height: 50px;
+            min-height: 52px;
+            z-index: 10;
         }
 
-        .editor-header .back-btn {
-            background: none;
-            border: none;
-            color: #5a7a5a;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: 0.2s;
+        .editor-header .header-left {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-        .editor-header .back-btn:hover {
-            color: #e2e8e0;
-            background: #1a2a1a;
-        }
-
-        .editor-header .back-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            gap: 14px;
         }
 
         .editor-header .project-title {
             font-size: 16px;
             font-weight: 500;
-            color: #b0c8b0;
+            color: #e2e8e0;
+            letter-spacing: 0.3px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 260px;
         }
 
-        /* 视频预览区域 - 占上半部分 1/4 高度 */
+        .editor-header .project-title .sub {
+            font-weight: 400;
+            color: #5a7a5a;
+            font-size: 13px;
+            margin-left: 8px;
+        }
+
+        .editor-header .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* ---- 设置按钮（齿轮） ---- */
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #8aa88a;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+        .settings-btn:hover {
+            background: rgba(26, 122, 74, 0.15);
+            color: #e2e8e0;
+            transform: rotate(60deg);
+        }
+        .settings-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ---- 右上角状态小点 ---- */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1d6b4c;
+            flex-shrink: 0;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        /* ============================================================
+                   视频预览区域
+                   ============================================================ */
         .video-preview-area {
-            flex: 0 0 25vh;         /* 固定 25vh 高度 */
+            flex: 0 0 25vh;
             width: 100%;
             background: #0d130d;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-bottom: 1px solid #1a2a1a;
+            border-bottom: 1px solid rgba(26, 42, 26, 0.4);
             position: relative;
             overflow: hidden;
         }
@@ -99,14 +153,56 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
         }
         .video-preview-area .placeholder svg {
             width: 64px;
             height: 64px;
             fill: #2a4a2a;
+            opacity: 0.5;
+        }
+        .video-preview-area .placeholder span {
+            opacity: 0.6;
         }
 
-        /* 下方区域（占剩余空间） - 暂时空白，只留一个提示 */
+        /* ---- 预览区叠加的播放/导入按钮 ---- */
+        .preview-overlay-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 24px;
+            background: rgba(17, 24, 17, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(26, 42, 26, 0.6);
+            border-radius: 12px;
+            padding: 8px 16px;
+            color: #b0c8b0;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .preview-overlay-btn:hover {
+            background: rgba(26, 122, 74, 0.3);
+            border-color: #1d6b4c;
+            color: #e2e8e0;
+        }
+        .preview-overlay-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+
+        /* ============================================================
+                   下方工作区
+                   ============================================================ */
         .editor-workspace {
             flex: 1;
             display: flex;
@@ -114,61 +210,512 @@
             justify-content: center;
             color: #3a5a3a;
             font-size: 16px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
             background: #0a0f0a;
+            position: relative;
+        }
+        .editor-workspace .hint {
+            opacity: 0.5;
         }
 
-        /* 响应式 */
-        @media (max-width: 640px) {
+        /* ============================================================
+                   设置面板（Apple 风格毛玻璃）
+                   ============================================================ */
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.35s ease;
+        }
+        .settings-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .settings-panel {
+            display: flex;
+            width: 780px;
+            max-width: 92vw;
+            height: 520px;
+            max-height: 80vh;
+            background: rgba(22, 30, 22, 0.75);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            overflow: hidden;
+            animation: panelSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes panelSlide {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* ---- 左侧侧边栏 ---- */
+        .settings-sidebar {
+            width: 180px;
+            min-width: 180px;
+            background: rgba(10, 15, 10, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-right: 1px solid rgba(255, 255, 255, 0.04);
+            flex-shrink: 0;
+        }
+
+        .settings-sidebar .sidebar-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #5a7a5a;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 8px 12px 6px;
+            opacity: 0.6;
+        }
+
+        .settings-sidebar .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #8aa88a;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 450;
+            font-family: inherit;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            position: relative;
+        }
+        .settings-sidebar .sidebar-item:hover {
+            background: rgba(26, 122, 74, 0.12);
+            color: #e2e8e0;
+        }
+        .settings-sidebar .sidebar-item.active {
+            background: rgba(26, 122, 74, 0.2);
+            color: #e2e8e0;
+        }
+        .settings-sidebar .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background: #1d6b4c;
+            border-radius: 0 4px 4px 0;
+        }
+        .settings-sidebar .sidebar-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0.7;
+        }
+        .settings-sidebar .sidebar-item.active svg {
+            opacity: 1;
+        }
+
+        /* ---- 右侧内容区 ---- */
+        .settings-content {
+            flex: 1;
+            padding: 28px 32px;
+            overflow-y: auto;
+            background: rgba(10, 15, 10, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .settings-content .content-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e2e8e0;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+        .settings-content .content-sub {
+            font-size: 14px;
+            color: #6a8a6a;
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+
+        .settings-content .form-group {
+            margin-bottom: 18px;
+        }
+        .settings-content .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #b0c8b0;
+            margin-bottom: 4px;
+            letter-spacing: 0.2px;
+        }
+        .settings-content .form-group input,
+        .settings-content .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid rgba(26, 42, 26, 0.6);
+            border-radius: 10px;
+            font-size: 15px;
+            background: rgba(10, 15, 10, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #e2f0e2;
+            outline: none;
+            transition: all 0.25s;
+            font-family: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .settings-content .form-group input:focus,
+        .settings-content .form-group select:focus {
+            border-color: #1d6b4c;
+            box-shadow: 0 0 0 3px rgba(26, 122, 74, 0.2);
+            background: rgba(10, 15, 10, 0.7);
+        }
+        .settings-content .form-group input::placeholder {
+            color: #3a5a3a;
+        }
+
+        .settings-content .form-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a7a5a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+        }
+
+        .settings-content .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .settings-content .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .settings-content .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1d6b4c;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .settings-content .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: 400;
+            font-size: 14px;
+            color: #b0c8b0;
+        }
+
+        .settings-content .save-btn {
+            margin-top: 20px;
+            padding: 10px 28px;
+            background: #1a7a4a;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+        }
+        .settings-content .save-btn:hover {
+            background: #239d5e;
+            box-shadow: 0 4px 20px rgba(26, 122, 74, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* ---- 关闭按钮（右上角） ---- */
+        .settings-close-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #5a7a5a;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+        .settings-close-btn:hover {
+            color: #e2e8e0;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .settings-close-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ---- 隐藏滚动条（但保持可滚） ---- */
+        .settings-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .settings-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .settings-content::-webkit-scrollbar-thumb {
+            background: #1d3a1d;
+            border-radius: 4px;
+        }
+        .settings-content::-webkit-scrollbar-thumb:hover {
+            background: #1d6b4c;
+        }
+
+        /* ============================================================
+                   响应式
+                   ============================================================ */
+        @media (max-width: 768px) {
+            .settings-panel {
+                flex-direction: column;
+                height: auto;
+                max-height: 85vh;
+                width: 96vw;
+                border-radius: 18px;
+            }
+            .settings-sidebar {
+                width: 100%;
+                min-width: unset;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 12px 16px;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+                gap: 2px;
+                overflow-x: auto;
+            }
+            .settings-sidebar .sidebar-label {
+                display: none;
+            }
+            .settings-sidebar .sidebar-item {
+                padding: 8px 14px;
+                font-size: 13px;
+                flex-shrink: 0;
+                width: auto;
+            }
+            .settings-sidebar .sidebar-item.active::before {
+                display: none;
+            }
+            .settings-sidebar .sidebar-item.active {
+                background: rgba(26, 122, 74, 0.25);
+                border-radius: 8px;
+            }
+            .settings-content {
+                padding: 20px;
+            }
+            .settings-content .form-row {
+                grid-template-columns: 1fr;
+            }
             .video-preview-area {
                 flex: 0 0 30vh;
             }
             .editor-header .project-title {
+                max-width: 120px;
                 font-size: 14px;
-                max-width: 140px;
+            }
+            .editor-header .project-title .sub {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .settings-panel {
+                border-radius: 14px;
+                max-height: 90vh;
+            }
+            .settings-content {
+                padding: 16px;
+            }
+            .settings-content .content-title {
+                font-size: 18px;
+            }
+            .editor-header {
+                padding: 6px 14px;
+            }
+            .settings-btn {
+                width: 36px;
+                height: 36px;
+                padding: 6px;
+            }
+            .settings-btn svg {
+                width: 20px;
+                height: 20px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- 顶部栏 -->
+    <!-- ============================================================
+    顶部导航
+    ============================================================ -->
     <header class="editor-header">
-        <button class="back-btn" id="backBtn">
-            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-            返回
-        </button>
-        <span class="project-title" id="projectTitle">加载中...</span>
+        <div class="header-left">
+            <span class="project-title" id="projectTitle">
+                加载中...
+                <span class="sub" id="projectSub">—</span>
+            </span>
+        </div>
+        <div class="header-right">
+            <span class="status-dot" title="自动保存已开启"></span>
+            <button class="settings-btn" id="settingsToggle" aria-label="设置">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+            </button>
+        </div>
     </header>
 
-    <!-- 视频预览区域（占 1/4 高度） -->
+    <!-- ============================================================
+    视频预览区域（占 1/4 高度）
+    ============================================================ -->
     <div class="video-preview-area" id="videoPreview">
         <div class="placeholder">
-            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <svg viewBox="0 0 24 24">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <polygon points="10 8 16 12 10 16 10 8"/>
+            </svg>
             <span>暂未导入视频</span>
         </div>
+        <button class="preview-overlay-btn" id="importVideoBtn">
+            <svg viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            导入视频
+        </button>
     </div>
 
-    <!-- 工作区（下半部分，占剩余高度） -->
+    <!-- ============================================================
+    下方工作区
+    ============================================================ -->
     <div class="editor-workspace">
-        编辑功能开发中...
+        <span class="hint">编辑功能开发中...</span>
+    </div>
+
+    <!-- ============================================================
+    设置面板（Apple 风格毛玻璃）
+    ============================================================ -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-panel">
+
+            <!-- 关闭按钮 -->
+            <button class="settings-close-btn" id="settingsClose">
+                <svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+
+            <!-- 左侧侧边栏 -->
+            <div class="settings-sidebar">
+                <div class="sidebar-label">设置</div>
+                <button class="sidebar-item active" data-tab="project">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                        <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    项目
+                </button>
+                <button class="sidebar-item" data-tab="export">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    导出
+                </button>
+                <button class="sidebar-item" data-tab="about">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    关于
+                </button>
+            </div>
+
+            <!-- 右侧内容区 -->
+            <div class="settings-content" id="settingsContent">
+                <!-- 由 JavaScript 动态渲染 -->
+            </div>
+
+        </div>
     </div>
 
     <script>
         // ============================================================
-        // 1. 获取项目 ID 并加载项目数据
+        // 1. IndexedDB 操作
         // ============================================================
-        const urlParams = new URLSearchParams(window.location.search);
-        const projectId = urlParams.get('id');
-
-        const projectTitleEl = document.getElementById('projectTitle');
-        const videoPreviewEl = document.getElementById('videoPreview');
-
         const DB_NAME = 'VideoEditorDB';
         const DB_VERSION = 2;
 
         function openDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('projects')) {
+                        db.createObjectStore('projects', { keyPath: 'id' });
+                    }
+                };
                 request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(request.error);
             });
@@ -187,6 +734,31 @@
             });
         }
 
+        function dbUpdate(storeName, data) {
+            return openDB().then(db => {
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(storeName, 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    const req = store.put(data);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
+                    tx.oncomplete = () => db.close();
+                });
+            });
+        }
+
+        // ============================================================
+        // 2. 加载项目
+        // ============================================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('id');
+
+        const projectTitleEl = document.getElementById('projectTitle');
+        const projectSubEl = document.getElementById('projectSub');
+        const videoPreviewEl = document.getElementById('videoPreview');
+
+        let currentProject = null;
+
         async function loadProject() {
             if (!projectId) {
                 projectTitleEl.textContent = '无项目 ID';
@@ -195,16 +767,21 @@
             try {
                 const project = await dbGet('projects', projectId);
                 if (project) {
+                    currentProject = project;
                     projectTitleEl.textContent = project.name;
-                    // 可以在这里根据 project 参数调整预览区域背景等
-                    // 例如背景色：
+                    projectSubEl.textContent = `${project.resolution}p · ${project.fps}fps · ${project.ratio}`;
+
+                    // 根据背景色设置预览区
                     if (project.bg === 'black') {
                         videoPreviewEl.style.background = '#000';
                     } else if (project.bg === 'white') {
                         videoPreviewEl.style.background = '#fff';
                     } else {
-                        videoPreviewEl.style.background = '#0d130d'; // 透明时显示灰白格子 (在CSS中已定义)
+                        videoPreviewEl.style.background = '#0d130d';
                     }
+
+                    // 更新设置面板内容
+                    renderSettingsTab('project');
                 } else {
                     projectTitleEl.textContent = '项目不存在';
                 }
@@ -215,14 +792,344 @@
         }
 
         // ============================================================
-        // 2. 返回首页
+        // 3. 设置面板
         // ============================================================
-        document.getElementById('backBtn').addEventListener('click', () => {
-            window.location.href = 'index.html';
+        const overlay = document.getElementById('settingsOverlay');
+        const settingsToggle = document.getElementById('settingsToggle');
+        const settingsClose = document.getElementById('settingsClose');
+        const settingsContent = document.getElementById('settingsContent');
+
+        // 侧边栏切换
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                renderSettingsTab(item.dataset.tab);
+            });
+        });
+
+        function renderSettingsTab(tab) {
+            if (!currentProject) return;
+
+            const p = currentProject;
+
+            const tabs = {
+                project: `
+                            <div class="content-title">项目设置</div>
+                            <div class="content-sub">修改项目参数，不会影响已导入的视频</div>
+
+                            <div class="form-group">
+                                <label>项目名称</label>
+                                <input type="text" id="settingsProjectName" value="${p.name}" maxlength="50" />
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>分辨率</label>
+                                    <select id="settingsResolution">
+                                        <option value="480" ${p.resolution === 480 ? 'selected' : ''}>480p</option>
+                                        <option value="720" ${p.resolution === 720 ? 'selected' : ''}>720p</option>
+                                        <option value="1080" ${p.resolution === 1080 ? 'selected' : ''}>1080p</option>
+                                        <option value="2160" ${p.resolution === 2160 ? 'selected' : ''}>4K</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>帧数 (fps)</label>
+                                    <select id="settingsFps">
+                                        <option value="24" ${p.fps === 24 ? 'selected' : ''}>24</option>
+                                        <option value="30" ${p.fps === 30 ? 'selected' : ''}>30</option>
+                                        <option value="60" ${p.fps === 60 ? 'selected' : ''}>60</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>背景</label>
+                                    <select id="settingsBg">
+                                        <option value="black" ${p.bg === 'black' ? 'selected' : ''}>纯黑</option>
+                                        <option value="white" ${p.bg === 'white' ? 'selected' : ''}>纯白</option>
+                                        <option value="transparent" ${p.bg === 'transparent' ? 'selected' : ''}>透明</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>比例</label>
+                                    <select id="settingsRatio">
+                                        <option value="16:9" ${p.ratio === '16:9' ? 'selected' : ''}>16:9</option>
+                                        <option value="9:16" ${p.ratio === '9:16' ? 'selected' : ''}>9:16</option>
+                                        <option value="1:1" ${p.ratio === '1:1' ? 'selected' : ''}>1:1</option>
+                                        <option value="4:3" ${p.ratio === '4:3' ? 'selected' : ''}>4:3</option>
+                                        <option value="21:9" ${p.ratio === '21:9' ? 'selected' : ''}>21:9</option>
+                                        <option value="custom" ${!['16:9','9:16','1:1','4:3','21:9'].includes(p.ratio) ? 'selected' : ''}>自定义</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" id="settingsCustomRatioGroup" style="display:${!['16:9','9:16','1:1','4:3','21:9'].includes(p.ratio) ? 'block' : 'none'};">
+                                <label>自定义比例 (宽:高)</label>
+                                <input type="text" id="settingsCustomRatio" value="${!['16:9','9:16','1:1','4:3','21:9'].includes(p.ratio) ? p.ratio : ''}" placeholder="例如 16:9" />
+                            </div>
+
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="settingsAutosave" ${p.autosave !== false ? 'checked' : ''} />
+                                <label for="settingsAutosave">开启自动保存（每60秒）</label>
+                            </div>
+
+                            <button class="save-btn" id="settingsSaveBtn">保存更改</button>
+                        `,
+                export: `
+                            <div class="content-title">导出设置</div>
+                            <div class="content-sub">配置视频导出参数</div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>导出分辨率</label>
+                                    <select id="exportResolution">
+                                        <option value="480">480p</option>
+                                        <option value="720" selected>720p</option>
+                                        <option value="1080">1080p</option>
+                                        <option value="2160">4K</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>导出帧数</label>
+                                    <select id="exportFps">
+                                        <option value="24">24</option>
+                                        <option value="30" selected>30</option>
+                                        <option value="60">60</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>比特率</label>
+                                <select id="exportBitrate">
+                                    <option value="2">2 Mbps (低)</option>
+                                    <option value="5" selected>5 Mbps (中)</option>
+                                    <option value="10">10 Mbps (高)</option>
+                                    <option value="20">20 Mbps (极高)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>输出格式</label>
+                                <select id="exportFormat">
+                                    <option value="mp4">MP4</option>
+                                    <option value="webm">WebM</option>
+                                </select>
+                            </div>
+
+                            <button class="save-btn" id="exportSaveBtn">保存导出设置</button>
+                        `,
+                about: `
+                            <div class="content-title">关于</div>
+                            <div class="content-sub">必看 · 剪辑</div>
+
+                            <div style="color:#6a8a6a; font-size:14px; line-height:1.8; max-width:400px;">
+                                <p style="margin-bottom:8px;">版本 1.0.0</p>
+                                <p style="margin-bottom:8px;">纯前端视频剪辑工具，所有数据存储在本地浏览器中。</p>
+                                <p style="margin-bottom:8px; color:#5a7a5a; font-size:13px;">
+                                    基于 <span style="color:#8aa88a;">IndexedDB</span> · 
+                                    <span style="color:#8aa88a;">Canvas</span> · 
+                                    <span style="color:#8aa88a;">MediaRecorder</span>
+                                </p>
+                                <div style="margin-top:16px; padding:12px 16px; background:rgba(26,42,26,0.3); border-radius:10px; border:1px solid rgba(26,42,26,0.3);">
+                                    <span style="color:#5a7a5a; font-size:13px;">💡 所有数据存储在本地，不会上传到任何服务器</span>
+                                </div>
+                            </div>
+                        `
+            };
+
+            settingsContent.innerHTML = tabs[tab] || '<p>未找到</p>';
+
+            // 绑定项目设置的事件
+            if (tab === 'project') {
+                const ratioSelect = document.getElementById('settingsRatio');
+                const customGroup = document.getElementById('settingsCustomRatioGroup');
+
+                if (ratioSelect) {
+                    ratioSelect.addEventListener('change', () => {
+                        customGroup.style.display = ratioSelect.value === 'custom' ? 'block' : 'none';
+                    });
+                }
+
+                const saveBtn = document.getElementById('settingsSaveBtn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', saveProjectSettings);
+                }
+            }
+
+            if (tab === 'export') {
+                const saveBtn = document.getElementById('exportSaveBtn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', () => {
+                        showToast('导出设置已保存', 'success');
+                    });
+                }
+            }
+        }
+
+        async function saveProjectSettings() {
+            if (!currentProject) return;
+
+            const name = document.getElementById('settingsProjectName').value.trim();
+            if (!name) {
+                showToast('请输入项目名称', 'error');
+                return;
+            }
+
+            const resolution = parseInt(document.getElementById('settingsResolution').value, 10);
+            const fps = parseInt(document.getElementById('settingsFps').value, 10);
+            const bg = document.getElementById('settingsBg').value;
+            let ratio = document.getElementById('settingsRatio').value;
+            if (ratio === 'custom') {
+                ratio = document.getElementById('settingsCustomRatio').value.trim();
+                if (!ratio || !ratio.match(/^\d+:\d+$/)) {
+                    showToast('请输入正确的比例格式，例如 16:9', 'error');
+                    return;
+                }
+            }
+            const autosave = document.getElementById('settingsAutosave').checked;
+
+            const updated = {
+                ...currentProject,
+                name,
+                resolution,
+                fps,
+                bg,
+                ratio,
+                autosave,
+                updatedAt: Date.now()
+            };
+
+            try {
+                await dbUpdate('projects', updated);
+                currentProject = updated;
+                projectTitleEl.textContent = name;
+                projectSubEl.textContent = `${resolution}p · ${fps}fps · ${ratio}`;
+
+                // 更新预览区背景
+                if (bg === 'black') {
+                    videoPreviewEl.style.background = '#000';
+                } else if (bg === 'white') {
+                    videoPreviewEl.style.background = '#fff';
+                } else {
+                    videoPreviewEl.style.background = '#0d130d';
+                }
+
+                showToast('项目已更新', 'success');
+                closeSettings();
+            } catch (err) {
+                console.error('保存失败:', err);
+                showToast('保存失败，请重试', 'error');
+            }
+        }
+
+        // ============================================================
+        // 4. 设置面板开关
+        // ============================================================
+        function openSettings() {
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // 重新渲染当前 tab
+            const activeTab = document.querySelector('.sidebar-item.active');
+            if (activeTab) {
+                renderSettingsTab(activeTab.dataset.tab);
+            }
+        }
+
+        function closeSettings() {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        settingsToggle.addEventListener('click', openSettings);
+        settingsClose.addEventListener('click', closeSettings);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeSettings();
+        });
+
+        // ESC 关闭
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('active')) {
+                closeSettings();
+            }
         });
 
         // ============================================================
-        // 3. 启动
+        // 5. Toast 提示
+        // ============================================================
+        let toastTimer = null;
+
+        function showToast(message, type = 'info') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            if (toastTimer) clearTimeout(toastTimer);
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toast.style.cssText = `
+                        position: fixed;
+                        bottom: 30px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: rgba(20, 30, 20, 0.9);
+                        backdrop-filter: blur(12px);
+                        -webkit-backdrop-filter: blur(12px);
+                        color: #d4ecd4;
+                        padding: 12px 24px;
+                        border-radius: 12px;
+                        font-size: 14px;
+                        font-weight: 500;
+                        z-index: 1001;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                        animation: fadeInUp 0.3s ease;
+                        pointer-events: none;
+                        border: 1px solid ${type === 'error' ? '#662222' : '#1d6b4c'};
+                        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+                    `;
+            document.body.appendChild(toast);
+
+            toastTimer = setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                toast.style.transition = 'opacity 0.3s, transform 0.3s';
+                setTimeout(() => toast.remove(), 400);
+                toastTimer = null;
+            }, 3000);
+        }
+
+        // ============================================================
+        // 6. 导入视频（占位）
+        // ============================================================
+        document.getElementById('importVideoBtn').addEventListener('click', () => {
+            // 模拟选择文件
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'video/*';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    const videoEl = document.createElement('video');
+                    videoEl.src = url;
+                    videoEl.controls = true;
+                    videoEl.autoplay = false;
+                    videoEl.style.width = '100%';
+                    videoEl.style.height = '100%';
+                    videoEl.style.objectFit = 'contain';
+                    const previewArea = document.getElementById('videoPreview');
+                    previewArea.innerHTML = '';
+                    previewArea.appendChild(videoEl);
+                    showToast(`已导入: ${file.name}`, 'success');
+                }
+            };
+            input.click();
+        });
+
+        // ============================================================
+        // 7. 启动
         // ============================================================
         document.addEventListener('DOMContentLoaded', loadProject);
     </script>
