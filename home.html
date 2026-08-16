@@ -76,32 +76,34 @@
         .logo-text { font-size: 20px; font-weight: 700; white-space: nowrap; opacity: 1; transition: opacity 0.2s ease; }
         .sidebar.collapsed .logo-text { opacity: 0; width: 0; }
 
-        /* 新的汉堡菜单按钮 */
+        /* 侧边栏折叠按钮（独立固定在侧边栏边缘） */
         .sidebar-toggle {
-            background: none;
+            position: fixed;
+            top: 20px;
+            left: calc(var(--sidebar-width) - 12px);
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
             border: none;
+            border-radius: 50%;
             cursor: pointer;
-            padding: 6px;
-            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-secondary);
-            transition: color var(--transition), background var(--transition);
-            flex-shrink: 0;
-            margin-left: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: left var(--transition), transform var(--transition);
+            z-index: 110;
         }
-        .sidebar-toggle:hover {
-            background: rgba(255,255,255,0.06);
-            color: var(--text-primary);
+        .sidebar.collapsed + .sidebar-toggle {
+            left: calc(var(--sidebar-collapsed-width) - 12px);
         }
         .sidebar-toggle svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
+            width: 14px;
+            height: 14px;
+            fill: #0f0c29;
             transition: transform 0.3s ease;
         }
-        .sidebar.collapsed .sidebar-toggle svg {
+        .sidebar.collapsed + .sidebar-toggle svg {
             transform: rotate(180deg);
         }
 
@@ -307,12 +309,6 @@
                 </svg>
             </div>
             <span class="logo-text">必看</span>
-            <!-- 汉堡菜单按钮 -->
-            <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="展开/收起侧边栏">
-                <svg viewBox="0 0 24 24">
-                    <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
-                </svg>
-            </button>
         </div>
 
         <nav class="nav-section">
@@ -353,6 +349,11 @@
             </button>
         </div>
     </aside>
+
+    <!-- 侧边栏折叠按钮（独立固定在侧边栏边缘，始终可见） -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="展开/收起侧边栏">
+        <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </button>
 
     <!-- 主内容区 -->
     <main class="main-content" id="mainContent">
@@ -435,8 +436,11 @@
 
             // ========== 全局函数 ==========
             function toggleSidebar() {
-                document.getElementById('sidebar').classList.toggle('collapsed');
-                document.getElementById('mainContent').classList.toggle('expanded');
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                // 调整按钮位置（CSS 自动根据 .collapsed 类调整，但需要手动更新类选择器）
             }
 
             async function logout() {
@@ -722,15 +726,20 @@
             }
 
             async function approvePost(postId) {
+                console.log('approvePost called with id:', postId);
                 try {
                     const { error } = await supabase.from('websites').update({ status: 'approved' }).eq('id', postId);
                     if (error) throw error;
                     showToast('已通过');
                     loadAdminPosts(adminCurrentStatus);
-                } catch (err) { console.error(err); showToast('操作失败'); }
+                } catch (err) {
+                    console.error('approvePost error:', err);
+                    showToast('操作失败：' + (err.message || '未知错误'));
+                }
             }
 
             async function rejectPost(postId) {
+                console.log('rejectPost called with id:', postId);
                 try {
                     const post = allAdminPosts.find(p => p.id === postId);
                     if (post && post.file_map) {
@@ -747,7 +756,10 @@
                     if (error) throw error;
                     showToast('已拒绝');
                     loadAdminPosts(adminCurrentStatus);
-                } catch (err) { console.error(err); showToast('操作失败'); }
+                } catch (err) {
+                    console.error('rejectPost error:', err);
+                    showToast('操作失败：' + (err.message || '未知错误'));
+                }
             }
 
             // 视图切换
