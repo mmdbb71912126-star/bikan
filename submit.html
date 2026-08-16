@@ -37,6 +37,7 @@
             --radius-sm: 10px;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --toolbar-height: 56px;
+            --id-library-height: 180px;
         }
 
         * {
@@ -226,6 +227,145 @@
         .preview-area audio {
             width: 100%;
             margin: 8px 0;
+        }
+        /* ID引用占位样式 */
+        .id-placeholder {
+            display: inline-block;
+            background: rgba(62, 207, 142, 0.15);
+            border: 1px dashed var(--primary);
+            border-radius: 8px;
+            padding: 4px 10px;
+            color: var(--primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* ========== ID库面板 ========== */
+        .id-library-panel {
+            height: var(--id-library-height);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            transition: height 0.3s ease;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .id-library-panel.collapsed {
+            height: 36px;
+        }
+        .id-library-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 16px;
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .id-library-header .toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+        .id-library-panel.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+        .id-library-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex: 1;
+        }
+        .id-library-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .id-library-actions .toolbar-btn {
+            padding: 4px;
+        }
+        .id-library-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 16px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+        .id-library-empty {
+            color: var(--text-muted);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        .id-file-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: grab;
+            transition: background var(--transition);
+            max-width: 200px;
+            height: 50px;
+        }
+        .id-file-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .id-file-item.dragging {
+            opacity: 0.5;
+        }
+        .id-file-thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: rgba(62, 207, 142, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .id-file-info {
+            flex: 1;
+            overflow: hidden;
+        }
+        .id-file-name {
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .id-file-id {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .id-file-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px;
+            color: var(--text-muted);
+            transition: color var(--transition);
+            flex-shrink: 0;
+        }
+        .id-file-delete:hover {
+            color: var(--error);
+        }
+        .id-file-delete svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
         }
 
         /* ========== 弹窗覆盖层 ========== */
@@ -490,6 +630,25 @@
         <div class="preview-area" id="previewArea"></div>
     </div>
 
+    <!-- ID库面板 -->
+    <div class="id-library-panel" id="idLibraryPanel">
+        <div class="id-library-header" onclick="toggleIdLibrary()">
+            <span class="toggle-icon">▼</span>
+            <span class="id-library-title">ID 库</span>
+            <div class="id-library-actions">
+                <button class="toolbar-btn" id="importFilesBtn" title="导入文件" onclick="event.stopPropagation(); importFiles()">
+                    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                </button>
+                <button class="toolbar-btn" id="clearIdLibraryBtn" title="清空ID库" onclick="event.stopPropagation(); clearIdLibrary()">
+                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="id-library-body" id="idLibraryBody">
+            <div class="id-library-empty">还没有导入文件，点击上方“导入文件”按钮添加</div>
+        </div>
+    </div>
+
     <!-- 设置弹窗 -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
@@ -543,6 +702,9 @@
     <!-- Toast 提示 -->
     <div class="toast" id="toast"></div>
 
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="fileInput" multiple style="display:none" accept="image/*,video/*,audio/*" />
+
     <script>
         (function() {
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
@@ -576,6 +738,11 @@
             const cancelPublishBtn = document.getElementById('cancelPublishBtn');
             const confirmPublishBtn = document.getElementById('confirmPublishBtn');
             const toast = document.getElementById('toast');
+            const idLibraryPanel = document.getElementById('idLibraryPanel');
+            const idLibraryBody = document.getElementById('idLibraryBody');
+            const importFilesBtn = document.getElementById('importFilesBtn');
+            const clearIdLibraryBtn = document.getElementById('clearIdLibraryBtn');
+            const fileInput = document.getElementById('fileInput');
 
             let isPreviewMode = false;
             let cardMeta = {
@@ -584,6 +751,203 @@
                 isAnonymous: false
             };
 
+            // ========== IndexedDB 封装 ==========
+            const dbName = 'bikan_id_library';
+            const storeName = 'files';
+            let db = null;
+
+            function openDB() {
+                return new Promise((resolve, reject) => {
+                    if (db) {
+                        resolve(db);
+                        return;
+                    }
+                    const request = indexedDB.open(dbName, 1);
+                    request.onupgradeneeded = (e) => {
+                        const database = e.target.result;
+                        if (!database.objectStoreNames.contains(storeName)) {
+                            database.createObjectStore(storeName, { keyPath: 'id' });
+                        }
+                    };
+                    request.onsuccess = (e) => {
+                        db = e.target.result;
+                        resolve(db);
+                    };
+                    request.onerror = (e) => {
+                        reject(e.target.error);
+                    };
+                });
+            }
+
+            async function idbAdd(id, file) {
+                await openDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const record = { id, file, type: file.type, name: file.name };
+                    store.put(record);
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function idbGetAll() {
+                await openDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([storeName], 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function idbDelete(id) {
+                await openDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    store.delete(id);
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            async function idbClear() {
+                await openDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    store.clear();
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            // ========== 文件ID库管理 ==========
+            function generateShortId() {
+                return Math.random().toString(36).substring(2, 8);
+            }
+
+            async function renderIdLibrary() {
+                const files = await idbGetAll();
+                idLibraryBody.innerHTML = '';
+                if (files.length === 0) {
+                    idLibraryBody.innerHTML = '<div class="id-library-empty">还没有导入文件，点击上方“导入文件”按钮添加</div>';
+                    return;
+                }
+                files.forEach(record => {
+                    const item = document.createElement('div');
+                    item.className = 'id-file-item';
+                    item.draggable = true;
+                    item.dataset.fileId = record.id;
+                    item.dataset.fileType = record.type.split('/')[0]; // image, video, audio
+
+                    // 缩略图 / 图标
+                    const thumb = document.createElement('div');
+                    thumb.className = 'id-file-thumb';
+                    if (record.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(record.file);
+                        img.className = 'id-file-thumb';
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        thumb.appendChild(img);
+                    } else if (record.type.startsWith('video/')) {
+                        thumb.textContent = 'VID';
+                    } else if (record.type.startsWith('audio/')) {
+                        thumb.textContent = 'AUD';
+                    } else {
+                        thumb.textContent = 'FILE';
+                    }
+
+                    const info = document.createElement('div');
+                    info.className = 'id-file-info';
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'id-file-name';
+                    nameDiv.textContent = record.name;
+                    const idDiv = document.createElement('div');
+                    idDiv.className = 'id-file-id';
+                    idDiv.textContent = `ID: ${record.id}`;
+                    info.appendChild(nameDiv);
+                    info.appendChild(idDiv);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'id-file-delete';
+                    deleteBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+                    deleteBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        await deleteIdFile(record.id);
+                    });
+
+                    item.appendChild(thumb);
+                    item.appendChild(info);
+                    item.appendChild(deleteBtn);
+
+                    // 拖放事件
+                    item.addEventListener('dragstart', (e) => {
+                        const syntax = `@id[${record.type.split('/')[0]}:${record.id}]`;
+                        e.dataTransfer.setData('text/plain', syntax);
+                        e.dataTransfer.effectAllowed = 'copy';
+                        item.classList.add('dragging');
+                    });
+                    item.addEventListener('dragend', () => {
+                        item.classList.remove('dragging');
+                    });
+
+                    idLibraryBody.appendChild(item);
+                });
+            }
+
+            async function deleteIdFile(id) {
+                await idbDelete(id);
+                renderIdLibrary();
+                showToast('已从 ID 库删除');
+            }
+
+            async function clearIdLibrary() {
+                if (confirm('确定清空 ID 库中的所有文件吗？')) {
+                    await idbClear();
+                    renderIdLibrary();
+                    showToast('ID 库已清空');
+                }
+            }
+
+            async function importFiles() {
+                fileInput.click();
+            }
+
+            fileInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+                for (const file of files) {
+                    if (!['image/', 'video/', 'audio/'].some(prefix => file.type.startsWith(prefix))) {
+                        showToast(`不支持的文件类型: ${file.name}`);
+                        continue;
+                    }
+                    const id = generateShortId();
+                    await idbAdd(id, file);
+                }
+                renderIdLibrary();
+                showToast(`已导入 ${files.length} 个文件`);
+                fileInput.value = '';
+            });
+
+            // 切换 ID 库展开/收起
+            function toggleIdLibrary() {
+                idLibraryPanel.classList.toggle('collapsed');
+                const icon = idLibraryPanel.querySelector('.toggle-icon');
+                if (idLibraryPanel.classList.contains('collapsed')) {
+                    icon.textContent = '▼';
+                } else {
+                    icon.textContent = '▼'; // 保持向下箭头，但旋转在CSS中
+                }
+                // CSS 中 .collapsed .toggle-icon 旋转 -90 度
+            }
+            window.toggleIdLibrary = toggleIdLibrary;
+
+            // ========== Markdown 编辑器逻辑 ==========
             function showToast(message) {
                 toast.textContent = message;
                 toast.classList.add('show');
@@ -593,7 +957,6 @@
                 }, 2000);
             }
 
-            // 退出登录
             async function logout() {
                 try {
                     if (supabase) {
@@ -639,28 +1002,47 @@
                 showToast('设置已保存');
             }
 
-            // 预处理 Markdown，支持自定义图片/视频/音频语法
-            function preprocessMarkdown(markdown) {
-                // 图片：![描述](url =50%) -> <img src="url" width="50%" alt="描述">
+            // 预处理 Markdown，支持自定义图片/视频/音频语法 + ID引用
+            function preprocessMarkdown(markdown, idMap) {
+                // 先替换 ID 引用为实际对象 URL 或占位
+                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\]/g, (match, type, id) => {
+                    const record = idMap[id];
+                    if (!record) {
+                        return `<span class="id-placeholder">缺失文件: ${id}</span>`;
+                    }
+                    const url = URL.createObjectURL(record.file);
+                    if (type === 'image') {
+                        return `<img src="${url}" alt="${record.name}" style="max-width: 100%; border-radius: 8px;" />`;
+                    } else if (type === 'video') {
+                        return `<video controls src="${url}" style="max-width: 100%; border-radius: 8px;"></video>`;
+                    } else if (type === 'audio') {
+                        return `<audio controls src="${url}"></audio>`;
+                    }
+                    return match;
+                });
+
+                // 自定义语法替换（保留原有 =50% 语法）
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
                     return `<img src="${url}" width="${width}%" alt="${alt}" />`;
                 });
-                // 视频：@video[描述](url =50%) -> <video width="50%" controls src="url">描述</video>
                 markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
                     return `<video width="${width}%" controls src="${url}">${alt}</video>`;
                 });
-                // 音频：@audio[描述](url) -> <audio controls src="url"></audio>
                 markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
                     return `<audio controls src="${url}"></audio>`;
                 });
+
                 return markdown;
             }
 
-            function togglePreview() {
+            async function togglePreview() {
                 isPreviewMode = !isPreviewMode;
                 if (isPreviewMode) {
                     const rawMarkdown = editor.value;
-                    const processed = preprocessMarkdown(rawMarkdown);
+                    const idMap = {};
+                    const files = await idbGetAll();
+                    files.forEach(record => { idMap[record.id] = record; });
+                    const processed = preprocessMarkdown(rawMarkdown, idMap);
                     const html = marked.parse(processed);
                     previewArea.innerHTML = html;
                     previewArea.classList.add('show');
@@ -682,61 +1064,20 @@
                 let cursorOffset = 0;
 
                 switch (action) {
-                    case 'heading':
-                        insertion = `# ${selectedText || '标题'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'bold':
-                        insertion = `**${selectedText || '加粗文本'}**`;
-                        cursorOffset = 2;
-                        break;
-                    case 'italic':
-                        insertion = `*${selectedText || '斜体文本'}*`;
-                        cursorOffset = 1;
-                        break;
-                    case 'strike':
-                        insertion = `~~${selectedText || '删除线文本'}~~`;
-                        cursorOffset = 2;
-                        break;
-                    case 'link':
-                        insertion = `[${selectedText || '链接文字'}](https://)`;
-                        cursorOffset = insertion.length - 1;
-                        break;
-                    case 'image':
-                        insertion = `![图片描述](https:// =50%)`;
-                        // 光标定位在 URL 输入位置
-                        cursorOffset = 6; // 6个字符 "图片描述" 后面的 "](https://" 之后的位置，用户输入 URL
-                        break;
-                    case 'video':
-                        insertion = `@video[视频描述](https:// =50%)`;
-                        cursorOffset = 10; // "视频描述" 后面的 "](https://" 之后的位置
-                        break;
-                    case 'audio':
-                        insertion = `@audio[音频描述](https://)`;
-                        cursorOffset = 10;
-                        break;
-                    case 'quote':
-                        insertion = `> ${selectedText || '引用内容'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'code':
-                        insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``;
-                        cursorOffset = 3;
-                        break;
-                    case 'list-ul':
-                        insertion = `\n- ${selectedText || '列表项'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'list-ol':
-                        insertion = `\n1. ${selectedText || '列表项'}`;
-                        cursorOffset = insertion.length;
-                        break;
-                    case 'hr':
-                        insertion = `\n---\n`;
-                        cursorOffset = insertion.length;
-                        break;
-                    default:
-                        return;
+                    case 'heading': insertion = `# ${selectedText || '标题'}`; cursorOffset = insertion.length; break;
+                    case 'bold': insertion = `**${selectedText || '加粗文本'}**`; cursorOffset = 2; break;
+                    case 'italic': insertion = `*${selectedText || '斜体文本'}*`; cursorOffset = 1; break;
+                    case 'strike': insertion = `~~${selectedText || '删除线文本'}~~`; cursorOffset = 2; break;
+                    case 'link': insertion = `[${selectedText || '链接文字'}](https://)`; cursorOffset = insertion.length - 1; break;
+                    case 'image': insertion = `![图片描述](https:// =50%)`; cursorOffset = 6; break;
+                    case 'video': insertion = `@video[视频描述](https:// =50%)`; cursorOffset = 10; break;
+                    case 'audio': insertion = `@audio[音频描述](https://)`; cursorOffset = 10; break;
+                    case 'quote': insertion = `> ${selectedText || '引用内容'}`; cursorOffset = insertion.length; break;
+                    case 'code': insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``; cursorOffset = 3; break;
+                    case 'list-ul': insertion = `\n- ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
+                    case 'list-ol': insertion = `\n1. ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
+                    case 'hr': insertion = `\n---\n`; cursorOffset = insertion.length; break;
+                    default: return;
                 }
 
                 const newValue = editor.value.substring(0, start) + insertion + editor.value.substring(end);
@@ -746,7 +1087,27 @@
                 editor.setSelectionRange(newCursorPos, newCursorPos);
             }
 
-            // 草稿相关
+            // 拖放到编辑器
+            editor.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+            editor.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const syntax = e.dataTransfer.getData('text/plain');
+                if (syntax.startsWith('@id[')) {
+                    const start = editor.selectionStart;
+                    const end = editor.selectionEnd;
+                    const newValue = editor.value.substring(0, start) + syntax + editor.value.substring(end);
+                    editor.value = newValue;
+                    const pos = start + syntax.length;
+                    editor.focus();
+                    editor.setSelectionRange(pos, pos);
+                    showToast('已插入 ID 引用');
+                }
+            });
+
+            // ========== 草稿相关 ==========
             function getAllDrafts() {
                 const drafts = [];
                 for (let i = 0; i < localStorage.length; i++) {
@@ -823,7 +1184,7 @@
                 }
             }
 
-            // 发布流程
+            // ========== 发布流程 ==========
             function openPublishConfirm() {
                 if (!cardMeta.title || !cardMeta.description) {
                     showToast('请先在设置中填写卡片标题和简介');
@@ -852,25 +1213,76 @@
 
                     const submitterName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '用户';
 
-                    const { error } = await supabase
+                    // 扫描编辑器内容中的 ID 引用
+                    const idMap = {};
+                    const files = await idbGetAll();
+                    files.forEach(record => { idMap[record.id] = record; });
+
+                    // 正则匹配 @id[类型:ID]
+                    const content = editor.value;
+                    const idRefs = content.matchAll(/@id\[(image|video|audio):([a-zA-Z0-9]+)\]/g);
+                    const uploadPromises = [];
+                    const uploadMap = {}; // 存储ID到最终URL的映射
+
+                    for (const match of idRefs) {
+                        const type = match[1];
+                        const id = match[2];
+                        if (!idMap[id]) {
+                            showToast(`ID 库中不存在 ${id}，请检查`);
+                            return;
+                        }
+                        const file = idMap[id].file;
+                        const fileExt = file.name.split('.').pop() || 'bin';
+                        const path = `${user.id}/${Date.now()}_${id}.${fileExt}`;
+                        // 上传到 Supabase Storage（需要预先创建存储桶 'media'）
+                        const { error: uploadError } = await supabase.storage
+                            .from('media')
+                            .upload(path, file);
+                        if (uploadError) {
+                            console.error('上传失败:', uploadError);
+                            showToast(`文件 ${id} 上传失败：${uploadError.message}`);
+                            return;
+                        }
+                        // 获取公共 URL
+                        const { data: publicUrlData } = supabase.storage
+                            .from('media')
+                            .getPublicUrl(path);
+                        const publicUrl = publicUrlData.publicUrl;
+                        uploadMap[id] = publicUrl;
+                    }
+
+                    // 替换内容中的 ID 引用为公共 URL
+                    let finalContent = content;
+                    for (const [id, url] of Object.entries(uploadMap)) {
+                        finalContent = finalContent.replaceAll(`@id[image:${id}]`, `![图片](${url})`);
+                        finalContent = finalContent.replaceAll(`@id[video:${id}]`, `@video[视频](${url})`);
+                        finalContent = finalContent.replaceAll(`@id[audio:${id}]`, `@audio[音频](${url})`);
+                    }
+
+                    // 插入数据库（需要 file_map 字段存储ID与URL映射）
+                    const { error: dbError } = await supabase
                         .from('websites')
                         .insert({
                             title: cardMeta.title,
                             description: cardMeta.description,
-                            content: editor.value,
+                            content: finalContent,
                             submitter_id: user.id,
                             submitter_name: submitterName,
                             is_anonymous: cardMeta.isAnonymous,
-                            status: 'pending'
+                            status: 'pending',
+                            file_map: uploadMap
                         });
 
-                    if (error) throw error;
+                    if (dbError) throw dbError;
 
                     publishModal.classList.remove('show');
                     showToast('已提交审核，感谢分享！');
                     editor.value = '';
                     cardMeta = { title: '', description: '', isAnonymous: false };
                     localStorage.removeItem('draft_website_post');
+                    // 清空 ID 库
+                    await idbClear();
+                    renderIdLibrary();
                     setTimeout(() => {
                         window.location.href = 'home.html';
                     }, 1500);
@@ -880,7 +1292,7 @@
                 }
             }
 
-            // 事件绑定
+            // ========== 事件绑定 ==========
             document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
                 btn.addEventListener('click', function() {
                     insertMarkdown(this.dataset.action);
@@ -915,10 +1327,13 @@
                 }
             });
 
-            // 初始化
-            loadLatestDraft();
-
-            async function checkUser() {
+            // ========== 初始化 ==========
+            async function init() {
+                // 渲染 ID 库
+                await renderIdLibrary();
+                // 加载最近草稿
+                loadLatestDraft();
+                // 检查登录
                 if (supabase) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
@@ -930,13 +1345,17 @@
                     }
                 }
             }
-            checkUser();
+            init();
 
-            // 将函数挂载到全局以便内联 onclick 使用
-            window.togglePreview = togglePreview;
+            // 暴露全局函数
+            window.toggleIdLibrary = toggleIdLibrary;
+            window.importFiles = importFiles;
+            window.clearIdLibrary = clearIdLibrary;
+            window.logout = logout;
             window.openSettings = openSettings;
             window.saveSettings = saveSettings;
             window.cancelSettings = closeSettings;
+            window.togglePreview = togglePreview;
             window.saveDraft = saveDraft;
             window.openPublishConfirm = openPublishConfirm;
             window.cancelPublish = cancelPublish;
