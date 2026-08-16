@@ -10,8 +10,6 @@
 
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Markdown 渲染库 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         :root {
@@ -66,13 +64,17 @@
         .sidebar-header {
             display: flex; align-items: center; gap: 10px; margin-bottom: 30px; padding: 0 8px; min-height: 40px;
         }
+        /* 无底板 Logo */
         .logo-icon {
-            width: 40px; height: 40px; border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary), #38bdf8);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; box-shadow: 0 4px 12px rgba(62, 207, 142, 0.3);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--text-primary);
         }
-        .logo-icon svg { width: 26px; height: 18px; fill: #000; }
+        .logo-icon svg { width: 36px; height: 24px; fill: currentColor; }
         .logo-text { font-size: 20px; font-weight: 700; white-space: nowrap; opacity: 1; transition: opacity 0.2s ease; }
         .sidebar.collapsed .logo-text { opacity: 0; width: 0; }
 
@@ -94,18 +96,16 @@
             transition: left var(--transition), transform var(--transition);
             z-index: 110;
         }
-        .sidebar.collapsed + .sidebar-toggle {
-            left: calc(var(--sidebar-collapsed-width) - 12px);
-        }
         .sidebar-toggle svg {
             width: 14px;
             height: 14px;
             fill: #0f0c29;
             transition: transform 0.3s ease;
         }
-        .sidebar.collapsed + .sidebar-toggle svg {
-            transform: rotate(180deg);
+        .sidebar.collapsed ~ .sidebar-toggle {
+            left: calc(var(--sidebar-collapsed-width) - 12px);
         }
+        .sidebar.collapsed ~ .sidebar-toggle svg { transform: rotate(180deg); }
 
         .nav-section { display: flex; flex-direction: column; gap: 6px; flex: 1; }
         .nav-item {
@@ -215,7 +215,7 @@
         .draft-time { font-size: 12px; color: var(--text-muted); }
         .draft-actions { display: flex; gap: 8px; }
 
-        /* 设置表单（优化样式） */
+        /* 设置表单 */
         .settings-form {
             max-width: 480px;
             background: var(--card-bg);
@@ -237,7 +237,6 @@
             color: var(--primary); cursor: pointer; transition: all var(--transition);
         }
         .avatar-upload-btn:hover { background: rgba(62,207,142,0.1); }
-
         .settings-form .form-group { margin-bottom: 18px; }
         .settings-form .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
         .settings-form .form-input {
@@ -266,28 +265,6 @@
         .btn-danger:hover { background: rgba(255,107,107,0.25); }
         .btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 6px; }
 
-        /* 审核视图 */
-        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .admin-tab {
-            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--input-border);
-            background: none; color: var(--text-secondary); cursor: pointer; transition: all var(--transition);
-        }
-        .admin-tab:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
-        .admin-tab.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
-        .admin-post-item { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; }
-        .admin-post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
-        .admin-post-title { font-weight: 600; }
-        .admin-post-actions { display: flex; gap: 8px; }
-        .btn-approve { background: var(--primary); color: #0f0c29; }
-        .btn-reject { background: rgba(255,107,107,0.2); color: #ffb3b3; }
-        .btn-detail { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
-        .admin-post-desc { font-size: 13px; color: var(--text-secondary); }
-        .admin-post-content { margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; display: none; max-height: 300px; overflow-y: auto; font-size: 14px; }
-        .admin-post-content.show { display: block; }
-        .content-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
-        .content-toggle button { padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 1px solid var(--input-border); background: none; color: var(--text-secondary); cursor: pointer; }
-        .content-toggle button.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
-
         @media (max-width: 480px) {
             .main-content { padding: 20px 16px; }
             .sidebar { width: 200px; }
@@ -302,7 +279,7 @@
             <div class="logo-icon">
                 <svg viewBox="0 0 1000 720" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g transform="translate(500, 360) scale(1.85) translate(-500, -360)">
-                        <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="currentColor" fill-rule="evenodd" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="currentColor" fill-rule="evenodd" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <rect x="484" y="273" width="32" height="100" rx="10" fill="currentColor"/>
                         <rect x="488" y="383" width="24" height="24" rx="8" fill="currentColor"/>
                     </g>
@@ -328,11 +305,11 @@
                 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.31.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                 <span>设置</span>
             </button>
-            <!-- 管理员审核入口（仅管理员可见） -->
-            <button class="nav-item" id="adminReviewItem" data-view="admin" style="display: none;">
+            <!-- 审核分区：独立文件链接 -->
+            <a class="nav-item" id="adminReviewItem" href="admin.html" style="display: none;">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 <span>审核分区</span>
-            </button>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -350,7 +327,7 @@
         </div>
     </aside>
 
-    <!-- 侧边栏折叠按钮（独立固定在侧边栏边缘，始终可见） -->
+    <!-- 侧边栏折叠按钮（独立固定在侧边栏边缘） -->
     <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="展开/收起侧边栏">
         <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
     </button>
@@ -407,17 +384,6 @@
                 <button class="btn btn-primary" id="saveProfileBtn">保存资料</button>
             </div>
         </div>
-
-        <!-- 审核视图（管理员） -->
-        <div class="view" id="view-admin">
-            <h2 style="margin-bottom:20px;">审核分区</h2>
-            <div class="admin-tabs">
-                <button class="admin-tab active" data-status="pending">待审核</button>
-                <button class="admin-tab" data-status="approved">已通过</button>
-                <button class="admin-tab" data-status="rejected">已拒绝</button>
-            </div>
-            <div id="adminPostList"></div>
-        </div>
     </main>
 
     <script>
@@ -431,16 +397,12 @@
 
             let currentUser = null;
             let userFavorites = [];
-            let allAdminPosts = [];
-            let adminCurrentStatus = 'pending';
 
-            // ========== 全局函数 ==========
             function toggleSidebar() {
                 const sidebar = document.getElementById('sidebar');
                 const mainContent = document.getElementById('mainContent');
                 sidebar.classList.toggle('collapsed');
                 mainContent.classList.toggle('expanded');
-                // 调整按钮位置（CSS 自动根据 .collapsed 类调整，但需要手动更新类选择器）
             }
 
             async function logout() {
@@ -467,6 +429,7 @@
                         avatar.style.backgroundImage = 'none';
                         avatar.textContent = name.charAt(0).toUpperCase();
                     }
+                    // 如果是管理员，显示审核入口
                     adminItem.style.display = (email === ADMIN_EMAIL) ? 'flex' : 'none';
                 } else {
                     userName.textContent = '未登录';
@@ -476,7 +439,6 @@
                 }
             }
 
-            // 收藏
             async function loadFavorites() {
                 if (!supabase || !currentUser) return [];
                 try {
@@ -503,7 +465,6 @@
                 } catch (e) { console.error(e); showToast('操作失败'); }
             }
 
-            // 渲染卡片
             function renderCards(data, containerId, favoritesSet) {
                 const container = document.getElementById(containerId);
                 if (!data || data.length === 0) {
@@ -576,7 +537,6 @@
                 } catch (e) { console.error(e); container.innerHTML = '<div class="empty-state">加载失败</div>'; }
             }
 
-            // 草稿
             function loadDrafts() {
                 const container = document.getElementById('draftList');
                 const drafts = [];
@@ -605,7 +565,6 @@
             function editDraft(draftId) { window.location.href = `submit.html?draftId=${draftId}`; }
             function deleteDraft(draftId) { localStorage.removeItem(draftId); loadDrafts(); showToast('草稿已删除'); }
 
-            // 设置
             async function loadSettings() {
                 if (!currentUser) return;
                 document.getElementById('nicknameInput').value = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
@@ -646,123 +605,6 @@
                 } catch (err) { console.error(err); showToast('更新失败'); }
             });
 
-            // 审核
-            async function loadAdminPosts(status) {
-                adminCurrentStatus = status;
-                const container = document.getElementById('adminPostList');
-                container.innerHTML = '<p>加载中...</p>';
-                try {
-                    const { data, error } = await supabase.from('websites').select('*').eq('status', status).order('created_at', { ascending: false });
-                    if (error) throw error;
-                    allAdminPosts = data;
-                    if (data.length === 0) { container.innerHTML = '<p style="color:var(--text-muted);">暂无内容</p>'; return; }
-                    container.innerHTML = data.map(post => `
-                        <div class="admin-post-item">
-                            <div class="admin-post-header">
-                                <div class="admin-post-title">${post.title}</div>
-                                <div class="admin-post-actions">
-                                    <button class="btn btn-sm btn-detail" onclick="toggleAdminContent('${post.id}')">详情</button>
-                                    ${status === 'pending' ? `
-                                    <button class="btn btn-sm btn-approve" onclick="approvePost('${post.id}')">通过</button>
-                                    <button class="btn btn-sm btn-reject" onclick="rejectPost('${post.id}')">拒绝</button>` : ''}
-                                </div>
-                            </div>
-                            <div class="admin-post-desc">${post.description || ''}</div>
-                            <div class="admin-post-content" id="adminContent-${post.id}">
-                                <div class="content-toggle">
-                                    <button class="active" onclick="setContentMode('${post.id}', 'text')">纯文本</button>
-                                    <button onclick="setContentMode('${post.id}', 'markdown')">Markdown</button>
-                                </div>
-                                <div class="content-body" id="contentBody-${post.id}"></div>
-                            </div>
-                        </div>
-                    `).join('');
-                } catch (err) { console.error(err); container.innerHTML = '<p>加载失败</p>'; }
-            }
-
-            function toggleAdminContent(postId) {
-                const contentDiv = document.getElementById(`adminContent-${postId}`);
-                contentDiv.classList.toggle('show');
-                if (contentDiv.classList.contains('show')) {
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    if (post && !document.getElementById(`contentBody-${postId}`).innerHTML) {
-                        setContentMode(postId, 'text');
-                    }
-                }
-            }
-
-            function setContentMode(postId, mode) {
-                const body = document.getElementById(`contentBody-${postId}`);
-                const buttons = document.querySelectorAll(`#adminContent-${postId} .content-toggle button`);
-                buttons.forEach(b => b.classList.remove('active'));
-                if (mode === 'text') {
-                    buttons[0].classList.add('active');
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    body.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${post ? escapeHtml(post.content || '') : ''}</pre>`;
-                } else {
-                    buttons[1].classList.add('active');
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    if (post) {
-                        const processed = preprocessMarkdown(post.content || '');
-                        body.innerHTML = marked.parse(processed);
-                    }
-                }
-            }
-
-            function escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-
-            function preprocessMarkdown(markdown) {
-                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
-                    return `[${type}文件:${id}]`;
-                });
-                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => `<img src="${url}" width="${width}%" alt="${alt}" />`);
-                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => `<video width="${width}%" controls src="${url}">${alt}</video>`);
-                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => `<audio controls src="${url}"></audio>`);
-                return markdown;
-            }
-
-            async function approvePost(postId) {
-                console.log('approvePost called with id:', postId);
-                try {
-                    const { error } = await supabase.from('websites').update({ status: 'approved' }).eq('id', postId);
-                    if (error) throw error;
-                    showToast('已通过');
-                    loadAdminPosts(adminCurrentStatus);
-                } catch (err) {
-                    console.error('approvePost error:', err);
-                    showToast('操作失败：' + (err.message || '未知错误'));
-                }
-            }
-
-            async function rejectPost(postId) {
-                console.log('rejectPost called with id:', postId);
-                try {
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    if (post && post.file_map) {
-                        for (const [id, info] of Object.entries(post.file_map)) {
-                            const url = info.url;
-                            const match = url.match(/\/storage\/v1\/object\/public\/media\/(.+)/);
-                            if (match) {
-                                const path = match[1];
-                                await supabase.storage.from('media').remove([path]);
-                            }
-                        }
-                    }
-                    const { error } = await supabase.from('websites').update({ status: 'rejected' }).eq('id', postId);
-                    if (error) throw error;
-                    showToast('已拒绝');
-                    loadAdminPosts(adminCurrentStatus);
-                } catch (err) {
-                    console.error('rejectPost error:', err);
-                    showToast('操作失败：' + (err.message || '未知错误'));
-                }
-            }
-
-            // 视图切换
             function switchView(viewName) {
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
                 document.getElementById(`view-${viewName}`).classList.add('active');
@@ -772,19 +614,10 @@
                 if (viewName === 'favorites') loadFavoriteWebsites();
                 if (viewName === 'drafts') loadDrafts();
                 if (viewName === 'settings') loadSettings();
-                if (viewName === 'admin') loadAdminPosts(adminCurrentStatus);
             }
 
             document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
                 btn.addEventListener('click', () => switchView(btn.dataset.view));
-            });
-
-            document.querySelectorAll('.admin-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    loadAdminPosts(tab.dataset.status);
-                });
             });
 
             document.getElementById('homeSearchInput').addEventListener('input', function() {
@@ -808,18 +641,12 @@
                 setTimeout(() => toast.remove(), 2000);
             }
 
-            // 挂载全局函数
             window.toggleSidebar = toggleSidebar;
             window.logout = logout;
             window.editDraft = editDraft;
             window.deleteDraft = deleteDraft;
-            window.toggleAdminContent = toggleAdminContent;
-            window.setContentMode = setContentMode;
-            window.approvePost = approvePost;
-            window.rejectPost = rejectPost;
             window.switchView = switchView;
 
-            // 初始化
             async function init() {
                 if (!supabase) { window.location.href = 'index.html'; return; }
                 const { data: { user } } = await supabase.auth.getUser();
