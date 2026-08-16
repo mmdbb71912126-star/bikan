@@ -219,6 +219,14 @@
             max-width: 100%;
             border-radius: 8px;
         }
+        .preview-area video {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .preview-area audio {
+            width: 100%;
+            margin: 8px 0;
+        }
 
         /* ========== 弹窗覆盖层 ========== */
         .modal-overlay {
@@ -420,6 +428,18 @@
             <button class="toolbar-btn" data-action="link" title="链接">
                 <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
             </button>
+            <!-- 新增图片按钮 -->
+            <button class="toolbar-btn" data-action="image" title="图片">
+                <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            </button>
+            <!-- 新增视频按钮 -->
+            <button class="toolbar-btn" data-action="video" title="视频">
+                <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            </button>
+            <!-- 新增音频按钮 -->
+            <button class="toolbar-btn" data-action="audio" title="音频">
+                <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+            </button>
             <button class="toolbar-btn" data-action="quote" title="引用">
                 <svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg>
             </button>
@@ -457,7 +477,7 @@
             <button class="toolbar-btn danger" id="publishBtn" title="发布">
                 <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
-            <!-- 新增退出按钮 -->
+            <!-- 退出按钮 -->
             <button class="toolbar-btn" id="logoutBtn" title="退出登录" onclick="logout()">
                 <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
             </button>
@@ -585,7 +605,7 @@
                     window.location.href = 'index.html';
                 }
             }
-            window.logout = logout; // 挂载到全局
+            window.logout = logout;
 
             function openSettings() {
                 cardTitleInput.value = cardMeta.title || '';
@@ -619,11 +639,29 @@
                 showToast('设置已保存');
             }
 
+            // 预处理 Markdown，支持自定义图片/视频/音频语法
+            function preprocessMarkdown(markdown) {
+                // 图片：![描述](url =50%) -> <img src="url" width="50%" alt="描述">
+                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
+                    return `<img src="${url}" width="${width}%" alt="${alt}" />`;
+                });
+                // 视频：@video[描述](url =50%) -> <video width="50%" controls src="url">描述</video>
+                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
+                    return `<video width="${width}%" controls src="${url}">${alt}</video>`;
+                });
+                // 音频：@audio[描述](url) -> <audio controls src="url"></audio>
+                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
+                    return `<audio controls src="${url}"></audio>`;
+                });
+                return markdown;
+            }
+
             function togglePreview() {
                 isPreviewMode = !isPreviewMode;
                 if (isPreviewMode) {
-                    const markdown = editor.value;
-                    const html = marked.parse(markdown);
+                    const rawMarkdown = editor.value;
+                    const processed = preprocessMarkdown(rawMarkdown);
+                    const html = marked.parse(processed);
                     previewArea.innerHTML = html;
                     previewArea.classList.add('show');
                     editor.style.display = 'none';
@@ -644,17 +682,61 @@
                 let cursorOffset = 0;
 
                 switch (action) {
-                    case 'heading': insertion = `# ${selectedText || '标题'}`; cursorOffset = insertion.length; break;
-                    case 'bold': insertion = `**${selectedText || '加粗文本'}**`; cursorOffset = 2; break;
-                    case 'italic': insertion = `*${selectedText || '斜体文本'}*`; cursorOffset = 1; break;
-                    case 'strike': insertion = `~~${selectedText || '删除线文本'}~~`; cursorOffset = 2; break;
-                    case 'link': insertion = `[${selectedText || '链接文字'}](https://)`; cursorOffset = insertion.length - 1; break;
-                    case 'quote': insertion = `> ${selectedText || '引用内容'}`; cursorOffset = insertion.length; break;
-                    case 'code': insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``; cursorOffset = 3; break;
-                    case 'list-ul': insertion = `\n- ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
-                    case 'list-ol': insertion = `\n1. ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
-                    case 'hr': insertion = `\n---\n`; cursorOffset = insertion.length; break;
-                    default: return;
+                    case 'heading':
+                        insertion = `# ${selectedText || '标题'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'bold':
+                        insertion = `**${selectedText || '加粗文本'}**`;
+                        cursorOffset = 2;
+                        break;
+                    case 'italic':
+                        insertion = `*${selectedText || '斜体文本'}*`;
+                        cursorOffset = 1;
+                        break;
+                    case 'strike':
+                        insertion = `~~${selectedText || '删除线文本'}~~`;
+                        cursorOffset = 2;
+                        break;
+                    case 'link':
+                        insertion = `[${selectedText || '链接文字'}](https://)`;
+                        cursorOffset = insertion.length - 1;
+                        break;
+                    case 'image':
+                        insertion = `![图片描述](https:// =50%)`;
+                        // 光标定位在 URL 输入位置
+                        cursorOffset = 6; // 6个字符 "图片描述" 后面的 "](https://" 之后的位置，用户输入 URL
+                        break;
+                    case 'video':
+                        insertion = `@video[视频描述](https:// =50%)`;
+                        cursorOffset = 10; // "视频描述" 后面的 "](https://" 之后的位置
+                        break;
+                    case 'audio':
+                        insertion = `@audio[音频描述](https://)`;
+                        cursorOffset = 10;
+                        break;
+                    case 'quote':
+                        insertion = `> ${selectedText || '引用内容'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'code':
+                        insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``;
+                        cursorOffset = 3;
+                        break;
+                    case 'list-ul':
+                        insertion = `\n- ${selectedText || '列表项'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'list-ol':
+                        insertion = `\n1. ${selectedText || '列表项'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'hr':
+                        insertion = `\n---\n`;
+                        cursorOffset = insertion.length;
+                        break;
+                    default:
+                        return;
                 }
 
                 const newValue = editor.value.substring(0, start) + insertion + editor.value.substring(end);
