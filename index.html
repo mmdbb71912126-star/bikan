@@ -1,1 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录 / 注册 - Supabase Auth</title>
 
+    <!-- Supabase JS SDK (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
+
+    <style>
+        /* ========== 全局样式 ========== */
+        :root {
+            --primary: #3ecf8e;
+            --primary-dark: #2bb673;
+            --bg-start: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-end: #24243e;
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-focus: #3ecf8e;
+            --error: #ff6b6b;
+            --success: #3ecf8e;
+            --google-bg: #ffffff;
+            --google-text: #3c4043;
+            --google-hover: #f8f9fa;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family:
+                'Inter',
+                -apple-system,
+                BlinkMacSystemFont,
+                'Segoe UI',
+                'PingFang SC',
+                'Hiragino Sans GB',
+                'Microsoft YaHei',
+                sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            background-attachment: fixed;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景装饰光斑 */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::before {
+            width: 500px;
+            height: 500px;
+            background: rgba(62, 207, 142, 0.15);
+            top: -150px;
+            left: -100px;
+            animation: float 12s ease-in-out infinite;
+        }
+        body::after {
+            width: 400px;
+            height: 400px;
+            background: rgba(99, 102, 241, 0.12);
+            bottom: -120px;
+            right: -80px;
+            animation: float 15s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            50% {
+                transform: translate(40px, 30px) scale(1.08);
+            }
+        }
+
+        /* ========== 卡片容器 ========== */
+        .auth-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 40px 36px 32px;
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ========== Logo / 标题 ========== */
+        .logo-area {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), #38bdf8);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 14px;
+            box-shadow: 0 8px 24px rgba(62, 207, 142, 0.3);
+        }
+        .logo-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        .logo-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ========== 标签切换 ========== */
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 28px;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .tab {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all var(--transition);
+            user-select: none;
+            border: none;
+            background: transparent;
+            position: relative;
+        }
+        .tab:hover {
+            color: var(--text-primary);
+        }
+        .tab.active {
+            color: #0f0c29;
+            background: var(--primary);
+            box-shadow: 0 4px 14px rgba(62, 207, 142, 0.4);
+        }
+        .tab:not(.active):hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ========== 表单样式 ========== */
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 13px 16px;
+            font-size: 15px;
+            color: var(--text-primary);
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all var(--transition);
+            letter-spacing: 0.3px;
+        }
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+        .form-input:focus {
+            border-color: var(--input-focus);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.15);
+        }
+        .form-input.error {
+            border-color: var(--error);
+            box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.12);
+        }
+
+        /* ========== 按钮 ========== */
+        .btn {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2bb673);
+            color: #0f0c29;
+            box-shadow: 0 6px 20px rgba(62, 207, 142, 0.35);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 8px 28px rgba(62, 207, 142, 0.5);
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 12px rgba(62, 207, 142, 0.2);
+        }
+
+        .btn-google {
+            background: var(--google-bg);
+            color: var(--google-text);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 0;
+        }
+        .btn-google:hover {
+            background: var(--google-hover);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+        .btn-google:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-google svg {
+            flex-shrink: 0;
+        }
+
+        /* ========== 分隔线 ========== */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 22px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* ========== 错误提示 ========== */
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+            line-height: 1.5;
+        }
+        .alert.show {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .alert-error {
+            background: rgba(255, 107, 107, 0.12);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ffb3b3;
+        }
+        .alert-success {
+            background: rgba(62, 207, 142, 0.12);
+            border: 1px solid rgba(62, 207, 142, 0.3);
+            color: #a8e6c9;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== 登录后用户信息 ========== */
+        .user-panel {
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .user-panel.show {
+            display: block;
+        }
+        .user-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            margin: 0 auto 14px;
+            box-shadow: 0 4px 16px rgba(62, 207, 142, 0.4);
+        }
+        .user-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .user-email {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: none;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+        .btn-logout:hover {
+            background: rgba(255, 107, 107, 0.15);
+            border-color: rgba(255, 107, 107, 0.3);
+            color: #ffb3b3;
+            transform: translateY(-1px);
+        }
+
+        /* ========== 加载 spinner ========== */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(15, 12, 41, 0.25);
+            border-top-color: #0f0c29;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+        .btn.loading .spinner {
+            display: inline-block;
+        }
+        .btn.loading .btn-text {
+            opacity: 0.7;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ========== 底部提示 ========== */
+        .footer-note {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 20px;
+            letter-spacing: 0.3px;
+        }
+        .footer-note a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+        .footer-note a:hover {
+            color: #5ce0a5;
+            text-decoration: underline;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 28px 22px 24px;
+                border-radius: 14px;
+            }
+            .logo-title {
+                font-size: 20px;
+            }
+            .form-input {
+                padding: 11px 14px;
+                font-size: 14px;
+            }
+            .btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 认证卡片 ==================== -->
+    <div class="auth-card" id="authCard">
+
+        <!-- Logo -->
+        <div class="logo-area">
+            <div class="logo-icon">🔐</div>
+            <h1 class="logo-title">欢迎回来</h1>
+            <p class="logo-subtitle">使用 Supabase 安全登录</p>
+        </div>
+
+        <!-- 登录/注册切换 -->
+        <div class="tabs" role="tablist">
+            <button class="tab active" id="tabLogin" role="tab" aria-selected="true">登录</button>
+            <button class="tab" id="tabRegister" role="tab" aria-selected="false">注册</button>
+        </div>
+
+        <!-- 错误/成功提示 -->
+        <div class="alert alert-error" id="alertBox" role="alert"></div>
+
+        <!-- 登录/注册表单 -->
+        <form id="authForm" novalidate>
+            <div class="form-group">
+                <label class="form-label" for="email">邮箱地址</label>
+                <input
+                class="form-input"
+                type="email"
+                id="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+                />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">密码</label>
+                <input
+                class="form-input"
+                type="password"
+                id="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                required
+                minlength="6"
+                />
+            </div>
+
+            <!-- 邮箱登录/注册按钮 -->
+            <button class="btn btn-primary" type="submit" id="submitBtn">
+                <span class="spinner"></span>
+                <span class="btn-text" id="submitBtnText">登 录</span>
+            </button>
+        </form>
+
+        <!-- 分隔线 -->
+        <div class="divider">或</div>
+
+        <!-- Google 登录按钮 -->
+        <button class="btn btn-google" type="button" id="googleBtn">
+            <!-- Google Logo SVG -->
+            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.13 0-5.78-2.11-6.73-4.95H1.28v3.08A11.99 11.99 0 0 0 12 24z"/>
+                <path fill="#FBBC05" d="M5.27 14.29A7.19 7.19 0 0 1 4.9 12c0-.8.14-1.57.37-2.29V6.63H1.28A11.99 11.99 0 0 0 0 12c0 1.94.47 3.77 1.28 5.37l3.99-3.08z"/>
+                <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.58 1.79l3.43-3.43A11.95 11.95 0 0 0 12 0 11.99 11.99 0 0 0 1.28 6.63l3.99 3.08C6.22 6.88 8.87 4.77 12 4.77z"/>
+            </svg>
+            <span class="btn-text">使用 Google 登录</span>
+        </button>
+
+        <!-- 登录后用户面板（默认隐藏） -->
+        <div class="user-panel" id="userPanel">
+            <img class="user-avatar" id="userAvatar" src="" alt="用户头像" />
+            <p class="user-name" id="userName"></p>
+            <p class="user-email" id="userEmail"></p>
+            <button class="btn btn-logout" id="logoutBtn" type="button">退出登录</button>
+        </div>
+
+        <p class="footer-note">
+            登录即表示您同意我们的
+            <a href="#" onclick="return false;">服务条款</a> 和
+            <a href="#" onclick="return false;">隐私政策</a>
+        </p>
+    </div>
+
+    <!-- ==================== 脚本 ==================== -->
+    <script>
+        // =============================================
+        //  ⚠️ 请替换为你的 Supabase 项目凭据！
+        //  在 Supabase Dashboard → Settings → API 中获取
+        // =============================================
+        const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+
+        // 初始化 Supabase 客户端
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase 客户端初始化成功');
+        } catch (err) {
+            console.error('❌ Supabase 初始化失败:', err);
+            showAlert('Supabase 配置错误，请检查 URL 和 anon key。', 'error');
+        }
+
+        // ============ DOM 元素 ============
+        const tabLogin = document.getElementById('tabLogin');
+        const tabRegister = document.getElementById('tabRegister');
+        const authForm = document.getElementById('authForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const googleBtn = document.getElementById('googleBtn');
+        const alertBox = document.getElementById('alertBox');
+        const userPanel = document.getElementById('userPanel');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const authCard = document.getElementById('authCard');
+
+        // ============ 状态 ============
+        let currentMode = 'login'; // 'login' | 'register'
+        let isLoading = false;
+
+        // ============ 工具函数 ============
+        function showAlert(message, type = 'error') {
+            alertBox.className = `alert alert-${type} show`;
+            alertBox.innerHTML = message;
+            // 5秒后自动隐藏
+            clearTimeout(alertBox._hideTimer);
+            alertBox._hideTimer = setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 5000);
+        }
+
+        function hideAlert() {
+            alertBox.classList.remove('show');
+            clearTimeout(alertBox._hideTimer);
+        }
+
+        function setLoading(btn, loading) {
+            if (loading) {
+                btn.classList.add('loading');
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'login') {
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+                submitBtnText.textContent = '登 录';
+                passwordInput.autocomplete = 'current-password';
+                document.querySelector('.logo-title').textContent = '欢迎回来';
+                document.querySelector('.logo-subtitle').textContent = '使用 Supabase 安全登录';
+            } else {
+                tabRegister.classList.add('active');
+                tabLogin.classList.remove('active');
+                submitBtnText.textContent = '注 册';
+                passwordInput.autocomplete = 'new-password';
+                document.querySelector('.logo-title').textContent = '创建账户';
+                document.querySelector('.logo-subtitle').textContent = '加入我们，开始使用 Supabase';
+            }
+            hideAlert();
+            // 清空密码但保留邮箱
+            passwordInput.value = '';
+            passwordInput.classList.remove('error');
+            emailInput.classList.remove('error');
+        }
+
+        function markError(input) {
+            input.classList.add('error');
+            setTimeout(() => input.classList.remove('error'), 2000);
+        }
+
+        // ============ 显示登录后的用户信息 ============
+        function showUserPanel(user) {
+            // 隐藏表单和 Google 按钮
+            authForm.style.display = 'none';
+            googleBtn.style.display = 'none';
+            document.querySelector('.tabs').style.display = 'none';
+            document.querySelector('.divider').style.display = 'none';
+            document.querySelector('.logo-subtitle').textContent = '已成功登录';
+
+            // 填充用户信息
+            const avatarUrl =
+                user.user_metadata?.avatar_url ||
+                user.user_metadata?.picture ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    user.user_metadata?.full_name || user.email || 'User'
+                )}&background=3ecf8e&color=fff&size=128`;
+            userAvatar.src = avatarUrl;
+            userName.textContent =
+                user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '用户';
+            userEmail.textContent = user.email || '';
+
+            // 显示用户面板
+            userPanel.classList.add('show');
+            userPanel.style.display = 'block';
+        }
+
+        function showAuthForms() {
+            authForm.style.display = 'block';
+            googleBtn.style.display = 'flex';
+            document.querySelector('.tabs').style.display = 'flex';
+            document.querySelector('.divider').style.display = 'flex';
+            document.querySelector('.logo-subtitle').textContent = '使用 Supabase 安全登录';
+            userPanel.classList.remove('show');
+            userPanel.style.display = 'none';
+        }
+
+        // ============ 邮箱密码认证 ============
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            // 基本验证
+            if (!email || !email.includes('@')) {
+                showAlert('⚠️ 请输入有效的邮箱地址。', 'error');
+                markError(emailInput);
+                return;
+            }
+            if (!password || password.length < 6) {
+                showAlert('⚠️ 密码至少需要 6 个字符。', 'error');
+                markError(passwordInput);
+                return;
+            }
+
+            setLoading(submitBtn, true);
+
+            try {
+                if (currentMode === 'login') {
+                    // ========== 邮箱登录 ==========
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    if (data?.user) {
+                        showAlert('✅ 登录成功！正在跳转...', 'success');
+                        setTimeout(() => showUserPanel(data.user), 800);
+                    }
+                } else {
+                    // ========== 邮箱注册 ==========
+                    const { data, error } = await supabase.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            // 如果启用了邮箱验证，用户会收到确认邮件
+                            // 若未开启，注册后自动登录
+                        },
+                    });
+                    if (error) throw error;
+
+                    if (data?.user?.identities?.length === 0) {
+                        showAlert('⚠️ 该邮箱已注册，请直接登录。', 'error');
+                    } else if (data?.session) {
+                        showAlert('✅ 注册成功！正在登录...', 'success');
+                        setTimeout(() => showUserPanel(data.user), 800);
+                    } else {
+                        showAlert('📧 注册成功！请前往邮箱验证后登录。', 'success');
+                        setMode('login');
+                        emailInput.value = email;
+                    }
+                }
+            } catch (err) {
+                console.error('认证错误:', err);
+                // 美化错误信息
+                const msg = err.message || '认证失败，请重试。';
+                if (msg.includes('Invalid login credentials')) {
+                    showAlert('⚠️ 邮箱或密码错误，请检查后重试。', 'error');
+                } else if (msg.includes('Email not confirmed')) {
+                    showAlert('📧 邮箱尚未验证，请查收邮件完成验证。', 'error');
+                } else if (msg.includes('User already registered')) {
+                    showAlert('⚠️ 该邮箱已注册，请直接登录。', 'error');
+                    setMode('login');
+                } else {
+                    showAlert(`⚠️ ${msg}`, 'error');
+                }
+            } finally {
+                setLoading(submitBtn, false);
+            }
+        });
+
+        // ============ Google OAuth 登录 ============
+        googleBtn.addEventListener('click', async () => {
+            hideAlert();
+            setLoading(googleBtn, true);
+
+            try {
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        // 登录成功后跳转回当前页面
+                        redirectTo: window.location.origin + window.location.pathname,
+                    },
+                });
+                if (error) throw error;
+                // 成功时通常会跳转到 Google 登录页面
+                // 返回后 Supabase 会自动处理回调，无需额外代码
+                console.log('🔄 正在跳转到 Google 登录...', data);
+            } catch (err) {
+                console.error('Google 登录错误:', err);
+                showAlert(`⚠️ Google 登录失败：${err.message || '请稍后重试'}`, 'error');
+                setLoading(googleBtn, false);
+            }
+        });
+
+        // ============ 退出登录 ============
+        logoutBtn.addEventListener('click', async () => {
+            setLoading(logoutBtn, true);
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                showAuthForms();
+                emailInput.value = '';
+                passwordInput.value = '';
+                showAlert('👋 已退出登录，期待再次相见！', 'success');
+            } catch (err) {
+                console.error('退出失败:', err);
+                showAlert(`⚠️ 退出失败：${err.message}`, 'error');
+            } finally {
+                setLoading(logoutBtn, false);
+            }
+        });
+
+        // ============ Tab 切换 ============
+        tabLogin.addEventListener('click', () => setMode('login'));
+        tabRegister.addEventListener('click', () => setMode('register'));
+
+        // ============ 输入时清除错误 ============
+        emailInput.addEventListener('input', () => {
+            emailInput.classList.remove('error');
+            hideAlert();
+        });
+        passwordInput.addEventListener('input', () => {
+            passwordInput.classList.remove('error');
+            hideAlert();
+        });
+
+        // ============ 自动检测已登录状态 ============
+        async function checkAuthState() {
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (user) {
+                    showUserPanel(user);
+                }
+            } catch (err) {
+                console.log('未检测到已登录用户');
+            }
+        }
+
+        // Supabase 的 onAuthStateChange 监听（处理 OAuth 回调）
+        if (supabase) {
+            supabase.auth.onAuthStateChange((event, session) => {
+                console.log('🔄 认证状态变化:', event);
+                if (event === 'SIGNED_IN' && session?.user) {
+                    showUserPanel(session.user);
+                    showAlert('✅ 登录成功！', 'success');
+                } else if (event === 'SIGNED_OUT') {
+                    showAuthForms();
+                } else if (event === 'USER_UPDATED' && session?.user) {
+                    showUserPanel(session.user);
+                }
+            });
+
+            // 页面加载时检查
+            checkAuthState();
+        }
+
+        // ============ 控制台输出配置提醒 ============
+        console.log('%c🔑 Supabase 认证页面已加载', 'font-size:16px; font-weight:bold; color:#3ecf8e;');
+        if (SUPABASE_URL.includes('YOUR-PROJECT') || SUPABASE_ANON_KEY.includes('YOUR-ANON')) {
+            console.warn('%c⚠️ 请先在代码中替换你的 Supabase URL 和 anon key！', 'font-size:14px; color:#ffb3b3;');
+            console.warn('%c📍 获取位置：Supabase Dashboard → Settings → API', 'font-size:12px; color:#ffb3b3;');
+        }
+    </script>
+</body>
+</html>
