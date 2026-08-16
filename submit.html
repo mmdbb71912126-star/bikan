@@ -228,6 +228,7 @@
             width: 100%;
             margin: 8px 0;
         }
+        /* ID引用占位样式 */
         .id-placeholder {
             display: inline-block;
             background: rgba(62, 207, 142, 0.15);
@@ -237,23 +238,6 @@
             color: var(--primary);
             font-size: 14px;
             cursor: pointer;
-        }
-
-        /* 尺寸调整控件 */
-        .media-resize-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .media-resize-controls input[type="range"] {
-            flex: 1;
-            accent-color: var(--primary);
-        }
-        .media-resize-controls span {
-            white-space: nowrap;
         }
 
         /* ========== ID库面板 ========== */
@@ -584,12 +568,15 @@
             <button class="toolbar-btn" data-action="link" title="链接">
                 <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
             </button>
-            <button class="toolbar-btn" data-action="image" title="图片">
+            <!-- 图片按钮（语法含 =50%） -->
+            <button class="toolbar-btn" data-action="image" title="图片（默认宽度50%）">
                 <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
             </button>
-            <button class="toolbar-btn" data-action="video" title="视频">
+            <!-- 视频按钮（语法含 =50%） -->
+            <button class="toolbar-btn" data-action="video" title="视频（默认宽度50%）">
                 <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
             </button>
+            <!-- 音频按钮 -->
             <button class="toolbar-btn" data-action="audio" title="音频">
                 <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
             </button>
@@ -756,7 +743,11 @@
             const fileInput = document.getElementById('fileInput');
 
             let isPreviewMode = false;
-            let cardMeta = { title: '', description: '', isAnonymous: false };
+            let cardMeta = {
+                title: '',
+                description: '',
+                isAnonymous: false
+            };
 
             // ========== IndexedDB 封装 ==========
             const dbName = 'bikan_id_library';
@@ -765,7 +756,10 @@
 
             function openDB() {
                 return new Promise((resolve, reject) => {
-                    if (db) { resolve(db); return; }
+                    if (db) {
+                        resolve(db);
+                        return;
+                    }
                     const request = indexedDB.open(dbName, 1);
                     request.onupgradeneeded = (e) => {
                         const database = e.target.result;
@@ -773,8 +767,13 @@
                             database.createObjectStore(storeName, { keyPath: 'id' });
                         }
                     };
-                    request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-                    request.onerror = (e) => { reject(e.target.error); };
+                    request.onsuccess = (e) => {
+                        db = e.target.result;
+                        resolve(db);
+                    };
+                    request.onerror = (e) => {
+                        reject(e.target.error);
+                    };
                 });
             }
 
@@ -783,7 +782,8 @@
                 return new Promise((resolve, reject) => {
                     const transaction = db.transaction([storeName], 'readwrite');
                     const store = transaction.objectStore(storeName);
-                    store.put({ id, file, type: file.type, name: file.name });
+                    const record = { id, file, type: file.type, name: file.name };
+                    store.put(record);
                     transaction.oncomplete = () => resolve();
                     transaction.onerror = (e) => reject(e.target.error);
                 });
@@ -839,7 +839,7 @@
                     item.className = 'id-file-item';
                     item.draggable = true;
                     item.dataset.fileId = record.id;
-                    item.dataset.fileType = record.type.split('/')[0];
+                    item.dataset.fileType = record.type.split('/')[0]; // image, video, audio
 
                     const thumb = document.createElement('div');
                     thumb.className = 'id-file-thumb';
@@ -882,14 +882,21 @@
                     item.appendChild(info);
                     item.appendChild(deleteBtn);
 
+                    // 拖放事件：根据类型决定是否带 =50%
                     item.addEventListener('dragstart', (e) => {
-                        const type = record.type.split('/')[0];
-                        const syntax = `@id[${type}:${record.id}:50%]`;
+                        const fileType = record.type.split('/')[0];
+                        let syntax = `@id[${fileType}:${record.id}]`;
+                        // 图片和视频默认加 =50%
+                        if (fileType === 'image' || fileType === 'video') {
+                            syntax = `@id[${fileType}:${record.id} =50%]`;
+                        }
                         e.dataTransfer.setData('text/plain', syntax);
                         e.dataTransfer.effectAllowed = 'copy';
                         item.classList.add('dragging');
                     });
-                    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+                    item.addEventListener('dragend', () => {
+                        item.classList.remove('dragging');
+                    });
 
                     idLibraryBody.appendChild(item);
                 });
@@ -931,6 +938,12 @@
 
             function toggleIdLibrary() {
                 idLibraryPanel.classList.toggle('collapsed');
+                const icon = idLibraryPanel.querySelector('.toggle-icon');
+                if (idLibraryPanel.classList.contains('collapsed')) {
+                    icon.textContent = '▼';
+                } else {
+                    icon.textContent = '▼';
+                }
             }
             window.toggleIdLibrary = toggleIdLibrary;
 
@@ -939,12 +952,21 @@
                 toast.textContent = message;
                 toast.classList.add('show');
                 clearTimeout(toast._hideTimer);
-                toast._hideTimer = setTimeout(() => { toast.classList.remove('show'); }, 2000);
+                toast._hideTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
             }
 
             async function logout() {
-                try { if (supabase) await supabase.auth.signOut(); } catch (err) { console.error('退出失败:', err); }
-                window.location.href = 'index.html';
+                try {
+                    if (supabase) {
+                        await supabase.auth.signOut();
+                    }
+                } catch (err) {
+                    console.error('退出失败:', err);
+                } finally {
+                    window.location.href = 'index.html';
+                }
             }
             window.logout = logout;
 
@@ -956,7 +978,9 @@
                 cardTitleInput.focus();
             }
 
-            function closeSettings() { settingsModal.classList.remove('show'); }
+            function closeSettings() {
+                settingsModal.classList.remove('show');
+            }
 
             function saveSettings() {
                 const title = cardTitleInput.value.trim();
@@ -978,55 +1002,38 @@
                 showToast('设置已保存');
             }
 
-            // 处理 Markdown 中的 ID 引用与自定义语法，并支持尺寸调整
+            // 预处理 Markdown，支持 ID 引用（带 =50%）和自定义语法
             function preprocessMarkdown(markdown, idMap) {
-                // 先替换 ID 引用，支持 @id[type:id:百分比] 或 @id[type:id]（默认50%）
-                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)(?::(\d+)%)?\]/g, (match, type, id, size) => {
+                // 先替换 ID 引用（支持带 =50% 大小参数）
+                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
                     const record = idMap[id];
-                    const width = size ? `${size}%` : '50%';
                     if (!record) {
                         return `<span class="id-placeholder">缺失文件: ${id}</span>`;
                     }
                     const url = URL.createObjectURL(record.file);
+                    const widthStyle = width ? `${width}%` : '100%';
                     if (type === 'image') {
-                        return `<div><img src="${url}" alt="${record.name}" style="width:${width}; max-width:100%; border-radius:8px;" /><div class="media-resize-controls"><input type="range" min="10" max="100" value="${size || 50}" data-id="${id}" data-type="image" data-url="${url}" /><span>${width}</span></div></div>`;
+                        return `<img src="${url}" alt="${record.name}" style="max-width: ${widthStyle}; border-radius: 8px;" />`;
                     } else if (type === 'video') {
-                        return `<div><video controls src="${url}" style="width:${width}; max-width:100%; border-radius:8px;"></video><div class="media-resize-controls"><input type="range" min="10" max="100" value="${size || 50}" data-id="${id}" data-type="video" data-url="${url}" /><span>${width}</span></div></div>`;
+                        return `<video controls src="${url}" style="max-width: ${widthStyle}; border-radius: 8px;"></video>`;
                     } else if (type === 'audio') {
                         return `<audio controls src="${url}"></audio>`;
                     }
                     return match;
                 });
 
-                // 直接 URL 的自定义语法（保留原有 =50% 语法）
+                // 自定义语法替换（保留 =50% 语法）
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
-                    return `<div><img src="${url}" width="${width}%" alt="${alt}" style="max-width:100%;" /><div class="media-resize-controls"><input type="range" min="10" max="100" value="${width}" data-url="${url}" data-type="image" /><span>${width}%</span></div></div>`;
+                    return `<img src="${url}" width="${width}%" alt="${alt}" />`;
                 });
                 markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
-                    return `<div><video width="${width}%" controls src="${url}" style="max-width:100%;"></video><div class="media-resize-controls"><input type="range" min="10" max="100" value="${width}" data-url="${url}" data-type="video" /><span>${width}%</span></div></div>`;
+                    return `<video width="${width}%" controls src="${url}">${alt}</video>`;
                 });
                 markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
                     return `<audio controls src="${url}"></audio>`;
                 });
 
                 return markdown;
-            }
-
-            // 预览时处理尺寸滑动条交互
-            function bindResizeControls() {
-                document.querySelectorAll('.media-resize-controls input[type="range"]').forEach(slider => {
-                    slider.addEventListener('input', function() {
-                        const val = this.value;
-                        const span = this.nextElementSibling;
-                        if (span) span.textContent = `${val}%`;
-                        // 找到同级的 media 元素
-                        const parent = this.closest('div');
-                        const media = parent.parentElement.querySelector('img, video');
-                        if (media) {
-                            media.style.width = `${val}%`;
-                        }
-                    });
-                });
             }
 
             async function togglePreview() {
@@ -1039,7 +1046,6 @@
                     const processed = preprocessMarkdown(rawMarkdown, idMap);
                     const html = marked.parse(processed);
                     previewArea.innerHTML = html;
-                    bindResizeControls();
                     previewArea.classList.add('show');
                     editor.style.display = 'none';
                     previewBtn.classList.add('active');
@@ -1208,19 +1214,21 @@
 
                     const submitterName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '用户';
 
+                    // 扫描编辑器内容中的 ID 引用（支持 =50%）
                     const idMap = {};
                     const files = await idbGetAll();
                     files.forEach(record => { idMap[record.id] = record; });
 
                     const content = editor.value;
-                    const idRefs = content.matchAll(/@id\[(image|video|audio):([a-zA-Z0-9]+)(?::(\d+)%)?\]/g);
+                    // 正则支持 @id[类型:ID =50%] 和 @id[类型:ID]
+                    const idRefs = content.matchAll(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g);
                     const uploadPromises = [];
                     const uploadMap = {};
 
                     for (const match of idRefs) {
                         const type = match[1];
                         const id = match[2];
-                        const size = match[3] ? `${match[3]}%` : '50%';
+                        const width = match[3] || null;
                         if (!idMap[id]) {
                             showToast(`ID 库中不存在 ${id}，请检查`);
                             return;
@@ -1240,19 +1248,19 @@
                             .from('media')
                             .getPublicUrl(path);
                         const publicUrl = publicUrlData.publicUrl;
-                        uploadMap[id] = { url: publicUrl, type, size };
+                        uploadMap[id] = { url: publicUrl, type, width };
                     }
 
+                    // 替换内容中的 ID 引用为公共 URL（保留大小参数）
                     let finalContent = content;
                     for (const [id, info] of Object.entries(uploadMap)) {
+                        const widthSuffix = info.width ? ` =${info.width}%` : '';
                         if (info.type === 'image') {
-                            finalContent = finalContent.replaceAll(`@id[image:${id}]`, `![图片](${info.url} =${info.size})`);
-                            finalContent = finalContent.replaceAll(`@id[image:${id}:${info.size}]`, `![图片](${info.url} =${info.size})`);
+                            finalContent = finalContent.replaceAll(new RegExp(`@id\\[image:${id}\\s*(?:=\\d+%)?\\]`, 'g'), `![图片](${info.url}${widthSuffix})`);
                         } else if (info.type === 'video') {
-                            finalContent = finalContent.replaceAll(`@id[video:${id}]`, `@video[视频](${info.url} =${info.size})`);
-                            finalContent = finalContent.replaceAll(`@id[video:${id}:${info.size}]`, `@video[视频](${info.url} =${info.size})`);
+                            finalContent = finalContent.replaceAll(new RegExp(`@id\\[video:${id}\\s*(?:=\\d+%)?\\]`, 'g'), `@video[视频](${info.url}${widthSuffix})`);
                         } else if (info.type === 'audio') {
-                            finalContent = finalContent.replaceAll(`@id[audio:${id}]`, `@audio[音频](${info.url})`);
+                            finalContent = finalContent.replaceAll(new RegExp(`@id\\[audio:${id}\\s*(?:=\\d+%)?\\]`, 'g'), `@audio[音频](${info.url})`);
                         }
                     }
 
@@ -1278,7 +1286,9 @@
                     localStorage.removeItem('draft_website_post');
                     await idbClear();
                     renderIdLibrary();
-                    setTimeout(() => { window.location.href = 'home.html'; }, 1500);
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1500);
                 } catch (err) {
                     console.error('发布失败:', err);
                     showToast('发布失败：' + err.message);
@@ -1327,8 +1337,12 @@
                 if (supabase) {
                     try {
                         const { data: { user } } = await supabase.auth.getUser();
-                        if (!user) { window.location.href = 'index.html'; }
-                    } catch (err) { console.error('获取用户失败:', err); }
+                        if (!user) {
+                            window.location.href = 'index.html';
+                        }
+                    } catch (err) {
+                        console.error('获取用户失败:', err);
+                    }
                 }
             }
             init();
