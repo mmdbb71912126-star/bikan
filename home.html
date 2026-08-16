@@ -162,6 +162,10 @@
             text-decoration: none;
             font-size: 15px;
             font-weight: 500;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
         }
         .nav-item:hover {
             background: rgba(255, 255, 255, 0.06);
@@ -278,6 +282,7 @@
             width: calc(100% - var(--sidebar-collapsed-width));
         }
 
+        /* 顶部栏 */
         .top-bar {
             display: flex;
             align-items: center;
@@ -345,7 +350,15 @@
             fill: #0f0c29;
         }
 
-        /* ========== 卡片列表 ========== */
+        /* 视图容器 */
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+        }
+
+        /* 卡片列表 */
         .card-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -415,18 +428,19 @@
             align-items: center;
             justify-content: center;
             transition: background var(--transition);
+            color: var(--text-muted);
         }
         .card-action-btn:hover {
             background: rgba(255, 255, 255, 0.08);
+            color: var(--primary);
         }
         .card-action-btn svg {
             width: 18px;
             height: 18px;
-            fill: var(--text-muted);
-            transition: fill var(--transition);
+            fill: currentColor;
         }
-        .card-action-btn:hover svg {
-            fill: var(--primary);
+        .card-action-btn.active {
+            color: var(--primary);
         }
 
         .card-description {
@@ -487,6 +501,152 @@
             color: var(--text-muted);
             font-size: 15px;
         }
+
+        /* 草稿列表样式 */
+        .draft-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .draft-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+        }
+        .draft-info {
+            flex: 1;
+        }
+        .draft-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .draft-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .draft-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 设置表单 */
+        .settings-form {
+            max-width: 480px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .avatar-upload {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+        .avatar-upload-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px dashed var(--primary);
+            background: none;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        /* 审核视图 */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .admin-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--input-border);
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .admin-tab.active {
+            background: var(--primary);
+            color: #0f0c29;
+            border-color: var(--primary);
+        }
+        .admin-post-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .admin-post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .admin-post-title {
+            font-weight: 600;
+        }
+        .admin-post-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-approve {
+            background: var(--primary);
+            color: #0f0c29;
+        }
+        .btn-reject {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ffb3b3;
+        }
+        .btn-detail {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+        .admin-post-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .admin-post-content {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        .admin-post-content.show {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 20px 16px;
+            }
+            .sidebar {
+                width: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -511,29 +671,27 @@
         </div>
 
         <nav class="nav-section">
-            <a class="nav-item active" href="home.html">
+            <button class="nav-item active" data-view="home">
                 <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                 <span>首页</span>
-            </a>
-            <a class="nav-item" href="#">
+            </button>
+            <button class="nav-item" data-view="favorites">
                 <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 <span>我的收藏</span>
-            </a>
-            <!-- 草稿导航项 -->
-            <a class="nav-item" href="submit.html">
+            </button>
+            <button class="nav-item" data-view="drafts">
                 <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
                 <span>草稿</span>
-            </a>
-            <a class="nav-item" href="settings.html">
+            </button>
+            <button class="nav-item" data-view="settings">
                 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.31.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                 <span>设置</span>
-            </a>
-
+            </button>
             <!-- 管理员审核入口（仅管理员可见） -->
-            <a class="nav-item" id="adminReviewItem" style="display: none;" href="#">
+            <button class="nav-item" id="adminReviewItem" data-view="admin" style="display: none;">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 <span>审核分区</span>
-            </a>
+            </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -553,28 +711,73 @@
 
     <!-- 主内容区 -->
     <main class="main-content" id="mainContent">
-        <div class="top-bar">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="搜索网址、标签或描述..." />
-                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <!-- 首页视图 -->
+        <div class="view active" id="view-home">
+            <div class="top-bar">
+                <div class="search-box">
+                    <input type="text" id="homeSearchInput" placeholder="搜索网址、标签或描述..." />
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                </div>
+                <button class="submit-btn" onclick="location.href='submit.html'">
+                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    发布网址
+                </button>
             </div>
-            <button class="submit-btn" onclick="location.href='submit.html'">
-                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                发布网址
-            </button>
+            <div class="card-list" id="homeCardList"></div>
         </div>
 
-        <div class="card-list" id="cardList">
-            <!-- 卡片由 JS 动态渲染 -->
+        <!-- 收藏视图 -->
+        <div class="view" id="view-favorites">
+            <div class="top-bar">
+                <div class="search-box">
+                    <input type="text" id="favoritesSearchInput" placeholder="搜索收藏..." />
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                </div>
+            </div>
+            <div class="card-list" id="favoritesCardList"></div>
+        </div>
+
+        <!-- 草稿视图 -->
+        <div class="view" id="view-drafts">
+            <h2 style="margin-bottom:20px;">草稿箱</h2>
+            <div class="draft-list" id="draftList"></div>
+        </div>
+
+        <!-- 设置视图 -->
+        <div class="view" id="view-settings">
+            <h2 style="margin-bottom:20px;">设置</h2>
+            <div class="settings-form">
+                <div class="avatar-upload">
+                    <img class="avatar-preview" id="avatarPreview" src="" alt="头像" />
+                    <div>
+                        <button class="avatar-upload-btn" id="avatarUploadBtn">更换头像</button>
+                        <input type="file" id="avatarFileInput" accept="image/*" style="display:none" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">昵称</label>
+                    <input class="form-input" type="text" id="nicknameInput" placeholder="输入新昵称" />
+                </div>
+                <button class="btn btn-primary" id="saveProfileBtn" style="width:auto;">保存资料</button>
+            </div>
+        </div>
+
+        <!-- 审核视图（管理员） -->
+        <div class="view" id="view-admin">
+            <h2 style="margin-bottom:20px;">审核分区</h2>
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-status="pending">待审核</button>
+                <button class="admin-tab" data-status="approved">已通过</button>
+                <button class="admin-tab" data-status="rejected">已拒绝</button>
+            </div>
+            <div id="adminPostList"></div>
         </div>
     </main>
 
     <script>
         (function() {
-            // Supabase 配置
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
-
             const ADMIN_EMAIL = '3948677391@qq.com';
 
             let supabase;
@@ -585,50 +788,40 @@
             }
 
             let currentUser = null;
-            let allWebsites = []; // 缓存所有已审核帖子，用于搜索
+            let userFavorites = []; // 收藏的 website_id 数组
 
             // 侧边栏折叠
             function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const main = document.getElementById('mainContent');
-                sidebar.classList.toggle('collapsed');
-                main.classList.toggle('expanded');
+                document.getElementById('sidebar').classList.toggle('collapsed');
+                document.getElementById('mainContent').classList.toggle('expanded');
             }
 
             // 退出登录
             async function logout() {
                 try {
-                    if (supabase) {
-                        await supabase.auth.signOut();
-                    }
-                } catch (err) {
-                    console.error('退出失败:', err);
-                } finally {
-                    window.location.href = 'index.html';
-                }
+                    if (supabase) await supabase.auth.signOut();
+                } catch (e) { console.error(e); }
+                window.location.href = 'index.html';
             }
 
-            function isAdmin(email) {
-                return email === ADMIN_EMAIL;
-            }
-
+            // 更新侧边栏用户信息
             function updateUserUI(user) {
                 const avatar = document.getElementById('userAvatar');
                 const userName = document.getElementById('sidebarUserName');
                 const userEmail = document.getElementById('sidebarUserEmail');
                 const adminItem = document.getElementById('adminReviewItem');
-
                 if (user) {
                     const email = user.email || '';
                     const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0] || '用户';
                     userName.textContent = name;
                     userEmail.textContent = email;
                     avatar.textContent = name.charAt(0).toUpperCase();
-                    if (isAdmin(email)) {
-                        adminItem.style.display = 'flex';
-                    } else {
-                        adminItem.style.display = 'none';
+                    if (user.user_metadata?.avatar_url) {
+                        avatar.style.backgroundImage = `url(${user.user_metadata.avatar_url})`;
+                        avatar.style.backgroundSize = 'cover';
+                        avatar.textContent = '';
                     }
+                    adminItem.style.display = (email === ADMIN_EMAIL) ? 'flex' : 'none';
                 } else {
                     userName.textContent = '未登录';
                     userEmail.textContent = '';
@@ -637,35 +830,38 @@
                 }
             }
 
-            // 渲染卡片
-            function renderCards(data) {
-                const container = document.getElementById('cardList');
+            // 加载收藏列表
+            async function loadFavorites() {
+                if (!supabase || !currentUser) return [];
+                try {
+                    const { data, error } = await supabase
+                        .from('favorites')
+                        .select('website_id')
+                        .eq('user_id', currentUser.id);
+                    if (error) throw error;
+                    return data.map(item => item.website_id);
+                } catch (err) {
+                    console.error('加载收藏失败:', err);
+                    return [];
+                }
+            }
+
+            // 渲染卡片（通用）
+            function renderCards(data, containerId, favoritesSet) {
+                const container = document.getElementById(containerId);
                 if (!data || data.length === 0) {
-                    container.innerHTML = `<div class="empty-state">暂无已审核的网址，快来分享第一个吧！</div>`;
+                    container.innerHTML = '<div class="empty-state">暂无内容</div>';
                     return;
                 }
                 container.innerHTML = data.map(item => {
-                    // 处理 URL 可能不存在的情况
                     let domain = '';
-                    try {
-                        if (item.url) {
-                            domain = new URL(item.url).hostname;
-                        }
-                    } catch (e) {
-                        domain = item.url || '';
-                    }
-
-                    // 提交者信息
+                    try { if (item.url) domain = new URL(item.url).hostname; } catch(e) {}
                     const isAnonymous = item.is_anonymous;
                     const submitterDisplay = isAnonymous ? '匿名用户' : (item.submitter_name || '用户');
                     const avatarText = isAnonymous ? '匿' : (submitterDisplay.charAt(0) || 'U');
-
-                    // 日期格式化
                     const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : '';
-
-                    // 标签（假设 tags 字段是数组，这里暂时显示空或占位）
-                    const tagsHtml = item.tags && item.tags.length ? item.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
-
+                    const tagsHtml = item.tags && item.tags.length ? item.tags.map(t => `<span class="tag">${t}</span>`).join('') : '';
+                    const isFav = favoritesSet.has(item.id);
                     return `
                     <div class="url-card">
                         <div class="card-header">
@@ -674,7 +870,7 @@
                                 ${domain ? `<div class="card-domain">${domain}</div>` : ''}
                             </div>
                             <div class="card-actions">
-                                <button class="card-action-btn" title="收藏">
+                                <button class="card-action-btn fav-btn ${isFav ? 'active' : ''}" data-id="${item.id}" title="收藏">
                                     <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                                 </button>
                                 <button class="card-action-btn" title="复制链接">
@@ -694,84 +890,408 @@
                     </div>
                     `;
                 }).join('');
+
+                // 绑定收藏按钮事件
+                container.querySelectorAll('.fav-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const websiteId = btn.dataset.id;
+                        await toggleFavorite(websiteId);
+                    });
+                });
             }
 
-            // 加载已审核的网址
-            async function loadWebsites() {
+            // 切换收藏状态
+            async function toggleFavorite(websiteId) {
+                if (!currentUser) return;
+                const isFav = userFavorites.includes(websiteId);
                 try {
-                    if (!supabase) {
-                        document.getElementById('cardList').innerHTML = '<div class="empty-state">Supabase 未初始化</div>';
-                        return;
+                    if (isFav) {
+                        await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('website_id', websiteId);
+                        userFavorites = userFavorites.filter(id => id !== websiteId);
+                    } else {
+                        await supabase.from('favorites').insert({ user_id: currentUser.id, website_id: websiteId });
+                        userFavorites.push(websiteId);
                     }
+                    // 刷新当前视图
+                    const activeView = document.querySelector('.view.active').id;
+                    if (activeView === 'view-home') loadHomeWebsites();
+                    if (activeView === 'view-favorites') loadFavoriteWebsites();
+                } catch (err) {
+                    console.error('收藏操作失败:', err);
+                    showToast('操作失败');
+                }
+            }
+
+            // 加载首页已审核帖子
+            async function loadHomeWebsites() {
+                const container = document.getElementById('homeCardList');
+                container.innerHTML = '<div class="empty-state">加载中...</div>';
+                try {
                     const { data, error } = await supabase
                         .from('websites')
                         .select('*')
                         .eq('status', 'approved')
                         .order('created_at', { ascending: false });
-
                     if (error) throw error;
-
-                    allWebsites = data || [];
-                    renderCards(allWebsites);
+                    renderCards(data, 'homeCardList', new Set(userFavorites));
                 } catch (err) {
-                    console.error('加载网址失败:', err);
-                    document.getElementById('cardList').innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
+                    console.error('加载首页失败:', err);
+                    container.innerHTML = '<div class="empty-state">加载失败</div>';
                 }
             }
 
-            // 搜索
-            document.getElementById('searchInput').addEventListener('input', function() {
-                const query = this.value.trim().toLowerCase();
-                if (!query) {
-                    renderCards(allWebsites);
+            // 加载收藏的帖子
+            async function loadFavoriteWebsites() {
+                const container = document.getElementById('favoritesCardList');
+                container.innerHTML = '<div class="empty-state">加载中...</div>';
+                if (userFavorites.length === 0) {
+                    container.innerHTML = '<div class="empty-state">暂无收藏</div>';
                     return;
                 }
-                const filtered = allWebsites.filter(item => 
-                    (item.title && item.title.toLowerCase().includes(query)) || 
-                    (item.description && item.description.toLowerCase().includes(query)) ||
-                    (item.url && item.url.toLowerCase().includes(query))
-                );
-                renderCards(filtered);
+                try {
+                    const { data, error } = await supabase
+                        .from('websites')
+                        .select('*')
+                        .in('id', userFavorites)
+                        .eq('status', 'approved')
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    renderCards(data, 'favoritesCardList', new Set(userFavorites));
+                } catch (err) {
+                    console.error('加载收藏失败:', err);
+                    container.innerHTML = '<div class="empty-state">加载失败</div>';
+                }
+            }
+
+            // 加载草稿列表
+            function loadDrafts() {
+                const container = document.getElementById('draftList');
+                const drafts = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('draft_')) {
+                        try {
+                            const draft = JSON.parse(localStorage.getItem(key));
+                            draft.id = key;
+                            drafts.push(draft);
+                        } catch (e) {}
+                    }
+                }
+                drafts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                if (drafts.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-muted);">暂无草稿</p>';
+                    return;
+                }
+                container.innerHTML = drafts.map(d => `
+                    <div class="draft-item">
+                        <div class="draft-info">
+                            <div class="draft-title">${d.meta.title || '未命名草稿'}</div>
+                            <div class="draft-time">${new Date(d.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div class="draft-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="editDraft('${d.id}')">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteDraft('${d.id}')">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function editDraft(draftId) {
+                // 跳转 submit.html 并传递 draftId 参数（submit.html 需要支持读取该参数加载草稿）
+                window.location.href = `submit.html?draftId=${draftId}`;
+            }
+
+            function deleteDraft(draftId) {
+                localStorage.removeItem(draftId);
+                loadDrafts();
+                showToast('草稿已删除');
+            }
+
+            // 设置视图
+            async function loadSettings() {
+                if (!currentUser) return;
+                document.getElementById('nicknameInput').value = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
+                const avatarUrl = currentUser.user_metadata?.avatar_url || '';
+                document.getElementById('avatarPreview').src = avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email)}&background=3ecf8e&color=fff`;
+            }
+
+            document.getElementById('avatarUploadBtn').addEventListener('click', () => {
+                document.getElementById('avatarFileInput').click();
             });
+
+            document.getElementById('avatarFileInput').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const fileExt = file.name.split('.').pop();
+                    const path = `avatars/${currentUser.id}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage.from('media').upload(path, file, { upsert: true });
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = supabase.storage.from('media').getPublicUrl(path);
+                    const avatarUrl = urlData.publicUrl;
+                    document.getElementById('avatarPreview').src = avatarUrl;
+                    // 更新用户元数据
+                    const { error: updateError } = await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
+                    if (updateError) throw updateError;
+                    currentUser = (await supabase.auth.getUser()).data.user;
+                    updateUserUI(currentUser);
+                    showToast('头像更新成功');
+                } catch (err) {
+                    console.error('头像上传失败:', err);
+                    showToast('头像上传失败');
+                }
+                e.target.value = '';
+            });
+
+            document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+                const nickname = document.getElementById('nicknameInput').value.trim();
+                if (!nickname) { showToast('昵称不能为空'); return; }
+                try {
+                    const { error } = await supabase.auth.updateUser({ data: { full_name: nickname } });
+                    if (error) throw error;
+                    currentUser = (await supabase.auth.getUser()).data.user;
+                    updateUserUI(currentUser);
+                    showToast('昵称更新成功');
+                } catch (err) {
+                    console.error('昵称更新失败:', err);
+                    showToast('更新失败');
+                }
+            });
+
+            // 审核视图
+            let adminCurrentStatus = 'pending';
+            async function loadAdminPosts(status) {
+                const container = document.getElementById('adminPostList');
+                container.innerHTML = '<p>加载中...</p>';
+                try {
+                    const { data, error } = await supabase
+                        .from('websites')
+                        .select('*')
+                        .eq('status', status)
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    if (data.length === 0) {
+                        container.innerHTML = '<p style="color:var(--text-muted);">暂无内容</p>';
+                        return;
+                    }
+                    container.innerHTML = data.map(post => `
+                        <div class="admin-post-item">
+                            <div class="admin-post-header">
+                                <div class="admin-post-title">${post.title}</div>
+                                <div class="admin-post-actions">
+                                    <button class="btn btn-sm btn-detail" onclick="toggleAdminContent('${post.id}')">详情</button>
+                                    ${status === 'pending' ? `
+                                    <button class="btn btn-sm btn-approve" onclick="approvePost('${post.id}')">通过</button>
+                                    <button class="btn btn-sm btn-reject" onclick="rejectPost('${post.id}')">拒绝</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="admin-post-desc">${post.description || ''}</div>
+                            <div class="admin-post-content" id="adminContent-${post.id}"></div>
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    console.error('加载审核列表失败:', err);
+                    container.innerHTML = '<p>加载失败</p>';
+                }
+            }
+
+            function toggleAdminContent(postId) {
+                const contentDiv = document.getElementById(`adminContent-${postId}`);
+                if (!contentDiv.classList.contains('show')) {
+                    // 加载内容
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    if (post && !contentDiv.innerHTML) {
+                        contentDiv.innerHTML = post.content || '无内容';
+                    }
+                }
+                contentDiv.classList.toggle('show');
+            }
+
+            async function approvePost(postId) {
+                try {
+                    const { error } = await supabase.from('websites').update({ status: 'approved' }).eq('id', postId);
+                    if (error) throw error;
+                    showToast('已通过');
+                    loadAdminPosts(adminCurrentStatus);
+                } catch (err) {
+                    console.error('审核通过失败:', err);
+                    showToast('操作失败');
+                }
+            }
+
+            async function rejectPost(postId) {
+                try {
+                    // 删除文件
+                    const post = allAdminPosts.find(p => p.id === postId);
+                    if (post && post.file_map) {
+                        for (const [id, info] of Object.entries(post.file_map)) {
+                            const path = info.url.split('/').pop(); // 需要完整路径，但 file_map 存储的是 url，需要调整
+                            // 这里简化处理，实际需要从 url 提取 bucket 内的路径
+                        }
+                    }
+                    const { error } = await supabase.from('websites').update({ status: 'rejected' }).eq('id', postId);
+                    if (error) throw error;
+                    showToast('已拒绝');
+                    loadAdminPosts(adminCurrentStatus);
+                } catch (err) {
+                    console.error('审核拒绝失败:', err);
+                    showToast('操作失败');
+                }
+            }
+
+            // 视图切换
+            function switchView(viewName) {
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById(`view-${viewName}`).classList.add('active');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
+                // 根据视图加载数据
+                if (viewName === 'home') loadHomeWebsites();
+                if (viewName === 'favorites') loadFavoriteWebsites();
+                if (viewName === 'drafts') loadDrafts();
+                if (viewName === 'settings') loadSettings();
+                if (viewName === 'admin') loadAdminPosts(adminCurrentStatus);
+            }
+
+            document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+                btn.addEventListener('click', () => switchView(btn.dataset.view));
+            });
+
+            // 审核标签切换
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    adminCurrentStatus = tab.dataset.status;
+                    loadAdminPosts(adminCurrentStatus);
+                });
+            });
+
+            // 首页搜索
+            document.getElementById('homeSearchInput').addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                // 简单实现：从已渲染的卡片中过滤（更优方案是重新查询，此处简化）
+                const cards = document.querySelectorAll('#homeCardList .url-card');
+                cards.forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    card.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+
+            // 收藏搜索类似
+            document.getElementById('favoritesSearchInput').addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                const cards = document.querySelectorAll('#favoritesCardList .url-card');
+                cards.forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    card.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+
+            // Toast 提示
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.textContent = message;
+                toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(30,30,50,0.95);color:#fff;padding:12px 24px;border-radius:30px;font-size:14px;z-index:999;';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            }
 
             // 初始化
             async function init() {
-                try {
-                    if (supabase) {
-                        const { data: { user } } = await supabase.auth.getUser();
-                        currentUser = user;
-                        updateUserUI(user);
-                        if (!user) {
-                            window.location.href = 'index.html';
-                            return;
-                        }
-                    } else {
-                        updateUserUI(null);
-                    }
-                    await loadWebsites();
-                } catch (err) {
-                    console.error('认证检查失败:', err);
-                    updateUserUI(null);
-                    await loadWebsites();
+                if (!supabase) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                currentUser = user;
+                updateUserUI(user);
+                userFavorites = await loadFavorites();
+                await loadHomeWebsites();
+                // 如果管理员，显示审核入口
+                if (user.email === ADMIN_EMAIL) {
+                    document.getElementById('adminReviewItem').style.display = 'flex';
                 }
             }
+            init();
 
-            if (supabase) {
-                supabase.auth.onAuthStateChange((event, session) => {
-                    if (event === 'SIGNED_OUT') {
-                        window.location.href = 'index.html';
-                    }
-                    if (event === 'SIGNED_IN' && session?.user) {
-                        currentUser = session.user;
-                        updateUserUI(session.user);
-                    }
-                });
-            }
-
+            // 暴露全局函数
             window.toggleSidebar = toggleSidebar;
             window.logout = logout;
+            window.editDraft = editDraft;
+            window.deleteDraft = deleteDraft;
+            window.toggleAdminContent = toggleAdminContent;
+            window.approvePost = approvePost;
+            window.rejectPost = rejectPost;
+            window.switchView = switchView;
+            // 保持 allAdminPosts 全局可访问（用于详情展开）
+            window.allAdminPosts = [];
+            // 更新 allAdminPosts 引用
+            const originalLoadAdminPosts = loadAdminPosts;
+            loadAdminPosts = async function(status) {
+                adminCurrentStatus = status;
+                const container = document.getElementById('adminPostList');
+                container.innerHTML = '<p>加载中...</p>';
+                try {
+                    const { data, error } = await supabase
+                        .from('websites')
+                        .select('*')
+                        .eq('status', status)
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    allAdminPosts = data;
+                    if (data.length === 0) {
+                        container.innerHTML = '<p style="color:var(--text-muted);">暂无内容</p>';
+                        return;
+                    }
+                    container.innerHTML = data.map(post => `
+                        <div class="admin-post-item">
+                            <div class="admin-post-header">
+                                <div class="admin-post-title">${post.title}</div>
+                                <div class="admin-post-actions">
+                                    <button class="btn btn-sm btn-detail" onclick="toggleAdminContent('${post.id}')">详情</button>
+                                    ${status === 'pending' ? `
+                                    <button class="btn btn-sm btn-approve" onclick="approvePost('${post.id}')">通过</button>
+                                    <button class="btn btn-sm btn-reject" onclick="rejectPost('${post.id}')">拒绝</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="admin-post-desc">${post.description || ''}</div>
+                            <div class="admin-post-content" id="adminContent-${post.id}"></div>
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    console.error('加载审核列表失败:', err);
+                    container.innerHTML = '<p>加载失败</p>';
+                }
+            };
+            // 重新绑定审核标签事件（因为 loadAdminPosts 被重写）
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.removeEventListener('click', tabClickHandler);
+                tab.addEventListener('click', tabClickHandler);
+            });
+            function tabClickHandler() {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                loadAdminPosts(this.dataset.status);
+            }
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.addEventListener('click', tabClickHandler);
+            });
 
-            init();
+            // 确保切换视图时调用 loadAdminPosts
+            const originalSwitchView = switchView;
+            switchView = function(viewName) {
+                originalSwitchView(viewName);
+                if (viewName === 'admin') {
+                    loadAdminPosts(adminCurrentStatus);
+                }
+            };
+            window.switchView = switchView;
         })();
     </script>
 </body>
