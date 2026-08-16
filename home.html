@@ -407,30 +407,17 @@
             let allAdminPosts = [];
             let adminCurrentStatus = 'pending';
 
-            // 暴露全局
-            window.toggleSidebar = toggleSidebar;
-            window.logout = logout;
-            window.editDraft = editDraft;
-            window.deleteDraft = deleteDraft;
-            window.toggleAdminContent = toggleAdminContent;
-            window.approvePost = approvePost;
-            window.rejectPost = rejectPost;
-            window.switchView = switchView;
-            window.setAdminStatus = setAdminStatus;
-
-            // 侧边栏折叠
+            // ========== 全局函数 ==========
             function toggleSidebar() {
                 document.getElementById('sidebar').classList.toggle('collapsed');
                 document.getElementById('mainContent').classList.toggle('expanded');
             }
 
-            // 退出登录
             async function logout() {
                 try { if (supabase) await supabase.auth.signOut(); } catch(e) {}
                 window.location.href = 'index.html';
             }
 
-            // 更新用户UI
             function updateUserUI(user) {
                 const avatar = document.getElementById('userAvatar');
                 const userName = document.getElementById('sidebarUserName');
@@ -459,7 +446,7 @@
                 }
             }
 
-            // 加载收藏列表
+            // 收藏
             async function loadFavorites() {
                 if (!supabase || !currentUser) return [];
                 try {
@@ -467,6 +454,23 @@
                     if (error) throw error;
                     return data.map(item => item.website_id);
                 } catch (e) { console.error(e); return []; }
+            }
+
+            async function toggleFavorite(websiteId) {
+                if (!currentUser) return;
+                const isFav = userFavorites.includes(websiteId);
+                try {
+                    if (isFav) {
+                        await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('website_id', websiteId);
+                        userFavorites = userFavorites.filter(id => id !== websiteId);
+                    } else {
+                        await supabase.from('favorites').insert({ user_id: currentUser.id, website_id: websiteId });
+                        userFavorites.push(websiteId);
+                    }
+                    const activeView = document.querySelector('.view.active').id;
+                    if (activeView === 'view-home') loadHomeWebsites();
+                    if (activeView === 'view-favorites') loadFavoriteWebsites();
+                } catch (e) { console.error(e); showToast('操作失败'); }
             }
 
             // 渲染卡片
@@ -521,25 +525,6 @@
                 });
             }
 
-            // 收藏切换
-            async function toggleFavorite(websiteId) {
-                if (!currentUser) return;
-                const isFav = userFavorites.includes(websiteId);
-                try {
-                    if (isFav) {
-                        await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('website_id', websiteId);
-                        userFavorites = userFavorites.filter(id => id !== websiteId);
-                    } else {
-                        await supabase.from('favorites').insert({ user_id: currentUser.id, website_id: websiteId });
-                        userFavorites.push(websiteId);
-                    }
-                    const activeView = document.querySelector('.view.active').id;
-                    if (activeView === 'view-home') loadHomeWebsites();
-                    if (activeView === 'view-favorites') loadFavoriteWebsites();
-                } catch (e) { console.error(e); showToast('操作失败'); }
-            }
-
-            // 加载首页
             async function loadHomeWebsites() {
                 const container = document.getElementById('homeCardList');
                 container.innerHTML = '<div class="empty-state">加载中...</div>';
@@ -550,7 +535,6 @@
                 } catch (e) { console.error(e); container.innerHTML = '<div class="empty-state">加载失败</div>'; }
             }
 
-            // 加载收藏
             async function loadFavoriteWebsites() {
                 const container = document.getElementById('favoritesCardList');
                 container.innerHTML = '<div class="empty-state">加载中...</div>';
@@ -632,7 +616,7 @@
                 } catch (err) { console.error(err); showToast('更新失败'); }
             });
 
-            // 审核相关
+            // 审核
             async function loadAdminPosts(status) {
                 adminCurrentStatus = status;
                 const container = document.getElementById('adminPostList');
@@ -701,11 +685,8 @@
                 return div.innerHTML;
             }
 
-            // 预处理Markdown（支持自定义语法）
             function preprocessMarkdown(markdown) {
-                // 自定义图片、视频、音频语法替换
                 markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
-                    // 无法获取实际文件URL，显示占位
                     return `[${type}文件:${id}]`;
                 });
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => `<img src="${url}" width="${width}%" alt="${alt}" />`);
@@ -725,12 +706,10 @@
 
             async function rejectPost(postId) {
                 try {
-                    // 删除关联文件
                     const post = allAdminPosts.find(p => p.id === postId);
                     if (post && post.file_map) {
                         for (const [id, info] of Object.entries(post.file_map)) {
                             const url = info.url;
-                            // 从URL中提取路径：media/xxx
                             const match = url.match(/\/storage\/v1\/object\/public\/media\/(.+)/);
                             if (match) {
                                 const path = match[1];
@@ -762,7 +741,6 @@
                 btn.addEventListener('click', () => switchView(btn.dataset.view));
             });
 
-            // 审核标签切换
             document.querySelectorAll('.admin-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
@@ -771,21 +749,16 @@
                 });
             });
 
-            // 首页搜索
             document.getElementById('homeSearchInput').addEventListener('input', function() {
                 const query = this.value.trim().toLowerCase();
-                const cards = document.querySelectorAll('#homeCardList .url-card');
-                cards.forEach(card => {
-                    const text = card.textContent.toLowerCase();
-                    card.style.display = text.includes(query) ? '' : 'none';
+                document.querySelectorAll('#homeCardList .url-card').forEach(card => {
+                    card.style.display = card.textContent.toLowerCase().includes(query) ? '' : 'none';
                 });
             });
             document.getElementById('favoritesSearchInput').addEventListener('input', function() {
                 const query = this.value.trim().toLowerCase();
-                const cards = document.querySelectorAll('#favoritesCardList .url-card');
-                cards.forEach(card => {
-                    const text = card.textContent.toLowerCase();
-                    card.style.display = text.includes(query) ? '' : 'none';
+                document.querySelectorAll('#favoritesCardList .url-card').forEach(card => {
+                    card.style.display = card.textContent.toLowerCase().includes(query) ? '' : 'none';
                 });
             });
 
@@ -796,6 +769,17 @@
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 2000);
             }
+
+            // 挂载全局函数
+            window.toggleSidebar = toggleSidebar;
+            window.logout = logout;
+            window.editDraft = editDraft;
+            window.deleteDraft = deleteDraft;
+            window.toggleAdminContent = toggleAdminContent;
+            window.setContentMode = setContentMode;
+            window.approvePost = approvePost;
+            window.rejectPost = rejectPost;
+            window.switchView = switchView;
 
             // 初始化
             async function init() {
