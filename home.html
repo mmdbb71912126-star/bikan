@@ -62,7 +62,10 @@
             z-index: 100; overflow: hidden;
         }
         .sidebar.collapsed { width: var(--sidebar-collapsed-width); padding: 20px 8px; }
-        .sidebar-header { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; padding: 0 8px; min-height: 40px; }
+
+        .sidebar-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 30px; padding: 0 8px; min-height: 40px;
+        }
         .logo-icon {
             width: 40px; height: 40px; border-radius: 12px;
             background: linear-gradient(135deg, var(--primary), #38bdf8);
@@ -72,14 +75,35 @@
         .logo-icon svg { width: 26px; height: 18px; fill: #000; }
         .logo-text { font-size: 20px; font-weight: 700; white-space: nowrap; opacity: 1; transition: opacity 0.2s ease; }
         .sidebar.collapsed .logo-text { opacity: 0; width: 0; }
+
+        /* 新的汉堡菜单按钮 */
         .sidebar-toggle {
-            position: absolute; top: 20px; right: -12px; width: 24px; height: 24px;
-            background: var(--primary); border: none; border-radius: 50%;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: transform var(--transition); z-index: 101;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: color var(--transition), background var(--transition);
+            flex-shrink: 0;
+            margin-left: auto;
         }
-        .sidebar-toggle svg { width: 14px; height: 14px; fill: #0f0c29; transition: transform 0.3s ease; }
-        .sidebar.collapsed .sidebar-toggle svg { transform: rotate(180deg); }
+        .sidebar-toggle:hover {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-primary);
+        }
+        .sidebar-toggle svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+            transition: transform 0.3s ease;
+        }
+        .sidebar.collapsed .sidebar-toggle svg {
+            transform: rotate(180deg);
+        }
 
         .nav-section { display: flex; flex-direction: column; gap: 6px; flex: 1; }
         .nav-item {
@@ -272,10 +296,6 @@
 
     <!-- 侧边栏 -->
     <aside class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-            <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-        </button>
-
         <div class="sidebar-header">
             <div class="logo-icon">
                 <svg viewBox="0 0 1000 720" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -287,6 +307,12 @@
                 </svg>
             </div>
             <span class="logo-text">必看</span>
+            <!-- 汉堡菜单按钮 -->
+            <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="展开/收起侧边栏">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+                </svg>
+            </button>
         </div>
 
         <nav class="nav-section">
