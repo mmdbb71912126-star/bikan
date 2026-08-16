@@ -325,7 +325,7 @@
             }
 
             // ============================================================
-            // 核心：评论渲染（只嵌套一层，深层显示为引用块）
+            // 核心：评论渲染
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -375,7 +375,6 @@
                 // 渲染根评论
                 // ============================================================
                 function renderRootComment(root) {
-                    // 根评论主体
                     const rootEl = document.createElement('div');
                     rootEl.className = 'comment-item level-0';
 
@@ -385,21 +384,18 @@
                     });
                     rootEl.appendChild(rootCommentEl);
 
-                    // 获取直接子评论（第一层回复）
                     const directReplies = root.children || [];
 
                     if (directReplies.length > 0) {
                         const container = document.createElement('div');
                         container.className = 'replies-container';
 
-                        // 折叠按钮
                         const toggleBtn = document.createElement('button');
                         toggleBtn.className = 'toggle-replies';
                         const count = directReplies.length;
                         toggleBtn.textContent = `收起 ${count} 条回复 ↑`;
                         toggleBtn.dataset.expanded = 'true';
 
-                        // 回复列表容器
                         const listContainer = document.createElement('div');
                         listContainer.className = 'replies-list';
 
@@ -408,27 +404,25 @@
                             const replyEl = document.createElement('div');
                             replyEl.className = 'comment-item level-1';
 
-                            // 检查该回复是否有子回复（深度2+）
-                            const deeperReplies = reply.children || [];
-
-                            // 如果有深层回复，构建引用行（放在评论内容之前）
+                            // =============================================
+                            // 修复：检查该回复是否有 reply_to_user（即它本身是别人的回复）
+                            // =============================================
                             let quoteLineHtml = '';
-                            if (deeperReplies.length > 0) {
-                                // 取第一个深层回复作为引用来源
-                                const firstDeep = deeperReplies[0];
-                                const parentNickname = getUserDisplayName(reply.profiles);
-                                const parentContent = reply.content || '';
+                            // 查找该回复的父评论（如果是深层回复）
+                            if (reply.reply_to_user && reply.reply_to_user.id) {
+                                const parentNickname = getUserDisplayName(reply.reply_to_user);
+                                // 查找父评论内容
+                                const parentComment = data.find(c => c.id === reply.parent_id);
+                                const parentContent = parentComment ? parentComment.content || '' : '';
                                 const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
-                                quoteLineHtml = `<div class="reply-quote-line"><strong>${getUserDisplayName(firstDeep.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的“${preview}”</div>`;
+                                quoteLineHtml = `<div class="reply-quote-line"><strong>${getUserDisplayName(reply.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的“${preview}”</div>`;
                             }
 
-                            // 渲染回复本身
                             const replyCommentEl = comp.renderCommentItem(reply, {
                                 isReply: true,
                                 isAdmin: isAdmin
                             });
 
-                            // 如果有引用，插入到评论内容之前
                             if (quoteLineHtml) {
                                 const quoteDiv = document.createElement('div');
                                 quoteDiv.innerHTML = quoteLineHtml;
@@ -436,7 +430,6 @@
                             }
                             replyEl.appendChild(replyCommentEl);
 
-                            // 隐藏原有的 reply-to 提示
                             const replyToSpan = replyCommentEl.querySelector('.comment-reply-to');
                             if (replyToSpan) replyToSpan.style.display = 'none';
 
@@ -447,7 +440,6 @@
                         container.appendChild(listContainer);
                         rootEl.appendChild(container);
 
-                        // 折叠切换
                         toggleBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const expanded = toggleBtn.dataset.expanded === 'true';
@@ -466,7 +458,6 @@
                     return rootEl;
                 }
 
-                // 渲染所有根评论
                 roots.forEach(root => {
                     const el = renderRootComment(root);
                     listDiv.appendChild(el);
