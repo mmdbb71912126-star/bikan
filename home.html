@@ -519,7 +519,7 @@
                 <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 <span>我的收藏</span>
             </a>
-            <!-- 新增草稿导航项 -->
+            <!-- 草稿导航项 -->
             <a class="nav-item" href="submit.html">
                 <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
                 <span>草稿</span>
@@ -571,7 +571,7 @@
 
     <script>
         (function() {
-            // Supabase 配置（局部变量，避免全局冲突）
+            // Supabase 配置
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
 
@@ -585,6 +585,7 @@
             }
 
             let currentUser = null;
+            let allWebsites = []; // 缓存所有已审核帖子，用于搜索
 
             // 侧边栏折叠
             function toggleSidebar() {
@@ -636,93 +637,41 @@
                 }
             }
 
-            function getMockData() {
-                return [
-                    {
-                        id: 1,
-                        title: 'Supabase 官方文档',
-                        url: 'https://supabase.com/docs',
-                        description: 'Supabase 是开源的 Firebase 替代品，提供数据库、认证、存储等后端服务。',
-                        tags: ['技术', '工具'],
-                        submitter: '张小明',
-                        avatar: '张',
-                        date: '2026-08-15',
-                        anonymous: false,
-                    },
-                    {
-                        id: 2,
-                        title: 'Dribbble - 设计灵感',
-                        url: 'https://dribbble.com',
-                        description: '全球设计师作品分享平台，发现优秀的 UI/UX 设计灵感。',
-                        tags: ['设计'],
-                        submitter: '匿名用户',
-                        avatar: '匿',
-                        date: '2026-08-14',
-                        anonymous: true,
-                    },
-                    {
-                        id: 3,
-                        title: 'Canva - 在线设计工具',
-                        url: 'https://www.canva.com',
-                        description: '简单易用的在线平面设计工具，海量模板。',
-                        tags: ['设计', '工具'],
-                        submitter: '李思思',
-                        avatar: '李',
-                        date: '2026-08-13',
-                        anonymous: false,
-                    },
-                    {
-                        id: 4,
-                        title: 'GitHub - 代码托管平台',
-                        url: 'https://github.com',
-                        description: '全球最大的代码托管平台，协作开发首选。',
-                        tags: ['技术', '工具'],
-                        submitter: '匿名用户',
-                        avatar: '匿',
-                        date: '2026-08-12',
-                        anonymous: true,
-                    },
-                    {
-                        id: 5,
-                        title: 'Awwwards - 网页设计奖项',
-                        url: 'https://www.awwwards.com',
-                        description: '全球最优秀的网页设计作品展示与评选。',
-                        tags: ['设计'],
-                        submitter: '王五',
-                        avatar: '王',
-                        date: '2026-08-11',
-                        anonymous: false,
-                    },
-                    {
-                        id: 6,
-                        title: 'Figma - 协作设计工具',
-                        url: 'https://www.figma.com',
-                        description: '基于浏览器的实时协作设计工具。',
-                        tags: ['设计', '工具'],
-                        submitter: '匿名用户',
-                        avatar: '匿',
-                        date: '2026-08-10',
-                        anonymous: true,
-                    },
-                ];
-            }
-
+            // 渲染卡片
             function renderCards(data) {
                 const container = document.getElementById('cardList');
-                if (data.length === 0) {
-                    container.innerHTML = `<div class="empty-state">暂无符合条件的网址，快去发布第一个吧！</div>`;
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div class="empty-state">暂无已审核的网址，快来分享第一个吧！</div>`;
                     return;
                 }
                 container.innerHTML = data.map(item => {
-                    const tagsHtml = item.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-                    const submitterDisplay = item.anonymous ? '匿名用户' : item.submitter;
-                    const avatarText = item.anonymous ? '匿' : (item.avatar || item.submitter.charAt(0));
+                    // 处理 URL 可能不存在的情况
+                    let domain = '';
+                    try {
+                        if (item.url) {
+                            domain = new URL(item.url).hostname;
+                        }
+                    } catch (e) {
+                        domain = item.url || '';
+                    }
+
+                    // 提交者信息
+                    const isAnonymous = item.is_anonymous;
+                    const submitterDisplay = isAnonymous ? '匿名用户' : (item.submitter_name || '用户');
+                    const avatarText = isAnonymous ? '匿' : (submitterDisplay.charAt(0) || 'U');
+
+                    // 日期格式化
+                    const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : '';
+
+                    // 标签（假设 tags 字段是数组，这里暂时显示空或占位）
+                    const tagsHtml = item.tags && item.tags.length ? item.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
+
                     return `
                     <div class="url-card">
                         <div class="card-header">
                             <div>
-                                <div class="card-title"><a href="${item.url}" target="_blank">${item.title}</a></div>
-                                <div class="card-domain">${new URL(item.url).hostname}</div>
+                                <div class="card-title"><a href="${item.url || '#'}" target="_blank">${item.title}</a></div>
+                                ${domain ? `<div class="card-domain">${domain}</div>` : ''}
                             </div>
                             <div class="card-actions">
                                 <button class="card-action-btn" title="收藏">
@@ -733,13 +682,12 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="card-description">${item.description}</div>
+                        <div class="card-description">${item.description || ''}</div>
                         <div class="card-footer">
                             <div class="card-submitter">
                                 <div class="submitter-avatar">${avatarText}</div>
                                 <span>${submitterDisplay}</span>
-                                <span>·</span>
-                                <span>${item.date}</span>
+                                ${date ? `<span>·</span><span>${date}</span>` : ''}
                             </div>
                             <div class="card-tags">${tagsHtml}</div>
                         </div>
@@ -748,21 +696,45 @@
                 }).join('');
             }
 
+            // 加载已审核的网址
+            async function loadWebsites() {
+                try {
+                    if (!supabase) {
+                        document.getElementById('cardList').innerHTML = '<div class="empty-state">Supabase 未初始化</div>';
+                        return;
+                    }
+                    const { data, error } = await supabase
+                        .from('websites')
+                        .select('*')
+                        .eq('status', 'approved')
+                        .order('created_at', { ascending: false });
+
+                    if (error) throw error;
+
+                    allWebsites = data || [];
+                    renderCards(allWebsites);
+                } catch (err) {
+                    console.error('加载网址失败:', err);
+                    document.getElementById('cardList').innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
+                }
+            }
+
+            // 搜索
             document.getElementById('searchInput').addEventListener('input', function() {
                 const query = this.value.trim().toLowerCase();
-                const allData = getMockData();
                 if (!query) {
-                    renderCards(allData);
+                    renderCards(allWebsites);
                     return;
                 }
-                const filtered = allData.filter(item => 
-                    item.title.toLowerCase().includes(query) || 
-                    item.description.toLowerCase().includes(query) ||
-                    item.tags.some(tag => tag.toLowerCase().includes(query))
+                const filtered = allWebsites.filter(item => 
+                    (item.title && item.title.toLowerCase().includes(query)) || 
+                    (item.description && item.description.toLowerCase().includes(query)) ||
+                    (item.url && item.url.toLowerCase().includes(query))
                 );
                 renderCards(filtered);
             });
 
+            // 初始化
             async function init() {
                 try {
                     if (supabase) {
@@ -776,11 +748,11 @@
                     } else {
                         updateUserUI(null);
                     }
-                    renderCards(getMockData());
+                    await loadWebsites();
                 } catch (err) {
                     console.error('认证检查失败:', err);
                     updateUserUI(null);
-                    renderCards(getMockData());
+                    await loadWebsites();
                 }
             }
 
