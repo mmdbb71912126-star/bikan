@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视频剪辑 - 我的项目</title>
+    <title>必看 · 剪辑</title>
     <style>
         /* ========== 全局重置 ========== */
         * {
@@ -53,18 +53,31 @@
         }
 
         .app-logo {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2ecc71;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            text-decoration: none;
+            color: #e2e8e0;
         }
 
         .app-logo svg {
-            width: 32px;
-            height: 32px;
-            fill: #2ecc71;
+            width: 44px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+        .app-logo .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .app-logo .logo-text .highlight {
+            color: #2ecc71;
+        }
+        .app-logo .logo-sub {
+            font-size: 14px;
+            font-weight: 400;
+            color: #5a7a5a;
+            margin-left: 4px;
         }
 
         .app-actions {
@@ -74,7 +87,7 @@
 
         /* ========== 按钮 ========== */
         .btn {
-            padding: 10px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 10px;
             font-size: 15px;
@@ -84,6 +97,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-family: inherit;
         }
 
         .btn-primary {
@@ -127,6 +141,12 @@
             border-color: #2ecc71;
         }
 
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
         /* ========== 项目列表 ========== */
         .projects-grid {
             display: grid;
@@ -157,10 +177,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
-            color: #2a4a2a;
             overflow: hidden;
             position: relative;
+        }
+
+        .project-thumbnail .placeholder-icon {
+            opacity: 0.25;
+            width: 64px;
+            height: 64px;
         }
 
         .project-thumbnail img {
@@ -178,10 +202,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 20px;
             opacity: 0;
             transition: opacity 0.3s;
+        }
+        .project-thumbnail .play-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: white;
         }
         .project-card:hover .play-icon {
             opacity: 1;
@@ -239,9 +266,13 @@
         }
 
         .empty-state .icon {
-            font-size: 64px;
+            display: inline-block;
             margin-bottom: 16px;
-            opacity: 0.4;
+            opacity: 0.3;
+        }
+        .empty-state .icon svg {
+            width: 80px;
+            height: 80px;
         }
 
         .empty-state h3 {
@@ -282,6 +313,16 @@
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
             animation: slideUp 0.25s ease;
             border: 1px solid #1d3a1d;
+        }
+
+        .modal .modal-icon {
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .modal .modal-icon svg {
+            width: 48px;
+            height: 48px;
+            fill: #2ecc71;
         }
 
         .modal h2 {
@@ -374,6 +415,9 @@
                 gap: 16px;
                 align-items: stretch;
             }
+            .app-logo {
+                justify-content: center;
+            }
             .app-actions {
                 justify-content: stretch;
             }
@@ -387,9 +431,8 @@
             .modal {
                 padding: 24px;
             }
-            .app-logo {
-                font-size: 22px;
-                justify-content: center;
+            .app-logo .logo-sub {
+                display: none;
             }
         }
     </style>
@@ -400,15 +443,26 @@
 
         <!-- 头部 -->
         <header class="app-header">
-            <div class="app-logo">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 4v16H6V4h12zm0-2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
-                    <path d="M10 9h4v6h-4z"/>
+            <a href="#" class="app-logo">
+                <!-- 必看 Logo (原版SVG，颜色改为绿色) -->
+                <svg viewBox="0 0 1000 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="#2ecc71" fill-rule="evenodd" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="484" y="273" width="32" height="100" rx="10" fill="#2ecc71" />
+                    <rect x="488" y="383" width="24" height="24" rx="8" fill="#2ecc71" />
                 </svg>
-                剪映 · 本地版
-            </div>
+                <span class="logo-text">
+                    <span class="highlight">必看</span><span class="logo-sub">· 剪辑</span>
+                </span>
+            </a>
             <div class="app-actions">
-                <button class="btn btn-primary" id="newProjectBtn">+ 新建项目</button>
+                <button class="btn btn-primary" id="newProjectBtn">
+                    <!-- SVG 加号 -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    新建项目
+                </button>
             </div>
         </header>
 
@@ -423,7 +477,14 @@
     <!-- 新建项目弹窗 -->
     <div class="modal-overlay" id="newProjectModal" style="display:none;">
         <div class="modal">
-            <h2>📹 新建项目</h2>
+            <div class="modal-icon">
+                <!-- SVG 视频图标 -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <polygon points="10 8 16 12 10 16 10 8"/>
+                </svg>
+            </div>
+            <h2>新建项目</h2>
             <p>输入项目名称，开始剪辑你的视频。</p>
             <input type="text" id="projectNameInput" placeholder="例如：我的第一个视频" maxlength="50" />
             <div class="modal-actions">
@@ -517,12 +578,34 @@
             return d.toLocaleString('zh-CN', { hour12: false });
         }
 
+        // SVG 图标函数
+        function iconPlay() {
+            return `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+        }
+
+        function iconFolder() {
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>`;
+        }
+
+        function iconTrash() {
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>`;
+        }
+
+        function iconOpen() {
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+        }
+
         function renderProjects(projects) {
             const container = document.getElementById('projectList');
             if (!projects || projects.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="icon">🎬</div>
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <polygon points="10 8 16 12 10 16 10 8"/>
+                            </svg>
+                        </div>
                         <h3>还没有项目</h3>
                         <p>点击右上角「新建项目」开始你的第一个视频剪辑</p>
                     </div>
@@ -536,13 +619,13 @@
             sorted.forEach(proj => {
                 const thumbnailHtml = proj.thumbnail ?
                     `<img src="${proj.thumbnail}" alt="缩略图" />` :
-                    `<span style="font-size:48px; opacity:0.3;">🎬</span>`;
+                    `<div class="placeholder-icon">${iconFolder()}</div>`;
 
                 html += `
                     <div class="project-card" data-id="${proj.id}">
                         <div class="project-thumbnail">
                             ${thumbnailHtml}
-                            <div class="play-icon">▶</div>
+                            <div class="play-icon">${iconPlay()}</div>
                         </div>
                         <div class="project-info">
                             <div class="project-name">${proj.name}</div>
@@ -551,8 +634,8 @@
                                 <span>${new Date(proj.createdAt).toLocaleDateString()}</span>
                             </div>
                             <div class="project-actions">
-                                <button class="btn btn-primary btn-open" data-id="${proj.id}">打开</button>
-                                <button class="btn btn-danger btn-delete" data-id="${proj.id}">删除</button>
+                                <button class="btn btn-primary btn-open" data-id="${proj.id}">${iconOpen()} 打开</button>
+                                <button class="btn btn-danger btn-delete" data-id="${proj.id}">${iconTrash()} 删除</button>
                             </div>
                         </div>
                     </div>
@@ -647,7 +730,6 @@
             toast.className = 'toast';
             toast.textContent = message;
 
-            // 深色主题的提示颜色
             if (type === 'error') toast.style.borderColor = '#662222';
             else if (type === 'success') toast.style.borderColor = '#1d6b4c';
             else toast.style.borderColor = '#1d3a1d';
