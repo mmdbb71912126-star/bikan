@@ -1,7 +1,7 @@
 // ============================================================
 // js/app.js
 // 必看 - 核心应用逻辑（路由、页面渲染、交互）
-// 依赖：config.js, components.js（需先加载）
+// 依赖：config.js, components.js（需先加载），marked 库（需在 HTML 中引入）
 // ============================================================
 
 (function() {
@@ -393,9 +393,16 @@
         const card = document.createElement('div');
         card.className = 'announcement-card';
         card.style.marginBottom = '12px';
+        // 公告内容支持 Markdown
+        let content = ann.content || '';
+        if (typeof window.marked !== 'undefined' && window.marked.parse) {
+            try {
+                content = window.marked.parse(content, { html: true, breaks: true });
+            } catch (e) {}
+        }
         card.innerHTML = `
             <div class="announcement-title">${ann.title}</div>
-            <div class="post-content">${ann.content || ''}</div>
+            <div class="post-content">${content}</div>
             <div style="font-size:13px;color:var(--text-light);">${timeAgo(ann.created_at)}</div>
         `;
         card.addEventListener('click', () => {
@@ -827,7 +834,14 @@
 
         let contentHtml = '';
         if (!error && data && data.length > 0) {
-            contentHtml = data[0].content || '';
+            let raw = data[0].content || '';
+            // 支持 Markdown
+            if (typeof window.marked !== 'undefined' && window.marked.parse) {
+                try {
+                    raw = window.marked.parse(raw, { html: true, breaks: true });
+                } catch (e) {}
+            }
+            contentHtml = raw;
         } else {
             contentHtml = '<p>暂无关于信息</p>';
         }
