@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 - 登录注册</title>
 
-    <!-- Favicon 内联 SVG，避免 404 -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 680'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='black' fill-rule='evenodd' stroke='%231a1a2e' stroke-width='2'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='black'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='black'/%3E%3C/svg%3E">
+    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
     <!-- Supabase JS SDK (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -87,7 +87,7 @@
             50% { transform: translate(40px, 30px) scale(1.08); }
         }
 
-        /* 卡片样式 */
+        /* ========== 卡片容器 ========== */
         .auth-card {
             position: relative;
             z-index: 1;
@@ -108,6 +108,7 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
+        /* ========== Logo / 标题 ========== */
         .logo-area {
             text-align: center;
             margin-bottom: 28px;
@@ -122,11 +123,11 @@
             justify-content: center;
             margin-bottom: 14px;
             box-shadow: 0 8px 24px rgba(62, 207, 142, 0.3);
-            color: #ffffff;
+            padding: 10px;
         }
         .logo-icon svg {
-            width: 44px;
-            height: 30px;
+            width: 100%;
+            height: 100%;
             display: block;
         }
         .logo-title {
@@ -141,6 +142,7 @@
             margin-top: 4px;
         }
 
+        /* ========== 标签切换 ========== */
         .tabs {
             display: flex;
             background: rgba(255, 255, 255, 0.06);
@@ -181,6 +183,7 @@
             box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
         }
 
+        /* ========== 表单样式 ========== */
         .form-group {
             margin-bottom: 18px;
         }
@@ -217,6 +220,7 @@
             box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.12);
         }
 
+        /* ========== 按钮 ========== */
         .btn {
             width: 100%;
             padding: 14px 20px;
@@ -273,6 +277,7 @@
             flex-shrink: 0;
         }
 
+        /* ========== 分隔线 ========== */
         .divider {
             display: flex;
             align-items: center;
@@ -291,6 +296,7 @@
             background: rgba(255, 255, 255, 0.12);
         }
 
+        /* ========== 提示信息 ========== */
         .alert {
             padding: 12px 16px;
             border-radius: var(--radius-sm);
@@ -330,6 +336,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ========== 登录后用户信息 ========== */
         .user-panel {
             text-align: center;
             display: none;
@@ -374,6 +381,7 @@
             transform: translateY(-1px);
         }
 
+        /* ========== 加载 spinner ========== */
         .spinner {
             width: 20px;
             height: 20px;
@@ -393,21 +401,9 @@
             to { transform: rotate(360deg); }
         }
 
-        .footer-note {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 20px;
-            letter-spacing: 0.3px;
-        }
-        .footer-note a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: color var(--transition);
-        }
-        .footer-note a:hover {
-            color: #5ce0a5;
-            text-decoration: underline;
+        /* 确认密码输入框默认隐藏 */
+        #confirmPasswordGroup {
+            display: none;
         }
 
         @media (max-width: 480px) {
@@ -435,14 +431,17 @@
         <!-- Logo 区域 -->
         <div class="logo-area">
             <div class="logo-icon">
-                <svg viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                    <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill-rule="evenodd" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    <rect x="484" y="273" width="32" height="100" rx="10" />
-                    <rect x="488" y="383" width="24" height="24" rx="8" />
+                <!-- 使用新的黑色 Logo SVG（适配容器） -->
+                <svg viewBox="0 0 1000 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="translate(500, 360) scale(1.85) translate(-500, -360)">
+                        <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="#000000" fill-rule="evenodd" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="484" y="273" width="32" height="100" rx="10" fill="#000000"/>
+                        <rect x="488" y="383" width="24" height="24" rx="8" fill="#000000"/>
+                    </g>
                 </svg>
             </div>
-            <h1 class="logo-title" id="logoTitle">必看</h1>
-            <p class="logo-subtitle" id="logoSubtitle">使用 Supabase 安全登录</p>
+            <h1 class="logo-title" id="logoTitle">登录账户</h1>
+            <p class="logo-subtitle" id="logoSubtitle">欢迎回来，继续使用</p>
         </div>
 
         <!-- 登录/注册切换标签 -->
@@ -468,6 +467,11 @@
             <div class="form-group">
                 <label class="form-label" for="password">密码</label>
                 <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" required />
+            </div>
+            <!-- 新增确认密码输入框，默认隐藏，仅注册时显示 -->
+            <div class="form-group" id="confirmPasswordGroup">
+                <label class="form-label" for="confirmPassword">确认密码</label>
+                <input class="form-input" type="password" id="confirmPassword" placeholder="再次输入密码" autocomplete="new-password" />
             </div>
 
             <button class="btn btn-primary" type="submit" id="submitBtn">
@@ -498,11 +502,7 @@
             <button class="btn btn-logout" id="logoutBtn" type="button">退出登录</button>
         </div>
 
-        <p class="footer-note">
-            登录即表示您同意我们的
-            <a href="#" onclick="return false;">服务条款</a> 和
-            <a href="#" onclick="return false;">隐私政策</a>
-        </p>
+        <!-- 底部的服务条款和隐私政策已移除 -->
     </div>
 
     <script>
@@ -512,7 +512,6 @@
         const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
         const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
 
-        // 将所有代码封装在 IIFE 中，避免全局变量冲突和重复声明错误
         (function() {
             let supabase;
             try {
@@ -520,7 +519,14 @@
                 console.log('Supabase 客户端初始化成功');
             } catch (err) {
                 console.error('Supabase 初始化失败:', err);
-                showAlert('error', 'Supabase 配置错误，请检查 URL 和 anon key。');
+                // 如果 supabase 未定义，showAlert 可能不可用，所以延迟调用
+                setTimeout(() => {
+                    const alertBox = document.getElementById('alertBox');
+                    if (alertBox) {
+                        alertBox.className = 'alert alert-error show';
+                        document.getElementById('alertMessage').textContent = 'Supabase 配置错误，请检查 URL 和 anon key。';
+                    }
+                }, 100);
             }
 
             // DOM 元素
@@ -529,6 +535,8 @@
             const authForm = document.getElementById('authForm');
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
             const submitBtn = document.getElementById('submitBtn');
             const submitBtnText = document.getElementById('submitBtnText');
             const googleBtn = document.getElementById('googleBtn');
@@ -598,23 +606,30 @@
                     tabRegister.setAttribute('aria-selected', 'false');
                     submitBtnText.textContent = '登 录';
                     passwordInput.autocomplete = 'current-password';
-                    logoTitle.textContent = '必看';
-                    logoSubtitle.textContent = '使用 Supabase 安全登录';
+                    logoTitle.textContent = '登录账户';
+                    logoSubtitle.textContent = '欢迎回来，继续使用';
                     authCard.classList.remove('tab-register-mode');
+                    // 隐藏确认密码输入框
+                    confirmPasswordGroup.style.display = 'none';
+                    confirmPasswordInput.value = '';
                 } else {
                     tabRegister.classList.add('active');
                     tabLogin.classList.remove('active');
                     tabRegister.setAttribute('aria-selected', 'true');
                     tabLogin.setAttribute('aria-selected', 'false');
-                    submitBtnText.textContent = '注 册';
+                    submitBtnText.textContent = '发送验证邮件';
                     passwordInput.autocomplete = 'new-password';
-                    logoTitle.textContent = '创建账户';
-                    logoSubtitle.textContent = '加入必看，开始使用';
+                    logoTitle.textContent = '注册账户';
+                    logoSubtitle.textContent = '创建您的账户，开始使用';
                     authCard.classList.add('tab-register-mode');
+                    // 显示确认密码输入框
+                    confirmPasswordGroup.style.display = 'block';
                 }
 
                 passwordInput.value = '';
+                confirmPasswordInput.value = '';
                 passwordInput.classList.remove('error');
+                confirmPasswordInput.classList.remove('error');
                 emailInput.classList.remove('error');
                 hideAlert();
             };
@@ -646,7 +661,7 @@
                 googleBtn.style.display = 'flex';
                 document.querySelector('.tabs').style.display = 'flex';
                 document.querySelector('.divider').style.display = 'flex';
-                logoSubtitle.textContent = '使用 Supabase 安全登录';
+                logoSubtitle.textContent = '欢迎回来，继续使用';
                 userPanel.classList.remove('show');
                 userPanel.style.display = 'none';
             }
@@ -658,6 +673,7 @@
 
                 const email = emailInput.value.trim();
                 const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
 
                 if (!email || !email.includes('@')) {
                     showAlert('error', '请输入有效的邮箱地址。');
@@ -667,6 +683,11 @@
                 if (!password || password.length < 6) {
                     showAlert('error', '密码至少需要 6 个字符。');
                     markError(passwordInput);
+                    return;
+                }
+                if (currentMode === 'register' && password !== confirmPassword) {
+                    showAlert('error', '两次输入的密码不一致，请重新输入。');
+                    markError(confirmPasswordInput);
                     return;
                 }
 
@@ -694,7 +715,7 @@
                             showAlert('success', '注册成功！正在登录...');
                             setTimeout(() => showUserPanel(data.user), 800);
                         } else {
-                            showAlert('success', '注册成功！请前往邮箱验证后登录。');
+                            showAlert('success', '验证邮件已发送，请前往邮箱验证后登录。');
                             setMode('login');
                             emailInput.value = email;
                         }
@@ -747,6 +768,7 @@
                     showAuthForms();
                     emailInput.value = '';
                     passwordInput.value = '';
+                    confirmPasswordInput.value = '';
                     showAlert('success', '已退出登录，期待再次相见！');
                 } catch (err) {
                     console.error('退出失败:', err);
@@ -762,6 +784,10 @@
             });
             passwordInput.addEventListener('input', () => {
                 passwordInput.classList.remove('error');
+                hideAlert();
+            });
+            confirmPasswordInput.addEventListener('input', () => {
+                confirmPasswordInput.classList.remove('error');
                 hideAlert();
             });
 
