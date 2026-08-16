@@ -468,7 +468,7 @@
                 <label class="form-label" for="password">密码</label>
                 <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" required />
             </div>
-            <!-- 新增确认密码输入框，默认隐藏，仅注册时显示 -->
+            <!-- 确认密码输入框，仅注册时显示 -->
             <div class="form-group" id="confirmPasswordGroup">
                 <label class="form-label" for="confirmPassword">确认密码</label>
                 <input class="form-input" type="password" id="confirmPassword" placeholder="再次输入密码" autocomplete="new-password" />
@@ -483,7 +483,7 @@
         <!-- 分隔线 -->
         <div class="divider">或</div>
 
-        <!-- Google 登录按钮 -->
+        <!-- Google 登录按钮（文字会随模式变化） -->
         <button class="btn btn-google" type="button" id="googleBtn">
             <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81z"/>
@@ -491,7 +491,7 @@
                 <path fill="#FBBC05" d="M5.27 14.29A7.19 7.19 0 0 1 4.9 12c0-.8.14-1.57.37-2.29V6.63H1.28A11.99 11.99 0 0 0 0 12c0 1.94.47 3.77 1.28 5.37l3.99-3.08z"/>
                 <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.58 1.79l3.43-3.43A11.95 11.95 0 0 0 12 0 11.99 11.99 0 0 0 1.28 6.63l3.99 3.08C6.22 6.88 8.87 4.77 12 4.77z"/>
             </svg>
-            <span class="btn-text">使用 Google 登录</span>
+            <span class="btn-text" id="googleBtnText">使用 Google 登录</span>
         </button>
 
         <!-- 用户面板 -->
@@ -519,7 +519,6 @@
                 console.log('Supabase 客户端初始化成功');
             } catch (err) {
                 console.error('Supabase 初始化失败:', err);
-                // 如果 supabase 未定义，showAlert 可能不可用，所以延迟调用
                 setTimeout(() => {
                     const alertBox = document.getElementById('alertBox');
                     if (alertBox) {
@@ -540,6 +539,7 @@
             const submitBtn = document.getElementById('submitBtn');
             const submitBtnText = document.getElementById('submitBtnText');
             const googleBtn = document.getElementById('googleBtn');
+            const googleBtnText = document.getElementById('googleBtnText');
             const alertBox = document.getElementById('alertBox');
             const alertIcon = document.getElementById('alertIcon');
             const alertMessage = document.getElementById('alertMessage');
@@ -605,11 +605,11 @@
                     tabLogin.setAttribute('aria-selected', 'true');
                     tabRegister.setAttribute('aria-selected', 'false');
                     submitBtnText.textContent = '登 录';
+                    googleBtnText.textContent = '使用 Google 登录';
                     passwordInput.autocomplete = 'current-password';
                     logoTitle.textContent = '登录账户';
                     logoSubtitle.textContent = '欢迎回来，继续使用';
                     authCard.classList.remove('tab-register-mode');
-                    // 隐藏确认密码输入框
                     confirmPasswordGroup.style.display = 'none';
                     confirmPasswordInput.value = '';
                 } else {
@@ -618,11 +618,11 @@
                     tabRegister.setAttribute('aria-selected', 'true');
                     tabLogin.setAttribute('aria-selected', 'false');
                     submitBtnText.textContent = '发送验证邮件';
+                    googleBtnText.textContent = '使用 Google 注册';
                     passwordInput.autocomplete = 'new-password';
                     logoTitle.textContent = '注册账户';
                     logoSubtitle.textContent = '创建您的账户，开始使用';
                     authCard.classList.add('tab-register-mode');
-                    // 显示确认密码输入框
                     confirmPasswordGroup.style.display = 'block';
                 }
 
