@@ -300,6 +300,20 @@
             resize: vertical;
             line-height: 1.5;
         }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
 
         .modal-actions {
             display: flex;
@@ -464,6 +478,12 @@
                 <label class="form-label" for="cardDescription">简单介绍 <span style="color:var(--error)">*</span></label>
                 <textarea class="form-input form-textarea" id="cardDescription" placeholder="用一两句话介绍这个网址的特色"></textarea>
             </div>
+            <div class="form-group">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="isAnonymous" />
+                    <span>匿名发布（不显示我的用户名）</span>
+                </label>
+            </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="cancelSettingsBtn">取消</button>
                 <button class="btn btn-primary" id="saveSettingsBtn">保存</button>
@@ -526,6 +546,7 @@
             const closeDraftListBtn = document.getElementById('closeDraftListBtn');
             const cardTitleInput = document.getElementById('cardTitle');
             const cardDescriptionInput = document.getElementById('cardDescription');
+            const isAnonymousInput = document.getElementById('isAnonymous');
             const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
             const saveSettingsBtn = document.getElementById('saveSettingsBtn');
             const cancelPublishBtn = document.getElementById('cancelPublishBtn');
@@ -535,7 +556,8 @@
             let isPreviewMode = false;
             let cardMeta = {
                 title: '',
-                description: ''
+                description: '',
+                isAnonymous: false
             };
 
             function showToast(message) {
@@ -550,6 +572,7 @@
             function openSettings() {
                 cardTitleInput.value = cardMeta.title || '';
                 cardDescriptionInput.value = cardMeta.description || '';
+                isAnonymousInput.checked = cardMeta.isAnonymous || false;
                 settingsModal.classList.add('show');
                 cardTitleInput.focus();
             }
@@ -573,6 +596,7 @@
                 }
                 cardMeta.title = title;
                 cardMeta.description = description;
+                cardMeta.isAnonymous = isAnonymousInput.checked;
                 closeSettings();
                 showToast('设置已保存');
             }
@@ -664,7 +688,7 @@
                     try {
                         const draft = JSON.parse(saved);
                         editor.value = draft.content || '';
-                        cardMeta = draft.meta || { title: '', description: '' };
+                        cardMeta = draft.meta || { title: '', description: '', isAnonymous: false };
                         draftListModal.classList.remove('show');
                         showToast('草稿已加载');
                     } catch (e) {
@@ -695,7 +719,7 @@
                 if (drafts.length > 0) {
                     const latest = drafts[0];
                     editor.value = latest.content || '';
-                    cardMeta = latest.meta || { title: '', description: '' };
+                    cardMeta = latest.meta || { title: '', description: '', isAnonymous: false };
                 }
             }
 
@@ -717,23 +741,43 @@
                 publishModal.classList.remove('show');
             }
 
-            function confirmPublish() {
-                const postData = {
-                    content: editor.value,
-                    title: cardMeta.title,
-                    description: cardMeta.description,
-                    author: '当前用户',
-                    timestamp: new Date().toISOString()
-                };
-                console.log('发布数据:', postData);
-                publishModal.classList.remove('show');
-                showToast('已提交审核，感谢分享！');
-                editor.value = '';
-                cardMeta = { title: '', description: '' };
-                localStorage.removeItem('draft_website_post');
-                setTimeout(() => {
-                    window.location.href = 'home.html';
-                }, 1500);
+            async function confirmPublish() {
+                try {
+                    // 获取当前用户
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) {
+                        showToast('请先登录');
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    // 插入数据库
+                    const { error } = await supabase
+                        .from('websites')
+                        .insert({
+                            title: cardMeta.title,
+                            description: cardMeta.description,
+                            content: editor.value,
+                            submitter_id: user.id,
+                            is_anonymous: cardMeta.isAnonymous,
+                            status: 'pending'
+                        });
+
+                    if (error) throw error;
+
+                    publishModal.classList.remove('show');
+                    showToast('已提交审核，感谢分享！');
+                    editor.value = '';
+                    cardMeta = { title: '', description: '', isAnonymous: false };
+                    // 清除草稿（可选）
+                    localStorage.removeItem('draft_website_post');
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1500);
+                } catch (err) {
+                    console.error('发布失败:', err);
+                    showToast('发布失败：' + err.message);
+                }
             }
 
             // 事件绑定
