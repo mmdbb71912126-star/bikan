@@ -1,1 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>必看 - 发布网址</title>
 
+    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
+
+    <!-- Supabase JS SDK (预留，暂未使用数据库) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Markdown 渲染库 (marked) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #3ecf8e;
+            --primary-dark: #2bb673;
+            --bg-start: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-end: #24243e;
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-focus: #3ecf8e;
+            --error: #ff6b6b;
+            --success: #3ecf8e;
+            --google-bg: #ffffff;
+            --google-text: #3c4043;
+            --google-hover: #f8f9fa;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --toolbar-height: 56px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ========== 顶部工具栏 ========== */
+        .toolbar {
+            height: var(--toolbar-height);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 20px;
+            flex-shrink: 0;
+            z-index: 10;
+            overflow-x: auto;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--card-border);
+            margin: 0 8px;
+            flex-shrink: 0;
+        }
+
+        .toolbar-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition);
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+        .toolbar-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        .toolbar-btn.active {
+            background: rgba(62, 207, 142, 0.15);
+            color: var(--primary);
+        }
+
+        .toolbar-btn.primary {
+            color: var(--primary);
+        }
+        .toolbar-btn.primary:hover {
+            background: rgba(62, 207, 142, 0.2);
+        }
+
+        .toolbar-btn.danger {
+            color: var(--error);
+        }
+        .toolbar-btn.danger:hover {
+            background: rgba(255, 107, 107, 0.15);
+        }
+
+        /* ========== 编辑区容器 ========== */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            position: relative;
+        }
+
+        /* 编辑器文本域 */
+        .editor-textarea {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 20px 24px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            transition: background var(--transition);
+        }
+        .editor-textarea:focus {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .editor-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 预览区域 */
+        .preview-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            display: none;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .preview-area.show {
+            display: block;
+        }
+        .preview-area h1,
+        .preview-area h2,
+        .preview-area h3,
+        .preview-area h4 {
+            margin: 16px 0 8px;
+            line-height: 1.3;
+        }
+        .preview-area h1 { font-size: 2em; }
+        .preview-area h2 { font-size: 1.5em; }
+        .preview-area h3 { font-size: 1.17em; }
+        .preview-area p { margin: 8px 0; }
+        .preview-area code {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .preview-area pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .preview-area pre code {
+            background: none;
+            padding: 0;
+        }
+        .preview-area a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .preview-area a:hover {
+            text-decoration: underline;
+        }
+        .preview-area blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 16px;
+            margin: 8px 0;
+            color: var(--text-secondary);
+        }
+        .preview-area ul,
+        .preview-area ol {
+            padding-left: 24px;
+            margin: 8px 0;
+        }
+        .preview-area img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        /* ========== 弹窗覆盖层 ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: rgba(30, 30, 50, 0.9);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            max-width: 480px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: var(--text-primary);
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all var(--transition);
+        }
+        .form-input:focus {
+            border-color: var(--input-focus);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.15);
+        }
+        .form-input.error {
+            border-color: var(--error);
+        }
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2bb673);
+            color: #0f0c29;
+            box-shadow: 0 4px 12px rgba(62, 207, 142, 0.3);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 18px rgba(62, 207, 142, 0.5);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .btn-danger {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ffb3b3;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(255, 107, 107, 0.25);
+        }
+
+        /* 提示消息 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 30px;
+            padding: 12px 24px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 300;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .toolbar {
+                padding: 0 12px;
+            }
+            .editor-textarea {
+                padding: 15px;
+                font-size: 15px;
+            }
+            .modal {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部工具栏 -->
+    <div class="toolbar">
+        <!-- Markdown 语法按钮组 -->
+        <div class="toolbar-group">
+            <button class="toolbar-btn" data-action="heading" title="标题">
+                <svg viewBox="0 0 24 24"><path d="M5 4h2v6h10V4h2v16h-2v-8H7v8H5V4z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="bold" title="加粗">
+                <svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.6-1.76 1.6-2.98C17.2 5.6 15.6 4 13.5 4H6v16h8.5c2.3 0 4.2-1.8 4.2-4.1 0-1.8-1.1-3.3-2.8-3.9zM9 6.5h3.5c1.1 0 2 .9 2 2s-.9 2-2 2H9v-4zm5.5 11H9v-4h5.5c1.2 0 2.2.9 2.2 2s-1 2-2.2 2z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="italic" title="斜体">
+                <svg viewBox="0 0 24 24"><path d="M10 4h4l4 16h-2l-1-4H9l-1 4H6l4-16z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="strike" title="删除线">
+                <svg viewBox="0 0 24 24"><path d="M12 4c-2.8 0-5 1.6-5 3.8 0 1.8 1.4 3.2 4 3.7 2.7.5 4.5 1.5 4.5 3.3 0 2-2 3.2-4.5 3.2-2.2 0-4-.9-4.8-2.8H4.4C5.4 17 8 19 12 19c3 0 5.4-1.6 5.4-4.2 0-1.7-1.3-3-3.8-3.5-2.8-.6-4.6-1.5-4.6-3.3 0-1.7 1.7-2.8 3.8-2.8 1.8 0 3.4.8 4.2 2.5h2C18.5 6.3 15.5 4 12 4z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="link" title="链接">
+                <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="quote" title="引用">
+                <svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="code" title="代码块">
+                <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="list-ul" title="无序列表">
+                <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="list-ol" title="有序列表">
+                <svg viewBox="0 0 24 24"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="hr" title="分割线">
+                <svg viewBox="0 0 24 24"><path d="M6 11h12v2H6z"/></svg>
+            </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <!-- 特殊功能按钮组 -->
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="previewBtn" title="预览">
+                <svg viewBox="0 0 24 24"><path d="M12 6c-3.87 0-7.17 2.36-8.48 5.66L3 12l.52.34C4.83 15.64 8.13 18 12 18s7.17-2.36 8.48-5.66L21 12l-.52-.34C19.17 8.36 15.87 6 12 6zm0 10c-2.76 0-5.24-1.55-6.47-4C6.76 9.55 9.24 8 12 8s5.24 1.55 6.47 4c-1.23 2.45-3.71 4-6.47 4zm0-6.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+            </button>
+            <button class="toolbar-btn" id="settingsBtn" title="设置（卡片标题和简介）">
+                <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.31.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
+            <button class="toolbar-btn" id="saveDraftBtn" title="保存草稿">
+                <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            </button>
+            <button class="toolbar-btn danger" id="publishBtn" title="发布">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 编辑器主体 -->
+    <div class="editor-container">
+        <textarea class="editor-textarea" id="editor" placeholder="输入 Markdown 内容，例如：&#10;# 标题&#10;这是一段描述..." spellcheck="false"></textarea>
+        <div class="preview-area" id="previewArea"></div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <h3 class="modal-title">设置卡片信息</h3>
+            <div class="form-group">
+                <label class="form-label" for="cardTitle">卡片标题 <span style="color:var(--error)">*</span></label>
+                <input class="form-input" type="text" id="cardTitle" placeholder="例如：必看 - 精选好网址" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="cardDescription">简单介绍 <span style="color:var(--error)">*</span></label>
+                <textarea class="form-input form-textarea" id="cardDescription" placeholder="用一两句话介绍这个网址的特色"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelSettingsBtn">取消</button>
+                <button class="btn btn-primary" id="saveSettingsBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 发布确认弹窗 -->
+    <div class="modal-overlay" id="publishModal">
+        <div class="modal">
+            <h3 class="modal-title">确认发布</h3>
+            <p style="color:var(--text-secondary); margin-bottom:20px;">请确认您的帖子内容无误。发布后将提交给管理员审核，审核通过后才会在主页展示。</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelPublishBtn">再检查一下</button>
+                <button class="btn btn-primary" id="confirmPublishBtn">确认发布</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            // Supabase 配置（目前仅用于获取用户，不执行数据库操作）
+            const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+
+            let supabase;
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (err) {
+                console.error('Supabase 初始化失败:', err);
+            }
+
+            // DOM 元素
+            const editor = document.getElementById('editor');
+            const previewArea = document.getElementById('previewArea');
+            const previewBtn = document.getElementById('previewBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const saveDraftBtn = document.getElementById('saveDraftBtn');
+            const publishBtn = document.getElementById('publishBtn');
+            const settingsModal = document.getElementById('settingsModal');
+            const publishModal = document.getElementById('publishModal');
+            const cardTitleInput = document.getElementById('cardTitle');
+            const cardDescriptionInput = document.getElementById('cardDescription');
+            const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const cancelPublishBtn = document.getElementById('cancelPublishBtn');
+            const confirmPublishBtn = document.getElementById('confirmPublishBtn');
+            const toast = document.getElementById('toast');
+
+            // 状态
+            let isPreviewMode = false;
+            let cardMeta = {
+                title: '',
+                description: ''
+            };
+
+            // 显示 Toast
+            function showToast(message) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                clearTimeout(toast._hideTimer);
+                toast._hideTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            }
+
+            // 打开设置弹窗
+            function openSettings() {
+                cardTitleInput.value = cardMeta.title || '';
+                cardDescriptionInput.value = cardMeta.description || '';
+                settingsModal.classList.add('show');
+                cardTitleInput.focus();
+            }
+
+            // 关闭设置弹窗
+            function closeSettings() {
+                settingsModal.classList.remove('show');
+            }
+
+            // 保存设置
+            function saveSettings() {
+                const title = cardTitleInput.value.trim();
+                const description = cardDescriptionInput.value.trim();
+                if (!title || !description) {
+                    showToast('标题和简介均为必填项');
+                    if (!title) cardTitleInput.classList.add('error');
+                    if (!description) cardDescriptionInput.classList.add('error');
+                    setTimeout(() => {
+                        cardTitleInput.classList.remove('error');
+                        cardDescriptionInput.classList.remove('error');
+                    }, 2000);
+                    return;
+                }
+                cardMeta.title = title;
+                cardMeta.description = description;
+                closeSettings();
+                showToast('设置已保存');
+            }
+
+            // 切换预览
+            function togglePreview() {
+                isPreviewMode = !isPreviewMode;
+                if (isPreviewMode) {
+                    const markdown = editor.value;
+                    const html = marked.parse(markdown);
+                    previewArea.innerHTML = html;
+                    previewArea.classList.add('show');
+                    editor.style.display = 'none';
+                    previewBtn.classList.add('active');
+                } else {
+                    previewArea.classList.remove('show');
+                    editor.style.display = 'block';
+                    previewBtn.classList.remove('active');
+                    editor.focus();
+                }
+            }
+
+            // 在光标处插入 Markdown 语法
+            function insertMarkdown(action) {
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const selectedText = editor.value.substring(start, end);
+                let insertion = '';
+                let cursorOffset = 0;
+
+                switch (action) {
+                    case 'heading':
+                        insertion = `# ${selectedText || '标题'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'bold':
+                        insertion = `**${selectedText || '加粗文本'}**`;
+                        cursorOffset = 2;
+                        break;
+                    case 'italic':
+                        insertion = `*${selectedText || '斜体文本'}*`;
+                        cursorOffset = 1;
+                        break;
+                    case 'strike':
+                        insertion = `~~${selectedText || '删除线文本'}~~`;
+                        cursorOffset = 2;
+                        break;
+                    case 'link':
+                        insertion = `[${selectedText || '链接文字'}](https://)`;
+                        cursorOffset = insertion.length - 1;
+                        break;
+                    case 'quote':
+                        insertion = `> ${selectedText || '引用内容'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'code':
+                        insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``;
+                        cursorOffset = 3;
+                        break;
+                    case 'list-ul':
+                        insertion = `\n- ${selectedText || '列表项'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'list-ol':
+                        insertion = `\n1. ${selectedText || '列表项'}`;
+                        cursorOffset = insertion.length;
+                        break;
+                    case 'hr':
+                        insertion = `\n---\n`;
+                        cursorOffset = insertion.length;
+                        break;
+                    default:
+                        return;
+                }
+
+                const newValue = editor.value.substring(0, start) + insertion + editor.value.substring(end);
+                editor.value = newValue;
+                const newCursorPos = start + cursorOffset;
+                editor.focus();
+                editor.setSelectionRange(newCursorPos, newCursorPos);
+            }
+
+            // 工具栏按钮事件
+            document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.dataset.action;
+                    insertMarkdown(action);
+                });
+            });
+
+            // 预览按钮
+            previewBtn.addEventListener('click', togglePreview);
+
+            // 设置按钮
+            settingsBtn.addEventListener('click', openSettings);
+            cancelSettingsBtn.addEventListener('click', closeSettings);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            cardTitleInput.addEventListener('input', () => cardTitleInput.classList.remove('error'));
+            cardDescriptionInput.addEventListener('input', () => cardDescriptionInput.classList.remove('error'));
+
+            // 保存草稿
+            function saveDraft() {
+                const draft = {
+                    content: editor.value,
+                    meta: cardMeta,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('draft_website_post', JSON.stringify(draft));
+                showToast('草稿已保存');
+            }
+            saveDraftBtn.addEventListener('click', saveDraft);
+
+            // 加载草稿（如果有）
+            function loadDraft() {
+                const saved = localStorage.getItem('draft_website_post');
+                if (saved) {
+                    try {
+                        const draft = JSON.parse(saved);
+                        editor.value = draft.content || '';
+                        cardMeta = draft.meta || { title: '', description: '' };
+                        showToast('已恢复上次草稿');
+                    } catch (e) {
+                        console.error('草稿解析失败:', e);
+                    }
+                }
+            }
+
+            // 发布流程
+            function openPublishConfirm() {
+                if (!cardMeta.title || !cardMeta.description) {
+                    showToast('请先在设置中填写卡片标题和简介');
+                    openSettings();
+                    return;
+                }
+                if (!editor.value.trim()) {
+                    showToast('内容不能为空');
+                    return;
+                }
+                publishModal.classList.add('show');
+            }
+
+            function cancelPublish() {
+                publishModal.classList.remove('show');
+            }
+
+            function confirmPublish() {
+                // 模拟发布操作
+                const postData = {
+                    content: editor.value,
+                    title: cardMeta.title,
+                    description: cardMeta.description,
+                    author: '当前用户',
+                    timestamp: new Date().toISOString()
+                };
+                console.log('发布数据:', postData);
+                // 这里将来会调用 Supabase 写入数据库
+                publishModal.classList.remove('show');
+                showToast('已提交审核，感谢分享！');
+                // 清空编辑区和设置，清除草稿
+                editor.value = '';
+                cardMeta = { title: '', description: '' };
+                localStorage.removeItem('draft_website_post');
+                // 跳转回主页
+                setTimeout(() => {
+                    window.location.href = 'home.html';
+                }, 1500);
+            }
+
+            publishBtn.addEventListener('click', openPublishConfirm);
+            cancelPublishBtn.addEventListener('click', cancelPublish);
+            confirmPublishBtn.addEventListener('click', confirmPublish);
+
+            // 键盘快捷键：Ctrl+S 保存草稿，Ctrl+P 预览
+            editor.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    saveDraft();
+                }
+                if (e.ctrlKey && e.key === 'p') {
+                    e.preventDefault();
+                    togglePreview();
+                }
+            });
+
+            // 初始化：加载草稿
+            loadDraft();
+
+            // 自动调整编辑器高度（虽然占满容器，但保留扩展）
+            function adjustEditorHeight() {
+                // 可以在这里添加，但编辑器目前使用flex占满高度，无需额外操作
+            }
+
+            // 获取当前用户（可选）
+            async function checkUser() {
+                if (supabase) {
+                    try {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) {
+                            // 如果未登录，跳转登录页
+                            window.location.href = 'index.html';
+                        }
+                    } catch (err) {
+                        console.error('获取用户失败:', err);
+                    }
+                }
+            }
+            checkUser();
+
+            // 暴露函数给内联事件（如果有的话）
+            window.togglePreview = togglePreview;
+            window.openSettings = openSettings;
+            window.saveSettings = saveSettings;
+            window.cancelSettings = closeSettings;
+            window.saveDraft = saveDraft;
+            window.openPublishConfirm = openPublishConfirm;
+            window.cancelPublish = cancelPublish;
+            window.confirmPublish = confirmPublish;
+
+        })();
+    </script>
+</body>
+</html>
