@@ -55,20 +55,21 @@
         .app-logo {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 0;                    /* 文字紧贴图标，左移一个字的距离 */
             text-decoration: none;
             color: #e2e8e0;
         }
 
         .app-logo svg {
-            width: 72px;
-            height: 48px;
+            width: 108px;              /* 72 × 1.5 = 108 */
+            height: 72px;              /* 48 × 1.5 = 72 */
             flex-shrink: 0;
         }
         .app-logo .logo-text {
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 0.5px;
+            margin-left: 0;            /* 确保没有额外偏移 */
         }
         .app-logo .logo-text .highlight {
             color: #2ecc71;
@@ -417,6 +418,7 @@
             }
             .app-logo {
                 justify-content: center;
+                gap: 4px;              /* 移动端稍微保留一点间距，避免过于拥挤 */
             }
             .app-actions {
                 justify-content: stretch;
@@ -433,6 +435,10 @@
             }
             .app-logo .logo-sub {
                 display: none;
+            }
+            .app-logo svg {
+                width: 72px;            /* 移动端缩小到 72×48，保持比例 */
+                height: 48px;
             }
         }
     </style>
