@@ -14,10 +14,26 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f7fa;
-            color: #1e293b;
+            background: #0a0f0a;
+            color: #e2e8e0;
             min-height: 100vh;
             padding: 24px;
+        }
+
+        /* ========== 滚动条 ========== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141a14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1d6b4c;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #238b5e;
         }
 
         /* ========== 容器 ========== */
@@ -33,13 +49,13 @@
             align-items: center;
             padding: 16px 0;
             margin-bottom: 32px;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid #1a2a1a;
         }
 
         .app-logo {
             font-size: 28px;
             font-weight: 700;
-            color: #667eea;
+            color: #2ecc71;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -48,7 +64,7 @@
         .app-logo svg {
             width: 32px;
             height: 32px;
-            fill: #667eea;
+            fill: #2ecc71;
         }
 
         .app-actions {
@@ -56,6 +72,7 @@
             gap: 12px;
         }
 
+        /* ========== 按钮 ========== */
         .btn {
             padding: 10px 24px;
             border: none;
@@ -63,37 +80,51 @@
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
         .btn-primary {
-            background: #667eea;
+            background: #1a7a4a;
             color: white;
         }
         .btn-primary:hover {
-            background: #5a6fd6;
+            background: #239d5e;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 20px rgba(26, 122, 74, 0.5);
         }
 
         .btn-danger {
-            background: #ef4444;
-            color: white;
+            background: #4a1a1a;
+            color: #ef8a8a;
         }
         .btn-danger:hover {
-            background: #dc2626;
+            background: #662222;
+            color: #ffaaaa;
         }
 
         .btn-outline {
             background: transparent;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
+            color: #8aa88a;
+            border: 1px solid #1d3a1d;
         }
         .btn-outline:hover {
-            background: #f1f5f9;
+            background: #141f14;
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+
+        .btn-secondary {
+            background: #1a2a1a;
+            color: #8aa88a;
+            border: 1px solid #1d3a1d;
+        }
+        .btn-secondary:hover {
+            background: #1d3a1d;
+            color: #b8d4b8;
+            border-color: #2ecc71;
         }
 
         /* ========== 项目列表 ========== */
@@ -105,36 +136,55 @@
         }
 
         .project-card {
-            background: white;
+            background: #111811;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
             cursor: pointer;
-            border: 1px solid transparent;
+            border: 1px solid #1a2a1a;
         }
         .project-card:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            border-color: #667eea;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+            border-color: #1d6b4c;
             transform: translateY(-4px);
         }
 
         .project-thumbnail {
             width: 100%;
             aspect-ratio: 16 / 9;
-            background: #e2e8f0;
+            background: #0d130d;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 48px;
-            color: #94a3b8;
+            color: #2a4a2a;
             overflow: hidden;
+            position: relative;
         }
 
         .project-thumbnail img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        .project-thumbnail .play-icon {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            background: rgba(26, 122, 74, 0.8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .project-card:hover .play-icon {
+            opacity: 1;
         }
 
         .project-info {
@@ -148,11 +198,12 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            color: #e2f0e2;
         }
 
         .project-meta {
             font-size: 13px;
-            color: #94a3b8;
+            color: #5a7a5a;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -167,7 +218,7 @@
             gap: 8px;
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #f1f5f9;
+            border-top: 1px solid #1a2a1a;
         }
 
         .project-actions .btn {
@@ -182,26 +233,26 @@
             grid-column: 1 / -1;
             text-align: center;
             padding: 80px 20px;
-            background: white;
+            background: #111811;
             border-radius: 16px;
-            border: 2px dashed #e2e8f0;
+            border: 2px dashed #1a3a1a;
         }
 
         .empty-state .icon {
             font-size: 64px;
             margin-bottom: 16px;
-            opacity: 0.6;
+            opacity: 0.4;
         }
 
         .empty-state h3 {
             font-size: 20px;
             font-weight: 600;
-            color: #334155;
+            color: #c8e0c8;
             margin-bottom: 8px;
         }
 
         .empty-state p {
-            color: #94a3b8;
+            color: #5a7a5a;
             font-size: 15px;
             margin-bottom: 20px;
         }
@@ -213,8 +264,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -223,23 +274,25 @@
         }
 
         .modal {
-            background: white;
+            background: #111811;
             border-radius: 20px;
             padding: 32px;
             max-width: 440px;
             width: 90%;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
             animation: slideUp 0.25s ease;
+            border: 1px solid #1d3a1d;
         }
 
         .modal h2 {
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 8px;
+            color: #e2f0e2;
         }
 
         .modal p {
-            color: #64748b;
+            color: #6a8a6a;
             font-size: 14px;
             margin-bottom: 20px;
         }
@@ -247,17 +300,23 @@
         .modal input {
             width: 100%;
             padding: 12px 16px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #1d3a1d;
             border-radius: 10px;
             font-size: 15px;
             outline: none;
             transition: 0.2s;
             margin-bottom: 16px;
+            background: #0d130d;
+            color: #e2f0e2;
         }
 
         .modal input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            border-color: #1d6b4c;
+            box-shadow: 0 0 0 3px rgba(26, 122, 74, 0.25);
+        }
+
+        .modal input::placeholder {
+            color: #3a5a3a;
         }
 
         .modal-actions {
@@ -276,16 +335,17 @@
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
+            background: #141f14;
+            color: #d4ecd4;
             padding: 12px 24px;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 500;
             z-index: 1000;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             animation: fadeInUp 0.3s ease;
             pointer-events: none;
+            border: 1px solid #1d3a1d;
         }
 
         /* ========== 动画 ========== */
@@ -306,6 +366,9 @@
 
         /* ========== 响应式 ========== */
         @media (max-width: 640px) {
+            body {
+                padding: 16px;
+            }
             .app-header {
                 flex-direction: column;
                 gap: 16px;
@@ -323,6 +386,10 @@
             }
             .modal {
                 padding: 24px;
+            }
+            .app-logo {
+                font-size: 22px;
+                justify-content: center;
             }
         }
     </style>
@@ -438,8 +505,7 @@
                 name: name || '未命名项目',
                 createdAt: now,
                 updatedAt: now,
-                thumbnail: null, // 将来存缩略图 dataURL
-                // 其他剪辑参数后续扩展
+                thumbnail: null,
             };
         }
 
@@ -464,7 +530,6 @@
                 return;
             }
 
-            // 按更新时间降序排列
             const sorted = [...projects].sort((a, b) => b.updatedAt - a.updatedAt);
 
             let html = '';
@@ -477,6 +542,7 @@
                     <div class="project-card" data-id="${proj.id}">
                         <div class="project-thumbnail">
                             ${thumbnailHtml}
+                            <div class="play-icon">▶</div>
                         </div>
                         <div class="project-info">
                             <div class="project-name">${proj.name}</div>
@@ -495,7 +561,6 @@
 
             container.innerHTML = html;
 
-            // 绑定事件
             container.querySelectorAll('.btn-open').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -512,7 +577,6 @@
                 });
             });
 
-            // 点击卡片本身也打开
             container.querySelectorAll('.project-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const id = card.dataset.id;
@@ -544,7 +608,6 @@
                 await dbAdd('projects', project);
                 showToast(`项目「${project.name}」已创建`, 'success');
                 await loadProjects();
-                // 跳转到编辑页（占位）
                 alert(`准备编辑项目：${project.name}\n（编辑页面开发中）`);
                 return true;
             } catch (err) {
@@ -567,7 +630,6 @@
         }
 
         function openProject(id) {
-            // 后续跳转到编辑页面
             alert(`打开项目 ID: ${id}\n（编辑页面开发中）`);
         }
 
@@ -584,10 +646,12 @@
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.textContent = message;
-            // 根据类型调整颜色
-            if (type === 'error') toast.style.background = '#ef4444';
-            else if (type === 'success') toast.style.background = '#22c55e';
-            else toast.style.background = '#1e293b';
+
+            // 深色主题的提示颜色
+            if (type === 'error') toast.style.borderColor = '#662222';
+            else if (type === 'success') toast.style.borderColor = '#1d6b4c';
+            else toast.style.borderColor = '#1d3a1d';
+
             document.body.appendChild(toast);
 
             toastTimer = setTimeout(() => {
