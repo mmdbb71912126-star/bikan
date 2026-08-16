@@ -1,7 +1,7 @@
 // ============================================================
 // js/components.js
 // 必看 - 通用 UI 组件（卡片、头像、图标、弹窗等）
-// 依赖：config.js（需先加载）
+// 依赖：config.js（需先加载），marked 库（需在 HTML 中引入）
 // ============================================================
 
 (function() {
@@ -182,11 +182,12 @@
     }
 
     // ============================================================
-    // 渲染帖子内容中的自定义媒体语法（支持百分比尺寸，默认 80%）
+    // 渲染帖子内容中的自定义媒体语法 + Markdown
     // ============================================================
     function renderPostContentWithMedia(content, fileMap = {}) {
         if (!content) return '';
 
+        // 先替换自定义媒体标签 [img], [video], [audio], [file]
         let html = content;
 
         function parseSize(sizeStr) {
@@ -232,7 +233,7 @@
                 const style = buildStyle(sizeInfo, true);
                 return `<div class="post-media-wrapper"><img src="${file.file_url}" alt="${file.file_name}" class="post-media-img" loading="lazy"${style} /></div>`;
             }
-            return `<span class="media-placeholder">🖼️ 图片未找到 (${id})</span>`;
+            return `<span class="media-placeholder">图片未找到 (${id})</span>`;
         });
 
         html = html.replace(/\[video\]([^\]]+?)(?:=([^\]]*?))?\[\/video\]/g, (match, id, sizeStr) => {
@@ -242,7 +243,7 @@
                 const style = buildStyle(sizeInfo, false);
                 return `<div class="post-media-wrapper"><video src="${file.file_url}" controls class="post-media-video" preload="metadata"${style}></video></div>`;
             }
-            return `<span class="media-placeholder">🎬 视频未找到 (${id})</span>`;
+            return `<span class="media-placeholder">视频未找到 (${id})</span>`;
         });
 
         html = html.replace(/\[audio\]([^\]]+?)(?:=([^\]]*?))?\[\/audio\]/g, (match, id, sizeStr) => {
@@ -250,7 +251,7 @@
             if (file) {
                 return `<div class="post-media-wrapper"><audio src="${file.file_url}" controls class="post-media-audio" preload="metadata" style="width:100%;"></audio></div>`;
             }
-            return `<span class="media-placeholder">🎵 音频未找到 (${id})</span>`;
+            return `<span class="media-placeholder">音频未找到 (${id})</span>`;
         });
 
         html = html.replace(/\[file\]([^\]]+?)(?:=([^\]]*?))?\[\/file\]/g, (match, id, sizeStr) => {
@@ -259,8 +260,19 @@
                 const card = renderFileCard(file);
                 return card.outerHTML;
             }
-            return `<span class="media-placeholder">📄 文件未找到 (${id})</span>`;
+            return `<span class="media-placeholder">文件未找到 (${id})</span>`;
         });
+
+        // 现在用 marked 解析 Markdown
+        if (typeof window.marked !== 'undefined' && window.marked.parse) {
+            try {
+                // 启用 HTML 支持（因为我们已经插入了媒体标签），并自动换行
+                html = window.marked.parse(html, { html: true, breaks: true });
+            } catch (e) {
+                console.warn('Markdown 解析失败:', e);
+                // 降级为纯文本
+            }
+        }
 
         return html;
     }
@@ -277,7 +289,7 @@
         return [...new Set(ids)];
     }
 
-    // ---------- 渲染帖子卡片（删除权限：仅作者） ----------
+    // ---------- 渲染帖子卡片 ----------
     function renderPostCard(post, options = {}) {
         if (!post) return document.createElement('div');
         const { showActions = true, isDetail = false } = options;
@@ -333,32 +345,26 @@
 
         card.appendChild(header);
 
-        if (post.content) {
-            const tagRegex = /#\w+/g;
-            const tags = post.content.match(tagRegex);
-            if (tags && tags.length > 0) {
-                const tagsDiv = document.createElement('div');
-                tagsDiv.className = 'post-tags';
-                tags.forEach(tag => {
-                    const tagEl = document.createElement('span');
-                    tagEl.className = 'tag';
-                    tagEl.dataset.tag = tag.substring(1);
-                    tagEl.textContent = tag;
-                    tagsDiv.appendChild(tagEl);
-                });
-                card.appendChild(tagsDiv);
-            }
-        }
-
+        // ----- 内容渲染（支持 Markdown + 自定义媒体） -----
         const contentDiv = document.createElement('div');
         contentDiv.className = 'post-content';
         if (post.fileMap) {
             contentDiv.innerHTML = renderPostContentWithMedia(post.content, post.fileMap);
         } else {
-            contentDiv.textContent = post.content || '';
+            // 如果没有 fileMap，仍然尝试 Markdown
+            let raw = post.content || '';
+            if (typeof window.marked !== 'undefined' && window.marked.parse) {
+                try {
+                    raw = window.marked.parse(raw, { html: true, breaks: true });
+                } catch (e) {
+                    // 降级
+                }
+            }
+            contentDiv.innerHTML = raw;
         }
         card.appendChild(contentDiv);
 
+        // 标签（如果内容中没有 # 标签，但数据库有 tags 字段）
         if (post.tags && post.tags.length && !post.content?.match(/#\w+/g)) {
             const tagsDiv = document.createElement('div');
             tagsDiv.className = 'post-tags';
@@ -449,7 +455,7 @@
             shareBtn.innerHTML = Icons.share;
             actions.appendChild(shareBtn);
 
-            // ===== 删除权限：仅作者，移除管理员 =====
+            // 删除权限：仅作者
             if (post.is_owner) {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'action-btn';
@@ -472,7 +478,7 @@
         return card;
     }
 
-    // ---------- 渲染评论项（删除权限：评论作者或帖子作者） ----------
+    // ---------- 渲染评论项 ----------
     function renderCommentItem(comment, options = {}) {
         const { isReply = false } = options;
         const item = document.createElement('div');
@@ -515,9 +521,18 @@
 
         item.appendChild(header);
 
+        // 评论内容（支持 Markdown）
         const content = document.createElement('div');
         content.className = 'comment-content';
-        content.textContent = comment.content || '';
+        let raw = comment.content || '';
+        if (typeof window.marked !== 'undefined' && window.marked.parse) {
+            try {
+                raw = window.marked.parse(raw, { html: true, breaks: true });
+            } catch (e) {
+                // 降级
+            }
+        }
+        content.innerHTML = raw;
         item.appendChild(content);
 
         const actions = document.createElement('div');
@@ -544,7 +559,7 @@
         shareBtn.innerHTML = Icons.share;
         actions.appendChild(shareBtn);
 
-        // ===== 删除权限：评论作者 或 帖子作者，移除管理员 =====
+        // 删除权限：评论作者 或 帖子作者
         const canDelete = comment.user_id === comment.currentUserId || comment.is_owner;
         if (canDelete) {
             const deleteBtn = document.createElement('button');
@@ -710,7 +725,15 @@
         if (topic.description) {
             const desc = document.createElement('div');
             desc.className = 'topic-desc';
-            desc.textContent = topic.description;
+            let raw = topic.description || '';
+            if (typeof window.marked !== 'undefined' && window.marked.parse) {
+                try {
+                    raw = window.marked.parse(raw, { html: true, breaks: true });
+                } catch (e) {
+                    // 降级
+                }
+            }
+            desc.innerHTML = raw;
             card.appendChild(desc);
         }
 
