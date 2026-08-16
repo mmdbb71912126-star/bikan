@@ -128,7 +128,7 @@
             const id = urlParams.get('id');
 
             // ============================================================
-            // 辅助函数
+            // 辅助函数（保持不变）
             // ============================================================
             async function enrichPostWithFiles(post) {
                 if (!post || !post.content) return post;
@@ -325,7 +325,7 @@
             }
 
             // ============================================================
-            // 核心：评论渲染
+            // 核心：评论渲染（修复深层回复消失）
             // ============================================================
             async function loadComments(postId, postAuthorId) {
                 const listDiv = document.getElementById('commentsList');
@@ -399,39 +399,54 @@
                         const listContainer = document.createElement('div');
                         listContainer.className = 'replies-list';
 
-                        // 渲染每条直接回复
+                        // 渲染每条直接回复（第一层）
                         directReplies.forEach(reply => {
                             const replyEl = document.createElement('div');
                             replyEl.className = 'comment-item level-1';
 
-                            // =============================================
-                            // 判断该回复是否直接回复根评论（parent_id === root.id）
-                            // 如果是，则不显示引用行；否则显示引用行
-                            // =============================================
-                            let quoteLineHtml = '';
-                            if (reply.parent_id !== root.id) {
-                                // 深层回复（回复了别人的回复）
-                                const parentNickname = getUserDisplayName(reply.reply_to_user);
-                                const parentComment = data.find(c => c.id === reply.parent_id);
-                                const parentContent = parentComment ? parentComment.content || '' : '';
-                                const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
-                                quoteLineHtml = `<div class="reply-quote-line"><strong>${getUserDisplayName(reply.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的“${preview}”</div>`;
-                            }
-
+                            // ---- 渲染第一层回复本身 ----
                             const replyCommentEl = comp.renderCommentItem(reply, {
                                 isReply: true,
                                 isAdmin: isAdmin
                             });
-
-                            if (quoteLineHtml) {
-                                const quoteDiv = document.createElement('div');
-                                quoteDiv.innerHTML = quoteLineHtml;
-                                replyEl.appendChild(quoteDiv);
-                            }
                             replyEl.appendChild(replyCommentEl);
 
-                            const replyToSpan = replyCommentEl.querySelector('.comment-reply-to');
-                            if (replyToSpan) replyToSpan.style.display = 'none';
+                            // ---- 处理该回复的子回复（深层回复） ----
+                            if (reply.children && reply.children.length > 0) {
+                                reply.children.forEach(child => {
+                                    const childEl = document.createElement('div');
+                                    childEl.className = 'comment-item level-1';
+
+                                    // 引用行
+                                    const parentNickname = getUserDisplayName(reply.profiles);
+                                    const parentContent = reply.content || '';
+                                    const preview = parentContent.length > 30 ? parentContent.substring(0, 30) + '...' : parentContent;
+                                    const quoteLineHtml =
+                                        `<div class="reply-quote-line"><strong>${getUserDisplayName(child.profiles)}</strong> 回复了 <strong>${parentNickname}</strong> 的“${preview}”</div>`;
+
+                                    const quoteDiv = document.createElement('div');
+                                    quoteDiv.innerHTML = quoteLineHtml;
+                                    childEl.appendChild(quoteDiv);
+
+                                    // 子回复内容
+                                    const childCommentEl = comp.renderCommentItem(child, {
+                                        isReply: true,
+                                        isAdmin: isAdmin
+                                    });
+                                    childEl.appendChild(childCommentEl);
+
+                                    // 隐藏原有的 reply-to 提示
+                                    const replyToSpan = childCommentEl.querySelector('.comment-reply-to');
+                                    if (replyToSpan) replyToSpan.style.display = 'none';
+
+                                    // 添加到父级回复元素后面
+                                    replyEl.appendChild(childEl);
+                                });
+                            }
+
+                            // 隐藏第一层回复的 reply-to（如果有）
+                            const replyToSpan2 = replyCommentEl.querySelector('.comment-reply-to');
+                            if (replyToSpan2) replyToSpan2.style.display = 'none';
 
                             listContainer.appendChild(replyEl);
                         });
