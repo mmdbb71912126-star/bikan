@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 - 登录注册</title>
 
+    <!-- Favicon 内联 SVG，避免 404 -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 680'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='black' fill-rule='evenodd' stroke='%231a1a2e' stroke-width='2'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='black'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='black'/%3E%3C/svg%3E">
+
     <!-- Supabase JS SDK (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -84,7 +87,7 @@
             50% { transform: translate(40px, 30px) scale(1.08); }
         }
 
-        /* ========== 卡片容器 ========== */
+        /* 卡片样式 */
         .auth-card {
             position: relative;
             z-index: 1;
@@ -105,7 +108,6 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* ========== Logo / 标题 ========== */
         .logo-area {
             text-align: center;
             margin-bottom: 28px;
@@ -139,7 +141,6 @@
             margin-top: 4px;
         }
 
-        /* ========== 标签切换 ========== */
         .tabs {
             display: flex;
             background: rgba(255, 255, 255, 0.06);
@@ -164,7 +165,7 @@
             background: transparent;
             position: relative;
             outline: none;
-            pointer-events: auto; /* 确保可点击 */
+            pointer-events: auto;
         }
         .tab:hover {
             color: var(--text-primary);
@@ -180,7 +181,6 @@
             box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
         }
 
-        /* ========== 表单样式 ========== */
         .form-group {
             margin-bottom: 18px;
         }
@@ -217,7 +217,6 @@
             box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.12);
         }
 
-        /* ========== 按钮 ========== */
         .btn {
             width: 100%;
             padding: 14px 20px;
@@ -274,7 +273,6 @@
             flex-shrink: 0;
         }
 
-        /* ========== 分隔线 ========== */
         .divider {
             display: flex;
             align-items: center;
@@ -293,7 +291,6 @@
             background: rgba(255, 255, 255, 0.12);
         }
 
-        /* ========== 提示信息 ========== */
         .alert {
             padding: 12px 16px;
             border-radius: var(--radius-sm);
@@ -333,7 +330,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ========== 登录后用户信息 ========== */
         .user-panel {
             text-align: center;
             display: none;
@@ -378,7 +374,6 @@
             transform: translateY(-1px);
         }
 
-        /* ========== 加载 spinner ========== */
         .spinner {
             width: 20px;
             height: 20px;
@@ -398,7 +393,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ========== 底部提示 ========== */
         .footer-note {
             text-align: center;
             font-size: 12px;
@@ -416,7 +410,6 @@
             text-decoration: underline;
         }
 
-        /* ========== 响应式 ========== */
         @media (max-width: 480px) {
             .auth-card {
                 padding: 28px 22px 24px;
@@ -452,7 +445,7 @@
             <p class="logo-subtitle" id="logoSubtitle">使用 Supabase 安全登录</p>
         </div>
 
-        <!-- 登录/注册切换标签（使用内联 onclick 确保触发） -->
+        <!-- 登录/注册切换标签 -->
         <div class="tabs" role="tablist">
             <button class="tab active" id="tabLogin" role="tab" aria-selected="true" type="button"
                     onclick="setMode('login')">登录</button>
@@ -474,7 +467,6 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="password">密码</label>
-                <!-- 移除 minlength 属性，避免原生验证干扰，改用自定义验证 -->
                 <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" required />
             </div>
 
@@ -520,298 +512,290 @@
         const SUPABASE_URL = 'https://YOUR-PROJECT-REF.supabase.co';
         const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
 
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('Supabase 客户端初始化成功');
-        } catch (err) {
-            console.error('Supabase 初始化失败:', err);
-            showAlert('error', 'Supabase 配置错误，请检查 URL 和 anon key。');
-        }
+        // 将所有代码封装在 IIFE 中，避免全局变量冲突和重复声明错误
+        (function() {
+            let supabase;
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase 客户端初始化成功');
+            } catch (err) {
+                console.error('Supabase 初始化失败:', err);
+                showAlert('error', 'Supabase 配置错误，请检查 URL 和 anon key。');
+            }
 
-        // DOM 元素
-        const tabLogin = document.getElementById('tabLogin');
-        const tabRegister = document.getElementById('tabRegister');
-        const authForm = document.getElementById('authForm');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const submitBtn = document.getElementById('submitBtn');
-        const submitBtnText = document.getElementById('submitBtnText');
-        const googleBtn = document.getElementById('googleBtn');
-        const alertBox = document.getElementById('alertBox');
-        const alertIcon = document.getElementById('alertIcon');
-        const alertMessage = document.getElementById('alertMessage');
-        const userPanel = document.getElementById('userPanel');
-        const userAvatar = document.getElementById('userAvatar');
-        const userName = document.getElementById('userName');
-        const userEmail = document.getElementById('userEmail');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const authCard = document.getElementById('authCard');
-        const logoTitle = document.getElementById('logoTitle');
-        const logoSubtitle = document.getElementById('logoSubtitle');
+            // DOM 元素
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+            const authForm = document.getElementById('authForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const googleBtn = document.getElementById('googleBtn');
+            const alertBox = document.getElementById('alertBox');
+            const alertIcon = document.getElementById('alertIcon');
+            const alertMessage = document.getElementById('alertMessage');
+            const userPanel = document.getElementById('userPanel');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userEmail = document.getElementById('userEmail');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const authCard = document.getElementById('authCard');
+            const logoTitle = document.getElementById('logoTitle');
+            const logoSubtitle = document.getElementById('logoSubtitle');
 
-        // 状态
-        let currentMode = 'login';
-        let isLoading = false;
+            let currentMode = 'login';
+            let isLoading = false;
 
-        // SVG 图标
-        const icons = {
-            error: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
-            success: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`
-        };
+            const icons = {
+                error: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
+                success: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`
+            };
 
-        // 提示函数
-        function showAlert(type, message) {
-            alertBox.className = `alert alert-${type} show`;
-            alertIcon.innerHTML = type === 'error' ? icons.error : icons.success;
-            alertMessage.textContent = message;
-            clearTimeout(alertBox._hideTimer);
-            alertBox._hideTimer = setTimeout(() => {
+            function showAlert(type, message) {
+                alertBox.className = `alert alert-${type} show`;
+                alertIcon.innerHTML = type === 'error' ? icons.error : icons.success;
+                alertMessage.textContent = message;
+                clearTimeout(alertBox._hideTimer);
+                alertBox._hideTimer = setTimeout(() => {
+                    alertBox.classList.remove('show');
+                }, 5000);
+            }
+
+            function hideAlert() {
                 alertBox.classList.remove('show');
-            }, 5000);
-        }
-
-        function hideAlert() {
-            alertBox.classList.remove('show');
-            clearTimeout(alertBox._hideTimer);
-            alertIcon.innerHTML = '';
-            alertMessage.textContent = '';
-        }
-
-        function setLoading(btn, loading) {
-            if (loading) {
-                btn.classList.add('loading');
-                btn.disabled = true;
-            } else {
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-        }
-
-        function markError(input) {
-            input.classList.add('error');
-            setTimeout(() => input.classList.remove('error'), 2000);
-        }
-
-        // 核心：切换模式函数（全局暴露给内联 onclick）
-        window.setMode = function(mode) {
-            // 仅允许 login / register
-            if (mode !== 'login' && mode !== 'register') return;
-
-            currentMode = mode;
-            console.log('模式切换为:', currentMode);
-
-            // 更新标签样式
-            if (mode === 'login') {
-                tabLogin.classList.add('active');
-                tabRegister.classList.remove('active');
-                tabLogin.setAttribute('aria-selected', 'true');
-                tabRegister.setAttribute('aria-selected', 'false');
-                submitBtnText.textContent = '登 录';
-                passwordInput.autocomplete = 'current-password';
-                logoTitle.textContent = '必看';
-                logoSubtitle.textContent = '使用 Supabase 安全登录';
-                authCard.classList.remove('tab-register-mode');
-            } else {
-                tabRegister.classList.add('active');
-                tabLogin.classList.remove('active');
-                tabRegister.setAttribute('aria-selected', 'true');
-                tabLogin.setAttribute('aria-selected', 'false');
-                submitBtnText.textContent = '注 册';
-                passwordInput.autocomplete = 'new-password';
-                logoTitle.textContent = '创建账户';
-                logoSubtitle.textContent = '加入必看，开始使用';
-                authCard.classList.add('tab-register-mode');
+                clearTimeout(alertBox._hideTimer);
+                alertIcon.innerHTML = '';
+                alertMessage.textContent = '';
             }
 
-            // 清空密码并移除错误样式
-            passwordInput.value = '';
-            passwordInput.classList.remove('error');
-            emailInput.classList.remove('error');
-            hideAlert();
-        };
-
-        // 显示用户面板
-        function showUserPanel(user) {
-            authForm.style.display = 'none';
-            googleBtn.style.display = 'none';
-            document.querySelector('.tabs').style.display = 'none';
-            document.querySelector('.divider').style.display = 'none';
-            logoSubtitle.textContent = '已成功登录';
-
-            const avatarUrl =
-                user.user_metadata?.avatar_url ||
-                user.user_metadata?.picture ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    user.user_metadata?.full_name || user.email || 'User'
-                )}&background=3ecf8e&color=fff&size=128`;
-            userAvatar.src = avatarUrl;
-            userName.textContent =
-                user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '用户';
-            userEmail.textContent = user.email || '';
-
-            userPanel.classList.add('show');
-            userPanel.style.display = 'block';
-        }
-
-        function showAuthForms() {
-            authForm.style.display = 'block';
-            googleBtn.style.display = 'flex';
-            document.querySelector('.tabs').style.display = 'flex';
-            document.querySelector('.divider').style.display = 'flex';
-            logoSubtitle.textContent = '使用 Supabase 安全登录';
-            userPanel.classList.remove('show');
-            userPanel.style.display = 'none';
-        }
-
-        // 表单提交（自定义验证，移除原生干扰）
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideAlert();
-
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-
-            // 自定义验证
-            if (!email || !email.includes('@')) {
-                showAlert('error', '请输入有效的邮箱地址。');
-                markError(emailInput);
-                return;
-            }
-            if (!password || password.length < 6) {
-                showAlert('error', '密码至少需要 6 个字符。');
-                markError(passwordInput);
-                return;
-            }
-
-            setLoading(submitBtn, true);
-
-            try {
-                if (currentMode === 'login') {
-                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                    if (data?.user) {
-                        showAlert('success', '登录成功！正在跳转...');
-                        setTimeout(() => showUserPanel(data.user), 800);
-                    }
+            function setLoading(btn, loading) {
+                if (loading) {
+                    btn.classList.add('loading');
+                    btn.disabled = true;
                 } else {
-                    const { data, error } = await supabase.auth.signUp({
-                        email,
-                        password,
-                        options: {}
-                    });
-                    if (error) throw error;
-
-                    if (data?.user?.identities?.length === 0) {
-                        showAlert('error', '该邮箱已注册，请直接登录。');
-                    } else if (data?.session) {
-                        showAlert('success', '注册成功！正在登录...');
-                        setTimeout(() => showUserPanel(data.user), 800);
-                    } else {
-                        showAlert('success', '注册成功！请前往邮箱验证后登录。');
-                        setMode('login');
-                        emailInput.value = email;
-                    }
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
                 }
-            } catch (err) {
-                console.error('认证错误:', err);
-                const msg = err.message || '认证失败，请重试。';
-                if (msg.includes('Invalid login credentials')) {
-                    showAlert('error', '邮箱或密码错误，请检查后重试。');
-                } else if (msg.includes('Email not confirmed')) {
-                    showAlert('error', '邮箱尚未验证，请查收邮件完成验证。');
-                } else if (msg.includes('User already registered')) {
-                    showAlert('error', '该邮箱已注册，请直接登录。');
-                    setMode('login');
+            }
+
+            function markError(input) {
+                input.classList.add('error');
+                setTimeout(() => input.classList.remove('error'), 2000);
+            }
+
+            // 全局暴露 setMode 供 onclick 调用
+            window.setMode = function(mode) {
+                if (mode !== 'login' && mode !== 'register') return;
+
+                currentMode = mode;
+                console.log('模式切换为:', currentMode);
+
+                if (mode === 'login') {
+                    tabLogin.classList.add('active');
+                    tabRegister.classList.remove('active');
+                    tabLogin.setAttribute('aria-selected', 'true');
+                    tabRegister.setAttribute('aria-selected', 'false');
+                    submitBtnText.textContent = '登 录';
+                    passwordInput.autocomplete = 'current-password';
+                    logoTitle.textContent = '必看';
+                    logoSubtitle.textContent = '使用 Supabase 安全登录';
+                    authCard.classList.remove('tab-register-mode');
                 } else {
-                    showAlert('error', msg);
+                    tabRegister.classList.add('active');
+                    tabLogin.classList.remove('active');
+                    tabRegister.setAttribute('aria-selected', 'true');
+                    tabLogin.setAttribute('aria-selected', 'false');
+                    submitBtnText.textContent = '注 册';
+                    passwordInput.autocomplete = 'new-password';
+                    logoTitle.textContent = '创建账户';
+                    logoSubtitle.textContent = '加入必看，开始使用';
+                    authCard.classList.add('tab-register-mode');
                 }
-            } finally {
-                setLoading(submitBtn, false);
-            }
-        });
 
-        // Google 登录
-        googleBtn.addEventListener('click', async () => {
-            hideAlert();
-            setLoading(googleBtn, true);
-
-            try {
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                        redirectTo: window.location.origin + window.location.pathname,
-                    },
-                });
-                if (error) throw error;
-                console.log('正在跳转到 Google 登录...', data);
-            } catch (err) {
-                console.error('Google 登录错误:', err);
-                showAlert('error', `Google 登录失败：${err.message || '请稍后重试'}`);
-                setLoading(googleBtn, false);
-            }
-        });
-
-        // 退出登录
-        logoutBtn.addEventListener('click', async () => {
-            setLoading(logoutBtn, true);
-            try {
-                const { error } = await supabase.auth.signOut();
-                if (error) throw error;
-                showAuthForms();
-                emailInput.value = '';
                 passwordInput.value = '';
-                showAlert('success', '已退出登录，期待再次相见！');
-            } catch (err) {
-                console.error('退出失败:', err);
-                showAlert('error', `退出失败：${err.message}`);
-            } finally {
-                setLoading(logoutBtn, false);
+                passwordInput.classList.remove('error');
+                emailInput.classList.remove('error');
+                hideAlert();
+            };
+
+            function showUserPanel(user) {
+                authForm.style.display = 'none';
+                googleBtn.style.display = 'none';
+                document.querySelector('.tabs').style.display = 'none';
+                document.querySelector('.divider').style.display = 'none';
+                logoSubtitle.textContent = '已成功登录';
+
+                const avatarUrl =
+                    user.user_metadata?.avatar_url ||
+                    user.user_metadata?.picture ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        user.user_metadata?.full_name || user.email || 'User'
+                    )}&background=3ecf8e&color=fff&size=128`;
+                userAvatar.src = avatarUrl;
+                userName.textContent =
+                    user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '用户';
+                userEmail.textContent = user.email || '';
+
+                userPanel.classList.add('show');
+                userPanel.style.display = 'block';
             }
-        });
 
-        // 输入时清除错误
-        emailInput.addEventListener('input', () => {
-            emailInput.classList.remove('error');
-            hideAlert();
-        });
-        passwordInput.addEventListener('input', () => {
-            passwordInput.classList.remove('error');
-            hideAlert();
-        });
+            function showAuthForms() {
+                authForm.style.display = 'block';
+                googleBtn.style.display = 'flex';
+                document.querySelector('.tabs').style.display = 'flex';
+                document.querySelector('.divider').style.display = 'flex';
+                logoSubtitle.textContent = '使用 Supabase 安全登录';
+                userPanel.classList.remove('show');
+                userPanel.style.display = 'none';
+            }
 
-        // 自动检测已登录状态
-        async function checkAuthState() {
-            try {
-                const { data: { user }, error } = await supabase.auth.getUser();
-                if (user) {
-                    showUserPanel(user);
+            // 表单提交
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                hideAlert();
+
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!email || !email.includes('@')) {
+                    showAlert('error', '请输入有效的邮箱地址。');
+                    markError(emailInput);
+                    return;
                 }
-            } catch (err) {
-                console.log('未检测到已登录用户');
-            }
-        }
+                if (!password || password.length < 6) {
+                    showAlert('error', '密码至少需要 6 个字符。');
+                    markError(passwordInput);
+                    return;
+                }
 
-        // Supabase 认证状态监听
-        if (supabase) {
-            supabase.auth.onAuthStateChange((event, session) => {
-                console.log('认证状态变化:', event);
-                if (event === 'SIGNED_IN' && session?.user) {
-                    showUserPanel(session.user);
-                    showAlert('success', '登录成功！');
-                } else if (event === 'SIGNED_OUT') {
-                    showAuthForms();
-                } else if (event === 'USER_UPDATED' && session?.user) {
-                    showUserPanel(session.user);
+                setLoading(submitBtn, true);
+
+                try {
+                    if (currentMode === 'login') {
+                        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                        if (error) throw error;
+                        if (data?.user) {
+                            showAlert('success', '登录成功！正在跳转...');
+                            setTimeout(() => showUserPanel(data.user), 800);
+                        }
+                    } else {
+                        const { data, error } = await supabase.auth.signUp({
+                            email,
+                            password,
+                            options: {}
+                        });
+                        if (error) throw error;
+
+                        if (data?.user?.identities?.length === 0) {
+                            showAlert('error', '该邮箱已注册，请直接登录。');
+                        } else if (data?.session) {
+                            showAlert('success', '注册成功！正在登录...');
+                            setTimeout(() => showUserPanel(data.user), 800);
+                        } else {
+                            showAlert('success', '注册成功！请前往邮箱验证后登录。');
+                            setMode('login');
+                            emailInput.value = email;
+                        }
+                    }
+                } catch (err) {
+                    console.error('认证错误:', err);
+                    const msg = err.message || '认证失败，请重试。';
+                    if (msg.includes('Invalid login credentials')) {
+                        showAlert('error', '邮箱或密码错误，请检查后重试。');
+                    } else if (msg.includes('Email not confirmed')) {
+                        showAlert('error', '邮箱尚未验证，请查收邮件完成验证。');
+                    } else if (msg.includes('User already registered')) {
+                        showAlert('error', '该邮箱已注册，请直接登录。');
+                        setMode('login');
+                    } else {
+                        showAlert('error', msg);
+                    }
+                } finally {
+                    setLoading(submitBtn, false);
                 }
             });
-            checkAuthState();
-        }
 
-        // 控制台提醒
-        if (SUPABASE_URL.includes('YOUR-PROJECT') || SUPABASE_ANON_KEY.includes('YOUR-ANON')) {
-            console.warn('%c请先在代码中替换你的 Supabase URL 和 anon key！', 'font-size:14px; color:#ffb3b3;');
-        }
+            // Google 登录
+            googleBtn.addEventListener('click', async () => {
+                hideAlert();
+                setLoading(googleBtn, true);
+
+                try {
+                    const { data, error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin + window.location.pathname,
+                        },
+                    });
+                    if (error) throw error;
+                    console.log('正在跳转到 Google 登录...', data);
+                } catch (err) {
+                    console.error('Google 登录错误:', err);
+                    showAlert('error', `Google 登录失败：${err.message || '请稍后重试'}`);
+                    setLoading(googleBtn, false);
+                }
+            });
+
+            // 退出登录
+            logoutBtn.addEventListener('click', async () => {
+                setLoading(logoutBtn, true);
+                try {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) throw error;
+                    showAuthForms();
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                    showAlert('success', '已退出登录，期待再次相见！');
+                } catch (err) {
+                    console.error('退出失败:', err);
+                    showAlert('error', `退出失败：${err.message}`);
+                } finally {
+                    setLoading(logoutBtn, false);
+                }
+            });
+
+            emailInput.addEventListener('input', () => {
+                emailInput.classList.remove('error');
+                hideAlert();
+            });
+            passwordInput.addEventListener('input', () => {
+                passwordInput.classList.remove('error');
+                hideAlert();
+            });
+
+            async function checkAuthState() {
+                try {
+                    const { data: { user }, error } = await supabase.auth.getUser();
+                    if (user) {
+                        showUserPanel(user);
+                    }
+                } catch (err) {
+                    console.log('未检测到已登录用户');
+                }
+            }
+
+            if (supabase) {
+                supabase.auth.onAuthStateChange((event, session) => {
+                    console.log('认证状态变化:', event);
+                    if (event === 'SIGNED_IN' && session?.user) {
+                        showUserPanel(session.user);
+                        showAlert('success', '登录成功！');
+                    } else if (event === 'SIGNED_OUT') {
+                        showAuthForms();
+                    } else if (event === 'USER_UPDATED' && session?.user) {
+                        showUserPanel(session.user);
+                    }
+                });
+                checkAuthState();
+            }
+
+            console.log('%c必看 认证页面已加载', 'font-size:16px; font-weight:bold; color:#3ecf8e;');
+            if (SUPABASE_URL.includes('YOUR-PROJECT') || SUPABASE_ANON_KEY.includes('YOUR-ANON')) {
+                console.warn('%c请先在代码中替换你的 Supabase URL 和 anon key！', 'font-size:14px; color:#ffb3b3;');
+            }
+        })();
     </script>
 </body>
 </html>
