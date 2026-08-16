@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        /* ... 样式不变 ... */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -31,14 +30,10 @@
             --input-focus: #3ecf8e;
             --error: #ff6b6b;
             --success: #3ecf8e;
-            --google-bg: #ffffff;
-            --google-text: #3c4043;
-            --google-hover: #f8f9fa;
             --radius: 16px;
             --radius-sm: 10px;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --toolbar-height: 56px;
-            --id-library-height: 180px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -55,31 +50,189 @@
             height: 100vh;
         }
 
-        /* 工具栏、编辑器、弹窗等样式不变（由于篇幅，不再重复，请保留之前样式） */
-        /* 此处省略样式，实际文件中应包含完整样式 */
+        .toolbar {
+            height: var(--toolbar-height);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 20px;
+            flex-shrink: 0;
+            z-index: 10;
+            overflow-x: auto;
+        }
+
+        .toolbar-group { display: flex; gap: 4px; align-items: center; }
+        .toolbar-divider { width: 1px; height: 24px; background: var(--card-border); margin: 0 8px; flex-shrink: 0; }
+
+        .toolbar-btn {
+            background: none; border: none; cursor: pointer; padding: 8px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; transition: background var(--transition);
+            color: var(--text-secondary); flex-shrink: 0;
+        }
+        .toolbar-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+        .toolbar-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .toolbar-btn.active { background: rgba(62, 207, 142, 0.15); color: var(--primary); }
+        .toolbar-btn.primary { color: var(--primary); }
+        .toolbar-btn.danger { color: var(--error); }
+        .toolbar-btn.danger:hover { background: rgba(255, 107, 107, 0.15); }
+
+        .editor-container { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+
+        .editor-textarea {
+            flex: 1; width: 100%; height: 100%; background: transparent; border: none; outline: none;
+            resize: none; color: var(--text-primary); font-size: 16px; line-height: 1.6; padding: 20px 24px;
+            font-family: 'Inter', sans-serif; transition: background var(--transition);
+        }
+        .editor-textarea:focus { background: rgba(255, 255, 255, 0.02); }
+        .editor-textarea::placeholder { color: var(--text-muted); }
+
+        .preview-area {
+            flex: 1; overflow-y: auto; padding: 20px 24px; font-size: 16px; line-height: 1.6;
+            color: var(--text-primary); display: none; background: rgba(255, 255, 255, 0.02);
+        }
+        .preview-area.show { display: block; }
+        .preview-area h1, .preview-area h2, .preview-area h3 { margin: 16px 0 8px; }
+        .preview-area p { margin: 8px 0; }
+        .preview-area code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
+        .preview-area pre { background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; overflow-x: auto; }
+        .preview-area a { color: var(--primary); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 200;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: rgba(30, 30, 50, 0.9); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px 28px;
+            max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--text-primary); }
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-input {
+            width: 100%; padding: 12px 16px; font-size: 15px; color: var(--text-primary);
+            background: var(--input-bg); border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
+            outline: none; transition: all var(--transition);
+        }
+        .form-input:focus { border-color: var(--input-focus); background: rgba(255,255,255,0.1); box-shadow: 0 0 0 4px rgba(62,207,142,0.15); }
+        .form-input.error { border-color: var(--error); }
+        .form-textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px; cursor: pointer; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+
+        .btn {
+            padding: 10px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+            cursor: pointer; border: none; transition: all var(--transition); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #2bb673); color: #0f0c29; box-shadow: 0 4px 12px rgba(62,207,142,0.3); }
+        .btn-primary:hover { box-shadow: 0 6px 18px rgba(62,207,142,0.5); transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.15); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(30,30,50,0.95); color: #fff; padding: 12px 24px; border-radius: 30px;
+            font-size: 14px; z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .toast.show { opacity: 1; }
     </style>
 </head>
 <body>
 
     <!-- 顶部工具栏 -->
     <div class="toolbar">
-        <!-- 工具栏按钮不变 ... -->
+        <div class="toolbar-group">
+            <button class="toolbar-btn" data-action="heading" title="标题">
+                <svg viewBox="0 0 24 24"><path d="M5 4h2v6h10V4h2v16h-2v-8H7v8H5V4z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="bold" title="加粗">
+                <svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.6-1.76 1.6-2.98C17.2 5.6 15.6 4 13.5 4H6v16h8.5c2.3 0 4.2-1.8 4.2-4.1 0-1.8-1.1-3.3-2.8-3.9zM9 6.5h3.5c1.1 0 2 .9 2 2s-.9 2-2 2H9v-4zm5.5 11H9v-4h5.5c1.2 0 2.2.9 2.2 2s-1 2-2.2 2z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="italic" title="斜体">
+                <svg viewBox="0 0 24 24"><path d="M10 4h4l4 16h-2l-1-4H9l-1 4H6l4-16z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="link" title="链接">
+                <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="quote" title="引用">
+                <svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="code" title="代码块">
+                <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="list-ul" title="无序列表">
+                <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="list-ol" title="有序列表">
+                <svg viewBox="0 0 24 24"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
+            </button>
+            <button class="toolbar-btn" data-action="hr" title="分割线">
+                <svg viewBox="0 0 24 24"><path d="M6 11h12v2H6z"/></svg>
+            </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="previewBtn" title="预览">
+                <svg viewBox="0 0 24 24"><path d="M12 6c-3.87 0-7.17 2.36-8.48 5.66L3 12l.52.34C4.83 15.64 8.13 18 12 18s7.17-2.36 8.48-5.66L21 12l-.52-.34C19.17 8.36 15.87 6 12 6zm0 10c-2.76 0-5.24-1.55-6.47-4C6.76 9.55 9.24 8 12 8s5.24 1.55 6.47 4c-1.23 2.45-3.71 4-6.47 4zm0-6.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+            </button>
+            <button class="toolbar-btn" id="settingsBtn" title="设置">
+                <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.31.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
+            <button class="toolbar-btn" id="saveDraftBtn" title="保存草稿">
+                <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            </button>
+            <button class="toolbar-btn danger" id="publishBtn" title="发布">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+            <button class="toolbar-btn" id="logoutBtn" title="退出登录" onclick="logout()">
+                <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+            </button>
+        </div>
     </div>
 
-    <!-- 编辑器主体 -->
+    <!-- 编辑器 -->
     <div class="editor-container">
         <textarea class="editor-textarea" id="editor" placeholder="输入 Markdown 内容..." spellcheck="false"></textarea>
         <div class="preview-area" id="previewArea"></div>
     </div>
 
-    <!-- ID库面板 -->
-    <div class="id-library-panel" id="idLibraryPanel">
-        <!-- ID库内容不变 ... -->
-    </div>
-
     <!-- 设置弹窗 -->
     <div class="modal-overlay" id="settingsModal">
-        <!-- 设置弹窗内容不变 ... -->
+        <div class="modal">
+            <h3 class="modal-title">设置卡片信息</h3>
+            <div class="form-group">
+                <label class="form-label" for="cardTitle">卡片标题 <span style="color:var(--error)">*</span></label>
+                <input class="form-input" type="text" id="cardTitle" placeholder="例如：必看 - 精选好网址" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="cardDescription">简单介绍 <span style="color:var(--error)">*</span></label>
+                <textarea class="form-input form-textarea" id="cardDescription" placeholder="用一两句话介绍这个网址的特色"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="isAnonymous" />
+                    <span>匿名发布（不显示我的用户名）</span>
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelSettingsBtn">取消</button>
+                <button class="btn btn-primary" id="saveSettingsBtn">保存</button>
+            </div>
+        </div>
     </div>
 
     <!-- 发布确认弹窗 -->
@@ -89,22 +242,13 @@
             <p style="color:var(--text-secondary); margin-bottom:20px;">请确认您的帖子内容无误。发布后将提交给管理员审核，审核通过后才会在主页展示。</p>
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="cancelPublishBtn">再检查一下</button>
-                <!-- 确保 onclick 属性存在 -->
                 <button class="btn btn-primary" id="confirmPublishBtn" onclick="confirmPublish()">确认发布</button>
             </div>
         </div>
     </div>
 
-    <!-- 草稿列表弹窗 -->
-    <div class="modal-overlay" id="draftListModal">
-        <!-- 草稿列表内容不变 ... -->
-    </div>
-
     <!-- Toast 提示 -->
     <div class="toast" id="toast"></div>
-
-    <!-- 隐藏的文件输入 -->
-    <input type="file" id="fileInput" multiple style="display:none" accept="image/*,video/*,audio/*" />
 
     <script>
         (function() {
@@ -114,7 +258,6 @@
             let supabase;
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('Supabase 初始化成功');
             } catch (err) {
                 console.error('Supabase 初始化失败:', err);
                 showToast('Supabase 配置错误');
@@ -126,14 +269,10 @@
             const previewArea = document.getElementById('previewArea');
             const previewBtn = document.getElementById('previewBtn');
             const settingsBtn = document.getElementById('settingsBtn');
-            const draftListBtn = document.getElementById('draftListBtn');
             const saveDraftBtn = document.getElementById('saveDraftBtn');
             const publishBtn = document.getElementById('publishBtn');
             const settingsModal = document.getElementById('settingsModal');
             const publishModal = document.getElementById('publishModal');
-            const draftListModal = document.getElementById('draftListModal');
-            const draftListContainer = document.getElementById('draftListContainer');
-            const closeDraftListBtn = document.getElementById('closeDraftListBtn');
             const cardTitleInput = document.getElementById('cardTitle');
             const cardDescriptionInput = document.getElementById('cardDescription');
             const isAnonymousInput = document.getElementById('isAnonymous');
@@ -142,25 +281,23 @@
             const cancelPublishBtn = document.getElementById('cancelPublishBtn');
             const confirmPublishBtn = document.getElementById('confirmPublishBtn');
             const toast = document.getElementById('toast');
-            const idLibraryPanel = document.getElementById('idLibraryPanel');
-            const idLibraryBody = document.getElementById('idLibraryBody');
-            const importFilesBtn = document.getElementById('importFilesBtn');
-            const clearIdLibraryBtn = document.getElementById('clearIdLibraryBtn');
-            const fileInput = document.getElementById('fileInput');
 
             let isPreviewMode = false;
             let cardMeta = { title: '', description: '', isAnonymous: false };
 
-            // IndexedDB 封装（省略，与之前相同）
-            // ...
-
-            // 显示 Toast
             function showToast(message) {
                 const toast = document.getElementById('toast');
                 toast.textContent = message;
                 toast.classList.add('show');
                 clearTimeout(toast._hideTimer);
                 toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+
+            // 登录检查
+            async function checkLogin() {
+                if (!supabase) return false;
+                const { data: { user } } = await supabase.auth.getUser();
+                return user ? true : false;
             }
 
             // 退出登录
@@ -170,12 +307,90 @@
             }
             window.logout = logout;
 
-            // 设置弹窗相关（省略，与之前相同）
-            // ...
+            // 设置弹窗
+            function openSettings() {
+                cardTitleInput.value = cardMeta.title || '';
+                cardDescriptionInput.value = cardMeta.description || '';
+                isAnonymousInput.checked = cardMeta.isAnonymous || false;
+                settingsModal.classList.add('show');
+                cardTitleInput.focus();
+            }
+            window.openSettings = openSettings;
 
-            // 发布确认
+            function closeSettings() {
+                settingsModal.classList.remove('show');
+            }
+            window.cancelSettings = closeSettings;
+
+            function saveSettings() {
+                const title = cardTitleInput.value.trim();
+                const description = cardDescriptionInput.value.trim();
+                if (!title || !description) {
+                    showToast('标题和简介均为必填项');
+                    if (!title) cardTitleInput.classList.add('error');
+                    if (!description) cardDescriptionInput.classList.add('error');
+                    setTimeout(() => {
+                        cardTitleInput.classList.remove('error');
+                        cardDescriptionInput.classList.remove('error');
+                    }, 2000);
+                    return;
+                }
+                cardMeta.title = title;
+                cardMeta.description = description;
+                cardMeta.isAnonymous = isAnonymousInput.checked;
+                closeSettings();
+                showToast('设置已保存');
+            }
+            window.saveSettings = saveSettings;
+
+            // 预览
+            function togglePreview() {
+                isPreviewMode = !isPreviewMode;
+                if (isPreviewMode) {
+                    const html = marked.parse(editor.value || '');
+                    previewArea.innerHTML = html;
+                    previewArea.classList.add('show');
+                    editor.style.display = 'none';
+                    previewBtn.classList.add('active');
+                } else {
+                    previewArea.classList.remove('show');
+                    editor.style.display = 'block';
+                    previewBtn.classList.remove('active');
+                    editor.focus();
+                }
+            }
+            window.togglePreview = togglePreview;
+
+            // Markdown 插入
+            function insertMarkdown(action) {
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const selectedText = editor.value.substring(start, end);
+                let insertion = '';
+                let cursorOffset = 0;
+
+                switch (action) {
+                    case 'heading': insertion = `# ${selectedText || '标题'}`; cursorOffset = insertion.length; break;
+                    case 'bold': insertion = `**${selectedText || '加粗文本'}**`; cursorOffset = 2; break;
+                    case 'italic': insertion = `*${selectedText || '斜体文本'}*`; cursorOffset = 1; break;
+                    case 'link': insertion = `[${selectedText || '链接文字'}](https://)`; cursorOffset = insertion.length - 1; break;
+                    case 'quote': insertion = `> ${selectedText || '引用内容'}`; cursorOffset = insertion.length; break;
+                    case 'code': insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``; cursorOffset = 3; break;
+                    case 'list-ul': insertion = `\n- ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
+                    case 'list-ol': insertion = `\n1. ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
+                    case 'hr': insertion = `\n---\n`; cursorOffset = insertion.length; break;
+                    default: return;
+                }
+
+                const newValue = editor.value.substring(0, start) + insertion + editor.value.substring(end);
+                editor.value = newValue;
+                const newCursorPos = start + cursorOffset;
+                editor.focus();
+                editor.setSelectionRange(newCursorPos, newCursorPos);
+            }
+
+            // 发布流程
             function openPublishConfirm() {
-                console.log('openPublishConfirm called');
                 if (!cardMeta.title || !cardMeta.description) {
                     showToast('请先在设置中填写卡片标题和简介');
                     openSettings();
@@ -186,12 +401,13 @@
                     return;
                 }
                 publishModal.classList.add('show');
-                console.log('发布确认弹窗已打开');
             }
+            window.openPublishConfirm = openPublishConfirm;
 
             function cancelPublish() {
                 publishModal.classList.remove('show');
             }
+            window.cancelPublish = cancelPublish;
 
             async function confirmPublish() {
                 console.log('confirmPublish 被调用');
@@ -202,12 +418,10 @@
                         window.location.href = 'index.html';
                         return;
                     }
-                    console.log('当前用户:', user.email);
 
                     const submitterName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '用户';
 
-                    // 简化：先不处理文件上传，只做基本插入
-                    const { error: insertError } = await supabase
+                    const { error } = await supabase
                         .from('websites')
                         .insert({
                             title: cardMeta.title,
@@ -217,12 +431,11 @@
                             submitter_name: submitterName,
                             is_anonymous: cardMeta.isAnonymous,
                             status: 'pending'
-                            // 暂不包含 file_map
                         });
 
-                    if (insertError) {
-                        console.error('插入失败:', insertError);
-                        showToast('发布失败：' + insertError.message);
+                    if (error) {
+                        console.error('插入失败:', error);
+                        showToast('发布失败：' + error.message);
                         return;
                     }
 
@@ -231,7 +444,6 @@
                     showToast('已提交审核，感谢分享！');
                     editor.value = '';
                     cardMeta = { title: '', description: '', isAnonymous: false };
-                    localStorage.removeItem('draft_website_post');
                     setTimeout(() => {
                         window.location.href = 'home.html';
                     }, 1500);
@@ -240,21 +452,20 @@
                     showToast('发布失败：' + err.message);
                 }
             }
-
-            // 将关键函数挂载到全局
-            window.openSettings = openSettings;
-            window.saveSettings = saveSettings;
-            window.cancelSettings = closeSettings;
-            window.togglePreview = togglePreview;
-            window.saveDraft = saveDraft;
-            window.openPublishConfirm = openPublishConfirm;
-            window.cancelPublish = cancelPublish;
             window.confirmPublish = confirmPublish;
-            window.loadDraftById = loadDraftById;
-            window.deleteDraftById = deleteDraftById;
-            window.toggleIdLibrary = toggleIdLibrary;
-            window.importFiles = importFiles;
-            window.clearIdLibrary = clearIdLibrary;
+
+            // 保存草稿
+            function saveDraft() {
+                const draft = {
+                    content: editor.value,
+                    meta: cardMeta,
+                    timestamp: new Date().toISOString()
+                };
+                const draftKey = `draft_${Date.now()}`;
+                localStorage.setItem(draftKey, JSON.stringify(draft));
+                showToast('草稿已保存');
+            }
+            window.saveDraft = saveDraft;
 
             // 事件绑定
             document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
@@ -269,18 +480,8 @@
             saveDraftBtn.addEventListener('click', saveDraft);
             publishBtn.addEventListener('click', openPublishConfirm);
             cancelPublishBtn.addEventListener('click', cancelPublish);
-            // 确认发布按钮同时绑定两种方式
             confirmPublishBtn.addEventListener('click', confirmPublish);
             confirmPublishBtn.onclick = confirmPublish; // 确保内联 onclick 也有效
-            draftListBtn.addEventListener('click', function() {
-                renderDraftList();
-                draftListModal.classList.add('show');
-            });
-            closeDraftListBtn.addEventListener('click', function() {
-                draftListModal.classList.remove('show');
-            });
-            cardTitleInput.addEventListener('input', () => cardTitleInput.classList.remove('error'));
-            cardDescriptionInput.addEventListener('input', () => cardDescriptionInput.classList.remove('error'));
 
             editor.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.key === 's') {
@@ -295,16 +496,29 @@
 
             // 初始化
             async function init() {
-                console.log('submit.html 初始化');
-                // 加载草稿、ID库等
-                await renderIdLibrary();
-                loadLatestDraft();
                 // 检查登录
-                if (supabase) {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) {
-                        window.location.href = 'index.html';
+                const loggedIn = await checkLogin();
+                if (!loggedIn) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                // 可选：加载最近草稿
+                const drafts = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('draft_')) {
+                        try {
+                            const draft = JSON.parse(localStorage.getItem(key));
+                            draft.id = key;
+                            drafts.push(draft);
+                        } catch(e) {}
                     }
+                }
+                if (drafts.length > 0) {
+                    drafts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    const latest = drafts[0];
+                    editor.value = latest.content || '';
+                    cardMeta = latest.meta || { title: '', description: '', isAnonymous: false };
                 }
             }
             init();
