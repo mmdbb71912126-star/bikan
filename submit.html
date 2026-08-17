@@ -769,7 +769,6 @@
                         uploadMap[id] = { url: publicUrl, type, width };
                     }
 
-                    // 替换内容中的 ID 引用为公共 URL
                     let finalContent = content;
                     for (const [id, info] of Object.entries(uploadMap)) {
                         const widthSuffix = info.width ? ` =${info.width}%` : '';
@@ -802,8 +801,7 @@
                     editor.value = '';
                     cardMeta = { title: '', description: '', isAnonymous: false };
                     localStorage.removeItem('draft_website_post');
-                    await idbClear();
-                    renderIdLibrary();
+                    // 注意：不执行 idbClear() 和 renderIdLibrary()，以保留 ID 库文件
                     setTimeout(() => { window.location.href = 'home.html'; }, 1500);
                 } catch (err) {
                     console.error('发布失败:', err);
@@ -839,7 +837,7 @@
                     window.location.href = 'index.html';
                     return;
                 }
-                // 可选加载草稿
+                // 可选加载最近草稿
                 const drafts = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
