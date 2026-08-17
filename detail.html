@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>必看 - 帖子详情</title>
+
+    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Markdown 渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #3ecf8e;
+            --primary-dark: #2bb673;
+            --bg-start: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-end: #24243e;
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --error: #ff6b6b;
+            --success: #3ecf8e;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            padding: 30px 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all var(--transition);
+            margin-bottom: 24px;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+        .back-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .post-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        .post-header {
+            margin-bottom: 20px;
+        }
+        .post-title {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .author-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(62,207,142,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .post-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .status-pending { background: rgba(255,193,7,0.2); color: #ffc107; }
+        .status-approved { background: rgba(62,207,142,0.2); color: var(--primary); }
+        .status-rejected { background: rgba(255,107,107,0.2); color: var(--error); }
+
+        .post-content {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        .post-content h1, .post-content h2, .post-content h3, .post-content h4 {
+            margin: 20px 0 10px;
+            line-height: 1.3;
+        }
+        .post-content h1 { font-size: 2em; }
+        .post-content h2 { font-size: 1.5em; }
+        .post-content h3 { font-size: 1.17em; }
+        .post-content p { margin: 10px 0; }
+        .post-content code {
+            background: rgba(255,255,255,0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .post-content pre {
+            background: rgba(0,0,0,0.3);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .post-content pre code {
+            background: none;
+            padding: 0;
+        }
+        .post-content a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .post-content a:hover { text-decoration: underline; }
+        .post-content blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 16px;
+            margin: 10px 0;
+            color: var(--text-secondary);
+        }
+        .post-content ul, .post-content ol {
+            padding-left: 24px;
+            margin: 10px 0;
+        }
+        .post-content img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .post-content video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .post-content audio {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="back-btn" href="home.html">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            返回主页
+        </a>
+
+        <div id="detailContainer">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+            const ADMIN_EMAIL = '3948677391@qq.com';
+
+            let supabase;
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (err) {
+                console.error('Supabase 初始化失败:', err);
+                document.getElementById('detailContainer').innerHTML = '<div class="error-message">Supabase 配置错误</div>';
+                return;
+            }
+
+            // 预处理 Markdown，支持自定义媒体语法
+            function preprocessMarkdown(markdown) {
+                // 处理自定义图片：![描述](url =50%)
+                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
+                    return `<img src="${url}" width="${width}%" alt="${alt}" />`;
+                });
+                // 处理自定义视频：@video[描述](url =50%)
+                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
+                    return `<video width="${width}%" controls src="${url}">${alt}</video>`;
+                });
+                // 处理自定义音频：@audio[描述](url)
+                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
+                    return `<audio controls src="${url}"></audio>`;
+                });
+                // 处理标准 Markdown 图片：![描述](url)
+                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
+                    return `<img src="${url}" alt="${alt}" />`;
+                });
+                return markdown;
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function renderPost(post, isOwnerOrAdmin) {
+                const statusMap = {
+                    pending: '<span class="status-tag status-pending">待审核</span>',
+                    approved: '<span class="status-tag status-approved">已通过</span>',
+                    rejected: '<span class="status-tag status-rejected">已拒绝</span>'
+                };
+                const statusHtml = statusMap[post.status] || '';
+                const submitterDisplay = post.is_anonymous ? '匿名用户' : (post.submitter_name || '用户');
+                const avatarText = post.is_anonymous ? '匿' : (submitterDisplay.charAt(0) || 'U');
+                const date = post.created_at ? new Date(post.created_at).toLocaleString() : '';
+
+                // 处理内容：如果帖子不是已审核且当前用户不是作者或管理员，则隐藏内容
+                let contentHtml = '';
+                if (post.status === 'approved' || isOwnerOrAdmin) {
+                    const processed = preprocessMarkdown(post.content || '');
+                    contentHtml = marked.parse(processed);
+                } else {
+                    contentHtml = '<p style="color:var(--text-muted);">该内容正在审核中，暂不可见。</p>';
+                }
+
+                document.getElementById('detailContainer').innerHTML = `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-title">${post.title} ${statusHtml}</div>
+                            <div class="post-meta">
+                                <div class="post-author">
+                                    <div class="author-avatar">${avatarText}</div>
+                                    <span>${submitterDisplay}</span>
+                                </div>
+                                ${date ? `<span>·</span><span>${date}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="post-desc">${post.description || ''}</div>
+                        <div class="post-content">${contentHtml}</div>
+                    </div>
+                `;
+            }
+
+            async function loadPost() {
+                const params = new URLSearchParams(window.location.search);
+                const postId = params.get('id');
+                if (!postId) {
+                    document.getElementById('detailContainer').innerHTML = '<div class="error-message">缺少帖子 ID</div>';
+                    return;
+                }
+
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const currentUser = user;
+
+                    const { data, error } = await supabase
+                        .from('websites')
+                        .select('*')
+                        .eq('id', postId)
+                        .single();
+
+                    if (error) {
+                        console.error('加载帖子失败:', error);
+                        document.getElementById('detailContainer').innerHTML = '<div class="error-message">帖子不存在或加载失败</div>';
+                        return;
+                    }
+
+                    // 判断当前用户是否为作者或管理员
+                    const isOwner = currentUser && data.submitter_id === currentUser.id;
+                    const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+                    const canViewFull = data.status === 'approved' || isOwner || isAdmin;
+
+                    renderPost(data, canViewFull);
+                } catch (err) {
+                    console.error('错误:', err);
+                    document.getElementById('detailContainer').innerHTML = '<div class="error-message">加载失败</div>';
+                }
+            }
+
+            // 启动
+            loadPost();
+        })();
+    </script>
+</body>
+</html>
