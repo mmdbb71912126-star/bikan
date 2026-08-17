@@ -63,10 +63,7 @@
             font-weight: 500;
             transition: all var(--transition);
         }
-        .back-btn:hover {
-            background: rgba(255,255,255,0.08);
-            color: var(--text-primary);
-        }
+        .back-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
         .back-btn svg { width: 16px; height: 16px; fill: currentColor; }
 
         .admin-title { font-size: 24px; font-weight: 700; }
@@ -215,19 +212,19 @@
 
             // 预处理 Markdown，支持自定义媒体语法
             function preprocessMarkdown(markdown) {
-                // 处理 @id[类型:ID] 引用（可能已被替换为 URL）
+                // 处理残留的 @id 引用（可能已经替换为 URL）
                 markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
                     return `[${type}文件:${id}]`;
                 });
-                // 自定义图片语法：![描述](url =50%)
+                // 自定义图片：![描述](url =50%)
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
                     return `<img src="${url}" width="${width}%" alt="${alt}" />`;
                 });
-                // 自定义视频语法：@video[描述](url =50%)
+                // 自定义视频：@video[描述](url =50%)
                 markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
                     return `<video width="${width}%" controls src="${url}">${alt}</video>`;
                 });
-                // 自定义音频语法：@audio[描述](url)
+                // 自定义音频：@audio[描述](url)
                 markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
                     return `<audio controls src="${url}"></audio>`;
                 });
@@ -315,13 +312,18 @@
             }
 
             async function approvePost(postId) {
-                console.log('通过帖子:', postId);
+                console.log('批准帖子:', postId);
                 try {
-                    const { error } = await supabase
+                    const { data, error } = await supabase
                         .from('websites')
                         .update({ status: 'approved' })
-                        .eq('id', postId);
+                        .eq('id', postId)
+                        .select(); // 添加 select 以确认更新
                     if (error) throw error;
+                    if (!data || data.length === 0) {
+                        showToast('未找到可更新的记录');
+                        return;
+                    }
                     showToast('已通过');
                     loadAdminPosts(adminCurrentStatus);
                 } catch (err) {
@@ -333,7 +335,7 @@
             async function rejectPost(postId) {
                 console.log('拒绝帖子:', postId);
                 try {
-                    // 获取帖子数据，删除关联文件
+                    // 获取帖子数据以删除文件
                     const post = allAdminPosts.find(p => p.id === postId);
                     if (post && post.file_map) {
                         for (const [id, info] of Object.entries(post.file_map)) {
@@ -345,11 +347,16 @@
                             }
                         }
                     }
-                    const { error } = await supabase
+                    const { data, error } = await supabase
                         .from('websites')
                         .update({ status: 'rejected' })
-                        .eq('id', postId);
+                        .eq('id', postId)
+                        .select();
                     if (error) throw error;
+                    if (!data || data.length === 0) {
+                        showToast('未找到可更新的记录');
+                        return;
+                    }
                     showToast('已拒绝');
                     loadAdminPosts(adminCurrentStatus);
                 } catch (err) {
