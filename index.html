@@ -164,7 +164,6 @@
             background: transparent;
             position: relative;
             outline: none;
-            pointer-events: auto;
         }
         .tab:hover {
             color: var(--text-primary);
@@ -273,6 +272,25 @@
             flex-shrink: 0;
         }
 
+        /* 游客登录按钮样式 */
+        .btn-guest {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 12px;
+        }
+        .btn-guest:hover {
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+        .btn-guest:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .divider {
             display: flex;
             align-items: center;
@@ -364,14 +382,6 @@
             max-height: 200px;
             opacity: 1;
             margin-bottom: 18px;
-        }
-
-        @keyframes formSwitch {
-            from { opacity: 0; transform: translateX(10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-form {
-            animation: formSwitch 0.3s ease;
         }
 
         .forgot-link {
@@ -496,6 +506,15 @@
             <span class="btn-text" id="googleBtnText">使用 Google 登录</span>
         </button>
 
+        <!-- 游客登录按钮 -->
+        <button class="btn btn-guest" type="button" id="guestBtn" onclick="guestLogin()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
+            </svg>
+            <span class="btn-text">游客登录</span>
+        </button>
+
+        <!-- 忘记密码面板 -->
         <div class="forgot-password-panel" id="forgotPasswordPanel">
             <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">重置密码</h3>
             <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
@@ -514,6 +533,7 @@
             </div>
         </div>
 
+        <!-- 重置密码面板 -->
         <div class="reset-password-panel" id="resetPasswordPanel">
             <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">设置新密码</h3>
             <div class="form-group">
@@ -535,10 +555,10 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
-
         (function() {
+            const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+
             let supabase;
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -553,6 +573,7 @@
                 }, 100);
             }
 
+            // DOM 元素
             const tabLogin = document.getElementById('tabLogin');
             const tabRegister = document.getElementById('tabRegister');
             const authForm = document.getElementById('authForm');
@@ -563,7 +584,7 @@
             const submitBtn = document.getElementById('submitBtn');
             const submitBtnText = document.getElementById('submitBtnText');
             const googleBtn = document.getElementById('googleBtn');
-            const googleBtnText = document.getElementById('googleBtnText');
+            const guestBtn = document.getElementById('guestBtn');
             const alertBox = document.getElementById('alertBox');
             const alertIcon = document.getElementById('alertIcon');
             const alertMessage = document.getElementById('alertMessage');
@@ -628,6 +649,7 @@
             function showAuthForms() {
                 authForm.style.display = 'block';
                 googleBtn.style.display = 'flex';
+                guestBtn.style.display = 'flex';
                 tabsContainer.style.display = 'flex';
                 dividerContainer.style.display = 'flex';
                 forgotLinkContainer.style.display = 'block';
@@ -647,6 +669,7 @@
             function showForgotPassword() {
                 authForm.style.display = 'none';
                 googleBtn.style.display = 'none';
+                guestBtn.style.display = 'none';
                 tabsContainer.style.display = 'none';
                 dividerContainer.style.display = 'none';
                 forgotLinkContainer.style.display = 'none';
@@ -662,6 +685,7 @@
             function showResetPassword() {
                 authForm.style.display = 'none';
                 googleBtn.style.display = 'none';
+                guestBtn.style.display = 'none';
                 tabsContainer.style.display = 'none';
                 dividerContainer.style.display = 'none';
                 forgotLinkContainer.style.display = 'none';
@@ -687,7 +711,6 @@
                     tabLogin.setAttribute('aria-selected', 'true');
                     tabRegister.setAttribute('aria-selected', 'false');
                     submitBtnText.textContent = '登 录';
-                    googleBtnText.textContent = '使用 Google 登录';
                     passwordInput.autocomplete = 'current-password';
                     logoTitle.textContent = '登录账户';
                     logoSubtitle.textContent = '欢迎回来，继续使用';
@@ -701,7 +724,6 @@
                     tabRegister.setAttribute('aria-selected', 'true');
                     tabLogin.setAttribute('aria-selected', 'false');
                     submitBtnText.textContent = '发送验证邮件';
-                    googleBtnText.textContent = '使用 Google 注册';
                     passwordInput.autocomplete = 'new-password';
                     logoTitle.textContent = '注册账户';
                     logoSubtitle.textContent = '创建账户，开始使用';
@@ -721,12 +743,23 @@
             window.showForgotPassword = showForgotPassword;
             window.showLogin = showLogin;
 
-            // 登录成功后跳转主页
-            function redirectToHome() {
-                window.location.href = 'home.html';
-            }
+            // 游客登录函数
+            window.guestLogin = async function() {
+                try {
+                    setLoading(guestBtn, true);
+                    const { data, error } = await supabase.auth.signInAnonymously();
+                    if (error) throw error;
+                    // 登录成功，跳转主页
+                    window.location.href = 'home.html';
+                } catch (err) {
+                    console.error('游客登录失败:', err);
+                    showAlert('error', `游客登录失败：${err.message || '请确保已在 Supabase 中开启匿名登录'}`);
+                } finally {
+                    setLoading(guestBtn, false);
+                }
+            };
 
-            // 表单提交
+            // 登录/注册表单提交
             authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 hideAlert();
@@ -759,7 +792,7 @@
                         if (error) throw error;
                         if (data?.user) {
                             showAlert('success', '登录成功！正在跳转...');
-                            setTimeout(redirectToHome, 800);
+                            setTimeout(() => window.location.href = 'home.html', 800);
                         }
                     } else {
                         const { data, error } = await supabase.auth.signUp({
@@ -773,7 +806,7 @@
                             showAlert('error', '该邮箱已注册，请直接登录。');
                         } else if (data?.session) {
                             showAlert('success', '注册成功！正在跳转...');
-                            setTimeout(redirectToHome, 800);
+                            setTimeout(() => window.location.href = 'home.html', 800);
                         } else {
                             showAlert('success', '验证邮件已发送，请前往邮箱验证后登录。');
                             setMode('login');
@@ -798,7 +831,26 @@
                 }
             });
 
-            // 发送忘记密码邮件
+            // Google 登录
+            googleBtn.addEventListener('click', async () => {
+                hideAlert();
+                setLoading(googleBtn, true);
+                try {
+                    const { data, error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin + window.location.pathname,
+                        },
+                    });
+                    if (error) throw error;
+                } catch (err) {
+                    console.error('Google 登录错误:', err);
+                    showAlert('error', `Google 登录失败：${err.message || '请稍后重试'}`);
+                    setLoading(googleBtn, false);
+                }
+            });
+
+            // 发送重置邮件
             sendResetBtn.addEventListener('click', async () => {
                 const email = forgotEmailInput.value.trim();
                 if (!email || !email.includes('@')) {
@@ -851,25 +903,6 @@
                 }
             });
 
-            // Google 登录
-            googleBtn.addEventListener('click', async () => {
-                hideAlert();
-                setLoading(googleBtn, true);
-                try {
-                    const { data, error } = await supabase.auth.signInWithOAuth({
-                        provider: 'google',
-                        options: {
-                            redirectTo: window.location.origin + window.location.pathname,
-                        },
-                    });
-                    if (error) throw error;
-                } catch (err) {
-                    console.error('Google 登录错误:', err);
-                    showAlert('error', `Google 登录失败：${err.message || '请稍后重试'}`);
-                    setLoading(googleBtn, false);
-                }
-            });
-
             // 输入时清除错误
             emailInput.addEventListener('input', () => { emailInput.classList.remove('error'); hideAlert(); });
             passwordInput.addEventListener('input', () => { passwordInput.classList.remove('error'); hideAlert(); });
@@ -878,6 +911,7 @@
             newPasswordInput.addEventListener('input', () => { newPasswordInput.classList.remove('error'); hideAlert(); });
             confirmNewPasswordInput.addEventListener('input', () => { confirmNewPasswordInput.classList.remove('error'); hideAlert(); });
 
+            // 处理恢复模式（URL 中包含 type=recovery）
             async function handleRecoveryMode() {
                 const hash = window.location.hash;
                 if (hash.includes('type=recovery')) {
@@ -886,14 +920,13 @@
                 }
             }
 
+            // 检查已登录状态
             async function checkAuthState() {
                 try {
                     const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                        // 已登录且不是恢复模式，直接跳转主页
-                        if (!window.location.hash.includes('type=recovery')) {
-                            redirectToHome();
-                        }
+                    if (user && !window.location.hash.includes('type=recovery')) {
+                        // 已登录（包括匿名登录），直接跳转主页
+                        window.location.href = 'home.html';
                     }
                 } catch (err) {
                     console.log('未检测到已登录用户');
@@ -902,15 +935,12 @@
 
             if (supabase) {
                 supabase.auth.onAuthStateChange((event, session) => {
-                    console.log('认证状态变化:', event);
                     if (event === 'SIGNED_IN' && session?.user) {
                         if (window.location.hash.includes('type=recovery')) {
                             showResetPassword();
                         } else {
-                            redirectToHome();
+                            window.location.href = 'home.html';
                         }
-                    } else if (event === 'SIGNED_OUT') {
-                        // 留在登录页
                     }
                 });
                 handleRecoveryMode();
