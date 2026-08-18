@@ -266,11 +266,11 @@
                 <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 <span>我的收藏</span>
             </button>
-            <!-- 反馈（仅登录用户可见） -->
-            <button class="nav-item" id="feedbackNav" data-view="feedback" style="display: none;">
+            <!-- 反馈（独立页面链接，仅登录用户可见） -->
+            <a class="nav-item" id="feedbackNav" href="feedback.html" style="display: none;">
                 <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
                 <span>反馈</span>
-            </button>
+            </a>
             <!-- 设置 -->
             <button class="nav-item" id="settingsNav" data-view="settings">
                 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.31.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
@@ -281,7 +281,7 @@
                 <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83zM3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                 <span>管理卡片</span>
             </a>
-            <!-- 审核分区（管理员查看反馈） -->
+            <!-- 反馈管理（仅管理员可见） -->
             <a class="nav-item" id="adminReviewNav" href="admin.html" style="display: none;">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 <span>反馈管理</span>
@@ -335,26 +335,6 @@
                 </div>
             </div>
             <div class="card-list" id="favoritesCardList"></div>
-        </div>
-
-        <!-- 反馈视图（普通用户提交反馈） -->
-        <div class="view" id="view-feedback">
-            <h2 style="margin-bottom:20px;">提交反馈</h2>
-            <div class="settings-form">
-                <div class="form-group">
-                    <label class="form-label" for="feedbackTitle">标题 <span style="color:var(--error)">*</span></label>
-                    <input class="form-input" type="text" id="feedbackTitle" placeholder="例如：建议添加某网址" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="feedbackDescription">详细描述 <span style="color:var(--error)">*</span></label>
-                    <textarea class="form-input" id="feedbackDescription" rows="4" placeholder="请描述您希望添加的网址或建议"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="feedbackUrl">建议网址（可选）</label>
-                    <input class="form-input" type="url" id="feedbackUrl" placeholder="https://example.com" />
-                </div>
-                <button class="btn btn-primary" id="submitFeedbackBtn">提交反馈</button>
-            </div>
         </div>
 
         <!-- 设置视图 -->
@@ -501,7 +481,6 @@
                     const avatarText = isAnonymous ? '匿' : (submitterDisplay.charAt(0) || 'U');
                     const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : '';
                     const isFav = favoritesSet.has(item.id);
-                    // 管理员操作按钮
                     const adminActions = isAdmin ? `
                         <button class="card-action-btn" onclick="location.href='admin-edit.html?id=${item.id}'" title="编辑">
                             <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83zM3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
@@ -510,7 +489,6 @@
                             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         </button>
                     ` : '';
-                    // 收藏按钮（仅普通用户可见）
                     const favButton = (!isAdmin && !currentUser?.is_anonymous) ? `
                         <button class="card-action-btn fav-btn ${isFav ? 'active' : ''}" data-id="${item.id}" title="收藏">
                             <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -569,38 +547,6 @@
                     renderCards(data, 'favoritesCardList', new Set(userFavorites), false);
                 } catch (e) { console.error(e); container.innerHTML = '<div class="empty-state">加载失败</div>'; }
             }
-
-            // 反馈提交
-            document.getElementById('submitFeedbackBtn').addEventListener('click', async () => {
-                const title = document.getElementById('feedbackTitle').value.trim();
-                const description = document.getElementById('feedbackDescription').value.trim();
-                const url = document.getElementById('feedbackUrl').value.trim();
-                if (!title || !description) {
-                    showToast('标题和描述不能为空');
-                    return;
-                }
-                if (!currentUser || currentUser.is_anonymous) {
-                    showToast('游客无法提交反馈，请登录后操作');
-                    return;
-                }
-                try {
-                    const { error } = await supabase.from('feedback').insert({
-                        user_id: currentUser.id,
-                        title,
-                        description,
-                        suggested_url: url || null,
-                        status: 'pending'
-                    });
-                    if (error) throw error;
-                    showToast('反馈已提交，感谢您的建议！');
-                    document.getElementById('feedbackTitle').value = '';
-                    document.getElementById('feedbackDescription').value = '';
-                    document.getElementById('feedbackUrl').value = '';
-                } catch (err) {
-                    console.error('提交反馈失败:', err);
-                    showToast('提交失败：' + err.message);
-                }
-            });
 
             // 设置功能
             async function loadSettings() {
@@ -662,7 +608,6 @@
                 if (viewName === 'home') loadHomeWebsites();
                 if (viewName === 'favorites') loadFavoriteWebsites();
                 if (viewName === 'settings') loadSettings();
-                // 反馈视图无需额外加载
             }
 
             document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
