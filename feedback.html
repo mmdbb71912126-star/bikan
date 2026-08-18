@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>必看 - 提交反馈</title>
+
+    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary: #3ecf8e;
+            --primary-dark: #2bb673;
+            --bg-start: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-end: #24243e;
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-focus: #3ecf8e;
+            --error: #ff6b6b;
+            --success: #3ecf8e;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .feedback-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 30px 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all var(--transition);
+            margin-bottom: 20px;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+        .back-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: var(--text-primary);
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all var(--transition);
+        }
+        .form-input:focus {
+            border-color: var(--input-focus);
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 4px rgba(62,207,142,0.15);
+        }
+        .form-input.error { border-color: var(--error); }
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2bb673);
+            color: #0f0c29;
+            box-shadow: 0 4px 12px rgba(62,207,142,0.3);
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 18px rgba(62,207,142,0.5);
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30,30,50,0.95);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="feedback-card">
+        <a class="back-btn" href="home.html">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            返回主页
+        </a>
+
+        <div class="form-title">提交反馈</div>
+
+        <div class="form-group">
+            <label class="form-label" for="feedbackTitle">标题 <span style="color:var(--error)">*</span></label>
+            <input class="form-input" type="text" id="feedbackTitle" placeholder="例如：建议添加某网址" />
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="feedbackDescription">详细描述 <span style="color:var(--error)">*</span></label>
+            <textarea class="form-input form-textarea" id="feedbackDescription" placeholder="请描述您希望添加的网址或建议"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="feedbackUrl">建议网址（可选）</label>
+            <input class="form-input" type="url" id="feedbackUrl" placeholder="https://example.com" />
+        </div>
+
+        <button class="btn btn-primary" id="submitFeedbackBtn">提交反馈</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+
+            let supabase;
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (err) {
+                console.error('Supabase 初始化失败:', err);
+                showToast('Supabase 配置错误');
+                return;
+            }
+
+            let currentUser = null;
+
+            function showToast(message) {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }
+
+            // 检查登录状态
+            async function checkAuth() {
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) {
+                        // 未登录，跳转登录页
+                        window.location.href = 'index.html';
+                        return null;
+                    }
+                    if (user.is_anonymous) {
+                        showToast('游客无法提交反馈，请登录后操作');
+                        setTimeout(() => window.location.href = 'index.html', 1500);
+                        return null;
+                    }
+                    return user;
+                } catch (err) {
+                    console.error('获取用户失败:', err);
+                    window.location.href = 'index.html';
+                    return null;
+                }
+            }
+
+            // 提交反馈
+            document.getElementById('submitFeedbackBtn').addEventListener('click', async () => {
+                const title = document.getElementById('feedbackTitle').value.trim();
+                const description = document.getElementById('feedbackDescription').value.trim();
+                const url = document.getElementById('feedbackUrl').value.trim();
+
+                if (!title || !description) {
+                    showToast('标题和描述不能为空');
+                    if (!title) document.getElementById('feedbackTitle').classList.add('error');
+                    if (!description) document.getElementById('feedbackDescription').classList.add('error');
+                    setTimeout(() => {
+                        document.getElementById('feedbackTitle').classList.remove('error');
+                        document.getElementById('feedbackDescription').classList.remove('error');
+                    }, 2000);
+                    return;
+                }
+
+                if (!currentUser || currentUser.is_anonymous) {
+                    showToast('游客无法提交反馈，请登录后操作');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitFeedbackBtn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = '提交中...';
+
+                try {
+                    const { error } = await supabase.from('feedback').insert({
+                        user_id: currentUser.id,
+                        title,
+                        description,
+                        suggested_url: url || null,
+                        status: 'pending'
+                    });
+
+                    if (error) throw error;
+
+                    showToast('反馈已提交，感谢您的建议！');
+                    // 清空表单
+                    document.getElementById('feedbackTitle').value = '';
+                    document.getElementById('feedbackDescription').value = '';
+                    document.getElementById('feedbackUrl').value = '';
+                    // 延迟跳转
+                    setTimeout(() => window.location.href = 'home.html', 1500);
+                } catch (err) {
+                    console.error('提交反馈失败:', err);
+                    showToast('提交失败：' + err.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '提交反馈';
+                }
+            });
+
+            // 初始化
+            (async function init() {
+                currentUser = await checkAuth();
+                if (!currentUser) return;
+                console.log('反馈页面已加载，当前用户:', currentUser.email);
+            })();
+        })();
+    </script>
+</body>
+</html>
