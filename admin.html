@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>必看 - 审核分区</title>
+    <title>必看 - 反馈管理</title>
 
+    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
+    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         :root {
@@ -24,6 +25,8 @@
             --input-bg: rgba(255, 255, 255, 0.08);
             --input-border: rgba(255, 255, 255, 0.15);
             --error: #ff6b6b;
+            --success: #3ecf8e;
+            --warning: #ffc107;
             --radius: 16px;
             --radius-sm: 10px;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -68,7 +71,11 @@
 
         .admin-title { font-size: 24px; font-weight: 700; }
 
-        .admin-tabs { display: flex; gap: 10px; margin-bottom: 24px; }
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
         .admin-tab {
             padding: 8px 16px;
             border-radius: 20px;
@@ -83,7 +90,7 @@
         .admin-tab:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
         .admin-tab.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
 
-        .admin-post-item {
+        .feedback-item {
             background: var(--card-bg);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
@@ -92,7 +99,7 @@
             padding: 16px;
             margin-bottom: 12px;
         }
-        .admin-post-header {
+        .feedback-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -100,8 +107,8 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-        .admin-post-title { font-weight: 600; font-size: 16px; }
-        .admin-post-actions { display: flex; gap: 8px; }
+        .feedback-title { font-weight: 600; font-size: 16px; }
+        .feedback-actions { display: flex; gap: 8px; }
 
         .btn {
             padding: 6px 14px;
@@ -113,36 +120,24 @@
             transition: all var(--transition);
         }
         .btn:hover { transform: translateY(-1px); }
-        .btn-approve { background: var(--primary); color: #0f0c29; }
-        .btn-reject { background: rgba(255,107,107,0.2); color: #ffb3b3; }
-        .btn-detail { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+        .btn-resolve { background: var(--success); color: #0f0c29; }
+        .btn-ignore { background: rgba(255,193,7,0.2); color: var(--warning); }
+        .btn-delete { background: rgba(255,107,107,0.2); color: var(--error); }
 
-        .admin-post-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
-        .admin-post-submitter { font-size: 12px; color: var(--text-muted); }
+        .feedback-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .feedback-url { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+        .feedback-meta { font-size: 11px; color: var(--text-muted); }
 
-        .admin-post-content {
-            margin-top: 10px;
-            padding: 12px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            display: none;
-            max-height: 300px;
-            overflow-y: auto;
-            font-size: 14px;
+        .status-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
         }
-        .admin-post-content.show { display: block; }
-
-        .content-toggle { display: flex; gap: 8px; margin-bottom: 8px; }
-        .content-toggle button {
-            padding: 4px 10px;
-            font-size: 12px;
-            border-radius: 4px;
-            border: 1px solid var(--input-border);
-            background: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-        .content-toggle button.active { background: var(--primary); color: #0f0c29; border-color: var(--primary); }
+        .status-pending { background: rgba(255,193,7,0.2); color: var(--warning); }
+        .status-resolved { background: rgba(62,207,142,0.2); color: var(--success); }
+        .status-ignored { background: rgba(255,107,107,0.2); color: var(--error); }
 
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 15px; }
 
@@ -171,16 +166,16 @@
             <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             返回主页
         </a>
-        <h1 class="admin-title">审核分区</h1>
+        <h1 class="admin-title">反馈管理</h1>
     </div>
 
     <div class="admin-tabs">
-        <button class="admin-tab active" data-status="pending">待审核</button>
-        <button class="admin-tab" data-status="approved">已通过</button>
-        <button class="admin-tab" data-status="rejected">已拒绝</button>
+        <button class="admin-tab active" data-status="pending">待处理</button>
+        <button class="admin-tab" data-status="resolved">已处理</button>
+        <button class="admin-tab" data-status="ignored">已忽略</button>
     </div>
 
-    <div id="adminPostList"></div>
+    <div id="feedbackList"></div>
 
     <div class="toast" id="toast"></div>
 
@@ -194,8 +189,8 @@
             try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
 
             let currentUser = null;
-            let allAdminPosts = [];
-            let adminCurrentStatus = 'pending';
+            let currentStatus = 'pending';
+            let allFeedbacks = [];
 
             function showToast(message) {
                 const toast = document.getElementById('toast');
@@ -210,173 +205,98 @@
                 return div.innerHTML;
             }
 
-            // 预处理 Markdown，支持自定义媒体语法
-            function preprocessMarkdown(markdown) {
-                // 处理残留的 @id 引用（可能已经替换为 URL）
-                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
-                    return `[${type}文件:${id}]`;
-                });
-                // 自定义图片：![描述](url =50%)
-                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
-                    return `<img src="${url}" width="${width}%" alt="${alt}" />`;
-                });
-                // 自定义视频：@video[描述](url =50%)
-                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
-                    return `<video width="${width}%" controls src="${url}">${alt}</video>`;
-                });
-                // 自定义音频：@audio[描述](url)
-                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
-                    return `<audio controls src="${url}"></audio>`;
-                });
-                // 标准 Markdown 图片
-                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
-                    return `<img src="${url}" alt="${alt}" />`;
-                });
-                return markdown;
-            }
-
-            async function loadAdminPosts(status) {
-                adminCurrentStatus = status;
-                const container = document.getElementById('adminPostList');
+            async function loadFeedbacks(status) {
+                currentStatus = status;
+                const container = document.getElementById('feedbackList');
                 container.innerHTML = '<p style="color:var(--text-muted);">加载中...</p>';
                 try {
                     const { data, error } = await supabase
-                        .from('websites')
+                        .from('feedback')
                         .select('*')
                         .eq('status', status)
                         .order('created_at', { ascending: false });
+
                     if (error) throw error;
-                    allAdminPosts = data;
+                    allFeedbacks = data;
                     if (data.length === 0) {
-                        container.innerHTML = '<div class="empty-state">暂无内容</div>';
+                        container.innerHTML = '<div class="empty-state">暂无反馈</div>';
                         return;
                     }
-                    container.innerHTML = data.map(post => {
-                        const submitter = post.is_anonymous ? '匿名用户' : (post.submitter_name || '用户');
+                    container.innerHTML = data.map(item => {
+                        const statusMap = {
+                            pending: '<span class="status-tag status-pending">待处理</span>',
+                            resolved: '<span class="status-tag status-resolved">已处理</span>',
+                            ignored: '<span class="status-tag status-ignored">已忽略</span>'
+                        };
+                        const statusHtml = statusMap[item.status] || '';
+                        const date = item.created_at ? new Date(item.created_at).toLocaleString() : '';
                         return `
-                        <div class="admin-post-item">
-                            <div class="admin-post-header">
-                                <div class="admin-post-title">${post.title}</div>
-                                <div class="admin-post-actions">
-                                    <button class="btn btn-detail" onclick="toggleAdminContent('${post.id}')">详情</button>
-                                    ${status === 'pending' ? `
-                                    <button class="btn btn-approve" onclick="approvePost('${post.id}')">通过</button>
-                                    <button class="btn btn-reject" onclick="rejectPost('${post.id}')">拒绝</button>` : ''}
+                        <div class="feedback-item">
+                            <div class="feedback-header">
+                                <div class="feedback-title">${item.title} ${statusHtml}</div>
+                                <div class="feedback-actions">
+                                    ${item.status === 'pending' ? `
+                                        <button class="btn btn-resolve" onclick="updateFeedbackStatus('${item.id}', 'resolved')">标记已处理</button>
+                                        <button class="btn btn-ignore" onclick="updateFeedbackStatus('${item.id}', 'ignored')">忽略</button>
+                                    ` : ''}
+                                    <button class="btn btn-delete" onclick="deleteFeedback('${item.id}')">删除</button>
                                 </div>
                             </div>
-                            <div class="admin-post-desc">${post.description || ''}</div>
-                            <div class="admin-post-submitter">提交者：${submitter} · ${post.created_at ? new Date(post.created_at).toLocaleString() : ''}</div>
-                            <div class="admin-post-content" id="adminContent-${post.id}">
-                                <div class="content-toggle">
-                                    <button class="active" onclick="setContentMode('${post.id}', 'text')">纯文本</button>
-                                    <button onclick="setContentMode('${post.id}', 'markdown')">Markdown</button>
-                                </div>
-                                <div class="content-body" id="contentBody-${post.id}"></div>
-                            </div>
+                            <div class="feedback-desc">${escapeHtml(item.description || '')}</div>
+                            ${item.suggested_url ? `<div class="feedback-url">建议网址：<a href="${item.suggested_url}" target="_blank" style="color:var(--primary);">${item.suggested_url}</a></div>` : ''}
+                            <div class="feedback-meta">提交于 ${date}</div>
                         </div>
                         `;
                     }).join('');
                 } catch (err) {
-                    console.error('加载审核列表失败:', err);
+                    console.error('加载反馈失败:', err);
                     container.innerHTML = '<div class="empty-state">加载失败：' + (err.message || '未知错误') + '</div>';
                 }
             }
 
-            function toggleAdminContent(postId) {
-                const contentDiv = document.getElementById(`adminContent-${postId}`);
-                contentDiv.classList.toggle('show');
-                if (contentDiv.classList.contains('show')) {
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    if (post && !document.getElementById(`contentBody-${postId}`).innerHTML) {
-                        setContentMode(postId, 'text');
-                    }
-                }
-            }
-
-            function setContentMode(postId, mode) {
-                const body = document.getElementById(`contentBody-${postId}`);
-                const buttons = document.querySelectorAll(`#adminContent-${postId} .content-toggle button`);
-                buttons.forEach(b => b.classList.remove('active'));
-                if (mode === 'text') {
-                    buttons[0].classList.add('active');
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    body.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${post ? escapeHtml(post.content || '') : ''}</pre>`;
-                } else {
-                    buttons[1].classList.add('active');
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    if (post) {
-                        const processed = preprocessMarkdown(post.content || '');
-                        body.innerHTML = marked.parse(processed);
-                    }
-                }
-            }
-
-            async function approvePost(postId) {
-                console.log('批准帖子:', postId);
+            async function updateFeedbackStatus(feedbackId, newStatus) {
                 try {
-                    const { data, error } = await supabase
-                        .from('websites')
-                        .update({ status: 'approved' })
-                        .eq('id', postId)
-                        .select(); // 添加 select 以确认更新
+                    const { error } = await supabase
+                        .from('feedback')
+                        .update({ status: newStatus })
+                        .eq('id', feedbackId);
+
                     if (error) throw error;
-                    if (!data || data.length === 0) {
-                        showToast('未找到可更新的记录');
-                        return;
-                    }
-                    showToast('已通过');
-                    loadAdminPosts(adminCurrentStatus);
+                    showToast('状态已更新');
+                    loadFeedbacks(currentStatus);
                 } catch (err) {
-                    console.error('审核通过失败:', err);
-                    showToast('操作失败：' + (err.message || '未知错误'));
+                    console.error('更新状态失败:', err);
+                    showToast('操作失败：' + err.message);
                 }
             }
 
-            async function rejectPost(postId) {
-                console.log('拒绝帖子:', postId);
+            async function deleteFeedback(feedbackId) {
+                if (!confirm('确定删除该反馈吗？此操作不可恢复。')) return;
                 try {
-                    // 获取帖子数据以删除文件
-                    const post = allAdminPosts.find(p => p.id === postId);
-                    if (post && post.file_map) {
-                        for (const [id, info] of Object.entries(post.file_map)) {
-                            const url = info.url;
-                            const match = url.match(/\/storage\/v1\/object\/public\/media\/(.+)/);
-                            if (match) {
-                                const path = match[1];
-                                await supabase.storage.from('media').remove([path]);
-                            }
-                        }
-                    }
-                    const { data, error } = await supabase
-                        .from('websites')
-                        .update({ status: 'rejected' })
-                        .eq('id', postId)
-                        .select();
+                    const { error } = await supabase
+                        .from('feedback')
+                        .delete()
+                        .eq('id', feedbackId);
+
                     if (error) throw error;
-                    if (!data || data.length === 0) {
-                        showToast('未找到可更新的记录');
-                        return;
-                    }
-                    showToast('已拒绝');
-                    loadAdminPosts(adminCurrentStatus);
+                    showToast('反馈已删除');
+                    loadFeedbacks(currentStatus);
                 } catch (err) {
-                    console.error('审核拒绝失败:', err);
-                    showToast('操作失败：' + (err.message || '未知错误'));
+                    console.error('删除反馈失败:', err);
+                    showToast('删除失败：' + err.message);
                 }
             }
 
             // 挂载全局函数
-            window.toggleAdminContent = toggleAdminContent;
-            window.setContentMode = setContentMode;
-            window.approvePost = approvePost;
-            window.rejectPost = rejectPost;
+            window.updateFeedbackStatus = updateFeedbackStatus;
+            window.deleteFeedback = deleteFeedback;
 
             // 标签切换
             document.querySelectorAll('.admin-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    loadAdminPosts(tab.dataset.status);
+                    loadFeedbacks(tab.dataset.status);
                 });
             });
 
@@ -392,12 +312,12 @@
                     return;
                 }
                 if (user.email !== ADMIN_EMAIL) {
-                    showToast('您没有权限访问审核分区');
+                    showToast('您没有权限访问此页面');
                     setTimeout(() => window.location.href = 'home.html', 1500);
                     return;
                 }
                 currentUser = user;
-                await loadAdminPosts('pending');
+                await loadFeedbacks('pending');
             }
             init();
         })();
