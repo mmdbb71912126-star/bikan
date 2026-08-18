@@ -8,8 +8,10 @@
     <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
-    <!-- Supabase JS SDK (CDN) -->
+    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <style>
         :root {
@@ -422,6 +424,13 @@
             color: var(--text-primary);
         }
 
+        /* Turnstile 容器 */
+        .turnstile-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
         @media (max-width: 480px) {
             .auth-card {
                 padding: 28px 22px 24px;
@@ -514,6 +523,11 @@
             <span class="btn-text">游客登录</span>
         </button>
 
+        <!-- Turnstile 验证码 -->
+        <div class="turnstile-container">
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAAEUsNj2JBRxJxqvc" data-callback="onTurnstileSuccess"></div>
+        </div>
+
         <!-- 忘记密码面板 -->
         <div class="forgot-password-panel" id="forgotPasswordPanel">
             <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">重置密码</h3>
@@ -604,6 +618,13 @@
 
             let currentMode = 'login';
             let isLoading = false;
+            let turnstileToken = null;
+
+            // Turnstile 回调
+            window.onTurnstileSuccess = function(token) {
+                turnstileToken = token;
+                console.log('Turnstile token 获取成功');
+            };
 
             const icons = {
                 error: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
@@ -650,6 +671,7 @@
                 authForm.style.display = 'block';
                 googleBtn.style.display = 'flex';
                 guestBtn.style.display = 'flex';
+                document.querySelector('.turnstile-container').style.display = 'flex';
                 tabsContainer.style.display = 'flex';
                 dividerContainer.style.display = 'flex';
                 forgotLinkContainer.style.display = 'block';
@@ -670,6 +692,7 @@
                 authForm.style.display = 'none';
                 googleBtn.style.display = 'none';
                 guestBtn.style.display = 'none';
+                document.querySelector('.turnstile-container').style.display = 'none';
                 tabsContainer.style.display = 'none';
                 dividerContainer.style.display = 'none';
                 forgotLinkContainer.style.display = 'none';
@@ -686,6 +709,7 @@
                 authForm.style.display = 'none';
                 googleBtn.style.display = 'none';
                 guestBtn.style.display = 'none';
+                document.querySelector('.turnstile-container').style.display = 'none';
                 tabsContainer.style.display = 'none';
                 dividerContainer.style.display = 'none';
                 forgotLinkContainer.style.display = 'none';
@@ -743,17 +767,23 @@
             window.showForgotPassword = showForgotPassword;
             window.showLogin = showLogin;
 
-            // 游客登录函数
+            // 游客登录函数（带 Turnstile 验证）
             window.guestLogin = async function() {
+                if (!turnstileToken) {
+                    showAlert('error', '请先完成验证码');
+                    return;
+                }
                 try {
                     setLoading(guestBtn, true);
-                    const { data, error } = await supabase.auth.signInAnonymously();
+                    const { data, error } = await supabase.auth.signInAnonymously({
+                        options: { captchaToken: turnstileToken }
+                    });
                     if (error) throw error;
                     // 登录成功，跳转主页
                     window.location.href = 'home.html';
                 } catch (err) {
                     console.error('游客登录失败:', err);
-                    showAlert('error', `游客登录失败：${err.message || '请确保已在 Supabase 中开启匿名登录'}`);
+                    showAlert('error', `游客登录失败：${err.message || '请稍后重试'}`);
                 } finally {
                     setLoading(guestBtn, false);
                 }
