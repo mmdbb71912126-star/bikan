@@ -268,6 +268,12 @@
             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             <span>删除并退出</span>
         </button>
+        <!-- 新增：保存草稿（不退出） -->
+        <button class="bottom-btn" onclick="saveDraftOnly()">
+            <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+            <span>保存草稿</span>
+        </button>
+        <!-- 保存并退出 -->
         <button class="bottom-btn" onclick="saveAndExit()">
             <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
             <span>保存并退出</span>
@@ -646,7 +652,7 @@
             }
             window.togglePreview = togglePreview;
 
-            // ========== 导入草稿功能（修复：显示所有草稿并带删除按钮） ==========
+            // ========== 导入草稿功能 ==========
             function loadDraftList() {
                 const container = document.getElementById('draftListContainer');
                 const drafts = [];
@@ -736,39 +742,39 @@
             window.closeMetaModal = closeMetaModal;
             window.saveMeta = saveMeta;
 
-            // ========== 保存并退出 ==========
-            async function saveAndExit() {
-                if (!currentUser) return;
+            // ========== 保存草稿（不退出） ==========
+            function saveDraftOnly() {
                 const content = document.getElementById('editor').value.trim();
-                if (!content || !cardMeta.title || !cardMeta.description) {
-                    showToast('请填写完整内容（包括标题与介绍）');
+                if (!content) {
+                    showToast('内容不能为空');
                     return;
                 }
-                try {
-                    if (editingId) {
-                        await supabase.from('websites').update({
-                            content,
-                            title: cardMeta.title,
-                            description: cardMeta.description
-                        }).eq('id', editingId);
-                        showToast('已保存');
-                    } else {
-                        await supabase.from('websites').insert({
-                            content,
-                            title: cardMeta.title,
-                            description: cardMeta.description,
-                            submitter_id: currentUser.id,
-                            submitter_name: '管理员',
-                            is_anonymous: false,
-                            status: 'pending'
-                        });
-                        showToast('已保存为草稿');
-                    }
-                    setTimeout(() => window.location.href = 'home.html', 1000);
-                } catch (err) {
-                    console.error('保存失败:', err);
-                    showToast('保存失败：' + err.message);
+                const draft = {
+                    content: document.getElementById('editor').value,
+                    meta: cardMeta,
+                    timestamp: new Date().toISOString()
+                };
+                const draftKey = `draft_${Date.now()}`;
+                localStorage.setItem(draftKey, JSON.stringify(draft));
+                showToast('草稿已保存');
+            }
+            window.saveDraftOnly = saveDraftOnly;
+
+            // ========== 保存并退出 ==========
+            async function saveAndExit() {
+                // 先保存草稿到 localStorage
+                const content = document.getElementById('editor').value.trim();
+                if (content) {
+                    const draft = {
+                        content: document.getElementById('editor').value,
+                        meta: cardMeta,
+                        timestamp: new Date().toISOString()
+                    };
+                    const draftKey = `draft_${Date.now()}`;
+                    localStorage.setItem(draftKey, JSON.stringify(draft));
                 }
+                // 然后退出
+                window.location.href = 'home.html';
             }
             window.saveAndExit = saveAndExit;
 
