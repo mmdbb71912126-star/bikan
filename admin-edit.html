@@ -215,7 +215,7 @@
 <body>
 
     <!-- 顶部工具栏 -->
-    <div class="toolbar">
+    <div class="toolbar" id="toolbar">
         <div class="toolbar-group">
             <button class="toolbar-btn" data-action="heading" title="标题"><svg viewBox="0 0 24 24"><path d="M5 4h2v6h10V4h2v16h-2v-8H7v8H5V4z"/></svg></button>
             <button class="toolbar-btn" data-action="bold" title="加粗"><svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.6-1.76 1.6-2.98C17.2 5.6 15.6 4 13.5 4H6v16h8.5c2.3 0 4.2-1.8 4.2-4.1 0-1.8-1.1-3.3-2.8-3.9zM9 6.5h3.5c1.1 0 2 .9 2 2s-.9 2-2 2H9v-4zm5.5 11H9v-4h5.5c1.2 0 2.2.9 2.2 2s-1 2-2.2 2z"/></svg></button>
@@ -268,12 +268,10 @@
             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             <span>删除并退出</span>
         </button>
-        <!-- 新增：保存草稿（不退出） -->
         <button class="bottom-btn" onclick="saveDraftOnly()">
             <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
             <span>保存草稿</span>
         </button>
-        <!-- 保存并退出 -->
         <button class="bottom-btn" onclick="saveAndExit()">
             <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
             <span>保存并退出</span>
@@ -762,7 +760,6 @@
 
             // ========== 保存并退出 ==========
             async function saveAndExit() {
-                // 先保存草稿到 localStorage
                 const content = document.getElementById('editor').value.trim();
                 if (content) {
                     const draft = {
@@ -773,7 +770,6 @@
                     const draftKey = `draft_${Date.now()}`;
                     localStorage.setItem(draftKey, JSON.stringify(draft));
                 }
-                // 然后退出
                 window.location.href = 'home.html';
             }
             window.saveAndExit = saveAndExit;
@@ -920,10 +916,15 @@
                     await loadCardData(cardId);
                 }
 
-                // 绑定工具栏按钮事件
-                document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
-                    btn.addEventListener('click', () => insertMarkdown(btn.dataset.action));
+                // 使用事件委托绑定工具栏按钮（确保生效）
+                const toolbar = document.getElementById('toolbar');
+                toolbar.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.toolbar-btn[data-action]');
+                    if (btn) {
+                        insertMarkdown(btn.dataset.action);
+                    }
                 });
+
                 document.getElementById('previewBtn').addEventListener('click', togglePreview);
                 document.getElementById('importDraftBtn').addEventListener('click', openDraftModal);
                 document.getElementById('editor').addEventListener('dragover', (e) => {
