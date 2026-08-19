@@ -238,7 +238,7 @@
             background: rgba(255, 255, 255, 0.06);
             border-radius: 8px;
             padding: 6px 10px;
-            cursor: grab;
+            cursor: pointer;
             transition: background var(--transition);
             max-width: 200px;
             height: 50px;
@@ -665,6 +665,24 @@
                     item.appendChild(info);
                     item.appendChild(deleteBtn);
 
+                    // 点击复制语法
+                    item.addEventListener('click', (e) => {
+                        // 避免点击删除按钮时同时触发复制
+                        if (e.target.closest('.media-file-delete')) return;
+                        const fileType = record.type.split('/')[0];
+                        let syntax = `@id[${fileType}:${record.id}]`;
+                        if (fileType === 'image' || fileType === 'video') {
+                            syntax = `@id[${fileType}:${record.id} =50%]`;
+                        }
+                        navigator.clipboard.writeText(syntax).then(() => {
+                            showToast(`已复制：${syntax}`);
+                        }).catch(err => {
+                            console.error('复制失败:', err);
+                            showToast('复制失败，请手动复制');
+                        });
+                    });
+
+                    // 拖拽事件
                     item.addEventListener('dragstart', (e) => {
                         const fileType = record.type.split('/')[0];
                         let syntax = `@id[${fileType}:${record.id}]`;
@@ -896,7 +914,6 @@
                     showToast('导入失败');
                 }
             }
-            // 将 importDraftById 挂载到全局
             window.importDraftById = importDraftById;
 
             // 事件绑定
