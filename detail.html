@@ -101,6 +101,15 @@
         .status-pending { background: rgba(255,193,7,0.2); color: #ffc107; }
         .status-approved { background: rgba(62,207,142,0.2); color: var(--primary); }
         .status-rejected { background: rgba(255,107,107,0.2); color: var(--error); }
+        .short-id-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-muted);
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
         .post-desc {
             font-size: 16px;
             color: var(--text-secondary);
@@ -240,6 +249,7 @@
                 };
                 const statusHtml = statusMap[post.status] || '';
                 const date = post.created_at ? new Date(post.created_at).toLocaleString() : '';
+                const shortId = post.short_id ? `#${post.short_id}` : '';
 
                 let contentHtml = '';
                 if (canViewFull) {
@@ -254,6 +264,7 @@
                         <div class="post-header">
                             <div class="post-title">${post.title} ${statusHtml}</div>
                             <div class="post-meta">
+                                ${shortId ? `<span class="short-id-badge">${shortId}</span>` : ''}
                                 ${date ? `<span>${date}</span>` : ''}
                             </div>
                         </div>
@@ -265,9 +276,16 @@
 
             async function loadPost() {
                 const params = new URLSearchParams(window.location.search);
-                const postId = params.get('id');
-                if (!postId) {
-                    document.getElementById('detailContainer').innerHTML = '<div class="error-message">缺少帖子 ID</div>';
+                const shortIdParam = params.get('id');
+                if (!shortIdParam) {
+                    document.getElementById('detailContainer').innerHTML = '<div class="error-message">缺少短 ID</div>';
+                    return;
+                }
+
+                // 尝试将参数解析为数字，如果不是数字则可能是旧版 UUID，暂时只支持数字
+                const shortId = Number(shortIdParam);
+                if (isNaN(shortId)) {
+                    document.getElementById('detailContainer').innerHTML = '<div class="error-message">无效的短 ID</div>';
                     return;
                 }
 
@@ -275,10 +293,11 @@
                     const { data: { user } } = await supabase.auth.getUser();
                     const currentUser = user;
 
+                    // 使用 short_id 查询
                     const { data, error } = await supabase
                         .from('websites')
                         .select('*')
-                        .eq('id', postId)
+                        .eq('short_id', shortId)
                         .single();
 
                     if (error) {
