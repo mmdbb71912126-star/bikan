@@ -217,7 +217,7 @@
             padding: 12px; border: 1px solid var(--card-border); border-radius: 8px;
             background: rgba(255,255,255,0.04); margin: 8px 0;
         }
-        .file-card-preview svg { width: 32px; height: 32px; fill: var(--primary); }
+        .file-card-preview svg { width: 32px; height: 32px; fill: var(--primary); flex-shrink: 0; }
         .file-card-info { flex: 1; }
         .file-card-name { font-weight: 600; font-size: 14px; }
         .file-card-meta { font-size: 12px; color: var(--text-muted); }
@@ -236,10 +236,12 @@
             <button class="toolbar-btn" data-action="bold" title="加粗"><svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.6-1.76 1.6-2.98C17.2 5.6 15.6 4 13.5 4H6v16h8.5c2.3 0 4.2-1.8 4.2-4.1 0-1.8-1.1-3.3-2.8-3.9zM9 6.5h3.5c1.1 0 2 .9 2 2s-.9 2-2 2H9v-4zm5.5 11H9v-4h5.5c1.2 0 2.2.9 2.2 2s-1 2-2.2 2z"/></svg></button>
             <button class="toolbar-btn" data-action="italic" title="斜体"><svg viewBox="0 0 24 24"><path d="M10 4h4l4 16h-2l-1-4H9l-1 4H6l4-16z"/></svg></button>
             <button class="toolbar-btn" data-action="link" title="链接"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
-            <!-- 图片按钮：语法改为 @image[图片描述](https:// =50%) -->
+            <!-- 图片按钮：语法 @image[图片描述](https:// =50%) -->
             <button class="toolbar-btn" data-action="image" title="图片（默认宽度50%）"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
             <button class="toolbar-btn" data-action="video" title="视频（默认宽度50%）"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
             <button class="toolbar-btn" data-action="audio" title="音频"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
+            <!-- 文件按钮：语法 @file[文件描述](https://) -->
+            <button class="toolbar-btn" data-action="file" title="文件"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg></button>
             <button class="toolbar-btn" data-action="quote" title="引用"><svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg></button>
             <button class="toolbar-btn" data-action="code" title="代码块"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg></button>
             <button class="toolbar-btn" data-action="list-ul" title="无序列表"><svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg></button>
@@ -492,7 +494,7 @@
                         if (category === 'image') syntax = `@image[图片描述](${record.id} =50%)`;
                         else if (category === 'video') syntax = `@video[视频描述](${record.id} =50%)`;
                         else if (category === 'audio') syntax = `@audio[音频描述](${record.id})`;
-                        else syntax = `@file[描述](${record.id})`;
+                        else syntax = `@file[文件描述](${record.id})`;
                         navigator.clipboard.writeText(syntax).then(() => {
                             showToast(`已复制：${syntax}`);
                         }).catch(err => {
@@ -506,7 +508,7 @@
                         if (category === 'image') syntax = `@image[图片描述](${record.id} =50%)`;
                         else if (category === 'video') syntax = `@video[视频描述](${record.id} =50%)`;
                         else if (category === 'audio') syntax = `@audio[音频描述](${record.id})`;
-                        else syntax = `@file[描述](${record.id})`;
+                        else syntax = `@file[文件描述](${record.id})`;
                         e.dataTransfer.setData('text/plain', syntax);
                         e.dataTransfer.effectAllowed = 'copy';
                         item.classList.add('dragging');
@@ -616,9 +618,10 @@
                     case 'bold': insertion = `**${selectedText || '加粗文本'}**`; cursorOffset = 2; break;
                     case 'italic': insertion = `*${selectedText || '斜体文本'}*`; cursorOffset = 1; break;
                     case 'link': insertion = `[${selectedText || '链接文字'}](https://)`; cursorOffset = insertion.length - 1; break;
-                    case 'image': insertion = `@image[图片描述](https:// =50%)`; cursorOffset = 16; break; // 与视频相同格式
+                    case 'image': insertion = `@image[图片描述](https:// =50%)`; cursorOffset = 16; break;
                     case 'video': insertion = `@video[视频描述](https:// =50%)`; cursorOffset = 16; break;
                     case 'audio': insertion = `@audio[音频描述](https://)`; cursorOffset = 16; break;
+                    case 'file': insertion = `@file[文件描述](https://)`; cursorOffset = 16; break; // 新增文件按钮
                     case 'quote': insertion = `> ${selectedText || '引用内容'}`; cursorOffset = insertion.length; break;
                     case 'code': insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``; cursorOffset = 3; break;
                     case 'list-ul': insertion = `\n- ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
@@ -632,7 +635,7 @@
             }
 
             function preprocessMarkdown(markdown, idMap) {
-                // 处理图片语法：@image[描述](ID =50%)
+                // 处理图片
                 markdown = markdown.replace(/@image\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
@@ -640,7 +643,7 @@
                     const widthStyle = width ? `${width}%` : '100%';
                     return `<img src="${url}" alt="${alt}" style="max-width: ${widthStyle}; border-radius: 8px;" />`;
                 });
-                // 处理视频语法：@video[描述](ID =50%)
+                // 处理视频
                 markdown = markdown.replace(/@video\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
@@ -648,14 +651,14 @@
                     const widthStyle = width ? `${width}%` : '100%';
                     return `<video controls src="${url}" style="max-width: ${widthStyle}; border-radius: 8px;"></video>`;
                 });
-                // 处理音频语法：@audio[描述](ID)
+                // 处理音频
                 markdown = markdown.replace(/@audio\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
                     const url = URL.createObjectURL(record.file);
                     return `<audio controls src="${url}"></audio>`;
                 });
-                // 处理文件语法：@file[描述](ID) -> 文件卡片
+                // 处理文件
                 markdown = markdown.replace(/@file\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
@@ -673,7 +676,7 @@
                     </div>
                     `;
                 });
-                // 处理标准 Markdown 图片（如果有）
+                // 处理标准 Markdown 图片（兼容）
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (m, alt, url) => `<img src="${url}" alt="${alt}" />`);
                 return markdown;
             }
@@ -861,7 +864,7 @@
                     const files = await idbGetAll();
                     files.forEach(record => { idMap[record.id] = record; });
 
-                    // 收集所有引用 ID
+                    // 收集所有引用 ID（包括 file 类型）
                     const allRefs = content.matchAll(/@(image|video|audio|file)\[([^\]]*)\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g);
                     const uploadMap = {};
 
@@ -909,7 +912,7 @@
                         };
                     }
 
-                    // 替换语法
+                    // 替换内容
                     let finalContent = content;
                     for (const [id, info] of Object.entries(uploadMap)) {
                         const widthSuffix = info.width ? ` =${info.width}%` : '';
@@ -920,7 +923,6 @@
                         } else if (info.type === 'audio') {
                             finalContent = finalContent.replaceAll(new RegExp(`@audio\\[([^\\]]*)\\]\\(${id}\\)`, 'g'), `@audio[$1](${info.url})`);
                         } else if (info.type === 'file') {
-                            // 文件卡片 HTML
                             const fileCard = `
                             <div class="file-card-preview">
                                 <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
