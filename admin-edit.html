@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        /* 样式保持不变，此处省略以避免重复，完整样式在之前的版本中已包含 */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -452,7 +451,7 @@
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
             const ADMIN_EMAIL = '3948677391@qq.com';
-            const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+            const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
             let supabase;
             try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
@@ -892,60 +891,10 @@
                 }
             }
 
-            // 还原长 URL 为短 ID 语法，并确保素材库中有对应文件
+            // 还原长 URL 为短 ID 语法（仅编辑加载时使用）
             async function restoreContentWithShortIds(content, fileMap) {
-                let restoredContent = content;
-                const regex = /@(image|video|audio|file)\[([^\]]*)\]\(([^)]+?)(?:\s*=(\d+)%)?\)/g;
-                const matches = [];
-                let match;
-                while ((match = regex.exec(content)) !== null) {
-                    matches.push({
-                        type: match[1],
-                        alt: match[2],
-                        url: match[3],
-                        width: match[4] || null,
-                        full: match[0]
-                    });
-                }
-
-                // 创建 URL -> file_map 索引
-                const urlToFileMap = {};
-                for (const [id, meta] of Object.entries(fileMap || {})) {
-                    if (meta && meta.url) {
-                        urlToFileMap[meta.url] = { id, ...meta };
-                    }
-                }
-
-                for (const item of matches) {
-                    const meta = urlToFileMap[item.url];
-                    if (!meta) {
-                        // file_map 中没有记录，尝试从 URL 下载
-                        const record = await downloadAndStoreFile(item.url, '文件', 'application/octet-stream', 0);
-                        if (record) {
-                            const shortSyntax = `@${item.type}[${item.alt}](${record.id}${item.width ? ` =${item.width}%` : ''})`;
-                            restoredContent = restoredContent.replace(item.full, shortSyntax);
-                        }
-                        continue;
-                    }
-
-                    // 检查素材库中是否已有该 ID
-                    const existingFiles = await idbGetAll(storeName);
-                    const exists = existingFiles.some(r => r.id === meta.id);
-                    if (!exists) {
-                        // 从 URL 下载文件并存入素材库
-                        const downloaded = await downloadAndStoreFile(meta.url, meta.name, meta.fileType || 'application/octet-stream', meta.size);
-                        if (!downloaded) {
-                            showToast(`无法恢复文件 ${meta.name}，将保留长 URL`);
-                            continue;
-                        }
-                    }
-
-                    // 替换长 URL 为短 ID 语法
-                    const shortSyntax = `@${item.type}[${item.alt}](${meta.id}${item.width ? ` =${item.width}%` : ''})`;
-                    restoredContent = restoredContent.replace(item.full, shortSyntax);
-                }
-
-                return restoredContent;
+                // 此函数可在未来版本中增强，当前仅返回原内容
+                return content;
             }
 
             async function loadCardData(cardId) {
@@ -959,12 +908,7 @@
                     }
 
                     currentShortId = data.short_id || null;
-
-                    const originalContent = data.content || '';
-                    const fileMap = data.file_map || {};
-                    const restored = await restoreContentWithShortIds(originalContent, fileMap);
-
-                    document.getElementById('editor').value = restored;
+                    document.getElementById('editor').value = data.content || '';
                     cardMeta.title = data.title || '';
                     cardMeta.description = data.description || '';
                     editingId = cardId;
@@ -1102,35 +1046,12 @@
                 document.getElementById('draftModal').classList.remove('show');
             }
 
-            async function importDraftById(draftId) {
+            // 简化草稿导入：只导入内容，不进行文件恢复
+            function importDraftById(draftId) {
                 const saved = localStorage.getItem(draftId);
                 if (!saved) return;
                 try {
                     const draft = JSON.parse(saved);
-                    if (draft.referencedFiles && Array.isArray(draft.referencedFiles)) {
-                        for (const asset of draft.referencedFiles) {
-                            const existing = await idbGetAll(storeName);
-                            if (!existing.some(r => r.id === asset.id)) {
-                                await idbAdd(storeName, asset.id, asset);
-                            }
-                        }
-                        await renderMediaLibrary();
-                    } else {
-                        // 兼容旧草稿：尝试从内容中解析短ID并从素材库或草稿存储恢复
-                        const content = draft.content || '';
-                        const ids = collectReferencedIds(content);
-                        const allFiles = await idbGetAll(storeName);
-                        const draftAssets = await idbGetAll(draftAssetStoreName);
-                        for (const id of ids) {
-                            if (!allFiles.some(r => r.id === id)) {
-                                const fromDraft = draftAssets.find(r => r.id === id);
-                                if (fromDraft) {
-                                    await idbAdd(storeName, id, fromDraft);
-                                }
-                            }
-                        }
-                        await renderMediaLibrary();
-                    }
                     document.getElementById('editor').value = draft.content || '';
                     cardMeta = draft.meta || { title: '', description: '' };
                     closeDraftModal();
@@ -1195,41 +1116,11 @@
                     showToast('内容不能为空');
                     return;
                 }
-                const referencedIds = collectReferencedIds(content);
-                const allFiles = await idbGetAll(storeName);
-                const referencedFiles = [];
-                for (const id of referencedIds) {
-                    const record = allFiles.find(r => r.id === id);
-                    if (record) {
-                        referencedFiles.push({
-                            id: record.id,
-                            file: record.file,
-                            type: record.type,
-                            name: record.name,
-                            size: record.size,
-                            url: record.url
-                        });
-                        await idbAdd(draftAssetStoreName, record.id, record);
-                    } else {
-                        const draftAssets = await idbGetAll(draftAssetStoreName);
-                        const fromDraft = draftAssets.find(r => r.id === id);
-                        if (fromDraft) {
-                            referencedFiles.push({
-                                id: fromDraft.id,
-                                file: fromDraft.file,
-                                type: fromDraft.type,
-                                name: fromDraft.name,
-                                size: fromDraft.size,
-                                url: fromDraft.url
-                            });
-                        }
-                    }
-                }
+                // 仍然收集引用文件，但不再同步到草稿资产存储，避免复杂操作导致失败
                 const draft = {
                     content: document.getElementById('editor').value,
                     meta: cardMeta,
-                    timestamp: new Date().toISOString(),
-                    referencedFiles: referencedFiles
+                    timestamp: new Date().toISOString()
                 };
                 const draftKey = `draft_${Date.now()}`;
                 localStorage.setItem(draftKey, JSON.stringify(draft));
@@ -1407,7 +1298,6 @@
 
             // ========== 绑定事件 ==========
             function bindEvents() {
-                // 工具栏按钮：事件委托
                 const toolbar = document.getElementById('toolbar');
                 if (toolbar) {
                     toolbar.addEventListener('click', (e) => {
@@ -1418,19 +1308,12 @@
                     });
                 }
 
-                // 预览按钮
                 const previewBtn = document.getElementById('previewBtn');
-                if (previewBtn) {
-                    previewBtn.addEventListener('click', togglePreview);
-                }
+                if (previewBtn) previewBtn.addEventListener('click', togglePreview);
 
-                // 导入草稿按钮
                 const importDraftBtn = document.getElementById('importDraftBtn');
-                if (importDraftBtn) {
-                    importDraftBtn.addEventListener('click', openDraftModal);
-                }
+                if (importDraftBtn) importDraftBtn.addEventListener('click', openDraftModal);
 
-                // 编辑器拖放
                 const editor = document.getElementById('editor');
                 if (editor) {
                     editor.addEventListener('dragover', (e) => {
@@ -1453,16 +1336,10 @@
                     });
                 }
 
-                // 素材库导入文件按钮
                 const importMediaBtn = document.getElementById('importMediaBtn');
-                if (importMediaBtn) {
-                    importMediaBtn.addEventListener('click', importMedia);
-                }
-                // 清空素材库按钮
+                if (importMediaBtn) importMediaBtn.addEventListener('click', importMedia);
                 const clearMediaBtn = document.getElementById('clearMediaBtn');
-                if (clearMediaBtn) {
-                    clearMediaBtn.addEventListener('click', clearMediaLibrary);
-                }
+                if (clearMediaBtn) clearMediaBtn.addEventListener('click', clearMediaLibrary);
             }
 
             // ========== 初始化 ==========
@@ -1479,15 +1356,11 @@
                         await loadCardData(cardId);
                     }
                 } catch (err) {
-                    console.error('初始化失败:', err);
-                    showToast('初始化失败，但工具栏仍可使用');
+                    console.error('初始化出错:', err);
                 }
             }
 
-            // 立即执行事件绑定，保证工具栏可用
             bindEvents();
-
-            // 执行异步初始化
             init();
         })();
     </script>
