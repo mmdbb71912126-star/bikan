@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        /* ========== 样式与之前保持一致 ========== */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -452,7 +451,7 @@
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
             const ADMIN_EMAIL = '3948677391@qq.com';
-            const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+            const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
             let supabase;
             try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
@@ -460,7 +459,7 @@
             let currentUser = null;
             let editingId = null;
             let cardMeta = { title: '', description: '' };
-            let currentShortId = null; // 当前编辑卡片的短数字ID
+            let currentShortId = null;
 
             // ========== IndexedDB 封装 ==========
             const dbName = 'bikan_media_library';
@@ -535,7 +534,6 @@
                 return Math.random().toString(36).substring(2, 8);
             }
 
-            // 生成帖子的短数字ID（6位数字）
             function generateShortNumericId() {
                 return Math.floor(100000 + Math.random() * 900000);
             }
@@ -637,14 +635,12 @@
                 });
             }
 
-            // 从公共 URL 提取 Storage 路径
             function getPathFromUrl(url) {
                 const regex = /\/storage\/v1\/object\/public\/media\/(.+)/;
                 const match = url.match(regex);
                 return match ? match[1] : null;
             }
 
-            // 检查文件是否被帖子引用
             async function isFileReferenced(fileId) {
                 try {
                     const { data, error } = await supabase
@@ -735,7 +731,6 @@
                 showToast('已清空素材库中未被引用的文件');
             }
 
-            // 使用 XHR 上传文件，带进度回调
             function uploadFileWithProgress(bucket, path, file, onProgress) {
                 return new Promise(async (resolve, reject) => {
                     const session = await supabase.auth.getSession();
@@ -869,7 +864,7 @@
                 return user;
             }
 
-            // 从 URL 下载文件并保存到 IndexedDB 素材库，返回 record
+            // 从 URL 下载文件并保存到素材库，返回 record
             async function downloadAndStoreFile(url, name, type, size) {
                 try {
                     const response = await fetch(url);
@@ -893,7 +888,7 @@
                 }
             }
 
-            // 还原长 URL 为短 ID 语法，并确保素材库中有对应文件
+            // 还原长 URL 为短 ID 语法
             async function restoreContentWithShortIds(content, fileMap) {
                 let restoredContent = content;
                 const regex = /@(image|video|audio|file)\[([^\]]*)\]\(([^)]+?)(?:\s*=(\d+)%)?\)/g;
@@ -909,7 +904,6 @@
                     });
                 }
 
-                // 创建 URL -> file_map 索引
                 const urlToFileMap = {};
                 for (const [id, meta] of Object.entries(fileMap || {})) {
                     if (meta && meta.url) {
@@ -920,7 +914,6 @@
                 for (const item of matches) {
                     const meta = urlToFileMap[item.url];
                     if (!meta) {
-                        // file_map 中没有记录，尝试从 URL 下载
                         const record = await downloadAndStoreFile(item.url, '文件', 'application/octet-stream', 0);
                         if (record) {
                             const shortSyntax = `@${item.type}[${item.alt}](${record.id}${item.width ? ` =${item.width}%` : ''})`;
@@ -929,11 +922,9 @@
                         continue;
                     }
 
-                    // 检查素材库中是否已有该 ID
                     const existingFiles = await idbGetAll(storeName);
                     const exists = existingFiles.some(r => r.id === meta.id);
                     if (!exists) {
-                        // 从 URL 下载文件并存入素材库
                         const downloaded = await downloadAndStoreFile(meta.url, meta.name, meta.fileType || 'application/octet-stream', meta.size);
                         if (!downloaded) {
                             showToast(`无法恢复文件 ${meta.name}，将保留长 URL`);
@@ -941,7 +932,6 @@
                         }
                     }
 
-                    // 替换长 URL 为短 ID 语法
                     const shortSyntax = `@${item.type}[${item.alt}](${meta.id}${item.width ? ` =${item.width}%` : ''})`;
                     restoredContent = restoredContent.replace(item.full, shortSyntax);
                 }
@@ -959,10 +949,8 @@
                         return;
                     }
 
-                    // 保存 short_id
                     currentShortId = data.short_id || null;
 
-                    // 还原短 ID 语法
                     const originalContent = data.content || '';
                     const fileMap = data.file_map || {};
                     const restored = await restoreContentWithShortIds(originalContent, fileMap);
@@ -972,7 +960,6 @@
                     cardMeta.description = data.description || '';
                     editingId = cardId;
 
-                    // 重新渲染素材库
                     await renderMediaLibrary();
                 } catch (err) {
                     console.error('加载卡片失败:', err);
@@ -1111,11 +1098,27 @@
                 if (!saved) return;
                 try {
                     const draft = JSON.parse(saved);
+                    // 恢复草稿引用的文件
                     if (draft.referencedFiles && Array.isArray(draft.referencedFiles)) {
                         for (const asset of draft.referencedFiles) {
                             const existing = await idbGetAll(storeName);
                             if (!existing.some(r => r.id === asset.id)) {
                                 await idbAdd(storeName, asset.id, asset);
+                            }
+                        }
+                        await renderMediaLibrary();
+                    } else {
+                        // 兼容旧草稿：尝试从内容中解析短ID并从素材库或草稿存储恢复
+                        const content = draft.content || '';
+                        const ids = collectReferencedIds(content);
+                        const allFiles = await idbGetAll(storeName);
+                        const draftAssets = await idbGetAll(draftAssetStoreName);
+                        for (const id of ids) {
+                            if (!allFiles.some(r => r.id === id)) {
+                                const fromDraft = draftAssets.find(r => r.id === id);
+                                if (fromDraft) {
+                                    await idbAdd(storeName, id, fromDraft);
+                                }
                             }
                         }
                         await renderMediaLibrary();
@@ -1141,7 +1144,6 @@
             window.importDraftById = importDraftById;
             window.deleteDraftById = deleteDraftById;
 
-            // ========== 收集引用的文件 ID ==========
             function collectReferencedIds(content) {
                 const ids = new Set();
                 const regex = /@(image|video|audio|file)\[[^\]]*\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g;
@@ -1260,7 +1262,6 @@
                 document.getElementById('publishProgressFile').textContent = '正在准备...';
                 document.getElementById('publishProgressPercent').textContent = '0%';
             }
-
             function updatePublishProgress(percent, fileName) {
                 const bar = document.getElementById('publishProgressBar');
                 const fileLabel = document.getElementById('publishProgressFile');
@@ -1273,7 +1274,6 @@
                     fileLabel.textContent = '正在保存...';
                 }
             }
-
             function hidePublishProgress() {
                 const overlay = document.getElementById('publishProgressOverlay');
                 overlay.classList.remove('show');
@@ -1351,7 +1351,6 @@
 
                     updatePublishProgress(95, null);
 
-                    // 生成或保留 short_id
                     if (!currentShortId) {
                         currentShortId = generateShortNumericId();
                     }
