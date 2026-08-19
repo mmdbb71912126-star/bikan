@@ -218,12 +218,14 @@
             background: rgba(255,255,255,0.04); margin: 8px 0;
         }
         .file-card-preview svg { width: 32px; height: 32px; fill: var(--primary); flex-shrink: 0; }
-        .file-card-info { flex: 1; }
-        .file-card-name { font-weight: 600; font-size: 14px; }
+        .file-card-info { flex: 1; min-width: 0; }
+        .file-card-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .file-card-meta { font-size: 12px; color: var(--text-muted); }
         .file-card-download {
-            padding: 6px 12px; background: var(--primary); color: #0f0c29;
-            border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px;
+            display: inline-flex; align-items: center; padding: 6px 12px;
+            background: var(--primary); color: #0f0c29; border-radius: 6px;
+            text-decoration: none; font-weight: 600; font-size: 12px;
+            white-space: nowrap; flex-shrink: 0;
         }
     </style>
 </head>
@@ -236,11 +238,9 @@
             <button class="toolbar-btn" data-action="bold" title="加粗"><svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.6-1.76 1.6-2.98C17.2 5.6 15.6 4 13.5 4H6v16h8.5c2.3 0 4.2-1.8 4.2-4.1 0-1.8-1.1-3.3-2.8-3.9zM9 6.5h3.5c1.1 0 2 .9 2 2s-.9 2-2 2H9v-4zm5.5 11H9v-4h5.5c1.2 0 2.2.9 2.2 2s-1 2-2.2 2z"/></svg></button>
             <button class="toolbar-btn" data-action="italic" title="斜体"><svg viewBox="0 0 24 24"><path d="M10 4h4l4 16h-2l-1-4H9l-1 4H6l4-16z"/></svg></button>
             <button class="toolbar-btn" data-action="link" title="链接"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
-            <!-- 图片按钮：语法 @image[图片描述](https:// =50%) -->
             <button class="toolbar-btn" data-action="image" title="图片（默认宽度50%）"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
             <button class="toolbar-btn" data-action="video" title="视频（默认宽度50%）"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
             <button class="toolbar-btn" data-action="audio" title="音频"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
-            <!-- 文件按钮：语法 @file[文件描述](https://) -->
             <button class="toolbar-btn" data-action="file" title="文件"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg></button>
             <button class="toolbar-btn" data-action="quote" title="引用"><svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg></button>
             <button class="toolbar-btn" data-action="code" title="代码块"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg></button>
@@ -353,19 +353,23 @@
             let editingId = null;
             let cardMeta = { title: '', description: '' };
 
-            // ========== 素材库 IndexedDB 封装 ==========
+            // ========== IndexedDB 封装 ==========
             const dbName = 'bikan_media_library';
             const storeName = 'media_files';
+            const draftAssetStoreName = 'draft_assets'; // 新增草稿资产存储
             let db = null;
 
             function openDB() {
                 return new Promise((resolve, reject) => {
                     if (db) { resolve(db); return; }
-                    const request = indexedDB.open(dbName, 1);
+                    const request = indexedDB.open(dbName, 2); // 版本升级到2
                     request.onupgradeneeded = (e) => {
                         const database = e.target.result;
                         if (!database.objectStoreNames.contains(storeName)) {
                             database.createObjectStore(storeName, { keyPath: 'id' });
+                        }
+                        if (!database.objectStoreNames.contains(draftAssetStoreName)) {
+                            database.createObjectStore(draftAssetStoreName, { keyPath: 'id' });
                         }
                     };
                     request.onsuccess = (e) => { db = e.target.result; resolve(db); };
@@ -373,46 +377,45 @@
                 });
             }
 
-            async function idbAdd(id, file) {
+            async function idbAdd(store, id, data) {
                 await openDB();
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([storeName], 'readwrite');
-                    const store = transaction.objectStore(storeName);
-                    const record = { id, file, type: file.type, name: file.name, size: file.size };
-                    store.put(record);
+                    const transaction = db.transaction([store], 'readwrite');
+                    const objectStore = transaction.objectStore(store);
+                    objectStore.put(data);
                     transaction.oncomplete = () => resolve();
                     transaction.onerror = (e) => reject(e.target.error);
                 });
             }
 
-            async function idbGetAll() {
+            async function idbGetAll(store) {
                 await openDB();
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([storeName], 'readonly');
-                    const store = transaction.objectStore(storeName);
-                    const request = store.getAll();
+                    const transaction = db.transaction([store], 'readonly');
+                    const objectStore = transaction.objectStore(store);
+                    const request = objectStore.getAll();
                     request.onsuccess = () => resolve(request.result);
                     request.onerror = (e) => reject(e.target.error);
                 });
             }
 
-            async function idbDelete(id) {
+            async function idbDelete(store, id) {
                 await openDB();
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([storeName], 'readwrite');
-                    const store = transaction.objectStore(storeName);
-                    store.delete(id);
+                    const transaction = db.transaction([store], 'readwrite');
+                    const objectStore = transaction.objectStore(store);
+                    objectStore.delete(id);
                     transaction.oncomplete = () => resolve();
                     transaction.onerror = (e) => reject(e.target.error);
                 });
             }
 
-            async function idbClear() {
+            async function idbClear(store) {
                 await openDB();
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([storeName], 'readwrite');
-                    const store = transaction.objectStore(storeName);
-                    store.clear();
+                    const transaction = db.transaction([store], 'readwrite');
+                    const objectStore = transaction.objectStore(store);
+                    objectStore.clear();
                     transaction.oncomplete = () => resolve();
                     transaction.onerror = (e) => reject(e.target.error);
                 });
@@ -437,7 +440,7 @@
             }
 
             async function renderMediaLibrary() {
-                const files = await idbGetAll();
+                const files = await idbGetAll(storeName);
                 const container = document.getElementById('mediaLibraryBody');
                 container.innerHTML = '';
                 if (files.length === 0) {
@@ -520,14 +523,14 @@
             }
 
             async function deleteMediaFile(id) {
-                await idbDelete(id);
+                await idbDelete(storeName, id);
                 renderMediaLibrary();
                 showToast('已从素材库删除');
             }
 
             async function clearMediaLibrary() {
                 if (confirm('确定清空素材库中的所有文件吗？')) {
-                    await idbClear();
+                    await idbClear(storeName);
                     renderMediaLibrary();
                     showToast('素材库已清空');
                 }
@@ -546,7 +549,8 @@
                         continue;
                     }
                     const id = generateShortId();
-                    await idbAdd(id, file);
+                    const record = { id, file, type: file.type, name: file.name, size: file.size };
+                    await idbAdd(storeName, id, record);
                 }
                 renderMediaLibrary();
                 showToast(`已导入 ${files.length} 个文件`);
@@ -658,7 +662,7 @@
                     const url = URL.createObjectURL(record.file);
                     return `<audio controls src="${url}"></audio>`;
                 });
-                // 处理文件（单行 HTML，避免被 markdown 解析为代码块）
+                // 处理文件（单行 HTML）
                 markdown = markdown.replace(/@file\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
@@ -684,7 +688,7 @@
                     editor.focus();
                 } else {
                     const idMap = {};
-                    const files = await idbGetAll();
+                    const files = await idbGetAll(storeName);
                     files.forEach(record => { idMap[record.id] = record; });
                     const content = editor.value || '';
                     const processed = preprocessMarkdown(content, idMap);
@@ -696,7 +700,7 @@
             }
             window.togglePreview = togglePreview;
 
-            // ========== 导入草稿功能 ==========
+            // ========== 导入草稿功能（增强：恢复缺失文件） ==========
             function loadDraftList() {
                 const container = document.getElementById('draftListContainer');
                 const drafts = [];
@@ -735,11 +739,23 @@
             function closeDraftModal() {
                 document.getElementById('draftModal').classList.remove('show');
             }
-            function importDraftById(draftId) {
+
+            async function importDraftById(draftId) {
                 const saved = localStorage.getItem(draftId);
                 if (!saved) return;
                 try {
                     const draft = JSON.parse(saved);
+                    // 恢复草稿引用的文件
+                    if (draft.referencedFiles && Array.isArray(draft.referencedFiles)) {
+                        for (const asset of draft.referencedFiles) {
+                            // 检查素材库中是否已有该 ID，若无则从草稿资产存储恢复
+                            const existing = await idbGetAll(storeName);
+                            if (!existing.some(r => r.id === asset.id)) {
+                                await idbAdd(storeName, asset.id, asset);
+                            }
+                        }
+                        await renderMediaLibrary();
+                    }
                     document.getElementById('editor').value = draft.content || '';
                     cardMeta = draft.meta || { title: '', description: '' };
                     closeDraftModal();
@@ -760,6 +776,17 @@
             window.closeDraftModal = closeDraftModal;
             window.importDraftById = importDraftById;
             window.deleteDraftById = deleteDraftById;
+
+            // ========== 收集引用的文件 ID ==========
+            function collectReferencedIds(content) {
+                const ids = new Set();
+                const regex = /@(image|video|audio|file)\[[^\]]*\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g;
+                let match;
+                while ((match = regex.exec(content)) !== null) {
+                    ids.add(match[2]);
+                }
+                return Array.from(ids);
+            }
 
             // ========== 设置弹窗 ==========
             function openMetaModal() {
@@ -786,38 +813,65 @@
             window.closeMetaModal = closeMetaModal;
             window.saveMeta = saveMeta;
 
-            // ========== 保存草稿（不退出） ==========
-            function saveDraftOnly() {
+            // ========== 保存草稿（增强备份文件） ==========
+            async function saveDraftWithAssets(exitAfter) {
                 const content = document.getElementById('editor').value.trim();
                 if (!content) {
                     showToast('内容不能为空');
                     return;
                 }
+                const referencedIds = collectReferencedIds(content);
+                const allFiles = await idbGetAll(storeName);
+                const referencedFiles = [];
+                for (const id of referencedIds) {
+                    const record = allFiles.find(r => r.id === id);
+                    if (record) {
+                        referencedFiles.push({
+                            id: record.id,
+                            file: record.file,
+                            type: record.type,
+                            name: record.name,
+                            size: record.size
+                        });
+                        // 同时保存到草稿资产存储
+                        await idbAdd(draftAssetStoreName, record.id, record);
+                    } else {
+                        // 如果素材库中缺少，尝试从草稿资产存储恢复
+                        const draftAssets = await idbGetAll(draftAssetStoreName);
+                        const fromDraft = draftAssets.find(r => r.id === id);
+                        if (fromDraft) {
+                            referencedFiles.push({
+                                id: fromDraft.id,
+                                file: fromDraft.file,
+                                type: fromDraft.type,
+                                name: fromDraft.name,
+                                size: fromDraft.size
+                            });
+                        }
+                    }
+                }
                 const draft = {
                     content: document.getElementById('editor').value,
                     meta: cardMeta,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    referencedFiles: referencedFiles
                 };
                 const draftKey = `draft_${Date.now()}`;
                 localStorage.setItem(draftKey, JSON.stringify(draft));
-                showToast('草稿已保存');
+                if (exitAfter) {
+                    window.location.href = 'home.html';
+                } else {
+                    showToast('草稿已保存');
+                }
+            }
+
+            async function saveDraftOnly() {
+                await saveDraftWithAssets(false);
+            }
+            async function saveAndExit() {
+                await saveDraftWithAssets(true);
             }
             window.saveDraftOnly = saveDraftOnly;
-
-            // ========== 保存并退出 ==========
-            async function saveAndExit() {
-                const content = document.getElementById('editor').value.trim();
-                if (content) {
-                    const draft = {
-                        content: document.getElementById('editor').value,
-                        meta: cardMeta,
-                        timestamp: new Date().toISOString()
-                    };
-                    const draftKey = `draft_${Date.now()}`;
-                    localStorage.setItem(draftKey, JSON.stringify(draft));
-                }
-                window.location.href = 'home.html';
-            }
             window.saveAndExit = saveAndExit;
 
             // ========== 删除并退出 ==========
@@ -852,7 +906,7 @@
                 }
                 try {
                     const idMap = {};
-                    const files = await idbGetAll();
+                    const files = await idbGetAll(storeName);
                     files.forEach(record => { idMap[record.id] = record; });
 
                     const allRefs = content.matchAll(/@(image|video|audio|file)\[([^\]]*)\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g);
