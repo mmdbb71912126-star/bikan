@@ -121,7 +121,6 @@
         }
         .btn:hover { transform: translateY(-1px); }
         .btn-resolve { background: var(--success); color: #0f0c29; }
-        .btn-ignore { background: rgba(255,193,7,0.2); color: var(--warning); }
         .btn-delete { background: rgba(255,107,107,0.2); color: var(--error); }
 
         .feedback-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
@@ -137,7 +136,6 @@
         }
         .status-pending { background: rgba(255,193,7,0.2); color: var(--warning); }
         .status-resolved { background: rgba(62,207,142,0.2); color: var(--success); }
-        .status-ignored { background: rgba(255,107,107,0.2); color: var(--error); }
 
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 15px; }
 
@@ -172,7 +170,6 @@
     <div class="admin-tabs">
         <button class="admin-tab active" data-status="pending">待处理</button>
         <button class="admin-tab" data-status="resolved">已处理</button>
-        <button class="admin-tab" data-status="ignored">已忽略</button>
     </div>
 
     <div id="feedbackList"></div>
@@ -225,8 +222,7 @@
                     container.innerHTML = data.map(item => {
                         const statusMap = {
                             pending: '<span class="status-tag status-pending">待处理</span>',
-                            resolved: '<span class="status-tag status-resolved">已处理</span>',
-                            ignored: '<span class="status-tag status-ignored">已忽略</span>'
+                            resolved: '<span class="status-tag status-resolved">已处理</span>'
                         };
                         const statusHtml = statusMap[item.status] || '';
                         const date = item.created_at ? new Date(item.created_at).toLocaleString() : '';
@@ -237,7 +233,6 @@
                                 <div class="feedback-actions">
                                     ${item.status === 'pending' ? `
                                         <button class="btn btn-resolve" onclick="updateFeedbackStatus('${item.id}', 'resolved')">标记已处理</button>
-                                        <button class="btn btn-ignore" onclick="updateFeedbackStatus('${item.id}', 'ignored')">忽略</button>
                                     ` : ''}
                                     <button class="btn btn-delete" onclick="deleteFeedback('${item.id}')">删除</button>
                                 </div>
