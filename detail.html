@@ -5,12 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 - 帖子详情</title>
 
-    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
-    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Markdown 渲染库 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
@@ -35,7 +32,6 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             min-height: 100vh;
@@ -48,10 +44,7 @@
             align-items: center;
         }
 
-        .container {
-            max-width: 800px;
-            width: 100%;
-        }
+        .container { max-width: 800px; width: 100%; }
 
         .back-btn {
             display: inline-flex;
@@ -82,9 +75,7 @@
             margin-bottom: 24px;
         }
 
-        .post-header {
-            margin-bottom: 20px;
-        }
+        .post-header { margin-bottom: 20px; }
         .post-title {
             font-size: 28px;
             font-weight: 700;
@@ -99,30 +90,6 @@
             font-size: 13px;
             color: var(--text-muted);
         }
-        .post-author {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .author-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: rgba(62,207,142,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        .post-desc {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
         .status-tag {
             display: inline-block;
             padding: 2px 10px;
@@ -134,6 +101,12 @@
         .status-pending { background: rgba(255,193,7,0.2); color: #ffc107; }
         .status-approved { background: rgba(62,207,142,0.2); color: var(--primary); }
         .status-rejected { background: rgba(255,107,107,0.2); color: var(--error); }
+        .post-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
 
         .post-content {
             font-size: 16px;
@@ -162,14 +135,8 @@
             overflow-x: auto;
             margin: 10px 0;
         }
-        .post-content pre code {
-            background: none;
-            padding: 0;
-        }
-        .post-content a {
-            color: var(--primary);
-            text-decoration: none;
-        }
+        .post-content pre code { background: none; padding: 0; }
+        .post-content a { color: var(--primary); text-decoration: none; }
         .post-content a:hover { text-decoration: underline; }
         .post-content blockquote {
             border-left: 4px solid var(--primary);
@@ -177,37 +144,31 @@
             margin: 10px 0;
             color: var(--text-secondary);
         }
-        .post-content ul, .post-content ol {
-            padding-left: 24px;
-            margin: 10px 0;
-        }
-        .post-content img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
-        .post-content video {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
-        .post-content audio {
-            width: 100%;
-            margin: 10px 0;
-        }
+        .post-content ul, .post-content ol { padding-left: 24px; margin: 10px 0; }
+        .post-content img { max-width: 100%; border-radius: 8px; margin: 10px 0; }
+        .post-content video { max-width: 100%; border-radius: 8px; margin: 10px 0; }
+        .post-content audio { width: 100%; margin: 10px 0; }
 
-        .error-message {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-            font-size: 16px;
+        /* 文件卡片 */
+        .file-card-preview {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border: 1px solid var(--card-border); border-radius: 8px;
+            background: rgba(255,255,255,0.04); margin: 8px 0;
         }
+        .file-card-preview svg { width: 32px; height: 32px; fill: var(--primary); flex-shrink: 0; }
+        .file-card-info { flex: 1; min-width: 0; }
+        .file-card-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-card-meta { font-size: 12px; color: var(--text-muted); }
+        .file-card-download {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 6px 12px; background: var(--primary); color: #0f0c29 !important;
+            border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .post-content a.file-card-download { color: #0f0c29 !important; }
 
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
+        .error-message { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 16px; }
+        .loading { text-align: center; padding: 60px 20px; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -239,22 +200,29 @@
 
             // 预处理 Markdown，支持自定义媒体语法
             function preprocessMarkdown(markdown) {
-                // 处理自定义图片：![描述](url =50%)
-                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
-                    return `<img src="${url}" width="${width}%" alt="${alt}" />`;
+                // 处理图片：@image[描述](url =50%) 或 @image[描述](url)
+                markdown = markdown.replace(/@image\[([^\]]*)\]\(([^)]+?)(?:\s*=(\d+)%)?\)/g, (match, alt, url, width) => {
+                    const widthStyle = width ? `${width}%` : '100%';
+                    return `<img src="${url}" alt="${alt}" style="max-width: ${widthStyle}; border-radius: 8px;" />`;
                 });
-                // 处理自定义视频：@video[描述](url =50%)
-                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (match, alt, url, width) => {
-                    return `<video width="${width}%" controls src="${url}">${alt}</video>`;
+                // 处理视频：@video[描述](url =50%) 或 @video[描述](url)
+                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)(?:\s*=(\d+)%)?\)/g, (match, alt, url, width) => {
+                    const widthStyle = width ? `${width}%` : '100%';
+                    return `<video controls src="${url}" style="max-width: ${widthStyle}; border-radius: 8px;"></video>`;
                 });
-                // 处理自定义音频：@audio[描述](url)
+                // 处理音频：@audio[描述](url)
                 markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
                     return `<audio controls src="${url}"></audio>`;
                 });
-                // 处理标准 Markdown 图片：![描述](url)
-                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
-                    return `<img src="${url}" alt="${alt}" />`;
+                // 处理文件：@file[描述](url)
+                markdown = markdown.replace(/@file\[([^\]]*)\]\(([^)]+?)\)/g, (match, alt, url) => {
+                    // 从 URL 提取文件名（最后一个斜杠后的部分）
+                    const urlParts = url.split('/');
+                    const filename = urlParts[urlParts.length - 1] || '文件';
+                    return `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${alt || filename}</div><div class="file-card-meta">文件</div></div><a class="file-card-download" href="${url}" download="${filename}">下载</a></div>`;
                 });
+                // 处理标准 Markdown 图片
+                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (m, alt, url) => `<img src="${url}" alt="${alt}" />`);
                 return markdown;
             }
 
@@ -264,20 +232,17 @@
                 return div.innerHTML;
             }
 
-            function renderPost(post, isOwnerOrAdmin) {
+            function renderPost(post, canViewFull) {
                 const statusMap = {
                     pending: '<span class="status-tag status-pending">待审核</span>',
                     approved: '<span class="status-tag status-approved">已通过</span>',
                     rejected: '<span class="status-tag status-rejected">已拒绝</span>'
                 };
                 const statusHtml = statusMap[post.status] || '';
-                const submitterDisplay = post.is_anonymous ? '匿名用户' : (post.submitter_name || '用户');
-                const avatarText = post.is_anonymous ? '匿' : (submitterDisplay.charAt(0) || 'U');
                 const date = post.created_at ? new Date(post.created_at).toLocaleString() : '';
 
-                // 处理内容：如果帖子不是已审核且当前用户不是作者或管理员，则隐藏内容
                 let contentHtml = '';
-                if (post.status === 'approved' || isOwnerOrAdmin) {
+                if (canViewFull) {
                     const processed = preprocessMarkdown(post.content || '');
                     contentHtml = marked.parse(processed);
                 } else {
@@ -289,11 +254,7 @@
                         <div class="post-header">
                             <div class="post-title">${post.title} ${statusHtml}</div>
                             <div class="post-meta">
-                                <div class="post-author">
-                                    <div class="author-avatar">${avatarText}</div>
-                                    <span>${submitterDisplay}</span>
-                                </div>
-                                ${date ? `<span>·</span><span>${date}</span>` : ''}
+                                ${date ? `<span>${date}</span>` : ''}
                             </div>
                         </div>
                         <div class="post-desc">${post.description || ''}</div>
@@ -326,7 +287,6 @@
                         return;
                     }
 
-                    // 判断当前用户是否为作者或管理员
                     const isOwner = currentUser && data.submitter_id === currentUser.id;
                     const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
                     const canViewFull = data.status === 'approved' || isOwner || isAdmin;
@@ -338,7 +298,6 @@
                 }
             }
 
-            // 启动
             loadPost();
         })();
     </script>
