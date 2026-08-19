@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        /* 样式与之前相同，此处省略重复，确保完整文件中包含 */
+        /* ========== 样式与之前保持一致 ========== */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -229,7 +229,6 @@
         }
         .preview-area a.file-card-download { color: #0f0c29 !important; }
 
-        /* 上传进度条 */
         .upload-progress-container {
             display: none;
             padding: 4px 16px 6px 16px;
@@ -261,7 +260,6 @@
             text-align: right;
         }
 
-        /* 发布进度条覆盖层 */
         .publish-progress-overlay {
             position: fixed;
             inset: 0;
@@ -462,6 +460,7 @@
             let currentUser = null;
             let editingId = null;
             let cardMeta = { title: '', description: '' };
+            let currentShortId = null; // 当前编辑卡片的短数字ID
 
             // ========== IndexedDB 封装 ==========
             const dbName = 'bikan_media_library';
@@ -534,6 +533,11 @@
             // ========== 素材库管理 ==========
             function generateShortId() {
                 return Math.random().toString(36).substring(2, 8);
+            }
+
+            // 生成帖子的短数字ID（6位数字）
+            function generateShortNumericId() {
+                return Math.floor(100000 + Math.random() * 900000);
             }
 
             function fileTypeCategory(fileType) {
@@ -955,6 +959,9 @@
                         return;
                     }
 
+                    // 保存 short_id
+                    currentShortId = data.short_id || null;
+
                     // 还原短 ID 语法
                     const originalContent = data.content || '';
                     const fileMap = data.file_map || {};
@@ -1344,13 +1351,19 @@
 
                     updatePublishProgress(95, null);
 
+                    // 生成或保留 short_id
+                    if (!currentShortId) {
+                        currentShortId = generateShortNumericId();
+                    }
+
                     if (editingId) {
                         const { error: updateError } = await supabase.from('websites').update({
                             content: finalContent,
                             title: cardMeta.title,
                             description: cardMeta.description,
                             status: 'approved',
-                            file_map: fileMap
+                            file_map: fileMap,
+                            short_id: currentShortId
                         }).eq('id', editingId);
                         if (updateError) throw updateError;
                         showToast('已发布');
@@ -1363,7 +1376,8 @@
                             submitter_name: '管理员',
                             is_anonymous: false,
                             status: 'approved',
-                            file_map: fileMap
+                            file_map: fileMap,
+                            short_id: currentShortId
                         });
                         if (insertError) throw insertError;
                         showToast('已发布');
