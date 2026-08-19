@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        /* 样式与之前版本相同，此处省略，确保完整文件中包含 */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -524,18 +523,109 @@
                 });
             }
 
+            // 从公共 URL 提取 Storage 路径
+            function getPathFromUrl(url) {
+                const regex = /\/storage\/v1\/object\/public\/media\/(.+)/;
+                const match = url.match(regex);
+                return match ? match[1] : null;
+            }
+
+            // 检查文件是否被帖子引用
+            async function isFileReferenced(fileId) {
+                try {
+                    const { data, error } = await supabase
+                        .from('websites')
+                        .select('id, file_map')
+                        .not('file_map', 'is', null);
+                    if (error) throw error;
+                    for (const post of data) {
+                        if (post.file_map && post.file_map[fileId]) {
+                            return true;
+                        }
+                    }
+                    return false;
+                } catch (err) {
+                    console.error('检查引用失败:', err);
+                    showToast('检查引用状态失败，请稍后重试');
+                    return true; // 保守起见，阻止删除
+                }
+            }
+
             async function deleteMediaFile(id) {
-                await idbDelete(storeName, id);
-                renderMediaLibrary();
-                showToast('已从素材库删除');
+                try {
+                    // 获取文件记录
+                    const allFiles = await idbGetAll(storeName);
+                    const record = allFiles.find(r => r.id === id);
+                    if (!record) {
+                        showToast('文件不存在');
+                        return;
+                    }
+
+                    // 检查是否被引用
+                    const referenced = await isFileReferenced(id);
+                    if (referenced) {
+                        showToast('该文件已被帖子引用，请先删除相关帖子或从帖子中移除该文件语法');
+                        return;
+                    }
+
+                    // 确认删除
+                    if (!confirm('确定删除该文件吗？此操作将同时删除云存储中的文件，且不可恢复。')) return;
+
+                    // 删除 Supabase Storage 文件
+                    if (record.url) {
+                        const path = getPathFromUrl(record.url);
+                        if (path) {
+                            const { error: removeError } = await supabase.storage
+                                .from('media')
+                                .remove([path]);
+                            if (removeError) {
+                                console.error('Storage 删除失败:', removeError);
+                                showToast('云存储删除失败：' + removeError.message);
+                                return;
+                            }
+                        }
+                    }
+
+                    // 删除 IndexedDB 素材库记录
+                    await idbDelete(storeName, id);
+                    // 删除草稿备份
+                    await idbDelete(draftAssetStoreName, id);
+
+                    renderMediaLibrary();
+                    showToast('已从素材库和云存储删除');
+                } catch (err) {
+                    console.error('删除文件失败:', err);
+                    showToast('删除失败：' + err.message);
+                }
             }
 
             async function clearMediaLibrary() {
-                if (confirm('确定清空素材库中的所有文件吗？')) {
-                    await idbClear(storeName);
-                    renderMediaLibrary();
-                    showToast('素材库已清空');
+                // 清空所有未被引用的文件
+                const files = await idbGetAll(storeName);
+                const unreferenced = [];
+                for (const record of files) {
+                    const referenced = await isFileReferenced(record.id);
+                    if (!referenced) {
+                        unreferenced.push(record);
+                    }
                 }
+                if (unreferenced.length === 0) {
+                    showToast('所有文件均被引用，无法清空');
+                    return;
+                }
+                if (!confirm(`确定清空素材库中未被引用的 ${unreferenced.length} 个文件吗？\n（被帖子引用的文件将被保留）`)) return;
+                for (const record of unreferenced) {
+                    if (record.url) {
+                        const path = getPathFromUrl(record.url);
+                        if (path) {
+                            await supabase.storage.from('media').remove([path]);
+                        }
+                    }
+                    await idbDelete(storeName, record.id);
+                    await idbDelete(draftAssetStoreName, record.id);
+                }
+                renderMediaLibrary();
+                showToast('已清空素材库中未被引用的文件');
             }
 
             async function importMedia() {
@@ -550,7 +640,6 @@
                         showToast(`文件 ${file.name} 超过 100MB，已跳过`);
                         continue;
                     }
-                    // 立即上传到 Supabase Storage
                     try {
                         const id = generateShortId();
                         const fileExt = file.name.split('.').pop() || 'bin';
@@ -610,7 +699,7 @@
                 const toast = document.getElementById('toast');
                 toast.textContent = message;
                 toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2000);
+                setTimeout(() => toast.classList.remove('show'), 2500);
             }
 
             async function checkAdmin() {
@@ -672,7 +761,6 @@
             }
 
             function preprocessMarkdown(markdown, idMap) {
-                // 处理图片
                 markdown = markdown.replace(/@image\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
@@ -680,7 +768,6 @@
                     const widthStyle = width ? `${width}%` : '100%';
                     return `<img src="${url}" alt="${alt}" style="max-width: ${widthStyle}; border-radius: 8px;" />`;
                 });
-                // 处理视频
                 markdown = markdown.replace(/@video\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
@@ -688,14 +775,12 @@
                     const widthStyle = width ? `${width}%` : '100%';
                     return `<video controls src="${url}" style="max-width: ${widthStyle}; border-radius: 8px;"></video>`;
                 });
-                // 处理音频
                 markdown = markdown.replace(/@audio\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
                     const url = record.url || URL.createObjectURL(record.file);
                     return `<audio controls src="${url}"></audio>`;
                 });
-                // 处理文件
                 markdown = markdown.replace(/@file\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
@@ -705,7 +790,6 @@
                     const displayName = record.name;
                     return `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${displayName}</div><div class="file-card-meta">${size} · ${type}</div></div><a class="file-card-download" href="${url}" download="${record.name}">下载</a></div>`;
                 });
-                // 处理标准 Markdown 图片
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (m, alt, url) => `<img src="${url}" alt="${alt}" />`);
                 return markdown;
             }
@@ -845,7 +929,7 @@
             window.closeMetaModal = closeMetaModal;
             window.saveMeta = saveMeta;
 
-            // ========== 保存草稿（增强备份文件） ==========
+            // ========== 保存草稿 ==========
             async function saveDraftWithAssets(exitAfter) {
                 const content = document.getElementById('editor').value.trim();
                 if (!content) {
@@ -897,12 +981,8 @@
                 }
             }
 
-            async function saveDraftOnly() {
-                await saveDraftWithAssets(false);
-            }
-            async function saveAndExit() {
-                await saveDraftWithAssets(true);
-            }
+            async function saveDraftOnly() { await saveDraftWithAssets(false); }
+            async function saveAndExit() { await saveDraftWithAssets(true); }
             window.saveDraftOnly = saveDraftOnly;
             window.saveAndExit = saveAndExit;
 
@@ -924,7 +1004,7 @@
             }
             window.deleteAndExit = deleteAndExit;
 
-            // ========== 发布（不再上传文件，直接使用已上传URL） ==========
+            // ========== 发布（使用已上传的 URL，不再重复上传） ==========
             async function publishCard() {
                 console.log('publishCard 被调用');
                 if (!currentUser) {
@@ -942,9 +1022,9 @@
                     files.forEach(record => { idMap[record.id] = record; });
 
                     const allRefs = content.matchAll(/@(image|video|audio|file)\[([^\]]*)\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g);
-                    const fileMap = {}; // 最终存储到 file_map 的元数据
-
+                    const fileMap = {};
                     let finalContent = content;
+
                     for (const match of allRefs) {
                         const type = match[1];
                         const alt = match[2];
@@ -955,9 +1035,8 @@
                             return;
                         }
                         const record = idMap[id];
-                        const url = record.url; // 使用上传时保存的URL
+                        const url = record.url;
 
-                        // 构建替换后的语法
                         if (type === 'image') {
                             const widthSuffix = width ? ` =${width}%` : '';
                             finalContent = finalContent.replace(new RegExp(`@image\\[([^\\]]*)\\]\\(${id}\\s*(?:=\\d+%)?\\)`), `@image[$1](${url}${widthSuffix})`);
@@ -971,7 +1050,6 @@
                             finalContent = finalContent.replace(new RegExp(`@file\\[([^\\]]*)\\]\\(${id}\\)`), fileCard);
                         }
 
-                        // 记录文件元数据
                         fileMap[id] = {
                             url: url,
                             type: type,
@@ -992,11 +1070,7 @@
                             status: 'approved',
                             file_map: fileMap
                         }).eq('id', editingId);
-                        if (updateError) {
-                            console.error('更新失败:', updateError);
-                            showToast('更新失败：' + updateError.message);
-                            return;
-                        }
+                        if (updateError) throw updateError;
                         showToast('已发布');
                     } else {
                         const { error: insertError } = await supabase.from('websites').insert({
@@ -1009,11 +1083,7 @@
                             status: 'approved',
                             file_map: fileMap
                         });
-                        if (insertError) {
-                            console.error('插入失败:', insertError);
-                            showToast('插入失败：' + insertError.message);
-                            return;
-                        }
+                        if (insertError) throw insertError;
                         showToast('已发布');
                     }
 
@@ -1041,9 +1111,7 @@
                 const toolbar = document.getElementById('toolbar');
                 toolbar.addEventListener('click', (e) => {
                     const btn = e.target.closest('.toolbar-btn[data-action]');
-                    if (btn) {
-                        insertMarkdown(btn.dataset.action);
-                    }
+                    if (btn) insertMarkdown(btn.dataset.action);
                 });
 
                 document.getElementById('previewBtn').addEventListener('click', togglePreview);
