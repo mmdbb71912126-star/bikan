@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 - 发现好网址</title>
 
-    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
-    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -72,7 +70,6 @@
         .logo-text { font-size: 20px; font-weight: 700; white-space: nowrap; opacity: 1; transition: opacity 0.2s ease; }
         .sidebar.collapsed .logo-text { opacity: 0; width: 0; }
 
-        /* 折叠按钮 */
         .sidebar-toggle {
             position: fixed; top: 20px; left: calc(var(--sidebar-width) - 12px);
             width: 24px; height: 24px; background: var(--primary); border: none; border-radius: 50%;
@@ -139,7 +136,6 @@
         }
         .search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: var(--text-muted); }
 
-        /* 添加卡片按钮（仅管理员可见） */
         .add-card-btn {
             padding: 10px 22px; border-radius: 20px;
             background: linear-gradient(135deg, var(--primary), #2bb673);
@@ -153,22 +149,42 @@
         .view { display: none; }
         .view.active { display: block; }
 
-        /* 卡片列表 */
-        .card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .url-card {
-            background: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--card-border); border-radius: var(--radius); padding: 22px;
-            transition: all var(--transition); animation: fadeInUp 0.4s ease-out;
-            display: flex; flex-direction: column;
+        /* 卡片列表：单列整行 */
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
-        .url-card:hover { border-color: rgba(62,207,142,0.4); transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
+        .url-card {
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 22px;
+            transition: all var(--transition);
+            animation: fadeInUp 0.4s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .url-card:hover { border-color: rgba(62,207,142,0.4); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
         .card-title { font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
         .card-title a { color: inherit; text-decoration: none; transition: color var(--transition); }
         .card-title a:hover { color: var(--primary); }
         .card-domain { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-        .card-actions { display: flex; gap: 6px; }
+        .card-actions { display: flex; gap: 6px; align-items: center; }
+        .card-short-id {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.06);
+            padding: 2px 8px;
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
         .card-action-btn {
             background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px;
             display: flex; align-items: center; justify-content: center; transition: background var(--transition);
@@ -178,13 +194,12 @@
         .card-action-btn svg { width: 18px; height: 18px; fill: currentColor; }
         .card-action-btn.active { color: var(--primary); }
         .card-action-btn.danger:hover { color: var(--error); }
-        .card-description { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .card-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: var(--text-muted); }
-        .card-tags { display: flex; gap: 6px; }
-        .tag { padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,0.06); font-size: 11px; color: var(--text-secondary); }
-        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 15px; }
 
-        /* 设置表单 */
+        .card-description { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; flex: 1; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 15px; }
+
+        /* 设置表单（与之前相同） */
         .settings-form {
             max-width: 480px;
             background: var(--card-bg);
@@ -239,7 +254,7 @@
 </head>
 <body>
 
-    <!-- 侧边栏 -->
+    <!-- 侧边栏（与之前相同，略作调整） -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo-icon">
@@ -296,18 +311,15 @@
         </div>
     </aside>
 
-    <!-- 折叠按钮 -->
     <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="展开/收起侧边栏">
         <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
     </button>
 
-    <!-- 主内容区 -->
     <main class="main-content" id="mainContent">
-        <!-- 首页视图 -->
         <div class="view active" id="view-home">
             <div class="top-bar">
                 <div class="search-box">
-                    <input type="text" id="homeSearchInput" placeholder="搜索网址、标签或描述..." />
+                    <input type="text" id="homeSearchInput" placeholder="搜索标题、描述或短ID..." />
                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                 </div>
                 <button class="add-card-btn" id="addCardBtn" onclick="location.href='admin-edit.html'">
@@ -318,7 +330,6 @@
             <div class="card-list" id="homeCardList"></div>
         </div>
 
-        <!-- 收藏视图 -->
         <div class="view" id="view-favorites">
             <div class="top-bar">
                 <div class="search-box">
@@ -329,7 +340,6 @@
             <div class="card-list" id="favoritesCardList"></div>
         </div>
 
-        <!-- 设置视图 -->
         <div class="view" id="view-settings">
             <h2 style="margin-bottom:20px;">设置</h2>
             <div class="settings-form">
@@ -361,15 +371,14 @@
             let currentUser = null;
             let userFavorites = [];
 
-            // ========== 全局函数 ==========
-            function toggleSidebar() {
+            window.toggleSidebar = function() {
                 document.getElementById('sidebar').classList.toggle('collapsed');
                 document.getElementById('mainContent').classList.toggle('expanded');
-            }
-            async function logout() {
+            };
+            window.logout = async function() {
                 try { if (supabase) await supabase.auth.signOut(); } catch(e) {}
                 window.location.href = 'index.html';
-            }
+            };
 
             function updateUserUI(user) {
                 const avatar = document.getElementById('userAvatar');
@@ -396,7 +405,6 @@
                         avatar.style.backgroundImage = 'none';
                         avatar.textContent = isAnonymous ? '游' : name.charAt(0).toUpperCase();
                     }
-
                     if (isAnonymous) {
                         favoritesNav.style.display = 'none';
                         feedbackNav.style.display = 'none';
@@ -428,7 +436,6 @@
                 }
             }
 
-            // 收藏加载
             async function loadFavorites() {
                 if (!supabase || !currentUser || currentUser.is_anonymous) return [];
                 try {
@@ -438,7 +445,6 @@
                 } catch (e) { console.error(e); return []; }
             }
 
-            // 切换收藏
             async function toggleFavorite(websiteId) {
                 if (!currentUser || currentUser.is_anonymous) {
                     showToast('游客无法收藏，请登录后操作');
@@ -458,6 +464,7 @@
                     if (activeView === 'view-favorites') loadFavoriteWebsites();
                 } catch (e) { console.error(e); showToast('操作失败'); }
             }
+            window.toggleFavorite = toggleFavorite;
 
             function renderCards(data, containerId, favoritesSet, isAdmin) {
                 const container = document.getElementById(containerId);
@@ -466,9 +473,12 @@
                     return;
                 }
                 container.innerHTML = data.map(item => {
-                    let domain = '';
-                    try { if (item.url) domain = new URL(item.url).hostname; } catch(e) {}
-                    const isFav = favoritesSet.has(item.id);
+                    const shortId = item.short_id || '无ID';
+                    const favButton = (!isAdmin && !currentUser?.is_anonymous) ? `
+                        <button class="card-action-btn fav-btn ${favoritesSet.has(item.id) ? 'active' : ''}" onclick="toggleFavorite('${item.id}')" title="收藏">
+                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </button>
+                    ` : '';
                     const adminActions = isAdmin ? `
                         <button class="card-action-btn" onclick="location.href='admin-edit.html?id=${item.id}'" title="编辑">
                             <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83zM3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
@@ -477,27 +487,20 @@
                             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                         </button>
                     ` : '';
-                    const favButton = (!isAdmin && !currentUser?.is_anonymous) ? `
-                        <button class="card-action-btn fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${item.id}')" title="收藏">
-                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        </button>
-                    ` : '';
                     return `
                     <div class="url-card">
                         <div class="card-header">
                             <div>
-                                <div class="card-title"><a href="detail.html?id=${item.id}">${item.title}</a></div>
-                                ${domain ? `<div class="card-domain">${domain}</div>` : ''}
+                                <div class="card-title"><a href="detail.html?id=${shortId}" onclick="event.preventDefault(); window.location.href='detail.html?id=${shortId}'">${item.title}</a></div>
+                                ${item.url ? `<div class="card-domain">${new URL(item.url).hostname}</div>` : ''}
                             </div>
                             <div class="card-actions">
+                                <span class="card-short-id">#${shortId}</span>
                                 ${adminActions}
                                 ${favButton}
                             </div>
                         </div>
                         <div class="card-description">${item.description || ''}</div>
-                        <div class="card-footer">
-                            <div class="card-tags"></div>
-                        </div>
                     </div>
                     `;
                 }).join('');
@@ -525,7 +528,6 @@
                 } catch (e) { console.error(e); container.innerHTML = '<div class="empty-state">加载失败</div>'; }
             }
 
-            // 设置功能
             async function loadSettings() {
                 if (!currentUser || currentUser.is_anonymous) {
                     document.getElementById('nicknameInput').value = '';
@@ -576,7 +578,6 @@
                 } catch (err) { console.error(err); showToast('更新失败'); }
             });
 
-            // 视图切换
             function switchView(viewName) {
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
                 document.getElementById(`view-${viewName}`).classList.add('active');
@@ -591,11 +592,11 @@
                 btn.addEventListener('click', () => switchView(btn.dataset.view));
             });
 
-            // 搜索过滤
             document.getElementById('homeSearchInput').addEventListener('input', function() {
                 const query = this.value.trim().toLowerCase();
                 document.querySelectorAll('#homeCardList .url-card').forEach(card => {
-                    card.style.display = card.textContent.toLowerCase().includes(query) ? '' : 'none';
+                    const text = card.textContent.toLowerCase();
+                    card.style.display = text.includes(query) ? '' : 'none';
                 });
             });
             document.getElementById('favoritesSearchInput').addEventListener('input', function() {
@@ -613,11 +614,6 @@
                 setTimeout(() => toast.remove(), 2000);
             }
 
-            // 全局挂载
-            window.toggleSidebar = toggleSidebar;
-            window.logout = logout;
-            window.switchView = switchView;
-            window.toggleFavorite = toggleFavorite; // 使内联onclick可用
             window.deleteCard = async function(cardId) {
                 if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
                 if (!confirm('确定删除该卡片吗？此操作不可恢复。')) return;
@@ -632,7 +628,6 @@
                 }
             };
 
-            // 初始化
             async function init() {
                 if (!supabase) { window.location.href = 'index.html'; return; }
                 const { data: { user } } = await supabase.auth.getUser();
