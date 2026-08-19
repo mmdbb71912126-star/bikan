@@ -366,7 +366,7 @@
         }
         .toast.show { opacity: 1; }
 
-        /* 草稿列表 */
+        /* 草稿列表项样式 */
         .draft-list-item {
             display: flex;
             align-items: center;
@@ -844,7 +844,7 @@
                 }
             }
 
-            // 导入草稿功能
+            // ========== 导入草稿功能 ==========
             function loadDraftList() {
                 const container = document.getElementById('draftListContainer');
                 const drafts = [];
@@ -896,6 +896,8 @@
                     showToast('导入失败');
                 }
             }
+            // 将 importDraftById 挂载到全局
+            window.importDraftById = importDraftById;
 
             // 事件绑定
             document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
