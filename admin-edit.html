@@ -621,7 +621,7 @@
                     case 'image': insertion = `@image[图片描述](https:// =50%)`; cursorOffset = 16; break;
                     case 'video': insertion = `@video[视频描述](https:// =50%)`; cursorOffset = 16; break;
                     case 'audio': insertion = `@audio[音频描述](https://)`; cursorOffset = 16; break;
-                    case 'file': insertion = `@file[文件描述](https://)`; cursorOffset = 16; break; // 新增文件按钮
+                    case 'file': insertion = `@file[文件描述](https://)`; cursorOffset = 16; break;
                     case 'quote': insertion = `> ${selectedText || '引用内容'}`; cursorOffset = insertion.length; break;
                     case 'code': insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``; cursorOffset = 3; break;
                     case 'list-ul': insertion = `\n- ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
@@ -658,25 +658,16 @@
                     const url = URL.createObjectURL(record.file);
                     return `<audio controls src="${url}"></audio>`;
                 });
-                // 处理文件
+                // 处理文件（单行 HTML，避免被 markdown 解析为代码块）
                 markdown = markdown.replace(/@file\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
                     const url = URL.createObjectURL(record.file);
                     const size = formatFileSize(record.size);
                     const type = record.type || '未知';
-                    return `
-                    <div class="file-card-preview">
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
-                        <div class="file-card-info">
-                            <div class="file-card-name">${alt || record.name}</div>
-                            <div class="file-card-meta">${size} · ${type}</div>
-                        </div>
-                        <a class="file-card-download" href="${url}" download="${record.name}">下载</a>
-                    </div>
-                    `;
+                    return `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${alt || record.name}</div><div class="file-card-meta">${size} · ${type}</div></div><a class="file-card-download" href="${url}" download="${record.name}">下载</a></div>`;
                 });
-                // 处理标准 Markdown 图片（兼容）
+                // 处理标准 Markdown 图片
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (m, alt, url) => `<img src="${url}" alt="${alt}" />`);
                 return markdown;
             }
@@ -864,7 +855,6 @@
                     const files = await idbGetAll();
                     files.forEach(record => { idMap[record.id] = record; });
 
-                    // 收集所有引用 ID（包括 file 类型）
                     const allRefs = content.matchAll(/@(image|video|audio|file)\[([^\]]*)\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g);
                     const uploadMap = {};
 
@@ -912,7 +902,6 @@
                         };
                     }
 
-                    // 替换内容
                     let finalContent = content;
                     for (const [id, info] of Object.entries(uploadMap)) {
                         const widthSuffix = info.width ? ` =${info.width}%` : '';
@@ -923,16 +912,7 @@
                         } else if (info.type === 'audio') {
                             finalContent = finalContent.replaceAll(new RegExp(`@audio\\[([^\\]]*)\\]\\(${id}\\)`, 'g'), `@audio[$1](${info.url})`);
                         } else if (info.type === 'file') {
-                            const fileCard = `
-                            <div class="file-card-preview">
-                                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
-                                <div class="file-card-info">
-                                    <div class="file-card-name">${info.name}</div>
-                                    <div class="file-card-meta">${formatFileSize(info.size)} · ${info.fileType || '未知'}</div>
-                                </div>
-                                <a class="file-card-download" href="${info.url}" download="${info.name}">下载</a>
-                            </div>
-                            `;
+                            const fileCard = `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${info.name}</div><div class="file-card-meta">${formatFileSize(info.size)} · ${info.fileType || '未知'}</div></div><a class="file-card-download" href="${info.url}" download="${info.name}">下载</a></div>`;
                             finalContent = finalContent.replaceAll(new RegExp(`@file\\[([^\\]]*)\\]\\(${id}\\)`, 'g'), fileCard);
                         }
                     }
@@ -993,7 +973,6 @@
                     await loadCardData(cardId);
                 }
 
-                // 使用事件委托绑定工具栏按钮
                 const toolbar = document.getElementById('toolbar');
                 toolbar.addEventListener('click', (e) => {
                     const btn = e.target.closest('.toolbar-btn[data-action]');
