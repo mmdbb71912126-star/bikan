@@ -227,6 +227,38 @@
             white-space: nowrap; flex-shrink: 0;
         }
         .preview-area a.file-card-download { color: #0f0c29 !important; }
+
+        /* 上传进度条 */
+        .upload-progress-container {
+            display: none;
+            padding: 4px 16px 6px 16px;
+            background: rgba(0,0,0,0.1);
+        }
+        .upload-progress-flex {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .upload-progress-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .upload-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .upload-progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-width: 40px;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -273,6 +305,15 @@
                 <button class="toolbar-btn" id="clearMediaBtn" title="清空素材库" onclick="event.stopPropagation(); clearMediaLibrary()">
                     <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
+            </div>
+        </div>
+        <!-- 上传进度条 -->
+        <div class="upload-progress-container" id="uploadProgressContainer">
+            <div class="upload-progress-flex">
+                <div class="upload-progress-bar-bg">
+                    <div class="upload-progress-bar" id="uploadProgressBar"></div>
+                </div>
+                <span class="upload-progress-text" id="uploadProgressText">0%</span>
             </div>
         </div>
         <div class="media-library-body" id="mediaLibraryBody">
@@ -547,13 +588,12 @@
                 } catch (err) {
                     console.error('检查引用失败:', err);
                     showToast('检查引用状态失败，请稍后重试');
-                    return true; // 保守起见，阻止删除
+                    return true;
                 }
             }
 
             async function deleteMediaFile(id) {
                 try {
-                    // 获取文件记录
                     const allFiles = await idbGetAll(storeName);
                     const record = allFiles.find(r => r.id === id);
                     if (!record) {
@@ -561,17 +601,14 @@
                         return;
                     }
 
-                    // 检查是否被引用
                     const referenced = await isFileReferenced(id);
                     if (referenced) {
                         showToast('该文件已被帖子引用，请先删除相关帖子或从帖子中移除该文件语法');
                         return;
                     }
 
-                    // 确认删除
                     if (!confirm('确定删除该文件吗？此操作将同时删除云存储中的文件，且不可恢复。')) return;
 
-                    // 删除 Supabase Storage 文件
                     if (record.url) {
                         const path = getPathFromUrl(record.url);
                         if (path) {
@@ -586,9 +623,7 @@
                         }
                     }
 
-                    // 删除 IndexedDB 素材库记录
                     await idbDelete(storeName, id);
-                    // 删除草稿备份
                     await idbDelete(draftAssetStoreName, id);
 
                     renderMediaLibrary();
@@ -600,7 +635,6 @@
             }
 
             async function clearMediaLibrary() {
-                // 清空所有未被引用的文件
                 const files = await idbGetAll(storeName);
                 const unreferenced = [];
                 for (const record of files) {
@@ -628,6 +662,36 @@
                 showToast('已清空素材库中未被引用的文件');
             }
 
+            // 使用 XHR 上传文件，带进度回调
+            function uploadFileWithProgress(bucket, path, file, onProgress) {
+                return new Promise(async (resolve, reject) => {
+                    const session = await supabase.auth.getSession();
+                    const accessToken = session.data.session?.access_token;
+                    if (!accessToken) {
+                        reject(new Error('未获取到访问令牌'));
+                        return;
+                    }
+                    const xhr = new XMLHttpRequest();
+                    const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
+                    xhr.open('POST', url);
+                    xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable && onProgress) {
+                            onProgress(Math.round((e.loaded / e.total) * 100));
+                        }
+                    };
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve(JSON.parse(xhr.responseText));
+                        } else {
+                            reject(new Error(xhr.responseText || '上传失败'));
+                        }
+                    };
+                    xhr.onerror = () => reject(new Error('网络错误'));
+                    xhr.send(file);
+                });
+            }
+
             async function importMedia() {
                 document.getElementById('mediaFileInput').click();
             }
@@ -635,31 +699,42 @@
             document.getElementById('mediaFileInput').addEventListener('change', async (e) => {
                 const files = Array.from(e.target.files);
                 if (files.length === 0) return;
-                for (const file of files) {
+
+                const progressContainer = document.getElementById('uploadProgressContainer');
+                const progressBar = document.getElementById('uploadProgressBar');
+                const progressText = document.getElementById('uploadProgressText');
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
+
+                let completed = 0;
+                let successCount = 0;
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+
                     if (file.size > MAX_FILE_SIZE) {
                         showToast(`文件 ${file.name} 超过 100MB，已跳过`);
+                        completed++;
                         continue;
                     }
+
+                    const id = generateShortId();
+                    const fileExt = file.name.split('.').pop() || 'bin';
+                    const path = `${currentUser.id}/${Date.now()}_${id}.${fileExt}`;
+
                     try {
-                        const id = generateShortId();
-                        const fileExt = file.name.split('.').pop() || 'bin';
-                        const path = `${currentUser.id}/${Date.now()}_${id}.${fileExt}`;
-                        const { error: uploadError } = await supabase.storage
-                            .from('media')
-                            .upload(path, file);
-                        if (uploadError) {
-                            console.error('上传失败:', uploadError);
-                            showToast(`文件 ${file.name} 上传失败：${uploadError.message}`);
-                            continue;
-                        }
+                        await uploadFileWithProgress('media', path, file, (percent) => {
+                            const totalProgress = ((completed + percent / 100) / files.length) * 100;
+                            progressBar.style.width = totalProgress + '%';
+                            progressText.textContent = Math.round(totalProgress) + '%';
+                        });
+
                         const { data: urlData } = supabase.storage
                             .from('media')
                             .getPublicUrl(path);
-                        const publicUrl = urlData?.publicUrl;
-                        if (!publicUrl) {
-                            showToast('获取文件 URL 失败');
-                            continue;
-                        }
+                        const publicUrl = urlData?.publicUrl || `${SUPABASE_URL}/storage/v1/object/public/media/${path}`;
+
                         const record = {
                             id: id,
                             file: file,
@@ -669,13 +744,21 @@
                             url: publicUrl
                         };
                         await idbAdd(storeName, id, record);
+                        successCount++;
                     } catch (err) {
-                        console.error('上传异常:', err);
-                        showToast(`文件 ${file.name} 上传异常`);
+                        console.error('上传失败:', err);
+                        showToast(`文件 ${file.name} 上传失败：${err.message}`);
                     }
+
+                    completed++;
+                    const totalProgress = (completed / files.length) * 100;
+                    progressBar.style.width = totalProgress + '%';
+                    progressText.textContent = Math.round(totalProgress) + '%';
                 }
-                renderMediaLibrary();
-                showToast(`已导入 ${files.length} 个文件`);
+
+                progressContainer.style.display = 'none';
+                await renderMediaLibrary();
+                showToast(`已成功导入 ${successCount} 个文件`);
                 e.target.value = '';
             });
 
