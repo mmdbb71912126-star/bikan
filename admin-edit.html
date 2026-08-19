@@ -115,7 +115,7 @@
         .media-file-item {
             display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06);
             border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: background var(--transition);
-            max-width: 200px; height: 50px;
+            max-width: 250px; height: 50px;
         }
         .media-file-item:hover { background: rgba(255,255,255,0.1); }
         .media-file-item.dragging { opacity: 0.5; }
@@ -210,6 +210,21 @@
         }
         .draft-delete-btn:hover { color: var(--error); }
         .draft-delete-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        /* 文件卡片预览样式 */
+        .file-card-preview {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border: 1px solid var(--card-border); border-radius: 8px;
+            background: rgba(255,255,255,0.04); margin: 8px 0;
+        }
+        .file-card-preview svg { width: 32px; height: 32px; fill: var(--primary); }
+        .file-card-info { flex: 1; }
+        .file-card-name { font-weight: 600; font-size: 14px; }
+        .file-card-meta { font-size: 12px; color: var(--text-muted); }
+        .file-card-download {
+            padding: 6px 12px; background: var(--primary); color: #0f0c29;
+            border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -221,6 +236,7 @@
             <button class="toolbar-btn" data-action="bold" title="加粗"><svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.6-1.76 1.6-2.98C17.2 5.6 15.6 4 13.5 4H6v16h8.5c2.3 0 4.2-1.8 4.2-4.1 0-1.8-1.1-3.3-2.8-3.9zM9 6.5h3.5c1.1 0 2 .9 2 2s-.9 2-2 2H9v-4zm5.5 11H9v-4h5.5c1.2 0 2.2.9 2.2 2s-1 2-2.2 2z"/></svg></button>
             <button class="toolbar-btn" data-action="italic" title="斜体"><svg viewBox="0 0 24 24"><path d="M10 4h4l4 16h-2l-1-4H9l-1 4H6l4-16z"/></svg></button>
             <button class="toolbar-btn" data-action="link" title="链接"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
+            <!-- 图片按钮：语法改为 @image[图片描述](https:// =50%) -->
             <button class="toolbar-btn" data-action="image" title="图片（默认宽度50%）"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
             <button class="toolbar-btn" data-action="video" title="视频（默认宽度50%）"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
             <button class="toolbar-btn" data-action="audio" title="音频"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></button>
@@ -319,13 +335,14 @@
     </div>
 
     <div class="toast" id="toast"></div>
-    <input type="file" id="mediaFileInput" multiple style="display:none" accept="image/*,video/*,audio/*" />
+    <input type="file" id="mediaFileInput" multiple style="display:none">
 
     <script>
         (function() {
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
             const ADMIN_EMAIL = '3948677391@qq.com';
+            const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
             let supabase;
             try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
@@ -359,7 +376,7 @@
                 return new Promise((resolve, reject) => {
                     const transaction = db.transaction([storeName], 'readwrite');
                     const store = transaction.objectStore(storeName);
-                    const record = { id, file, type: file.type, name: file.name };
+                    const record = { id, file, type: file.type, name: file.name, size: file.size };
                     store.put(record);
                     transaction.oncomplete = () => resolve();
                     transaction.onerror = (e) => reject(e.target.error);
@@ -404,6 +421,19 @@
                 return Math.random().toString(36).substring(2, 8);
             }
 
+            function fileTypeCategory(fileType) {
+                if (fileType.startsWith('image/')) return 'image';
+                if (fileType.startsWith('video/')) return 'video';
+                if (fileType.startsWith('audio/')) return 'audio';
+                return 'file';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+
             async function renderMediaLibrary() {
                 const files = await idbGetAll();
                 const container = document.getElementById('mediaLibraryBody');
@@ -417,23 +447,20 @@
                     item.className = 'media-file-item';
                     item.draggable = true;
                     item.dataset.fileId = record.id;
-                    item.dataset.fileType = record.type.split('/')[0];
+                    item.dataset.fileType = record.type;
 
+                    const category = fileTypeCategory(record.type);
                     const thumb = document.createElement('div');
                     thumb.className = 'media-file-thumb';
-                    if (record.type.startsWith('image/')) {
+                    if (category === 'image') {
                         const img = document.createElement('img');
                         img.src = URL.createObjectURL(record.file);
                         img.style.width = '100%';
                         img.style.height = '100%';
                         img.style.objectFit = 'cover';
                         thumb.appendChild(img);
-                    } else if (record.type.startsWith('video/')) {
-                        thumb.textContent = 'VID';
-                    } else if (record.type.startsWith('audio/')) {
-                        thumb.textContent = 'AUD';
                     } else {
-                        thumb.textContent = 'FILE';
+                        thumb.textContent = category === 'video' ? 'VID' : category === 'audio' ? 'AUD' : 'FILE';
                     }
 
                     const info = document.createElement('div');
@@ -441,11 +468,11 @@
                     const nameDiv = document.createElement('div');
                     nameDiv.className = 'media-file-name';
                     nameDiv.textContent = record.name;
-                    const idDiv = document.createElement('div');
-                    idDiv.className = 'media-file-id';
-                    idDiv.textContent = `ID: ${record.id}`;
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'media-file-id';
+                    metaDiv.textContent = `${formatFileSize(record.size)} · ${record.type || '未知'}`;
                     info.appendChild(nameDiv);
-                    info.appendChild(idDiv);
+                    info.appendChild(metaDiv);
 
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'media-file-delete';
@@ -461,11 +488,11 @@
 
                     item.addEventListener('click', (e) => {
                         if (e.target.closest('.media-file-delete')) return;
-                        const fileType = record.type.split('/')[0];
-                        let syntax = `@id[${fileType}:${record.id}]`;
-                        if (fileType === 'image' || fileType === 'video') {
-                            syntax = `@id[${fileType}:${record.id} =50%]`;
-                        }
+                        let syntax;
+                        if (category === 'image') syntax = `@image[图片描述](${record.id} =50%)`;
+                        else if (category === 'video') syntax = `@video[视频描述](${record.id} =50%)`;
+                        else if (category === 'audio') syntax = `@audio[音频描述](${record.id})`;
+                        else syntax = `@file[描述](${record.id})`;
                         navigator.clipboard.writeText(syntax).then(() => {
                             showToast(`已复制：${syntax}`);
                         }).catch(err => {
@@ -475,11 +502,11 @@
                     });
 
                     item.addEventListener('dragstart', (e) => {
-                        const fileType = record.type.split('/')[0];
-                        let syntax = `@id[${fileType}:${record.id}]`;
-                        if (fileType === 'image' || fileType === 'video') {
-                            syntax = `@id[${fileType}:${record.id} =50%]`;
-                        }
+                        let syntax;
+                        if (category === 'image') syntax = `@image[图片描述](${record.id} =50%)`;
+                        else if (category === 'video') syntax = `@video[视频描述](${record.id} =50%)`;
+                        else if (category === 'audio') syntax = `@audio[音频描述](${record.id})`;
+                        else syntax = `@file[描述](${record.id})`;
                         e.dataTransfer.setData('text/plain', syntax);
                         e.dataTransfer.effectAllowed = 'copy';
                         item.classList.add('dragging');
@@ -512,8 +539,8 @@
                 const files = Array.from(e.target.files);
                 if (files.length === 0) return;
                 for (const file of files) {
-                    if (!['image/', 'video/', 'audio/'].some(prefix => file.type.startsWith(prefix))) {
-                        showToast(`不支持的文件类型: ${file.name}`);
+                    if (file.size > MAX_FILE_SIZE) {
+                        showToast(`文件 ${file.name} 超过 100MB，已跳过`);
                         continue;
                     }
                     const id = generateShortId();
@@ -589,9 +616,9 @@
                     case 'bold': insertion = `**${selectedText || '加粗文本'}**`; cursorOffset = 2; break;
                     case 'italic': insertion = `*${selectedText || '斜体文本'}*`; cursorOffset = 1; break;
                     case 'link': insertion = `[${selectedText || '链接文字'}](https://)`; cursorOffset = insertion.length - 1; break;
-                    case 'image': insertion = `![图片描述](https:// =50%)`; cursorOffset = 6; break;
-                    case 'video': insertion = `@video[视频描述](https:// =50%)`; cursorOffset = 10; break;
-                    case 'audio': insertion = `@audio[音频描述](https://)`; cursorOffset = 10; break;
+                    case 'image': insertion = `@image[图片描述](https:// =50%)`; cursorOffset = 16; break; // 与视频相同格式
+                    case 'video': insertion = `@video[视频描述](https:// =50%)`; cursorOffset = 16; break;
+                    case 'audio': insertion = `@audio[音频描述](https://)`; cursorOffset = 16; break;
                     case 'quote': insertion = `> ${selectedText || '引用内容'}`; cursorOffset = insertion.length; break;
                     case 'code': insertion = `\`\`\`\n${selectedText || '代码'}\n\`\`\``; cursorOffset = 3; break;
                     case 'list-ul': insertion = `\n- ${selectedText || '列表项'}`; cursorOffset = insertion.length; break;
@@ -605,23 +632,48 @@
             }
 
             function preprocessMarkdown(markdown, idMap) {
-                markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
+                // 处理图片语法：@image[描述](ID =50%)
+                markdown = markdown.replace(/@image\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
                     const url = URL.createObjectURL(record.file);
                     const widthStyle = width ? `${width}%` : '100%';
-                    if (type === 'image') {
-                        return `<img src="${url}" alt="${record.name}" style="max-width: ${widthStyle}; border-radius: 8px;" />`;
-                    } else if (type === 'video') {
-                        return `<video controls src="${url}" style="max-width: ${widthStyle}; border-radius: 8px;"></video>`;
-                    } else if (type === 'audio') {
-                        return `<audio controls src="${url}"></audio>`;
-                    }
-                    return match;
+                    return `<img src="${url}" alt="${alt}" style="max-width: ${widthStyle}; border-radius: 8px;" />`;
                 });
-                markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (m, alt, url, width) => `<img src="${url}" width="${width}%" alt="${alt}" />`);
-                markdown = markdown.replace(/@video\[([^\]]*)\]\(([^)]+?)\s*=(\d+)%\)/g, (m, alt, url, width) => `<video width="${width}%" controls src="${url}">${alt}</video>`);
-                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([^)]+?)\)/g, (m, alt, url) => `<audio controls src="${url}"></audio>`);
+                // 处理视频语法：@video[描述](ID =50%)
+                markdown = markdown.replace(/@video\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
+                    const record = idMap[id];
+                    if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
+                    const url = URL.createObjectURL(record.file);
+                    const widthStyle = width ? `${width}%` : '100%';
+                    return `<video controls src="${url}" style="max-width: ${widthStyle}; border-radius: 8px;"></video>`;
+                });
+                // 处理音频语法：@audio[描述](ID)
+                markdown = markdown.replace(/@audio\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
+                    const record = idMap[id];
+                    if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
+                    const url = URL.createObjectURL(record.file);
+                    return `<audio controls src="${url}"></audio>`;
+                });
+                // 处理文件语法：@file[描述](ID) -> 文件卡片
+                markdown = markdown.replace(/@file\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
+                    const record = idMap[id];
+                    if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
+                    const url = URL.createObjectURL(record.file);
+                    const size = formatFileSize(record.size);
+                    const type = record.type || '未知';
+                    return `
+                    <div class="file-card-preview">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
+                        <div class="file-card-info">
+                            <div class="file-card-name">${alt || record.name}</div>
+                            <div class="file-card-meta">${size} · ${type}</div>
+                        </div>
+                        <a class="file-card-download" href="${url}" download="${record.name}">下载</a>
+                    </div>
+                    `;
+                });
+                // 处理标准 Markdown 图片（如果有）
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (m, alt, url) => `<img src="${url}" alt="${alt}" />`);
                 return markdown;
             }
@@ -809,13 +861,15 @@
                     const files = await idbGetAll();
                     files.forEach(record => { idMap[record.id] = record; });
 
-                    const idRefs = content.matchAll(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g);
+                    // 收集所有引用 ID
+                    const allRefs = content.matchAll(/@(image|video|audio|file)\[([^\]]*)\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g);
                     const uploadMap = {};
 
-                    for (const match of idRefs) {
+                    for (const match of allRefs) {
                         const type = match[1];
-                        const id = match[2];
-                        const width = match[3] || null;
+                        const alt = match[2];
+                        const id = match[3];
+                        const width = match[4] || null;
                         if (!idMap[id]) {
                             showToast(`素材库中不存在 ${id}，请检查`);
                             return;
@@ -845,18 +899,39 @@
                             return;
                         }
                         console.log('公共 URL:', publicUrl);
-                        uploadMap[id] = { url: publicUrl, type, width };
+                        uploadMap[id] = {
+                            url: publicUrl,
+                            type: type,
+                            name: file.name,
+                            size: file.size,
+                            fileType: file.type,
+                            width: width
+                        };
                     }
 
+                    // 替换语法
                     let finalContent = content;
                     for (const [id, info] of Object.entries(uploadMap)) {
                         const widthSuffix = info.width ? ` =${info.width}%` : '';
                         if (info.type === 'image') {
-                            finalContent = finalContent.replaceAll(new RegExp(`@id\\[image:${id}\\s*(?:=\\d+%)?\\]`, 'g'), `![图片](${info.url}${widthSuffix})`);
+                            finalContent = finalContent.replaceAll(new RegExp(`@image\\[([^\\]]*)\\]\\(${id}\\s*(?:=\\d+%)?\\)`, 'g'), `@image[$1](${info.url}${widthSuffix})`);
                         } else if (info.type === 'video') {
-                            finalContent = finalContent.replaceAll(new RegExp(`@id\\[video:${id}\\s*(?:=\\d+%)?\\]`, 'g'), `@video[视频](${info.url}${widthSuffix})`);
+                            finalContent = finalContent.replaceAll(new RegExp(`@video\\[([^\\]]*)\\]\\(${id}\\s*(?:=\\d+%)?\\)`, 'g'), `@video[$1](${info.url}${widthSuffix})`);
                         } else if (info.type === 'audio') {
-                            finalContent = finalContent.replaceAll(new RegExp(`@id\\[audio:${id}\\s*(?:=\\d+%)?\\]`, 'g'), `@audio[音频](${info.url})`);
+                            finalContent = finalContent.replaceAll(new RegExp(`@audio\\[([^\\]]*)\\]\\(${id}\\)`, 'g'), `@audio[$1](${info.url})`);
+                        } else if (info.type === 'file') {
+                            // 文件卡片 HTML
+                            const fileCard = `
+                            <div class="file-card-preview">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
+                                <div class="file-card-info">
+                                    <div class="file-card-name">${info.name}</div>
+                                    <div class="file-card-meta">${formatFileSize(info.size)} · ${info.fileType || '未知'}</div>
+                                </div>
+                                <a class="file-card-download" href="${info.url}" download="${info.name}">下载</a>
+                            </div>
+                            `;
+                            finalContent = finalContent.replaceAll(new RegExp(`@file\\[([^\\]]*)\\]\\(${id}\\)`, 'g'), fileCard);
                         }
                     }
 
@@ -916,7 +991,7 @@
                     await loadCardData(cardId);
                 }
 
-                // 使用事件委托绑定工具栏按钮（确保生效）
+                // 使用事件委托绑定工具栏按钮
                 const toolbar = document.getElementById('toolbar');
                 toolbar.addEventListener('click', (e) => {
                     const btn = e.target.closest('.toolbar-btn[data-action]');
@@ -934,7 +1009,7 @@
                 document.getElementById('editor').addEventListener('drop', (e) => {
                     e.preventDefault();
                     const syntax = e.dataTransfer.getData('text/plain');
-                    if (syntax.startsWith('@id[')) {
+                    if (syntax.startsWith('@')) {
                         const editor = document.getElementById('editor');
                         const start = editor.selectionStart;
                         const end = editor.selectionEnd;
