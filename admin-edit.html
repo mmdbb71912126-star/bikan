@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
+        /* 样式保持不变，此处省略以避免重复，完整样式在之前的版本中已包含 */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -451,7 +452,7 @@
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
             const ADMIN_EMAIL = '3948677391@qq.com';
-            const MAX_FILE_SIZE = 100 * 1024 * 1024;
+            const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
             let supabase;
             try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
@@ -635,12 +636,14 @@
                 });
             }
 
+            // 从公共 URL 提取 Storage 路径
             function getPathFromUrl(url) {
                 const regex = /\/storage\/v1\/object\/public\/media\/(.+)/;
                 const match = url.match(regex);
                 return match ? match[1] : null;
             }
 
+            // 检查文件是否被帖子引用
             async function isFileReferenced(fileId) {
                 try {
                     const { data, error } = await supabase
@@ -731,6 +734,7 @@
                 showToast('已清空素材库中未被引用的文件');
             }
 
+            // 使用 XHR 上传文件，带进度回调
             function uploadFileWithProgress(bucket, path, file, onProgress) {
                 return new Promise(async (resolve, reject) => {
                     const session = await supabase.auth.getSession();
@@ -864,7 +868,7 @@
                 return user;
             }
 
-            // 从 URL 下载文件并保存到素材库，返回 record
+            // 从 URL 下载文件并保存到 IndexedDB 素材库，返回 record
             async function downloadAndStoreFile(url, name, type, size) {
                 try {
                     const response = await fetch(url);
@@ -888,7 +892,7 @@
                 }
             }
 
-            // 还原长 URL 为短 ID 语法
+            // 还原长 URL 为短 ID 语法，并确保素材库中有对应文件
             async function restoreContentWithShortIds(content, fileMap) {
                 let restoredContent = content;
                 const regex = /@(image|video|audio|file)\[([^\]]*)\]\(([^)]+?)(?:\s*=(\d+)%)?\)/g;
@@ -904,6 +908,7 @@
                     });
                 }
 
+                // 创建 URL -> file_map 索引
                 const urlToFileMap = {};
                 for (const [id, meta] of Object.entries(fileMap || {})) {
                     if (meta && meta.url) {
@@ -914,6 +919,7 @@
                 for (const item of matches) {
                     const meta = urlToFileMap[item.url];
                     if (!meta) {
+                        // file_map 中没有记录，尝试从 URL 下载
                         const record = await downloadAndStoreFile(item.url, '文件', 'application/octet-stream', 0);
                         if (record) {
                             const shortSyntax = `@${item.type}[${item.alt}](${record.id}${item.width ? ` =${item.width}%` : ''})`;
@@ -922,9 +928,11 @@
                         continue;
                     }
 
+                    // 检查素材库中是否已有该 ID
                     const existingFiles = await idbGetAll(storeName);
                     const exists = existingFiles.some(r => r.id === meta.id);
                     if (!exists) {
+                        // 从 URL 下载文件并存入素材库
                         const downloaded = await downloadAndStoreFile(meta.url, meta.name, meta.fileType || 'application/octet-stream', meta.size);
                         if (!downloaded) {
                             showToast(`无法恢复文件 ${meta.name}，将保留长 URL`);
@@ -932,6 +940,7 @@
                         }
                     }
 
+                    // 替换长 URL 为短 ID 语法
                     const shortSyntax = `@${item.type}[${item.alt}](${meta.id}${item.width ? ` =${item.width}%` : ''})`;
                     restoredContent = restoredContent.replace(item.full, shortSyntax);
                 }
@@ -1098,7 +1107,6 @@
                 if (!saved) return;
                 try {
                     const draft = JSON.parse(saved);
-                    // 恢复草稿引用的文件
                     if (draft.referencedFiles && Array.isArray(draft.referencedFiles)) {
                         for (const asset of draft.referencedFiles) {
                             const existing = await idbGetAll(storeName);
@@ -1144,6 +1152,7 @@
             window.importDraftById = importDraftById;
             window.deleteDraftById = deleteDraftById;
 
+            // ========== 收集引用的文件 ID ==========
             function collectReferencedIds(content) {
                 const ids = new Set();
                 const regex = /@(image|video|audio|file)\[[^\]]*\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g;
@@ -1396,47 +1405,89 @@
             }
             window.publishCard = publishCard;
 
-            // ========== 初始化 ==========
-            async function init() {
-                currentUser = await checkAdmin();
-                if (!currentUser) return;
-
-                await renderMediaLibrary();
-
-                const params = new URLSearchParams(window.location.search);
-                const cardId = params.get('id');
-                if (cardId) {
-                    await loadCardData(cardId);
+            // ========== 绑定事件 ==========
+            function bindEvents() {
+                // 工具栏按钮：事件委托
+                const toolbar = document.getElementById('toolbar');
+                if (toolbar) {
+                    toolbar.addEventListener('click', (e) => {
+                        const btn = e.target.closest('.toolbar-btn[data-action]');
+                        if (btn) {
+                            insertMarkdown(btn.dataset.action);
+                        }
+                    });
                 }
 
-                const toolbar = document.getElementById('toolbar');
-                toolbar.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.toolbar-btn[data-action]');
-                    if (btn) insertMarkdown(btn.dataset.action);
-                });
+                // 预览按钮
+                const previewBtn = document.getElementById('previewBtn');
+                if (previewBtn) {
+                    previewBtn.addEventListener('click', togglePreview);
+                }
 
-                document.getElementById('previewBtn').addEventListener('click', togglePreview);
-                document.getElementById('importDraftBtn').addEventListener('click', openDraftModal);
-                document.getElementById('editor').addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'copy';
-                });
-                document.getElementById('editor').addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const syntax = e.dataTransfer.getData('text/plain');
-                    if (syntax.startsWith('@')) {
-                        const editor = document.getElementById('editor');
-                        const start = editor.selectionStart;
-                        const end = editor.selectionEnd;
-                        const newValue = editor.value.substring(0, start) + syntax + editor.value.substring(end);
-                        editor.value = newValue;
-                        const pos = start + syntax.length;
-                        editor.focus();
-                        editor.setSelectionRange(pos, pos);
-                        showToast('已插入素材引用');
-                    }
-                });
+                // 导入草稿按钮
+                const importDraftBtn = document.getElementById('importDraftBtn');
+                if (importDraftBtn) {
+                    importDraftBtn.addEventListener('click', openDraftModal);
+                }
+
+                // 编辑器拖放
+                const editor = document.getElementById('editor');
+                if (editor) {
+                    editor.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'copy';
+                    });
+                    editor.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        const syntax = e.dataTransfer.getData('text/plain');
+                        if (syntax.startsWith('@')) {
+                            const start = editor.selectionStart;
+                            const end = editor.selectionEnd;
+                            const newValue = editor.value.substring(0, start) + syntax + editor.value.substring(end);
+                            editor.value = newValue;
+                            const pos = start + syntax.length;
+                            editor.focus();
+                            editor.setSelectionRange(pos, pos);
+                            showToast('已插入素材引用');
+                        }
+                    });
+                }
+
+                // 素材库导入文件按钮
+                const importMediaBtn = document.getElementById('importMediaBtn');
+                if (importMediaBtn) {
+                    importMediaBtn.addEventListener('click', importMedia);
+                }
+                // 清空素材库按钮
+                const clearMediaBtn = document.getElementById('clearMediaBtn');
+                if (clearMediaBtn) {
+                    clearMediaBtn.addEventListener('click', clearMediaLibrary);
+                }
             }
+
+            // ========== 初始化 ==========
+            async function init() {
+                try {
+                    currentUser = await checkAdmin();
+                    if (!currentUser) return;
+
+                    await renderMediaLibrary();
+
+                    const params = new URLSearchParams(window.location.search);
+                    const cardId = params.get('id');
+                    if (cardId) {
+                        await loadCardData(cardId);
+                    }
+                } catch (err) {
+                    console.error('初始化失败:', err);
+                    showToast('初始化失败，但工具栏仍可使用');
+                }
+            }
+
+            // 立即执行事件绑定，保证工具栏可用
+            bindEvents();
+
+            // 执行异步初始化
             init();
         })();
     </script>
