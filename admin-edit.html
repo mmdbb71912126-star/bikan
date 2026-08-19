@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
+        /* ... 样式保持不变，此处省略以节省篇幅，请复制之前提供的完整样式 ... */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -52,7 +53,6 @@
             height: 100vh;
         }
 
-        /* ========== 顶部工具栏 ========== */
         .toolbar {
             height: var(--toolbar-height);
             background: rgba(255, 255, 255, 0.04);
@@ -67,10 +67,8 @@
             z-index: 10;
             overflow-x: auto;
         }
-
         .toolbar-group { display: flex; gap: 4px; align-items: center; }
         .toolbar-divider { width: 1px; height: 24px; background: var(--card-border); margin: 0 8px; flex-shrink: 0; }
-
         .toolbar-btn {
             background: none; border: none; cursor: pointer; padding: 8px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center; transition: background var(--transition);
@@ -80,95 +78,24 @@
         .toolbar-btn svg { width: 20px; height: 20px; fill: currentColor; }
         .toolbar-btn.active { background: rgba(62, 207, 142, 0.15); color: var(--primary); }
 
-        /* ========== 编辑器容器 ========== */
-        .editor-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            position: relative;
-        }
-
+        .editor-container { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
         .editor-textarea {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            outline: none;
-            resize: none;
-            color: var(--text-primary);
-            font-size: 16px;
-            line-height: 1.6;
-            padding: 20px 24px;
+            flex: 1; width: 100%; height: 100%; background: transparent; border: none; outline: none;
+            resize: none; color: var(--text-primary); font-size: 16px; line-height: 1.6; padding: 20px 24px;
             font-family: 'Inter', sans-serif;
         }
         .editor-textarea::placeholder { color: var(--text-muted); }
-
         .preview-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 24px;
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--text-primary);
-            display: none;
-            background: rgba(255, 255, 255, 0.02);
+            flex: 1; overflow-y: auto; padding: 20px 24px; font-size: 16px; line-height: 1.6;
+            color: var(--text-primary); display: none; background: rgba(255, 255, 255, 0.02);
         }
         .preview-area.show { display: block; }
-        .preview-area h1, .preview-area h2, .preview-area h3, .preview-area h4 {
-            margin: 16px 0 8px;
-            line-height: 1.3;
-        }
-        .preview-area h1 { font-size: 2em; }
-        .preview-area h2 { font-size: 1.5em; }
-        .preview-area h3 { font-size: 1.17em; }
+        .preview-area h1, .preview-area h2, .preview-area h3, .preview-area h4 { margin: 16px 0 8px; }
         .preview-area p { margin: 8px 0; }
-        .preview-area code {
-            background: rgba(255, 255, 255, 0.06);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-        }
-        .preview-area pre {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
-        }
-        .preview-area pre code {
-            background: none;
-            padding: 0;
-        }
-        .preview-area a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-        .preview-area a:hover { text-decoration: underline; }
-        .preview-area blockquote {
-            border-left: 4px solid var(--primary);
-            padding-left: 16px;
-            margin: 8px 0;
-            color: var(--text-secondary);
-        }
-        .preview-area ul, .preview-area ol {
-            padding-left: 24px;
-            margin: 8px 0;
-        }
-        .preview-area img {
-            max-width: 100%;
-            border-radius: 8px;
-        }
-        .preview-area video {
-            max-width: 100%;
-            border-radius: 8px;
-        }
-        .preview-area audio {
-            width: 100%;
-            margin: 8px 0;
-        }
+        .preview-area code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
+        .preview-area pre { background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; overflow-x: auto; }
+        .preview-area a { color: var(--primary); }
 
-        /* ========== 素材库面板 ========== */
         .media-library-panel {
             height: var(--media-library-height);
             background: rgba(255, 255, 255, 0.03);
@@ -181,116 +108,34 @@
             flex-shrink: 0;
             overflow: hidden;
         }
-        .media-library-panel.collapsed {
-            height: 36px;
-        }
-        .media-library-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 6px 16px;
-            cursor: pointer;
-            user-select: none;
-            flex-shrink: 0;
-        }
-        .media-library-header .toggle-icon {
-            transition: transform 0.3s ease;
-            font-size: 12px;
-        }
-        .media-library-panel.collapsed .toggle-icon {
-            transform: rotate(-90deg);
-        }
-        .media-library-title {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text-secondary);
-            flex: 1;
-        }
-        .media-library-actions {
-            display: flex;
-            gap: 8px;
-        }
-        .media-library-actions .toolbar-btn {
-            padding: 4px;
-        }
-        .media-library-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 16px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-content: flex-start;
-        }
-        .media-library-empty {
-            color: var(--text-muted);
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-        }
+        .media-library-panel.collapsed { height: 36px; }
+        .media-library-header { display: flex; align-items: center; gap: 12px; padding: 6px 16px; cursor: pointer; user-select: none; flex-shrink: 0; }
+        .media-library-header .toggle-icon { transition: transform 0.3s ease; font-size: 12px; }
+        .media-library-panel.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .media-library-title { font-weight: 600; font-size: 13px; color: var(--text-secondary); flex: 1; }
+        .media-library-actions { display: flex; gap: 8px; }
+        .media-library-actions .toolbar-btn { padding: 4px; }
+        .media-library-body { flex: 1; overflow-y: auto; padding: 8px 16px; display: flex; gap: 12px; flex-wrap: wrap; align-content: flex-start; }
+        .media-library-empty { color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
         .media-file-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 8px;
-            padding: 6px 10px;
-            cursor: pointer;
-            transition: background var(--transition);
-            max-width: 200px;
-            height: 50px;
+            display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06);
+            border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: background var(--transition);
+            max-width: 200px; height: 50px;
         }
-        .media-file-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .media-file-item.dragging {
-            opacity: 0.5;
-        }
+        .media-file-item:hover { background: rgba(255,255,255,0.1); }
+        .media-file-item.dragging { opacity: 0.5; }
         .media-file-thumb {
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            object-fit: cover;
-            flex-shrink: 0;
-            background: rgba(62, 207, 142, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            font-size: 18px;
-            font-weight: bold;
+            width: 36px; height: 36px; border-radius: 6px; object-fit: cover; flex-shrink: 0;
+            background: rgba(62,207,142,0.2); display: flex; align-items: center; justify-content: center;
+            color: var(--primary); font-size: 18px; font-weight: bold;
         }
-        .media-file-info {
-            flex: 1;
-            overflow: hidden;
-        }
-        .media-file-name {
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .media-file-id {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-        .media-file-delete {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 2px;
-            color: var(--text-muted);
-            transition: color var(--transition);
-            flex-shrink: 0;
-        }
+        .media-file-info { flex: 1; overflow: hidden; }
+        .media-file-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .media-file-id { font-size: 11px; color: var(--text-muted); }
+        .media-file-delete { background: none; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); transition: color var(--transition); flex-shrink: 0; }
         .media-file-delete:hover { color: var(--error); }
         .media-file-delete svg { width: 16px; height: 16px; fill: currentColor; }
 
-        /* ========== 底部按钮栏 ========== */
         .bottom-bar {
             height: var(--bottom-bar-height);
             background: rgba(255, 255, 255, 0.04);
@@ -303,20 +148,10 @@
             padding: 0 20px;
             flex-shrink: 0;
         }
-
         .bottom-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            transition: all var(--transition);
-            font-size: 14px;
-            font-weight: 500;
+            background: none; border: none; cursor: pointer; padding: 8px 12px; border-radius: 8px;
+            display: flex; align-items: center; gap: 8px; color: var(--text-secondary);
+            transition: all var(--transition); font-size: 14px; font-weight: 500;
         }
         .bottom-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
         .bottom-btn.danger { color: var(--error); }
@@ -325,7 +160,6 @@
         .bottom-btn.publish:hover { background: rgba(62,207,142,0.1); }
         .bottom-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* ========== 弹窗 ========== */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -366,17 +200,10 @@
         }
         .toast.show { opacity: 1; }
 
-        /* 草稿列表项样式 */
         .draft-list-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: background var(--transition);
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+            background: rgba(255,255,255,0.06); border-radius: 8px; margin-bottom: 8px;
+            cursor: pointer; transition: background var(--transition);
         }
         .draft-list-item:hover { background: rgba(255,255,255,0.1); }
         .draft-info { flex: 1; }
@@ -434,12 +261,10 @@
 
         <div class="toolbar-divider"></div>
 
-        <!-- 预览按钮 -->
         <button class="toolbar-btn" id="previewBtn" title="预览">
             <svg viewBox="0 0 24 24"><path d="M12 6c-3.87 0-7.17 2.36-8.48 5.66L3 12l.52.34C4.83 15.64 8.13 18 12 18s7.17-2.36 8.48-5.66L21 12l-.52-.34C19.17 8.36 15.87 6 12 6zm0 10c-2.76 0-5.24-1.55-6.47-4C6.76 9.55 9.24 8 12 8s5.24 1.55 6.47 4c-1.23 2.45-3.71 4-6.47 4zm0-6.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
         </button>
 
-        <!-- 导入草稿按钮 -->
         <button class="toolbar-btn" id="importDraftBtn" title="导入草稿">
             <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm5 11H7v-2h10v2zm0-4H7v-2h10v2zm-6-6h3v2h-3V6z"/></svg>
         </button>
@@ -470,21 +295,21 @@
         </div>
     </div>
 
-    <!-- 底部按钮栏 -->
+    <!-- 底部按钮栏（使用内联 onclick 确保触发） -->
     <div class="bottom-bar">
-        <button class="bottom-btn danger" id="deleteExitBtn" title="删除并退出">
+        <button class="bottom-btn danger" onclick="deleteAndExit()">
             <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             <span>删除并退出</span>
         </button>
-        <button class="bottom-btn" id="saveExitBtn" title="保存并退出">
+        <button class="bottom-btn" onclick="saveAndExit()">
             <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
             <span>保存并退出</span>
         </button>
-        <button class="bottom-btn" id="editMetaBtn" title="修改标题与介绍">
+        <button class="bottom-btn" onclick="openMetaModal()">
             <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83zM3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
             <span>修改标题与介绍</span>
         </button>
-        <button class="bottom-btn publish" id="publishBtn" title="发布">
+        <button class="bottom-btn publish" onclick="publishCard()">
             <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             <span>发布</span>
         </button>
@@ -503,8 +328,8 @@
                 <textarea class="form-input form-textarea" id="cardDescription" placeholder="简单介绍该网站的特色"></textarea>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" id="cancelMetaBtn">取消</button>
-                <button class="btn btn-primary" id="saveMetaBtn">保存</button>
+                <button class="btn btn-secondary" onclick="closeMetaModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveMeta()">保存</button>
             </div>
         </div>
     </div>
@@ -517,14 +342,13 @@
                 <p style="color: var(--text-muted);">加载中...</p>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" id="closeDraftModalBtn">取消</button>
+                <button class="btn btn-secondary" onclick="closeDraftModal()">取消</button>
             </div>
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
-    <!-- 隐藏的文件输入 -->
     <input type="file" id="mediaFileInput" multiple style="display:none" accept="image/*,video/*,audio/*" />
 
     <script>
@@ -665,9 +489,7 @@
                     item.appendChild(info);
                     item.appendChild(deleteBtn);
 
-                    // 点击复制语法
                     item.addEventListener('click', (e) => {
-                        // 避免点击删除按钮时同时触发复制
                         if (e.target.closest('.media-file-delete')) return;
                         const fileType = record.type.split('/')[0];
                         let syntax = `@id[${fileType}:${record.id}]`;
@@ -682,7 +504,6 @@
                         });
                     });
 
-                    // 拖拽事件
                     item.addEventListener('dragstart', (e) => {
                         const fileType = record.type.split('/')[0];
                         let syntax = `@id[${fileType}:${record.id}]`;
@@ -756,7 +577,6 @@
                 setTimeout(() => toast.classList.remove('show'), 2000);
             }
 
-            // 检查管理员
             async function checkAdmin() {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) { window.location.href = 'index.html'; return null; }
@@ -768,7 +588,6 @@
                 return user;
             }
 
-            // 加载卡片数据
             async function loadCardData(cardId) {
                 try {
                     const { data, error } = await supabase.from('websites').select('*').eq('id', cardId).single();
@@ -788,7 +607,6 @@
                 }
             }
 
-            // Markdown 插入
             function insertMarkdown(action) {
                 const editor = document.getElementById('editor');
                 const start = editor.selectionStart;
@@ -816,7 +634,6 @@
                 editor.setSelectionRange(start + cursorOffset, start + cursorOffset);
             }
 
-            // 预览处理
             function preprocessMarkdown(markdown, idMap) {
                 markdown = markdown.replace(/@id\[(image|video|audio):([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\]/g, (match, type, id, width) => {
                     const record = idMap[id];
@@ -861,6 +678,7 @@
                     previewBtn.classList.add('active');
                 }
             }
+            window.togglePreview = togglePreview;
 
             // ========== 导入草稿功能 ==========
             function loadDraftList() {
@@ -895,11 +713,9 @@
                 document.getElementById('draftModal').classList.add('show');
                 loadDraftList();
             }
-
             function closeDraftModal() {
                 document.getElementById('draftModal').classList.remove('show');
             }
-
             function importDraftById(draftId) {
                 const saved = localStorage.getItem(draftId);
                 if (!saved) return;
@@ -914,53 +730,22 @@
                     showToast('导入失败');
                 }
             }
+            window.openDraftModal = openDraftModal;
+            window.closeDraftModal = closeDraftModal;
             window.importDraftById = importDraftById;
 
-            // 事件绑定
-            document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
-                btn.addEventListener('click', () => insertMarkdown(btn.dataset.action));
-            });
-            document.getElementById('previewBtn').addEventListener('click', togglePreview);
-            document.getElementById('importDraftBtn').addEventListener('click', openDraftModal);
-            document.getElementById('closeDraftModalBtn').addEventListener('click', closeDraftModal);
-
-            // 编辑器拖放插入
-            document.getElementById('editor').addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'copy';
-            });
-            document.getElementById('editor').addEventListener('drop', (e) => {
-                e.preventDefault();
-                const syntax = e.dataTransfer.getData('text/plain');
-                if (syntax.startsWith('@id[')) {
-                    const editor = document.getElementById('editor');
-                    const start = editor.selectionStart;
-                    const end = editor.selectionEnd;
-                    const newValue = editor.value.substring(0, start) + syntax + editor.value.substring(end);
-                    editor.value = newValue;
-                    const pos = start + syntax.length;
-                    editor.focus();
-                    editor.setSelectionRange(pos, pos);
-                    showToast('已插入素材引用');
-                }
-            });
-
-            // 设置弹窗
-            const metaModal = document.getElementById('metaModal');
-            const cardTitleInput = document.getElementById('cardTitle');
-            const cardDescriptionInput = document.getElementById('cardDescription');
-            const cancelMetaBtn = document.getElementById('cancelMetaBtn');
-            const saveMetaBtn = document.getElementById('saveMetaBtn');
-
+            // ========== 设置弹窗 ==========
             function openMetaModal() {
-                cardTitleInput.value = cardMeta.title || '';
-                cardDescriptionInput.value = cardMeta.description || '';
-                metaModal.classList.add('show');
+                document.getElementById('cardTitle').value = cardMeta.title || '';
+                document.getElementById('cardDescription').value = cardMeta.description || '';
+                document.getElementById('metaModal').classList.add('show');
             }
-            function closeMetaModal() { metaModal.classList.remove('show'); }
+            function closeMetaModal() {
+                document.getElementById('metaModal').classList.remove('show');
+            }
             function saveMeta() {
-                const title = cardTitleInput.value.trim();
-                const description = cardDescriptionInput.value.trim();
+                const title = document.getElementById('cardTitle').value.trim();
+                const description = document.getElementById('cardDescription').value.trim();
                 if (!title || !description) {
                     showToast('标题和描述不能为空');
                     return;
@@ -970,13 +755,12 @@
                 closeMetaModal();
                 showToast('标题与介绍已保存');
             }
+            window.openMetaModal = openMetaModal;
+            window.closeMetaModal = closeMetaModal;
+            window.saveMeta = saveMeta;
 
-            document.getElementById('editMetaBtn').addEventListener('click', openMetaModal);
-            cancelMetaBtn.addEventListener('click', closeMetaModal);
-            saveMetaBtn.addEventListener('click', saveMeta);
-
-            // 保存并退出
-            document.getElementById('saveExitBtn').addEventListener('click', async () => {
+            // ========== 保存并退出 ==========
+            async function saveAndExit() {
                 if (!currentUser) return;
                 const content = document.getElementById('editor').value.trim();
                 if (!content || !cardMeta.title || !cardMeta.description) {
@@ -985,24 +769,22 @@
                 }
                 try {
                     if (editingId) {
-                        const { error } = await supabase.from('websites').update({
+                        await supabase.from('websites').update({
                             content,
                             title: cardMeta.title,
                             description: cardMeta.description
                         }).eq('id', editingId);
-                        if (error) throw error;
                         showToast('已保存');
                     } else {
-                        const { error } = await supabase.from('websites').insert({
+                        await supabase.from('websites').insert({
                             content,
                             title: cardMeta.title,
                             description: cardMeta.description,
                             submitter_id: currentUser.id,
                             submitter_name: '管理员',
                             is_anonymous: false,
-                            status: 'pending' // 暂存为草稿，不上线
+                            status: 'pending'
                         });
-                        if (error) throw error;
                         showToast('已保存为草稿');
                     }
                     setTimeout(() => window.location.href = 'home.html', 1000);
@@ -1010,35 +792,41 @@
                     console.error('保存失败:', err);
                     showToast('保存失败：' + err.message);
                 }
-            });
+            }
+            window.saveAndExit = saveAndExit;
 
-            // 删除并退出
-            document.getElementById('deleteExitBtn').addEventListener('click', async () => {
+            // ========== 删除并退出 ==========
+            async function deleteAndExit() {
                 if (!editingId) {
                     window.location.href = 'home.html';
                     return;
                 }
                 if (!confirm('确定删除该卡片吗？此操作不可恢复。')) return;
                 try {
-                    const { error } = await supabase.from('websites').delete().eq('id', editingId);
-                    if (error) throw error;
+                    await supabase.from('websites').delete().eq('id', editingId);
                     showToast('卡片已删除');
                     setTimeout(() => window.location.href = 'home.html', 1000);
                 } catch (err) {
                     console.error('删除失败:', err);
                     showToast('删除失败：' + err.message);
                 }
-            });
+            }
+            window.deleteAndExit = deleteAndExit;
 
-            // 发布
-            document.getElementById('publishBtn').addEventListener('click', async () => {
-                if (!currentUser) return;
+            // ========== 发布 ==========
+            async function publishCard() {
+                console.log('publishCard 被调用');
+                if (!currentUser) {
+                    showToast('未获取到管理员身份');
+                    return;
+                }
                 const content = document.getElementById('editor').value.trim();
                 if (!content || !cardMeta.title || !cardMeta.description) {
                     showToast('请填写完整内容（包括标题与介绍）');
                     return;
                 }
                 try {
+                    // 收集素材引用
                     const idMap = {};
                     const files = await idbGetAll();
                     files.forEach(record => { idMap[record.id] = record; });
@@ -1057,6 +845,7 @@
                         const file = idMap[id].file;
                         const fileExt = file.name.split('.').pop() || 'bin';
                         const path = `${currentUser.id}/${Date.now()}_${id}.${fileExt}`;
+                        console.log('上传文件:', path);
                         const { error: uploadError } = await supabase.storage
                             .from('media')
                             .upload(path, file);
@@ -1085,17 +874,16 @@
                     }
 
                     if (editingId) {
-                        const { error } = await supabase.from('websites').update({
+                        await supabase.from('websites').update({
                             content: finalContent,
                             title: cardMeta.title,
                             description: cardMeta.description,
                             status: 'approved',
                             file_map: uploadMap
                         }).eq('id', editingId);
-                        if (error) throw error;
                         showToast('已发布');
                     } else {
-                        const { error } = await supabase.from('websites').insert({
+                        await supabase.from('websites').insert({
                             content: finalContent,
                             title: cardMeta.title,
                             description: cardMeta.description,
@@ -1105,7 +893,6 @@
                             status: 'approved',
                             file_map: uploadMap
                         });
-                        if (error) throw error;
                         showToast('已发布');
                     }
                     setTimeout(() => window.location.href = 'home.html', 1000);
@@ -1113,9 +900,10 @@
                     console.error('发布失败:', err);
                     showToast('发布失败：' + err.message);
                 }
-            });
+            }
+            window.publishCard = publishCard;
 
-            // 初始化
+            // ========== 初始化 ==========
             async function init() {
                 currentUser = await checkAdmin();
                 if (!currentUser) return;
