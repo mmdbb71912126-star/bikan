@@ -92,16 +92,11 @@
         }
 
         .form-group { margin-bottom: 18px; }
-        .form-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-        .form-input {
+
+        .form-textarea {
             width: 100%;
-            padding: 12px 16px;
+            min-height: 200px;
+            padding: 16px;
             font-size: 15px;
             color: var(--text-primary);
             background: var(--input-bg);
@@ -109,18 +104,16 @@
             border-radius: var(--radius-sm);
             outline: none;
             transition: all var(--transition);
+            resize: vertical;
+            line-height: 1.5;
         }
-        .form-input:focus {
+        .form-textarea:focus {
             border-color: var(--input-focus);
             background: rgba(255,255,255,0.1);
             box-shadow: 0 0 0 4px rgba(62,207,142,0.15);
         }
-        .form-input.error { border-color: var(--error); }
-        .form-textarea {
-            min-height: 120px;
-            resize: vertical;
-            line-height: 1.5;
-        }
+        .form-textarea::placeholder { color: var(--text-muted); }
+        .form-textarea.error { border-color: var(--error); }
 
         .btn {
             padding: 12px 24px;
@@ -179,16 +172,7 @@
         <div class="form-title">提交反馈</div>
 
         <div class="form-group">
-            <label class="form-label" for="feedbackTitle">标题 <span style="color:var(--error)">*</span></label>
-            <input class="form-input" type="text" id="feedbackTitle" placeholder="例如：建议添加某网址" />
-        </div>
-        <div class="form-group">
-            <label class="form-label" for="feedbackDescription">详细描述 <span style="color:var(--error)">*</span></label>
-            <textarea class="form-input form-textarea" id="feedbackDescription" placeholder="请描述您希望添加的网址或建议"></textarea>
-        </div>
-        <div class="form-group">
-            <label class="form-label" for="feedbackUrl">建议网址（可选）</label>
-            <input class="form-input" type="url" id="feedbackUrl" placeholder="https://example.com" />
+            <textarea class="form-textarea" id="feedbackContent" placeholder="请描述您希望添加的网址或建议"></textarea>
         </div>
 
         <button class="btn btn-primary" id="submitFeedbackBtn">提交反馈</button>
@@ -224,7 +208,6 @@
                 try {
                     const { data: { user } } = await supabase.auth.getUser();
                     if (!user) {
-                        // 未登录，跳转登录页
                         window.location.href = 'index.html';
                         return null;
                     }
@@ -243,18 +226,12 @@
 
             // 提交反馈
             document.getElementById('submitFeedbackBtn').addEventListener('click', async () => {
-                const title = document.getElementById('feedbackTitle').value.trim();
-                const description = document.getElementById('feedbackDescription').value.trim();
-                const url = document.getElementById('feedbackUrl').value.trim();
+                const content = document.getElementById('feedbackContent').value.trim();
 
-                if (!title || !description) {
-                    showToast('标题和描述不能为空');
-                    if (!title) document.getElementById('feedbackTitle').classList.add('error');
-                    if (!description) document.getElementById('feedbackDescription').classList.add('error');
-                    setTimeout(() => {
-                        document.getElementById('feedbackTitle').classList.remove('error');
-                        document.getElementById('feedbackDescription').classList.remove('error');
-                    }, 2000);
+                if (!content) {
+                    showToast('内容不能为空');
+                    document.getElementById('feedbackContent').classList.add('error');
+                    setTimeout(() => document.getElementById('feedbackContent').classList.remove('error'), 2000);
                     return;
                 }
 
@@ -270,20 +247,16 @@
                 try {
                     const { error } = await supabase.from('feedback').insert({
                         user_id: currentUser.id,
-                        title,
-                        description,
-                        suggested_url: url || null,
+                        title: '用户反馈',  // 自动生成标题
+                        description: content,
+                        suggested_url: null,
                         status: 'pending'
                     });
 
                     if (error) throw error;
 
                     showToast('反馈已提交，感谢您的建议！');
-                    // 清空表单
-                    document.getElementById('feedbackTitle').value = '';
-                    document.getElementById('feedbackDescription').value = '';
-                    document.getElementById('feedbackUrl').value = '';
-                    // 延迟跳转
+                    document.getElementById('feedbackContent').value = '';
                     setTimeout(() => window.location.href = 'home.html', 1500);
                 } catch (err) {
                     console.error('提交反馈失败:', err);
