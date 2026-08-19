@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
+        /* 样式与之前相同，此处省略重复，确保完整文件中包含 */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -48,7 +49,6 @@
             height: 100vh;
         }
 
-        /* 顶部工具栏 */
         .toolbar {
             height: var(--toolbar-height);
             background: rgba(255, 255, 255, 0.04);
@@ -74,7 +74,6 @@
         .toolbar-btn svg { width: 20px; height: 20px; fill: currentColor; }
         .toolbar-btn.active { background: rgba(62, 207, 142, 0.15); color: var(--primary); }
 
-        /* 编辑器容器 */
         .editor-container { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
         .editor-textarea {
             flex: 1; width: 100%; height: 100%; background: transparent; border: none; outline: none;
@@ -93,7 +92,6 @@
         .preview-area pre { background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; overflow-x: auto; }
         .preview-area a { color: var(--primary); }
 
-        /* 素材库面板 */
         .media-library-panel {
             height: var(--media-library-height);
             background: rgba(255, 255, 255, 0.03);
@@ -134,7 +132,6 @@
         .media-file-delete:hover { color: var(--error); }
         .media-file-delete svg { width: 16px; height: 16px; fill: currentColor; }
 
-        /* 底部按钮栏 */
         .bottom-bar {
             height: var(--bottom-bar-height);
             background: rgba(255, 255, 255, 0.04);
@@ -159,7 +156,6 @@
         .bottom-btn.publish:hover { background: rgba(62,207,142,0.1); }
         .bottom-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* 弹窗 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -458,7 +454,7 @@
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
             const ADMIN_EMAIL = '3948677391@qq.com';
-            const MAX_FILE_SIZE = 100 * 1024 * 1024;
+            const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
             let supabase;
             try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.error(e); }
@@ -869,6 +865,86 @@
                 return user;
             }
 
+            // 从 URL 下载文件并保存到 IndexedDB 素材库，返回 record
+            async function downloadAndStoreFile(url, name, type, size) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('下载失败');
+                    const blob = await response.blob();
+                    const file = new File([blob], name, { type: type });
+                    const id = generateShortId();
+                    const record = {
+                        id,
+                        file,
+                        type: type,
+                        name: name,
+                        size: size,
+                        url: url
+                    };
+                    await idbAdd(storeName, id, record);
+                    return record;
+                } catch (err) {
+                    console.error('下载文件失败:', err);
+                    return null;
+                }
+            }
+
+            // 还原长 URL 为短 ID 语法，并确保素材库中有对应文件
+            async function restoreContentWithShortIds(content, fileMap) {
+                let restoredContent = content;
+                const regex = /@(image|video|audio|file)\[([^\]]*)\]\(([^)]+?)(?:\s*=(\d+)%)?\)/g;
+                const matches = [];
+                let match;
+                while ((match = regex.exec(content)) !== null) {
+                    matches.push({
+                        type: match[1],
+                        alt: match[2],
+                        url: match[3],
+                        width: match[4] || null,
+                        full: match[0]
+                    });
+                }
+
+                // 创建 URL -> file_map 索引
+                const urlToFileMap = {};
+                for (const [id, meta] of Object.entries(fileMap || {})) {
+                    if (meta && meta.url) {
+                        urlToFileMap[meta.url] = { id, ...meta };
+                    }
+                }
+
+                for (const item of matches) {
+                    const meta = urlToFileMap[item.url];
+                    if (!meta) {
+                        // file_map 中没有记录，尝试从 URL 下载
+                        const record = await downloadAndStoreFile(item.url, '文件', 'application/octet-stream', 0);
+                        if (record) {
+                            const shortSyntax = `@${item.type}[${item.alt}](${record.id}${item.width ? ` =${item.width}%` : ''})`;
+                            restoredContent = restoredContent.replace(item.full, shortSyntax);
+                        }
+                        continue;
+                    }
+
+                    // 检查素材库中是否已有该 ID
+                    const existingFiles = await idbGetAll(storeName);
+                    const exists = existingFiles.some(r => r.id === meta.id);
+                    if (!exists) {
+                        // 从 URL 下载文件并存入素材库
+                        const downloaded = await downloadAndStoreFile(meta.url, meta.name, meta.fileType || 'application/octet-stream', meta.size);
+                        if (!downloaded) {
+                            showToast(`无法恢复文件 ${meta.name}，将保留长 URL`);
+                            continue;
+                        }
+                    }
+
+                    // 替换长 URL 为短 ID 语法
+                    const shortSyntax = `@${item.type}[${item.alt}](${meta.id}${item.width ? ` =${item.width}%` : ''})`;
+                    restoredContent = restoredContent.replace(item.full, shortSyntax);
+                }
+
+                return restoredContent;
+            }
+
             async function loadCardData(cardId) {
                 try {
                     const { data, error } = await supabase.from('websites').select('*').eq('id', cardId).single();
@@ -878,10 +954,19 @@
                         setTimeout(() => window.location.href = 'home.html', 1500);
                         return;
                     }
-                    document.getElementById('editor').value = data.content || '';
+
+                    // 还原短 ID 语法
+                    const originalContent = data.content || '';
+                    const fileMap = data.file_map || {};
+                    const restored = await restoreContentWithShortIds(originalContent, fileMap);
+
+                    document.getElementById('editor').value = restored;
                     cardMeta.title = data.title || '';
                     cardMeta.description = data.description || '';
                     editingId = cardId;
+
+                    // 重新渲染素材库
+                    await renderMediaLibrary();
                 } catch (err) {
                     console.error('加载卡片失败:', err);
                     showToast('加载失败：' + err.message);
