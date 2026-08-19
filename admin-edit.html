@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
+        /* 样式与之前版本相同，此处省略，确保完整文件中包含 */
         :root {
             --primary: #3ecf8e;
             --primary-dark: #2bb673;
@@ -211,7 +212,6 @@
         .draft-delete-btn:hover { color: var(--error); }
         .draft-delete-btn svg { width: 16px; height: 16px; fill: currentColor; }
 
-        /* 文件卡片预览样式 */
         .file-card-preview {
             display: flex; align-items: center; gap: 12px;
             padding: 12px; border: 1px solid var(--card-border); border-radius: 8px;
@@ -227,10 +227,7 @@
             border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px;
             white-space: nowrap; flex-shrink: 0;
         }
-        /* 覆盖预览区域对链接的默认颜色 */
-        .preview-area a.file-card-download {
-            color: #0f0c29 !important;
-        }
+        .preview-area a.file-card-download { color: #0f0c29 !important; }
     </style>
 </head>
 <body>
@@ -464,7 +461,7 @@
                     thumb.className = 'media-file-thumb';
                     if (category === 'image') {
                         const img = document.createElement('img');
-                        img.src = URL.createObjectURL(record.file);
+                        img.src = record.url || URL.createObjectURL(record.file);
                         img.style.width = '100%';
                         img.style.height = '100%';
                         img.style.objectFit = 'cover';
@@ -553,9 +550,40 @@
                         showToast(`文件 ${file.name} 超过 100MB，已跳过`);
                         continue;
                     }
-                    const id = generateShortId();
-                    const record = { id, file, type: file.type, name: file.name, size: file.size };
-                    await idbAdd(storeName, id, record);
+                    // 立即上传到 Supabase Storage
+                    try {
+                        const id = generateShortId();
+                        const fileExt = file.name.split('.').pop() || 'bin';
+                        const path = `${currentUser.id}/${Date.now()}_${id}.${fileExt}`;
+                        const { error: uploadError } = await supabase.storage
+                            .from('media')
+                            .upload(path, file);
+                        if (uploadError) {
+                            console.error('上传失败:', uploadError);
+                            showToast(`文件 ${file.name} 上传失败：${uploadError.message}`);
+                            continue;
+                        }
+                        const { data: urlData } = supabase.storage
+                            .from('media')
+                            .getPublicUrl(path);
+                        const publicUrl = urlData?.publicUrl;
+                        if (!publicUrl) {
+                            showToast('获取文件 URL 失败');
+                            continue;
+                        }
+                        const record = {
+                            id: id,
+                            file: file,
+                            type: file.type,
+                            name: file.name,
+                            size: file.size,
+                            url: publicUrl
+                        };
+                        await idbAdd(storeName, id, record);
+                    } catch (err) {
+                        console.error('上传异常:', err);
+                        showToast(`文件 ${file.name} 上传异常`);
+                    }
                 }
                 renderMediaLibrary();
                 showToast(`已导入 ${files.length} 个文件`);
@@ -648,7 +676,7 @@
                 markdown = markdown.replace(/@image\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
-                    const url = URL.createObjectURL(record.file);
+                    const url = record.url || URL.createObjectURL(record.file);
                     const widthStyle = width ? `${width}%` : '100%';
                     return `<img src="${url}" alt="${alt}" style="max-width: ${widthStyle}; border-radius: 8px;" />`;
                 });
@@ -656,7 +684,7 @@
                 markdown = markdown.replace(/@video\[([^\]]*)\]\(([a-zA-Z0-9]+)\s*(?:=(\d+)%)?\)/g, (match, alt, id, width) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
-                    const url = URL.createObjectURL(record.file);
+                    const url = record.url || URL.createObjectURL(record.file);
                     const widthStyle = width ? `${width}%` : '100%';
                     return `<video controls src="${url}" style="max-width: ${widthStyle}; border-radius: 8px;"></video>`;
                 });
@@ -664,17 +692,16 @@
                 markdown = markdown.replace(/@audio\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
-                    const url = URL.createObjectURL(record.file);
+                    const url = record.url || URL.createObjectURL(record.file);
                     return `<audio controls src="${url}"></audio>`;
                 });
                 // 处理文件
                 markdown = markdown.replace(/@file\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
-                    const url = URL.createObjectURL(record.file);
+                    const url = record.url || URL.createObjectURL(record.file);
                     const size = formatFileSize(record.size);
                     const type = record.type || '未知';
-                    // 始终显示实际文件名，忽略 alt 中的描述
                     const displayName = record.name;
                     return `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${displayName}</div><div class="file-card-meta">${size} · ${type}</div></div><a class="file-card-download" href="${url}" download="${record.name}">下载</a></div>`;
                 });
@@ -707,7 +734,7 @@
             }
             window.togglePreview = togglePreview;
 
-            // ========== 导入草稿功能（增强：恢复缺失文件） ==========
+            // ========== 导入草稿功能 ==========
             function loadDraftList() {
                 const container = document.getElementById('draftListContainer');
                 const drafts = [];
@@ -836,7 +863,8 @@
                             file: record.file,
                             type: record.type,
                             name: record.name,
-                            size: record.size
+                            size: record.size,
+                            url: record.url
                         });
                         await idbAdd(draftAssetStoreName, record.id, record);
                     } else {
@@ -848,7 +876,8 @@
                                 file: fromDraft.file,
                                 type: fromDraft.type,
                                 name: fromDraft.name,
-                                size: fromDraft.size
+                                size: fromDraft.size,
+                                url: fromDraft.url
                             });
                         }
                     }
@@ -895,7 +924,7 @@
             }
             window.deleteAndExit = deleteAndExit;
 
-            // ========== 发布 ==========
+            // ========== 发布（不再上传文件，直接使用已上传URL） ==========
             async function publishCard() {
                 console.log('publishCard 被调用');
                 if (!currentUser) {
@@ -913,8 +942,9 @@
                     files.forEach(record => { idMap[record.id] = record; });
 
                     const allRefs = content.matchAll(/@(image|video|audio|file)\[([^\]]*)\]\(([a-zA-Z0-9]+)(?:\s*=(\d+)%)?\)/g);
-                    const uploadMap = {};
+                    const fileMap = {}; // 最终存储到 file_map 的元数据
 
+                    let finalContent = content;
                     for (const match of allRefs) {
                         const type = match[1];
                         const alt = match[2];
@@ -924,54 +954,32 @@
                             showToast(`素材库中不存在 ${id}，请检查`);
                             return;
                         }
-                        const file = idMap[id].file;
-                        const fileExt = file.name.split('.').pop() || 'bin';
-                        const path = `${currentUser.id}/${Date.now()}_${id}.${fileExt}`;
-                        console.log('上传文件:', path);
+                        const record = idMap[id];
+                        const url = record.url; // 使用上传时保存的URL
 
-                        const { data: uploadData, error: uploadError } = await supabase.storage
-                            .from('media')
-                            .upload(path, file);
-
-                        if (uploadError) {
-                            console.error('上传失败:', uploadError);
-                            showToast(`文件 ${id} 上传失败：${uploadError.message}`);
-                            return;
+                        // 构建替换后的语法
+                        if (type === 'image') {
+                            const widthSuffix = width ? ` =${width}%` : '';
+                            finalContent = finalContent.replace(new RegExp(`@image\\[([^\\]]*)\\]\\(${id}\\s*(?:=\\d+%)?\\)`), `@image[$1](${url}${widthSuffix})`);
+                        } else if (type === 'video') {
+                            const widthSuffix = width ? ` =${width}%` : '';
+                            finalContent = finalContent.replace(new RegExp(`@video\\[([^\\]]*)\\]\\(${id}\\s*(?:=\\d+%)?\\)`), `@video[$1](${url}${widthSuffix})`);
+                        } else if (type === 'audio') {
+                            finalContent = finalContent.replace(new RegExp(`@audio\\[([^\\]]*)\\]\\(${id}\\)`), `@audio[$1](${url})`);
+                        } else if (type === 'file') {
+                            const fileCard = `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${record.name}</div><div class="file-card-meta">${formatFileSize(record.size)} · ${record.type || '未知'}</div></div><a class="file-card-download" href="${url}" download="${record.name}">下载</a></div>`;
+                            finalContent = finalContent.replace(new RegExp(`@file\\[([^\\]]*)\\]\\(${id}\\)`), fileCard);
                         }
-                        console.log('上传成功，uploadData:', uploadData);
 
-                        const { data: urlData } = supabase.storage
-                            .from('media')
-                            .getPublicUrl(path);
-                        const publicUrl = urlData?.publicUrl;
-                        if (!publicUrl) {
-                            showToast('获取文件 URL 失败');
-                            return;
-                        }
-                        console.log('公共 URL:', publicUrl);
-                        uploadMap[id] = {
-                            url: publicUrl,
+                        // 记录文件元数据
+                        fileMap[id] = {
+                            url: url,
                             type: type,
-                            name: file.name,
-                            size: file.size,
-                            fileType: file.type,
+                            name: record.name,
+                            size: record.size,
+                            fileType: record.type,
                             width: width
                         };
-                    }
-
-                    let finalContent = content;
-                    for (const [id, info] of Object.entries(uploadMap)) {
-                        const widthSuffix = info.width ? ` =${info.width}%` : '';
-                        if (info.type === 'image') {
-                            finalContent = finalContent.replaceAll(new RegExp(`@image\\[([^\\]]*)\\]\\(${id}\\s*(?:=\\d+%)?\\)`, 'g'), `@image[$1](${info.url}${widthSuffix})`);
-                        } else if (info.type === 'video') {
-                            finalContent = finalContent.replaceAll(new RegExp(`@video\\[([^\\]]*)\\]\\(${id}\\s*(?:=\\d+%)?\\)`, 'g'), `@video[$1](${info.url}${widthSuffix})`);
-                        } else if (info.type === 'audio') {
-                            finalContent = finalContent.replaceAll(new RegExp(`@audio\\[([^\\]]*)\\]\\(${id}\\)`, 'g'), `@audio[$1](${info.url})`);
-                        } else if (info.type === 'file') {
-                            const fileCard = `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${info.name}</div><div class="file-card-meta">${formatFileSize(info.size)} · ${info.fileType || '未知'}</div></div><a class="file-card-download" href="${info.url}" download="${info.name}">下载</a></div>`;
-                            finalContent = finalContent.replaceAll(new RegExp(`@file\\[([^\\]]*)\\]\\(${id}\\)`, 'g'), fileCard);
-                        }
                     }
 
                     console.log('最终内容:', finalContent);
@@ -982,7 +990,7 @@
                             title: cardMeta.title,
                             description: cardMeta.description,
                             status: 'approved',
-                            file_map: uploadMap
+                            file_map: fileMap
                         }).eq('id', editingId);
                         if (updateError) {
                             console.error('更新失败:', updateError);
@@ -999,7 +1007,7 @@
                             submitter_name: '管理员',
                             is_anonymous: false,
                             status: 'approved',
-                            file_map: uploadMap
+                            file_map: fileMap
                         });
                         if (insertError) {
                             console.error('插入失败:', insertError);
