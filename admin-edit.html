@@ -198,12 +198,18 @@
         .draft-list-item {
             display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
             background: rgba(255,255,255,0.06); border-radius: 8px; margin-bottom: 8px;
-            cursor: pointer; transition: background var(--transition);
+            transition: background var(--transition);
         }
         .draft-list-item:hover { background: rgba(255,255,255,0.1); }
-        .draft-info { flex: 1; }
+        .draft-info { flex: 1; cursor: pointer; }
         .draft-title { font-weight: 600; font-size: 14px; }
         .draft-time { font-size: 12px; color: var(--text-muted); }
+        .draft-delete-btn {
+            background: none; border: none; cursor: pointer; padding: 4px;
+            color: var(--text-muted); transition: color var(--transition);
+        }
+        .draft-delete-btn:hover { color: var(--error); }
+        .draft-delete-btn svg { width: 16px; height: 16px; fill: currentColor; }
     </style>
 </head>
 <body>
@@ -640,13 +646,13 @@
             }
             window.togglePreview = togglePreview;
 
-            // ========== 导入草稿功能 ==========
+            // ========== 导入草稿功能（修复：显示所有草稿并带删除按钮） ==========
             function loadDraftList() {
                 const container = document.getElementById('draftListContainer');
                 const drafts = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key.startsWith('draft_')) {
+                    if (key && key.startsWith('draft_')) {
                         try {
                             const draft = JSON.parse(localStorage.getItem(key));
                             draft.id = key;
@@ -660,11 +666,14 @@
                     return;
                 }
                 container.innerHTML = drafts.map(d => `
-                    <div class="draft-list-item" onclick="importDraftById('${d.id}')">
-                        <div class="draft-info">
+                    <div class="draft-list-item">
+                        <div class="draft-info" onclick="importDraftById('${d.id}')">
                             <div class="draft-title">${d.meta.title || '未命名草稿'}</div>
                             <div class="draft-time">${new Date(d.timestamp).toLocaleString()}</div>
                         </div>
+                        <button class="draft-delete-btn" onclick="deleteDraftById('${d.id}')" title="删除草稿">
+                            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </button>
                     </div>
                 `).join('');
             }
@@ -690,9 +699,17 @@
                     showToast('导入失败');
                 }
             }
+            function deleteDraftById(draftId) {
+                if (confirm('确定删除该草稿吗？')) {
+                    localStorage.removeItem(draftId);
+                    loadDraftList();
+                    showToast('草稿已删除');
+                }
+            }
             window.openDraftModal = openDraftModal;
             window.closeDraftModal = closeDraftModal;
             window.importDraftById = importDraftById;
+            window.deleteDraftById = deleteDraftById;
 
             // ========== 设置弹窗 ==========
             function openMetaModal() {
