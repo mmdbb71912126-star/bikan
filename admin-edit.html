@@ -115,7 +115,7 @@
         .media-file-item {
             display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06);
             border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: background var(--transition);
-            max-width: 250px; height: 50px;
+            max-width: 250px; height: 60px;
         }
         .media-file-item:hover { background: rgba(255,255,255,0.1); }
         .media-file-item.dragging { opacity: 0.5; }
@@ -126,7 +126,7 @@
         }
         .media-file-info { flex: 1; overflow: hidden; }
         .media-file-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .media-file-id { font-size: 11px; color: var(--text-muted); }
+        .media-file-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .media-file-delete { background: none; border: none; cursor: pointer; padding: 2px; color: var(--text-muted); transition: color var(--transition); flex-shrink: 0; }
         .media-file-delete:hover { color: var(--error); }
         .media-file-delete svg { width: 16px; height: 16px; fill: currentColor; }
@@ -222,10 +222,14 @@
         .file-card-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .file-card-meta { font-size: 12px; color: var(--text-muted); }
         .file-card-download {
-            display: inline-flex; align-items: center; padding: 6px 12px;
-            background: var(--primary); color: #0f0c29; border-radius: 6px;
-            text-decoration: none; font-weight: 600; font-size: 12px;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 6px 12px; background: var(--primary); color: #0f0c29 !important;
+            border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px;
             white-space: nowrap; flex-shrink: 0;
+        }
+        /* 覆盖预览区域对链接的默认颜色 */
+        .preview-area a.file-card-download {
+            color: #0f0c29 !important;
         }
     </style>
 </head>
@@ -356,13 +360,13 @@
             // ========== IndexedDB 封装 ==========
             const dbName = 'bikan_media_library';
             const storeName = 'media_files';
-            const draftAssetStoreName = 'draft_assets'; // 新增草稿资产存储
+            const draftAssetStoreName = 'draft_assets';
             let db = null;
 
             function openDB() {
                 return new Promise((resolve, reject) => {
                     if (db) { resolve(db); return; }
-                    const request = indexedDB.open(dbName, 2); // 版本升级到2
+                    const request = indexedDB.open(dbName, 2);
                     request.onupgradeneeded = (e) => {
                         const database = e.target.result;
                         if (!database.objectStoreNames.contains(storeName)) {
@@ -434,6 +438,7 @@
             }
 
             function formatFileSize(bytes) {
+                if (bytes == null || isNaN(bytes) || bytes === undefined) return '未知大小';
                 if (bytes < 1024) return bytes + ' B';
                 else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
                 else return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -474,8 +479,8 @@
                     nameDiv.className = 'media-file-name';
                     nameDiv.textContent = record.name;
                     const metaDiv = document.createElement('div');
-                    metaDiv.className = 'media-file-id';
-                    metaDiv.textContent = `${formatFileSize(record.size)} · ${record.type || '未知'}`;
+                    metaDiv.className = 'media-file-meta';
+                    metaDiv.textContent = `ID: ${record.id} · ${formatFileSize(record.size)} · ${record.type || '未知'}`;
                     info.appendChild(nameDiv);
                     info.appendChild(metaDiv);
 
@@ -662,14 +667,16 @@
                     const url = URL.createObjectURL(record.file);
                     return `<audio controls src="${url}"></audio>`;
                 });
-                // 处理文件（单行 HTML）
+                // 处理文件
                 markdown = markdown.replace(/@file\[([^\]]*)\]\(([a-zA-Z0-9]+)\)/g, (match, alt, id) => {
                     const record = idMap[id];
                     if (!record) return `<span style="color:var(--error);">缺失文件: ${id}</span>`;
                     const url = URL.createObjectURL(record.file);
                     const size = formatFileSize(record.size);
                     const type = record.type || '未知';
-                    return `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${alt || record.name}</div><div class="file-card-meta">${size} · ${type}</div></div><a class="file-card-download" href="${url}" download="${record.name}">下载</a></div>`;
+                    // 始终显示实际文件名，忽略 alt 中的描述
+                    const displayName = record.name;
+                    return `<div class="file-card-preview"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg><div class="file-card-info"><div class="file-card-name">${displayName}</div><div class="file-card-meta">${size} · ${type}</div></div><a class="file-card-download" href="${url}" download="${record.name}">下载</a></div>`;
                 });
                 // 处理标准 Markdown 图片
                 markdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+?)\)/g, (m, alt, url) => `<img src="${url}" alt="${alt}" />`);
@@ -745,10 +752,8 @@
                 if (!saved) return;
                 try {
                     const draft = JSON.parse(saved);
-                    // 恢复草稿引用的文件
                     if (draft.referencedFiles && Array.isArray(draft.referencedFiles)) {
                         for (const asset of draft.referencedFiles) {
-                            // 检查素材库中是否已有该 ID，若无则从草稿资产存储恢复
                             const existing = await idbGetAll(storeName);
                             if (!existing.some(r => r.id === asset.id)) {
                                 await idbAdd(storeName, asset.id, asset);
@@ -833,10 +838,8 @@
                             name: record.name,
                             size: record.size
                         });
-                        // 同时保存到草稿资产存储
                         await idbAdd(draftAssetStoreName, record.id, record);
                     } else {
-                        // 如果素材库中缺少，尝试从草稿资产存储恢复
                         const draftAssets = await idbGetAll(draftAssetStoreName);
                         const fromDraft = draftAssets.find(r => r.id === id);
                         if (fromDraft) {
