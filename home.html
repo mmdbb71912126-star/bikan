@@ -167,7 +167,7 @@
             animation: fadeInUp 0.4s ease-out;
             display: flex;
             flex-direction: column;
-            cursor: pointer; /* 表示可点击 */
+            cursor: pointer;
         }
         .url-card:hover { border-color: rgba(62,207,142,0.4); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -285,10 +285,7 @@
                 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.31.59.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.98 1.62-3.6 3.6-3.6s3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                 <span>设置</span>
             </button>
-            <a class="nav-item" id="adminEditNav" href="admin-edit.html" style="display: none;">
-                <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83zM3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
-                <span>管理卡片</span>
-            </a>
+            <!-- 注意：侧边栏的“管理卡片”已被移除 -->
             <a class="nav-item" id="adminReviewNav" href="admin.html" style="display: none;">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 <span>反馈管理</span>
@@ -385,7 +382,6 @@
                 const userEmail = document.getElementById('sidebarUserEmail');
                 const favoritesNav = document.getElementById('favoritesNav');
                 const feedbackNav = document.getElementById('feedbackNav');
-                const adminEditNav = document.getElementById('adminEditNav');
                 const adminReviewNav = document.getElementById('adminReviewNav');
                 const addCardBtn = document.getElementById('addCardBtn');
 
@@ -407,18 +403,15 @@
                     if (isAnonymous) {
                         favoritesNav.style.display = 'none';
                         feedbackNav.style.display = 'none';
-                        adminEditNav.style.display = 'none';
                         adminReviewNav.style.display = 'none';
                         addCardBtn.style.display = 'none';
                     } else {
                         favoritesNav.style.display = 'flex';
                         feedbackNav.style.display = 'flex';
                         if (email === ADMIN_EMAIL) {
-                            adminEditNav.style.display = 'flex';
                             adminReviewNav.style.display = 'flex';
                             addCardBtn.style.display = 'flex';
                         } else {
-                            adminEditNav.style.display = 'none';
                             adminReviewNav.style.display = 'none';
                             addCardBtn.style.display = 'none';
                         }
@@ -429,7 +422,6 @@
                     avatar.textContent = '?';
                     favoritesNav.style.display = 'none';
                     feedbackNav.style.display = 'none';
-                    adminEditNav.style.display = 'none';
                     adminReviewNav.style.display = 'none';
                     addCardBtn.style.display = 'none';
                 }
@@ -445,7 +437,7 @@
             }
 
             async function toggleFavorite(websiteId, event) {
-                if (event) event.stopPropagation(); // 阻止卡片跳转
+                if (event) event.stopPropagation();
                 if (!currentUser || currentUser.is_anonymous) {
                     showToast('游客无法收藏，请登录后操作');
                     return;
