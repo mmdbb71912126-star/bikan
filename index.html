@@ -3,110 +3,220 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>必看 - 登录注册</title>
+    <title>必看 · 登录</title>
 
-    <!-- 网站图标（favicon）使用新的黑色 Logo SVG -->
+    <!-- 网站图标：黑色 SVG Logo -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
     <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
     <!-- Cloudflare Turnstile -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer>
+    </script>
 
     <style>
-        :root {
-            --primary: #3ecf8e;
-            --primary-dark: #2bb673;
-            --bg-start: #0f0c29;
-            --bg-mid: #302b63;
-            --bg-end: #24243e;
-            --card-bg: rgba(255, 255, 255, 0.06);
-            --card-border: rgba(255, 255, 255, 0.12);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-muted: rgba(255, 255, 255, 0.45);
-            --input-bg: rgba(255, 255, 255, 0.08);
-            --input-border: rgba(255, 255, 255, 0.15);
-            --input-focus: #3ecf8e;
-            --error: #ff6b6b;
-            --success: #3ecf8e;
-            --google-bg: #ffffff;
-            --google-text: #3c4043;
-            --google-hover: #f8f9fa;
-            --radius: 16px;
-            --radius-sm: 10px;
-            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
+        /* ===== 完整样式 ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-primary: #070a14;
+            --bg-secondary: #0f1628;
+            --bg-card: rgba(255, 255, 255, 0.02);
+            --bg-glass: rgba(255, 255, 255, 0.015);
+            --color-primary: #6c5ce7;
+            --color-primary-light: #a29bfe;
+            --color-primary-glow: rgba(108, 92, 231, 0.12);
+            --text-primary: rgba(255, 255, 255, 0.92);
+            --text-secondary: rgba(255, 255, 255, 0.55);
+            --text-muted: rgba(255, 255, 255, 0.12);
+            --text-micro: rgba(255, 255, 255, 0.04);
+            --border-color: rgba(255, 255, 255, 0.04);
+            --border-hover: rgba(255, 255, 255, 0.08);
+            --shadow-color: rgba(0, 0, 0, 0.25);
+            --glass-blur: 32px;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+            --error: #ff6b6b;
+            --success: #3ecf8e;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             min-height: 100vh;
+            background: var(--bg-primary);
+            background-image: radial-gradient(ellipse at 20% 30%, rgba(60, 40, 180, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(20, 80, 160, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(100, 60, 200, 0.04) 0%, transparent 40%),
+                linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 40%, var(--bg-primary) 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
-            background-attachment: fixed;
             padding: 20px;
-            position: relative;
-            overflow-x: hidden;
+            min-height: 100vh;
         }
 
-        body::before,
-        body::after {
-            content: '';
+        /* 丝带背景 */
+        .ribbon-container {
             position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            pointer-events: none;
+            inset: 0;
             z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
         }
-        body::before {
+        .ribbon {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px) saturate(1.5);
+            mix-blend-mode: screen;
+            opacity: 0.25;
+            will-change: transform;
+            animation: ribbonFlow linear infinite alternate;
+            transform-origin: center center;
+        }
+        .ribbon:nth-child(1) {
+            width: 50%;
+            height: 15%;
+            top: 5%;
+            left: -30%;
+            background: radial-gradient(circle, rgba(120, 80, 255, 0.6), rgba(60, 40, 200, 0.1));
+            animation-duration: 14s;
+            animation-delay: 0s;
+        }
+        .ribbon:nth-child(2) {
+            width: 40%;
+            height: 12%;
+            top: 35%;
+            left: -40%;
+            background: radial-gradient(circle, rgba(30, 120, 220, 0.5), rgba(10, 80, 160, 0.1));
+            animation-duration: 18s;
+            animation-delay: 2s;
+        }
+        .ribbon:nth-child(3) {
+            width: 60%;
+            height: 20%;
+            top: 65%;
+            left: -20%;
+            background: radial-gradient(circle, rgba(180, 80, 255, 0.4), rgba(100, 40, 200, 0.05));
+            animation-duration: 22s;
+            animation-delay: 4s;
+        }
+        .ribbon:nth-child(4) {
+            width: 30%;
+            height: 18%;
+            top: 80%;
+            left: -50%;
+            background: radial-gradient(circle, rgba(60, 180, 255, 0.3), rgba(20, 100, 200, 0.05));
+            animation-duration: 16s;
+            animation-delay: 6s;
+        }
+        .ribbon:nth-child(5) {
+            width: 45%;
+            height: 10%;
+            top: 20%;
+            left: -60%;
+            background: radial-gradient(circle, rgba(200, 120, 255, 0.4), rgba(80, 40, 200, 0.05));
+            animation-duration: 20s;
+            animation-delay: 8s;
+        }
+        @keyframes ribbonFlow {
+            0% {
+                transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+                opacity: 0.15;
+            }
+            25% {
+                transform: translateX(35vw) translateY(-8vh) scale(1.15) rotate(6deg);
+                opacity: 0.35;
+            }
+            50% {
+                transform: translateX(70vw) translateY(12vh) scale(0.85) rotate(-4deg);
+                opacity: 0.2;
+            }
+            75% {
+                transform: translateX(105vw) translateY(-4vh) scale(1.1) rotate(8deg);
+                opacity: 0.4;
+            }
+            100% {
+                transform: translateX(140vw) translateY(6vh) scale(0.95) rotate(-2deg);
+                opacity: 0.1;
+            }
+        }
+
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .bg-glow .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: transform;
+            mix-blend-mode: screen;
+        }
+        .bg-glow .orb.orb1 {
             width: 500px;
             height: 500px;
-            background: rgba(62, 207, 142, 0.15);
-            top: -150px;
-            left: -100px;
-            animation: float 12s ease-in-out infinite;
+            background: var(--color-primary-glow);
+            top: -10%;
+            left: -5%;
         }
-        body::after {
+        .bg-glow .orb.orb2 {
             width: 400px;
             height: 400px;
-            background: rgba(99, 102, 241, 0.12);
-            bottom: -120px;
-            right: -80px;
-            animation: float 15s ease-in-out infinite reverse;
+            background: rgba(30, 120, 220, 0.05);
+            bottom: -10%;
+            right: -5%;
+        }
+        .bg-glow .orb.orb3 {
+            width: 300px;
+            height: 300px;
+            background: rgba(180, 80, 255, 0.04);
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(40px, 30px) scale(1.08); }
-        }
-
+        /* ===== 登录卡片 ===== */
         .auth-card {
             position: relative;
-            z-index: 1;
+            z-index: 2;
             width: 100%;
             max-width: 440px;
-            background: var(--card-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--card-border);
+            background: var(--bg-glass);
+            backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
             border-radius: var(--radius);
+            border: 1px solid var(--border-color);
             padding: 40px 36px 32px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-            animation: slideUp 0.6s ease-out;
-            transition: height 0.3s ease;
+            box-shadow: 0 25px 60px var(--shadow-color), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .logo-area {
@@ -114,15 +224,15 @@
             margin-bottom: 28px;
         }
         .logo-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, var(--primary), #38bdf8);
+            width: 56px;
+            height: 56px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 14px;
-            box-shadow: 0 8px 24px rgba(62, 207, 142, 0.3);
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             padding: 10px;
         }
         .logo-icon svg {
@@ -131,29 +241,29 @@
             display: block;
         }
         .logo-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text-primary);
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
         }
         .logo-subtitle {
             font-size: 14px;
-            color: var(--text-secondary);
+            color: var(--text-muted);
             margin-top: 4px;
         }
 
+        /* ===== Tabs ===== */
         .tabs {
             display: flex;
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--bg-card);
             border-radius: var(--radius-sm);
             padding: 4px;
             margin-bottom: 28px;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
         }
         .tab {
             flex: 1;
-            padding: 12px 16px;
+            padding: 10px 16px;
             text-align: center;
             font-size: 14px;
             font-weight: 600;
@@ -161,29 +271,22 @@
             cursor: pointer;
             border-radius: 8px;
             transition: all var(--transition);
-            user-select: none;
             border: none;
             background: transparent;
-            position: relative;
-            outline: none;
+            font-family: inherit;
         }
         .tab:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
         }
         .tab.active {
-            color: #0f0c29;
-            background: var(--primary);
-            box-shadow: 0 4px 14px rgba(62, 207, 142, 0.4);
-        }
-        .tab-register-mode .tab.active {
-            background: #38bdf8;
-            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+            color: #fff;
+            background: var(--color-primary);
+            box-shadow: 0 4px 14px var(--color-primary-glow);
         }
 
         .form-group {
             margin-bottom: 18px;
-            transition: margin-bottom 0.3s ease, max-height 0.3s ease, opacity 0.3s ease;
         }
         .form-label {
             display: block;
@@ -195,23 +298,23 @@
         }
         .form-input {
             width: 100%;
-            padding: 13px 16px;
+            padding: 12px 16px;
             font-size: 15px;
             color: var(--text-primary);
-            background: var(--input-bg);
-            border: 1.5px solid var(--input-border);
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
             border-radius: var(--radius-sm);
             outline: none;
             transition: all var(--transition);
-            letter-spacing: 0.3px;
+            font-family: inherit;
         }
         .form-input::placeholder {
             color: var(--text-muted);
         }
         .form-input:focus {
-            border-color: var(--input-focus);
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.15);
+            border-color: var(--color-primary-glow);
+            background: rgba(255, 255, 255, 0.04);
+            box-shadow: 0 0 0 4px var(--color-primary-glow);
         }
         .form-input.error {
             border-color: var(--error);
@@ -220,7 +323,7 @@
 
         .btn {
             width: 100%;
-            padding: 14px 20px;
+            padding: 13px 20px;
             font-size: 15px;
             font-weight: 600;
             border: none;
@@ -231,64 +334,57 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
+            font-family: inherit;
+            backdrop-filter: blur(4px);
         }
         .btn:active {
             transform: scale(0.98);
         }
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #2bb673);
-            color: #0f0c29;
-            box-shadow: 0 6px 20px rgba(62, 207, 142, 0.35);
+            background: var(--color-primary);
+            color: #fff;
+            box-shadow: 0 6px 20px var(--color-primary-glow);
         }
         .btn-primary:hover {
-            box-shadow: 0 8px 28px rgba(62, 207, 142, 0.5);
+            box-shadow: 0 8px 28px rgba(108, 92, 231, 0.3);
             transform: translateY(-1px);
+            filter: brightness(1.08);
         }
         .btn-primary:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
-            box-shadow: 0 4px 12px rgba(62, 207, 142, 0.2);
         }
 
         .btn-google {
-            background: var(--google-bg);
-            color: var(--google-text);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            margin-top: 0;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
         .btn-google:hover {
-            background: var(--google-hover);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--border-hover);
             transform: translateY(-1px);
         }
         .btn-google:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
         }
-        .btn-google svg {
-            flex-shrink: 0;
-        }
 
-        /* 游客登录按钮样式 */
         .btn-guest {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-primary);
-            border: 1px solid var(--card-border);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
         }
         .btn-guest:hover {
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: var(--border-hover);
             transform: translateY(-1px);
         }
         .btn-guest:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
         }
@@ -297,7 +393,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            margin: 22px 0;
+            margin: 20px 0;
             color: var(--text-muted);
             font-size: 12px;
             text-transform: uppercase;
@@ -308,7 +404,7 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: rgba(255, 255, 255, 0.12);
+            background: var(--border-color);
         }
 
         .alert {
@@ -322,27 +418,21 @@
             gap: 10px;
             line-height: 1.5;
             opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            transform: translateY(-8px);
+            transition: opacity 0.3s ease;
             pointer-events: none;
         }
         .alert.show {
             opacity: 1;
-            transform: translateY(0);
             pointer-events: auto;
         }
-        .alert.fade-out {
-            opacity: 0;
-            transform: translateY(-8px);
-        }
         .alert-error {
-            background: rgba(255, 107, 107, 0.12);
-            border: 1px solid rgba(255, 107, 107, 0.3);
+            background: rgba(255, 107, 107, 0.08);
+            border: 1px solid rgba(255, 107, 107, 0.15);
             color: #ffb3b3;
         }
         .alert-success {
-            background: rgba(62, 207, 142, 0.12);
-            border: 1px solid rgba(62, 207, 142, 0.3);
+            background: rgba(62, 207, 142, 0.08);
+            border: 1px solid rgba(62, 207, 142, 0.15);
             color: #a8e6c9;
         }
         .alert-icon {
@@ -358,8 +448,8 @@
         .spinner {
             width: 20px;
             height: 20px;
-            border: 2.5px solid rgba(15, 12, 41, 0.25);
-            border-top-color: #0f0c29;
+            border: 2.5px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #fff;
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
             display: none;
@@ -371,7 +461,9 @@
             opacity: 0.7;
         }
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         #confirmPasswordGroup {
@@ -379,6 +471,7 @@
             opacity: 0;
             overflow: hidden;
             margin-bottom: 0;
+            transition: all 0.35s ease;
         }
         #confirmPasswordGroup.visible {
             max-height: 200px;
@@ -388,17 +481,17 @@
 
         .forgot-link {
             text-align: right;
-            margin-top: 10px;
-            margin-bottom: 10px;
+            margin-top: 8px;
         }
         .forgot-link a {
-            color: var(--text-secondary);
+            color: var(--text-muted);
             font-size: 13px;
             text-decoration: none;
             transition: color var(--transition);
+            cursor: pointer;
         }
         .forgot-link a:hover {
-            color: var(--primary);
+            color: var(--color-primary-light);
         }
 
         .forgot-password-panel,
@@ -412,23 +505,30 @@
 
         .back-link {
             text-align: center;
-            margin-top: 15px;
+            margin-top: 16px;
         }
         .back-link a {
             color: var(--text-muted);
             font-size: 13px;
             text-decoration: none;
             cursor: pointer;
+            transition: color var(--transition);
         }
         .back-link a:hover {
             color: var(--text-primary);
         }
 
-        /* Turnstile 容器 */
         .turnstile-container {
             display: flex;
             justify-content: center;
-            margin-top: 12px;
+            margin-top: 14px;
+        }
+
+        .auth-forms-wrapper {
+            display: block;
+        }
+        .auth-forms-wrapper.hidden {
+            display: none;
         }
 
         @media (max-width: 480px) {
@@ -452,26 +552,30 @@
 </head>
 <body>
 
+    <!-- 丝带背景 -->
+    <div class="ribbon-container"><div class="ribbon"></div><div class="ribbon"></div><div class="ribbon"></div><div class="ribbon"></div><div class="ribbon"></div></div>
+    <div class="bg-glow"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+    <!-- ===== 登录卡片 ===== -->
     <div class="auth-card" id="authCard">
+
         <div class="logo-area">
             <div class="logo-icon">
                 <svg viewBox="0 0 1000 720" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g transform="translate(500, 360) scale(1.85) translate(-500, -360)">
-                        <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="#000000" fill-rule="evenodd" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <rect x="484" y="273" width="32" height="100" rx="10" fill="#000000"/>
-                        <rect x="488" y="383" width="24" height="24" rx="8" fill="#000000"/>
+                        <path d="M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z" fill="#ffffff" fill-rule="evenodd" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <rect x="484" y="273" width="32" height="100" rx="10" fill="#ffffff"/>
+                        <rect x="488" y="383" width="24" height="24" rx="8" fill="#ffffff"/>
                     </g>
                 </svg>
             </div>
             <h1 class="logo-title" id="logoTitle">登录账户</h1>
-            <p class="logo-subtitle" id="logoSubtitle">欢迎回来，继续使用</p>
+            <p class="logo-subtitle" id="logoSubtitle">欢迎回来</p>
         </div>
 
-        <div class="tabs" id="tabsContainer" role="tablist">
-            <button class="tab active" id="tabLogin" role="tab" aria-selected="true" type="button"
-                    onclick="setMode('login')">登录</button>
-            <button class="tab" id="tabRegister" role="tab" aria-selected="false" type="button"
-                    onclick="setMode('register')">注册</button>
+        <div class="tabs" role="tablist">
+            <button class="tab active" id="tabLogin" role="tab" aria-selected="true" onclick="setMode('login')">登录</button>
+            <button class="tab" id="tabRegister" role="tab" aria-selected="false" onclick="setMode('register')">注册</button>
         </div>
 
         <div class="alert alert-error" id="alertBox" role="alert">
@@ -479,60 +583,58 @@
             <span class="alert-message" id="alertMessage"></span>
         </div>
 
-        <form id="authForm" novalidate>
-            <div class="form-group">
-                <label class="form-label" for="email">邮箱地址</label>
-                <input class="form-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required />
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="password">密码</label>
-                <input class="form-input" type="password" id="password" placeholder="请输入密码" autocomplete="current-password" required />
-            </div>
-            <div class="form-group" id="confirmPasswordGroup">
-                <label class="form-label" for="confirmPassword">确认密码</label>
-                <input class="form-input" type="password" id="confirmPassword" placeholder="再次输入确认密码" autocomplete="new-password" />
+        <!-- ===== 主表单区域 ===== -->
+        <div class="auth-forms-wrapper" id="authFormsWrapper">
+            <form id="authForm" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="email">邮箱地址</label>
+                    <input class="form-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">密码</label>
+                    <input class="form-input" type="password" id="password" placeholder="至少 6 个字符" autocomplete="current-password" required />
+                </div>
+                <div class="form-group" id="confirmPasswordGroup">
+                    <label class="form-label" for="confirmPassword">确认密码</label>
+                    <input class="form-input" type="password" id="confirmPassword" placeholder="再次输入确认" autocomplete="new-password" />
+                </div>
+
+                <button class="btn btn-primary" type="submit" id="submitBtn">
+                    <span class="spinner"></span>
+                    <span class="btn-text" id="submitBtnText">登录</span>
+                </button>
+            </form>
+
+            <div class="forgot-link" id="forgotLinkContainer">
+                <a id="forgotPasswordLink" onclick="showForgotPassword()">忘记密码？</a>
             </div>
 
-            <button class="btn btn-primary" type="submit" id="submitBtn">
-                <span class="spinner"></span>
-                <span class="btn-text" id="submitBtnText">登 录</span>
+            <div class="divider" id="dividerContainer">或</div>
+
+            <button class="btn btn-google" type="button" id="googleBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.13 0-5.78-2.11-6.73-4.95H1.28v3.08A11.99 11.99 0 0 0 12 24z"/>
+                    <path fill="#FBBC05" d="M5.27 14.29A7.19 7.19 0 0 1 4.9 12c0-.8.14-1.57.37-2.29V6.63H1.28A11.99 11.99 0 0 0 0 12c0 1.94.47 3.77 1.28 5.37l3.99-3.08z"/>
+                    <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.58 1.79l3.43-3.43A11.95 11.95 0 0 0 12 0 11.99 11.99 0 0 0 1.28 6.63l3.99 3.08C6.22 6.88 8.87 4.77 12 4.77z"/>
+                </svg>
+                <span class="btn-text" id="googleBtnText">使用 Google 登录</span>
             </button>
-        </form>
 
-        <div class="forgot-link" id="forgotLinkContainer">
-            <a href="#" id="forgotPasswordLink" onclick="showForgotPassword()">忘记密码？</a>
+            <button class="btn btn-guest" type="button" id="guestBtn">
+                <span class="btn-text">🔓 游客浏览</span>
+            </button>
+
+            <div class="turnstile-container">
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAAEUsNj2JBRxJxqvc" data-callback="onTurnstileSuccess"></div>
+            </div>
         </div>
 
-        <div class="divider" id="dividerContainer">或</div>
-
-        <button class="btn btn-google" type="button" id="googleBtn">
-            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.13 0-5.78-2.11-6.73-4.95H1.28v3.08A11.99 11.99 0 0 0 12 24z"/>
-                <path fill="#FBBC05" d="M5.27 14.29A7.19 7.19 0 0 1 4.9 12c0-.8.14-1.57.37-2.29V6.63H1.28A11.99 11.99 0 0 0 0 12c0 1.94.47 3.77 1.28 5.37l3.99-3.08z"/>
-                <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.58 1.79l3.43-3.43A11.95 11.95 0 0 0 12 0 11.99 11.99 0 0 0 1.28 6.63l3.99 3.08C6.22 6.88 8.87 4.77 12 4.77z"/>
-            </svg>
-            <span class="btn-text" id="googleBtnText">使用 Google 登录</span>
-        </button>
-
-        <!-- 游客登录按钮 -->
-        <button class="btn btn-guest" type="button" id="guestBtn" onclick="guestLogin()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
-            </svg>
-            <span class="btn-text">游客登录</span>
-        </button>
-
-        <!-- Turnstile 验证码 -->
-        <div class="turnstile-container">
-            <div class="cf-turnstile" data-sitekey="0x4AAAAAAEUsNj2JBRxJxqvc" data-callback="onTurnstileSuccess"></div>
-        </div>
-
-        <!-- 忘记密码面板 -->
+        <!-- ===== 忘记密码面板 ===== -->
         <div class="forgot-password-panel" id="forgotPasswordPanel">
-            <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">重置密码</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
-                请输入您的注册邮箱，我们将发送一封重置密码的邮件。
+            <h3 style="color: var(--text-primary); margin-bottom: 12px; font-size: 18px;">重置密码</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
+                输入您的注册邮箱，我们将发送重置密码的邮件。
             </p>
             <div class="form-group">
                 <label class="form-label" for="forgotEmail">邮箱地址</label>
@@ -543,51 +645,48 @@
                 <span class="btn-text">发送重置邮件</span>
             </button>
             <div class="back-link">
-                <a href="#" id="backToLoginFromForgot" onclick="showLogin()">返回登录</a>
+                <a onclick="showLogin()">← 返回登录</a>
             </div>
         </div>
 
-        <!-- 重置密码面板 -->
+        <!-- ===== 重置密码面板 ===== -->
         <div class="reset-password-panel" id="resetPasswordPanel">
-            <h3 style="color: #fff; margin-bottom: 16px; font-size: 18px;">设置新密码</h3>
+            <h3 style="color: var(--text-primary); margin-bottom: 12px; font-size: 18px;">设置新密码</h3>
             <div class="form-group">
                 <label class="form-label" for="newPassword">新密码</label>
-                <input class="form-input" type="password" id="newPassword" placeholder="至少6个字符" autocomplete="new-password" />
+                <input class="form-input" type="password" id="newPassword" placeholder="至少 6 个字符" autocomplete="new-password" />
             </div>
             <div class="form-group">
                 <label class="form-label" for="confirmNewPassword">确认新密码</label>
-                <input class="form-input" type="password" id="confirmNewPassword" placeholder="再次输入新密码" autocomplete="new-password" />
+                <input class="form-input" type="password" id="confirmNewPassword" placeholder="再次输入" autocomplete="new-password" />
             </div>
             <button class="btn btn-primary" type="button" id="updatePasswordBtn">
                 <span class="spinner"></span>
                 <span class="btn-text">更新密码</span>
             </button>
             <div class="back-link">
-                <a href="#" id="backToLoginFromReset" onclick="showLogin()">返回登录</a>
+                <a onclick="showLogin()">← 返回登录</a>
             </div>
         </div>
+
     </div>
 
     <script>
         (function() {
+            'use strict';
+
             const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+            const SUPABASE_ANON_KEY =
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
 
             let supabase;
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             } catch (err) {
                 console.error('Supabase 初始化失败:', err);
-                setTimeout(() => {
-                    const alertBox = document.getElementById('alertBox');
-                    if (alertBox) {
-                        alertBox.className = 'alert alert-error show';
-                        document.getElementById('alertMessage').textContent = 'Supabase 配置错误，请检查 URL 和 anon key。';
-                    }
-                }, 100);
             }
 
-            // DOM 元素
+            // DOM
             const tabLogin = document.getElementById('tabLogin');
             const tabRegister = document.getElementById('tabRegister');
             const authForm = document.getElementById('authForm');
@@ -602,11 +701,8 @@
             const alertBox = document.getElementById('alertBox');
             const alertIcon = document.getElementById('alertIcon');
             const alertMessage = document.getElementById('alertMessage');
-            const authCard = document.getElementById('authCard');
             const logoTitle = document.getElementById('logoTitle');
             const logoSubtitle = document.getElementById('logoSubtitle');
-            const tabsContainer = document.getElementById('tabsContainer');
-            const dividerContainer = document.getElementById('dividerContainer');
             const forgotLinkContainer = document.getElementById('forgotLinkContainer');
             const forgotPasswordPanel = document.getElementById('forgotPasswordPanel');
             const resetPasswordPanel = document.getElementById('resetPasswordPanel');
@@ -615,41 +711,29 @@
             const newPasswordInput = document.getElementById('newPassword');
             const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
             const updatePasswordBtn = document.getElementById('updatePasswordBtn');
+            const authFormsWrapper = document.getElementById('authFormsWrapper');
+            const dividerContainer = document.getElementById('dividerContainer');
 
             let currentMode = 'login';
-            let isLoading = false;
             let turnstileToken = null;
 
-            // Turnstile 回调
             window.onTurnstileSuccess = function(token) {
                 turnstileToken = token;
-                console.log('Turnstile token 获取成功');
-            };
-
-            const icons = {
-                error: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`,
-                success: `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`
             };
 
             function showAlert(type, message) {
-                alertBox.className = `alert alert-${type} show`;
-                alertIcon.innerHTML = type === 'error' ? icons.error : icons.success;
+                alertBox.className = 'alert alert-' + type + ' show';
+                alertIcon.textContent = type === 'error' ? '✕' : '✓';
                 alertMessage.textContent = message;
                 clearTimeout(alertBox._hideTimer);
-                alertBox._hideTimer = setTimeout(() => hideAlert(), 5000);
+                alertBox._hideTimer = setTimeout(function() {
+                    alertBox.classList.remove('show');
+                }, 5000);
             }
 
             function hideAlert() {
-                if (!alertBox.classList.contains('show')) return;
-                alertBox.classList.add('fade-out');
                 alertBox.classList.remove('show');
                 clearTimeout(alertBox._hideTimer);
-                alertBox._hideTimer = setTimeout(() => {
-                    alertBox.classList.remove('fade-out');
-                    alertIcon.innerHTML = '';
-                    alertMessage.textContent = '';
-                    alertBox.className = 'alert';
-                }, 300);
             }
 
             function setLoading(btn, loading) {
@@ -664,81 +748,60 @@
 
             function markError(input) {
                 input.classList.add('error');
-                setTimeout(() => input.classList.remove('error'), 2000);
+                setTimeout(function() { input.classList.remove('error'); }, 2000);
             }
 
-            function showAuthForms() {
-                authForm.style.display = 'block';
-                googleBtn.style.display = 'flex';
-                guestBtn.style.display = 'flex';
-                document.querySelector('.turnstile-container').style.display = 'flex';
-                tabsContainer.style.display = 'flex';
-                dividerContainer.style.display = 'flex';
-                forgotLinkContainer.style.display = 'block';
+            function showLogin() {
+                authFormsWrapper.classList.remove('hidden');
                 forgotPasswordPanel.classList.remove('show');
                 forgotPasswordPanel.style.display = 'none';
                 resetPasswordPanel.classList.remove('show');
                 resetPasswordPanel.style.display = 'none';
-                logoSubtitle.textContent = '欢迎回来，继续使用';
+                logoTitle.textContent = '登录账户';
+                logoSubtitle.textContent = '欢迎回来';
                 setMode('login');
+                hideAlert();
             }
 
-            function showLogin() {
-                showAuthForms();
-                setMode('login');
-            }
+            window.showLogin = showLogin;
 
             function showForgotPassword() {
-                authForm.style.display = 'none';
-                googleBtn.style.display = 'none';
-                guestBtn.style.display = 'none';
-                document.querySelector('.turnstile-container').style.display = 'none';
-                tabsContainer.style.display = 'none';
-                dividerContainer.style.display = 'none';
-                forgotLinkContainer.style.display = 'none';
-                resetPasswordPanel.classList.remove('show');
-                resetPasswordPanel.style.display = 'none';
+                authFormsWrapper.classList.add('hidden');
                 forgotPasswordPanel.classList.add('show');
                 forgotPasswordPanel.style.display = 'block';
+                resetPasswordPanel.classList.remove('show');
+                resetPasswordPanel.style.display = 'none';
                 logoTitle.textContent = '忘记密码';
                 logoSubtitle.textContent = '重置您的账户密码';
                 hideAlert();
             }
 
+            window.showForgotPassword = showForgotPassword;
+
             function showResetPassword() {
-                authForm.style.display = 'none';
-                googleBtn.style.display = 'none';
-                guestBtn.style.display = 'none';
-                document.querySelector('.turnstile-container').style.display = 'none';
-                tabsContainer.style.display = 'none';
-                dividerContainer.style.display = 'none';
-                forgotLinkContainer.style.display = 'none';
+                authFormsWrapper.classList.add('hidden');
                 forgotPasswordPanel.classList.remove('show');
                 forgotPasswordPanel.style.display = 'none';
                 resetPasswordPanel.classList.add('show');
                 resetPasswordPanel.style.display = 'block';
                 logoTitle.textContent = '设置新密码';
-                logoSubtitle.textContent = '请输入您的新密码';
+                logoSubtitle.textContent = '请输入新密码';
                 hideAlert();
             }
 
             window.setMode = function(mode) {
                 if (mode !== 'login' && mode !== 'register') return;
                 currentMode = mode;
-                authForm.classList.remove('animate-form');
-                void authForm.offsetWidth;
-                authForm.classList.add('animate-form');
 
                 if (mode === 'login') {
                     tabLogin.classList.add('active');
                     tabRegister.classList.remove('active');
                     tabLogin.setAttribute('aria-selected', 'true');
                     tabRegister.setAttribute('aria-selected', 'false');
-                    submitBtnText.textContent = '登 录';
+                    submitBtnText.textContent = '登录';
                     passwordInput.autocomplete = 'current-password';
                     logoTitle.textContent = '登录账户';
-                    logoSubtitle.textContent = '欢迎回来，继续使用';
-                    authCard.classList.remove('tab-register-mode');
+                    logoSubtitle.textContent = '欢迎回来';
                     confirmPasswordGroup.classList.remove('visible');
                     confirmPasswordInput.value = '';
                     forgotLinkContainer.style.display = 'block';
@@ -747,11 +810,10 @@
                     tabLogin.classList.remove('active');
                     tabRegister.setAttribute('aria-selected', 'true');
                     tabLogin.setAttribute('aria-selected', 'false');
-                    submitBtnText.textContent = '发送验证邮件';
+                    submitBtnText.textContent = '注册';
                     passwordInput.autocomplete = 'new-password';
                     logoTitle.textContent = '注册账户';
-                    logoSubtitle.textContent = '创建账户，开始使用';
-                    authCard.classList.add('tab-register-mode');
+                    logoSubtitle.textContent = '创建您的账户';
                     confirmPasswordGroup.classList.add('visible');
                     forgotLinkContainer.style.display = 'none';
                 }
@@ -764,33 +826,29 @@
                 hideAlert();
             };
 
-            window.showForgotPassword = showForgotPassword;
-            window.showLogin = showLogin;
-
-            // 游客登录函数（带 Turnstile 验证）
-            window.guestLogin = async function() {
+            // 游客登录
+            guestBtn.addEventListener('click', async function() {
                 if (!turnstileToken) {
                     showAlert('error', '请先完成验证码');
                     return;
                 }
+                setLoading(guestBtn, true);
                 try {
-                    setLoading(guestBtn, true);
                     const { data, error } = await supabase.auth.signInAnonymously({
                         options: { captchaToken: turnstileToken }
                     });
                     if (error) throw error;
-                    // 登录成功，跳转主页
                     window.location.href = 'home.html';
                 } catch (err) {
                     console.error('游客登录失败:', err);
-                    showAlert('error', `游客登录失败：${err.message || '请稍后重试'}`);
+                    showAlert('error', '游客登录失败：' + (err.message || '请稍后重试'));
                 } finally {
                     setLoading(guestBtn, false);
                 }
-            };
+            });
 
-            // 登录/注册表单提交
-            authForm.addEventListener('submit', async (e) => {
+            // 登录/注册提交
+            authForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 hideAlert();
 
@@ -799,17 +857,17 @@
                 const confirmPassword = confirmPasswordInput.value;
 
                 if (!email || !email.includes('@')) {
-                    showAlert('error', '请输入有效的邮箱地址。');
+                    showAlert('error', '请输入有效的邮箱地址');
                     markError(emailInput);
                     return;
                 }
                 if (!password || password.length < 6) {
-                    showAlert('error', '密码至少需要 6 个字符。');
+                    showAlert('error', '密码至少需要 6 个字符');
                     markError(passwordInput);
                     return;
                 }
                 if (currentMode === 'register' && password !== confirmPassword) {
-                    showAlert('error', '两次输入的密码不一致，请重新输入。');
+                    showAlert('error', '两次输入的密码不一致');
                     markError(confirmPasswordInput);
                     return;
                 }
@@ -820,38 +878,33 @@
                     if (currentMode === 'login') {
                         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                         if (error) throw error;
-                        if (data?.user) {
+                        if (data.user) {
                             showAlert('success', '登录成功！正在跳转...');
-                            setTimeout(() => window.location.href = 'home.html', 800);
+                            setTimeout(function() { window.location.href = 'home.html'; }, 600);
                         }
                     } else {
-                        const { data, error } = await supabase.auth.signUp({
-                            email,
-                            password,
-                            options: {}
-                        });
+                        const { data, error } = await supabase.auth.signUp({ email, password });
                         if (error) throw error;
-
-                        if (data?.user?.identities?.length === 0) {
-                            showAlert('error', '该邮箱已注册，请直接登录。');
-                        } else if (data?.session) {
+                        if (data.user && data.user.identities && data.user.identities.length === 0) {
+                            showAlert('error', '该邮箱已注册，请直接登录');
+                        } else if (data.session) {
                             showAlert('success', '注册成功！正在跳转...');
-                            setTimeout(() => window.location.href = 'home.html', 800);
+                            setTimeout(function() { window.location.href = 'home.html'; }, 600);
                         } else {
-                            showAlert('success', '验证邮件已发送，请前往邮箱验证后登录。');
+                            showAlert('success', '验证邮件已发送，请查收邮箱验证后登录');
                             setMode('login');
                             emailInput.value = email;
                         }
                     }
                 } catch (err) {
                     console.error('认证错误:', err);
-                    const msg = err.message || '认证失败，请重试。';
+                    var msg = err.message || '认证失败，请重试';
                     if (msg.includes('Invalid login credentials')) {
-                        showAlert('error', '邮箱或密码错误，请检查后重试。');
+                        showAlert('error', '邮箱或密码错误，请检查后重试');
                     } else if (msg.includes('Email not confirmed')) {
-                        showAlert('error', '邮箱尚未验证，请查收邮件完成验证。');
+                        showAlert('error', '邮箱尚未验证，请查收邮件完成验证');
                     } else if (msg.includes('User already registered')) {
-                        showAlert('error', '该邮箱已注册，请直接登录。');
+                        showAlert('error', '该邮箱已注册，请直接登录');
                         setMode('login');
                     } else {
                         showAlert('error', msg);
@@ -862,7 +915,7 @@
             });
 
             // Google 登录
-            googleBtn.addEventListener('click', async () => {
+            googleBtn.addEventListener('click', async function() {
                 hideAlert();
                 setLoading(googleBtn, true);
                 try {
@@ -875,16 +928,16 @@
                     if (error) throw error;
                 } catch (err) {
                     console.error('Google 登录错误:', err);
-                    showAlert('error', `Google 登录失败：${err.message || '请稍后重试'}`);
+                    showAlert('error', 'Google 登录失败：' + (err.message || '请稍后重试'));
                     setLoading(googleBtn, false);
                 }
             });
 
             // 发送重置邮件
-            sendResetBtn.addEventListener('click', async () => {
+            sendResetBtn.addEventListener('click', async function() {
                 const email = forgotEmailInput.value.trim();
                 if (!email || !email.includes('@')) {
-                    showAlert('error', '请输入有效的邮箱地址。');
+                    showAlert('error', '请输入有效的邮箱地址');
                     markError(forgotEmailInput);
                     return;
                 }
@@ -894,27 +947,27 @@
                         redirectTo: window.location.origin + window.location.pathname,
                     });
                     if (error) throw error;
-                    showAlert('success', '重置邮件已发送，请检查您的邮箱。');
+                    showAlert('success', '重置邮件已发送，请检查邮箱');
                     forgotEmailInput.value = '';
                 } catch (err) {
                     console.error('发送重置邮件失败:', err);
-                    showAlert('error', `发送失败：${err.message}`);
+                    showAlert('error', '发送失败：' + err.message);
                 } finally {
                     setLoading(sendResetBtn, false);
                 }
             });
 
-            // 更新密码（恢复模式）
-            updatePasswordBtn.addEventListener('click', async () => {
+            // 更新密码
+            updatePasswordBtn.addEventListener('click', async function() {
                 const newPassword = newPasswordInput.value;
                 const confirmNewPassword = confirmNewPasswordInput.value;
                 if (!newPassword || newPassword.length < 6) {
-                    showAlert('error', '密码至少需要 6 个字符。');
+                    showAlert('error', '密码至少需要 6 个字符');
                     markError(newPasswordInput);
                     return;
                 }
                 if (newPassword !== confirmNewPassword) {
-                    showAlert('error', '两次输入的密码不一致。');
+                    showAlert('error', '两次输入的密码不一致');
                     markError(confirmNewPasswordInput);
                     return;
                 }
@@ -922,50 +975,54 @@
                 try {
                     const { error } = await supabase.auth.updateUser({ password: newPassword });
                     if (error) throw error;
-                    showAlert('success', '密码更新成功！请使用新密码登录。');
+                    showAlert('success', '密码更新成功！请重新登录');
                     await supabase.auth.signOut();
                     showLogin();
                 } catch (err) {
                     console.error('更新密码失败:', err);
-                    showAlert('error', `更新失败：${err.message}`);
+                    showAlert('error', '更新失败：' + err.message);
                 } finally {
                     setLoading(updatePasswordBtn, false);
                 }
             });
 
             // 输入时清除错误
-            emailInput.addEventListener('input', () => { emailInput.classList.remove('error'); hideAlert(); });
-            passwordInput.addEventListener('input', () => { passwordInput.classList.remove('error'); hideAlert(); });
-            confirmPasswordInput.addEventListener('input', () => { confirmPasswordInput.classList.remove('error'); hideAlert(); });
-            forgotEmailInput.addEventListener('input', () => { forgotEmailInput.classList.remove('error'); hideAlert(); });
-            newPasswordInput.addEventListener('input', () => { newPasswordInput.classList.remove('error'); hideAlert(); });
-            confirmNewPasswordInput.addEventListener('input', () => { confirmNewPasswordInput.classList.remove('error'); hideAlert(); });
+            emailInput.addEventListener('input', function() { emailInput.classList.remove('error');
+                hideAlert(); });
+            passwordInput.addEventListener('input', function() { passwordInput.classList.remove('error');
+                hideAlert(); });
+            confirmPasswordInput.addEventListener('input', function() { confirmPasswordInput.classList.remove('error');
+                hideAlert(); });
+            forgotEmailInput.addEventListener('input', function() { forgotEmailInput.classList.remove('error');
+                hideAlert(); });
+            newPasswordInput.addEventListener('input', function() { newPasswordInput.classList.remove('error');
+                hideAlert(); });
+            confirmNewPasswordInput.addEventListener('input', function() { confirmNewPasswordInput.classList.remove('error');
+                hideAlert(); });
 
-            // 处理恢复模式（URL 中包含 type=recovery）
+            // 恢复模式
             async function handleRecoveryMode() {
-                const hash = window.location.hash;
-                if (hash.includes('type=recovery')) {
+                if (window.location.hash.includes('type=recovery')) {
                     showResetPassword();
                     window.history.replaceState(null, '', window.location.pathname);
                 }
             }
 
-            // 检查已登录状态
+            // 已登录检测
             async function checkAuthState() {
                 try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user && !window.location.hash.includes('type=recovery')) {
-                        // 已登录（包括匿名登录），直接跳转主页
+                    const { data } = await supabase.auth.getUser();
+                    if (data.user && !window.location.hash.includes('type=recovery')) {
                         window.location.href = 'home.html';
                     }
                 } catch (err) {
-                    console.log('未检测到已登录用户');
+                    // 未登录，正常显示
                 }
             }
 
             if (supabase) {
-                supabase.auth.onAuthStateChange((event, session) => {
-                    if (event === 'SIGNED_IN' && session?.user) {
+                supabase.auth.onAuthStateChange(function(event, session) {
+                    if (event === 'SIGNED_IN' && session) {
                         if (window.location.hash.includes('type=recovery')) {
                             showResetPassword();
                         } else {
@@ -977,8 +1034,9 @@
                 checkAuthState();
             }
 
-            console.log('%c必看 认证页面已加载', 'font-size:16px; font-weight:bold; color:#3ecf8e;');
+            console.log('%c✦ 必看 认证页面已加载', 'font-size:16px; font-weight:bold; color:#6c5ce7;');
         })();
     </script>
+
 </body>
 </html>
