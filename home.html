@@ -5,15 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 · 网址导航</title>
 
-    <!-- 网站图标：黑色 SVG Logo -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
-    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
 
     <style>
-        /* ===== 完整样式 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -41,7 +38,6 @@
             --error: #ff6b6b;
             --success: #3ecf8e;
         }
-
         html {
             scroll-behavior: smooth;
         }
@@ -59,7 +55,6 @@
             overflow: hidden;
             height: 100vh;
         }
-
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -75,7 +70,6 @@
             background: rgba(255, 255, 255, 0.12);
         }
 
-        /* 丝带背景 */
         .ribbon-container {
             position: fixed;
             inset: 0;
@@ -199,7 +193,6 @@
             transform: translateX(-50%);
         }
 
-        /* ===== 主应用 ===== */
         .app {
             position: relative;
             z-index: 2;
@@ -218,7 +211,6 @@
             opacity: 1;
         }
 
-        /* ===== 导航栏 ===== */
         .navbar {
             display: flex;
             align-items: center;
@@ -366,7 +358,6 @@
             padding: 0 2px;
         }
 
-        /* ===== 主布局 ===== */
         .app-layout {
             display: flex;
             flex: 1;
@@ -379,7 +370,6 @@
             position: relative;
         }
 
-        /* ===== 侧边栏 ===== */
         .app-sidebar {
             width: 280px;
             min-width: 280px;
@@ -582,7 +572,6 @@
             background: rgba(0, 0, 0, 0.05);
         }
 
-        /* ===== 页面堆叠 ===== */
         .page-stack {
             position: relative;
             flex: 1;
@@ -688,7 +677,6 @@
             padding: 4px 2px 16px;
         }
 
-        /* ===== Hero ===== */
         .hero {
             text-align: center;
             padding: 12px 0 20px;
@@ -767,7 +755,6 @@
             margin-top: 0px;
         }
 
-        /* ===== 内容网格 ===== */
         .content-grid {
             display: flex;
             flex-direction: column;
@@ -1022,7 +1009,6 @@
             transform: translateX(4px);
         }
 
-        /* ===== 分区详情 ===== */
         .detail-header {
             display: flex;
             align-items: center;
@@ -1241,7 +1227,6 @@
             color: #f87171;
         }
 
-        /* ===== 书签列表 ===== */
         .bm-list {
             display: flex;
             flex-direction: column;
@@ -1398,7 +1383,6 @@
             color: var(--text-micro);
         }
 
-        /* ===== 管理工具栏 ===== */
         .manage-toolbar {
             flex-shrink: 0;
             display: none;
@@ -1456,7 +1440,6 @@
             margin-left: 4px;
         }
 
-        /* ===== 模态框 ===== */
         .custom-modal-overlay {
             position: fixed;
             inset: 0;
@@ -1605,7 +1588,6 @@
             background: rgba(239, 68, 68, 0.15);
         }
 
-        /* ===== Toast ===== */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -1642,7 +1624,6 @@
             line-height: 1.6;
         }
 
-        /* ===== 全屏 HTML 展示 ===== */
         .fullscreen-html-overlay {
             position: fixed;
             inset: 0;
@@ -1704,7 +1685,6 @@
             background: #fff;
         }
 
-        /* ===== 响应式 ===== */
         @media (max-width: 768px) {
             .app {
                 padding: 6px 10px 10px;
@@ -1861,14 +1841,11 @@
 </head>
 <body>
 
-    <!-- 丝带背景 -->
     <div class="ribbon-container"><div class="ribbon"></div><div class="ribbon"></div><div class="ribbon"></div><div class="ribbon"></div><div class="ribbon"></div></div>
     <div class="bg-glow"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- 模态框 -->
     <div class="custom-modal-overlay" id="customModal">
         <div class="custom-modal">
             <h3 id="customModalTitle">输入</h3>
@@ -1880,7 +1857,6 @@
         </div>
     </div>
 
-    <!-- 确认对话框 -->
     <div class="custom-modal-overlay" id="confirmModal">
         <div class="custom-modal">
             <h3 id="confirmModalTitle">确认操作</h3>
@@ -1894,7 +1870,6 @@
         </div>
     </div>
 
-    <!-- 全屏 HTML -->
     <div class="fullscreen-html-overlay" id="fullscreenHtmlOverlay">
         <div class="fullscreen-html-container">
             <div class="fs-header">
@@ -1905,9 +1880,7 @@
         </div>
     </div>
 
-    <!-- ===== 主应用 ===== -->
     <div class="app" id="app">
-        <!-- 导航栏 -->
         <nav class="navbar">
             <div class="brand" id="brandHome">
                 <span class="brand-icon">
@@ -1935,9 +1908,7 @@
             </div>
         </nav>
 
-        <!-- 主布局 -->
         <div class="app-layout" id="appLayout">
-            <!-- 侧边栏 -->
             <aside class="app-sidebar" id="appSidebar">
                 <div class="sidebar-header">
                     <h2><span class="icon">📑</span> 我的分区</h2>
@@ -1950,10 +1921,8 @@
                 <div class="sidebar-footer">共 <span id="sidebarTotal">0</span> 个分区</div>
             </aside>
 
-            <!-- 主内容 -->
             <main class="app-main">
                 <div class="page-stack" id="pageStack">
-                    <!-- 首页 -->
                     <div class="page-layer depth-0" id="layerHome" data-depth="0">
                         <div class="layer-inner">
                             <div class="page-content">
@@ -1972,7 +1941,6 @@
                         </div>
                     </div>
 
-                    <!-- 分区详情 -->
                     <div class="page-layer depth-1 hidden" id="layerSection" data-depth="1">
                         <div class="layer-inner">
                             <div class="page-content">
@@ -1994,7 +1962,6 @@
                         </div>
                     </div>
 
-                    <!-- HTML 子分区 -->
                     <div class="page-layer depth-2 hidden" id="layerSubSection" data-depth="2">
                         <div class="layer-inner">
                             <div class="page-content">
@@ -2016,7 +1983,6 @@
                         </div>
                     </div>
 
-                    <!-- 书签列表 -->
                     <div class="page-layer depth-2 hidden" id="layerBookmarks" data-depth="2">
                         <div class="layer-inner">
                             <div class="page-content">
@@ -2041,7 +2007,6 @@
             </main>
         </div>
 
-        <!-- 管理工具栏 -->
         <div class="manage-toolbar" id="manageToolbar">
             <button class="tool-btn primary" id="toolAddAnnouncement">📢 添加公告</button>
             <button class="tool-btn primary" id="toolAddDivider">━ 添加分割线</button>
@@ -2054,48 +2019,33 @@
         (function() {
             'use strict';
 
-            // ============================================================
-            //  Supabase 配置
-            // ============================================================
-            const SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
-            const SUPABASE_ANON_KEY =
-                'eyJhbGciOiJIUzI1NiIsR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
+            // ===== 工具函数 =====
+            function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // ===== Supabase 配置 =====
+            var SUPABASE_URL = 'https://qziqskgvzabuynduyuqy.supabase.co';
+            var SUPABASE_ANON_KEY =
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
 
-            // ============================================================
-            //  状态
-            // ============================================================
-            let isManageMode = false;
-            let isSidebarCollapsed = false;
-            let isNavigating = false;
-            let currentSectionId = null;
-            let currentSubId = null;
-            let pageStack = ['home'];
-            let expandedNodes = {};
-            let dragData = null;
+            var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            // 缓存数据
-            let sections = [];
-            let homeItems = [];
-            let settings = { site: { name: '必看网', version: 'v3.0' }, hero: {} };
+            // ===== 状态 =====
+            var isManageMode = false;
+            var isSidebarCollapsed = false;
+            var isNavigating = false;
+            var currentSectionId = null;
+            var currentSubId = null;
+            var pageStack = ['home'];
+            var expandedNodes = {};
+            var dragData = null;
+            var isRedirecting = false;
+            var sections = [];
+            var homeItems = [];
+            var settings = { site: { name: '必看网', version: 'v3.0' }, hero: {} };
+            var currentUser = null;
 
-            let currentUser = null;
-
-            // ============================================================
-            //  工具函数
-            // ============================================================
-            function generateId() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9); }
-
-            function escapeHtml(s) { if (!s) return ''; var d = document.createElement('div');
-                d.textContent = s; return d.innerHTML; }
-
-            function formatDate() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,
-                '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-
-            function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-            let toastTimer = null;
+            // ===== Toast =====
+            var toastTimer = null;
 
             function showToast(msg, type) {
                 type = type || '';
@@ -2106,9 +2056,7 @@
                 toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
             }
 
-            // ============================================================
-            //  模态框
-            // ============================================================
+            // ===== 模态框 =====
             function showModal(title, fields, confirmLabel, confirmCb, cancelCb) {
                 return new Promise(function(resolve) {
                     var overlay = document.getElementById('customModal');
@@ -2231,12 +2179,9 @@
                 });
             }
 
-            // ============================================================
-            //  数据加载
-            // ============================================================
+            // ===== 数据加载 =====
             async function loadData() {
                 try {
-                    // 加载设置
                     var { data: settingsData, error: settingsErr } = await supabase
                         .from('settings')
                         .select('key, value');
@@ -2248,7 +2193,6 @@
                         });
                     }
 
-                    // 加载分区
                     var { data: sectionsData, error: sectionsErr } = await supabase
                         .from('sections')
                         .select('*')
@@ -2257,7 +2201,6 @@
                         sections = sectionsData;
                     }
 
-                    // 加载首页项
                     var { data: homeData, error: homeErr } = await supabase
                         .from('home_items')
                         .select('*')
@@ -2266,19 +2209,16 @@
                         homeItems = homeData;
                     }
 
-                    // 加载书签
                     var { data: bookmarksData, error: bmErr } = await supabase
                         .from('bookmarks')
                         .select('*')
                         .order('sort_order', { ascending: true });
                     if (!bmErr && bookmarksData) {
-                        // 按 section_id 分组
                         var bmMap = {};
                         bookmarksData.forEach(function(b) {
                             if (!bmMap[b.section_id]) bmMap[b.section_id] = [];
                             bmMap[b.section_id].push(b);
                         });
-                        // 合并到 sections
                         sections.forEach(function(sec) {
                             if (bmMap[sec.id]) {
                                 sec.bookmarks = bmMap[sec.id];
@@ -2288,7 +2228,6 @@
                         });
                     }
 
-                    // 加载 HTML 页面
                     var { data: htmlData, error: htmlErr } = await supabase
                         .from('html_pages')
                         .select('*')
@@ -2308,7 +2247,6 @@
                         });
                     }
 
-                    // 构建树形结构
                     var rootSections = sections.filter(function(s) { return !s.parent_id; });
                     var childMap = {};
                     sections.forEach(function(s) {
@@ -2318,7 +2256,6 @@
                         }
                     });
 
-                    // 构建 children 树
                     function buildTree(sec) {
                         var children = childMap[sec.id] || [];
                         sec.children = children.map(function(c) {
@@ -2335,10 +2272,8 @@
                         buildTree(sec);
                     });
 
-                    // 重新赋值 sections
                     sections = rootSections;
 
-                    // 设置默认值
                     if (!settings.site) settings.site = { name: '必看网', version: 'v3.0' };
                     if (!settings.hero) settings.hero = { badge: '✦ 精选优质网站', title: '发现好网站', subtitle: '从必看网开始',
                         highlight: '好网站' };
@@ -2353,9 +2288,6 @@
                 }
             }
 
-            // ============================================================
-            //  应用设置到 UI
-            // ============================================================
             function applySettings() {
                 if (settings.site) {
                     document.getElementById('brandName').textContent = settings.site.name || '必看网';
@@ -2384,9 +2316,7 @@
                 }
             }
 
-            // ============================================================
-            //  统计
-            // ============================================================
+            // ===== 统计 =====
             function countAllBookmarks() {
                 var total = 0;
                 sections.forEach(function(sec) {
@@ -2411,9 +2341,7 @@
                 return total;
             }
 
-            // ============================================================
-            //  查找函数
-            // ============================================================
+            // ===== 查找 =====
             function findSectionById(nodes, id) {
                 for (var i = 0; i < nodes.length; i++) {
                     if (nodes[i].id === id) return nodes[i];
@@ -2439,9 +2367,7 @@
                 return null;
             }
 
-            // ============================================================
-            //  渲染：侧边栏
-            // ============================================================
+            // ===== 渲染：侧边栏 =====
             function renderSidebar() {
                 var container = document.getElementById('sidebarTree');
                 container.innerHTML = '';
@@ -2584,9 +2510,7 @@
                 return li;
             }
 
-            // ============================================================
-            //  渲染：首页
-            // ============================================================
+            // ===== 渲染：首页 =====
             function renderHome() {
                 var totalSections = sections.length;
                 var totalSubs = countSubSections();
@@ -2624,9 +2548,7 @@
                 requestAnimationFrame(update);
             }
 
-            // ============================================================
-            //  渲染：内容网格
-            // ============================================================
+            // ===== 渲染：内容网格 =====
             function renderContentGrid() {
                 var container = document.getElementById('homeContentGrid');
                 container.innerHTML = '';
@@ -2760,9 +2682,10 @@
                 });
             }
 
-            // ============================================================
-            //  拖拽排序（首页）
-            // ============================================================
+            function escapeHtml(s) { if (!s) return ''; var d = document.createElement('div');
+                d.textContent = s; return d.innerHTML; }
+
+            // ===== 拖拽 =====
             function onDragStart(e) {
                 var el = e.target.closest('.grid-item');
                 if (!el) return;
@@ -2840,9 +2763,7 @@
                 }
             }
 
-            // ============================================================
-            //  首页项 CRUD
-            // ============================================================
+            // ===== 首页项 CRUD =====
             async function deleteHomeItem(id) {
                 try {
                     await supabase.from('home_items').delete().eq('id', id);
@@ -2899,9 +2820,7 @@
                 });
             }
 
-            // ============================================================
-            //  导航
-            // ============================================================
+            // ===== 导航 =====
             function navigateTo(page, sectionId, subId) {
                 isNavigating = true;
                 if (page === 'home') {
@@ -2976,9 +2895,7 @@
                 updateManageModeUI();
             }
 
-            // ============================================================
-            //  渲染：分区详情
-            // ============================================================
+            // ===== 渲染：分区详情 =====
             function renderSection(sectionId) {
                 var section = getSection(sectionId);
                 if (!section) { showToast('分区不存在', 'error');
@@ -3071,7 +2988,6 @@
                     if (!section) return;
                     var child = section.children.find(function(c) { return c.id === subId; });
                     if (!child) return;
-                    // 删除书签或 HTML 页面
                     if (child.isHtml) {
                         await supabase.from('html_pages').delete().eq('section_id', subId);
                     } else {
@@ -3086,9 +3002,7 @@
                 }
             }
 
-            // ============================================================
-            //  渲染：HTML 子分区
-            // ============================================================
+            // ===== 渲染：HTML 子分区 =====
             function renderSubSection(subId, sectionId) {
                 var section = getSection(sectionId);
                 if (!section) { goBack(); return; }
@@ -3167,7 +3081,6 @@
                     }
                     contentContainer.appendChild(listContainer);
                 } else {
-                    // 普通书签模式不应该到这里
                     navigateTo('bookmarks', sectionId, subId);
                 }
 
@@ -3224,9 +3137,7 @@
                 });
             }
 
-            // ============================================================
-            //  渲染：书签列表
-            // ============================================================
+            // ===== 渲染：书签列表 =====
             function renderBookmarks(subId, sectionId) {
                 var section = getSection(sectionId);
                 if (!section) { goBack(); return; }
@@ -3413,9 +3324,7 @@
                 });
             }
 
-            // ============================================================
-            //  全屏 HTML
-            // ============================================================
+            // ===== 全屏 HTML =====
             function openFullscreenHtml(htmlContent, title) {
                 var overlay = document.getElementById('fullscreenHtmlOverlay');
                 var iframe = document.getElementById('fsHtmlIframe');
@@ -3443,9 +3352,7 @@
                 document.addEventListener('keydown', keyHandler);
             }
 
-            // ============================================================
-            //  管理：添加分类/子分区
-            // ============================================================
+            // ===== 管理：添加分类/子分区 =====
             async function addSection() {
                 var parentOptions = [{ value: '', label: '（根级）' }];
                 sections.forEach(function(s) { parentOptions.push({ value: s.id, label: s.name }); });
@@ -3478,7 +3385,6 @@
                             sort_order: newSec.sort_order
                         }).select();
                         if (error) throw error;
-                        // 添加首页引用
                         await supabase.from('home_items').insert({
                             id: generateId(),
                             type: 'section_ref',
@@ -3567,7 +3473,6 @@
                         if (!isForcedHtml) {
                             var newIsHtml = results.sub_isHtml === true;
                             if (newIsHtml !== sub.isHtml) {
-                                // 切换模式时清理数据
                                 if (newIsHtml) {
                                     await supabase.from('bookmarks').delete().eq('section_id', subId);
                                     sub.bookmarks = [];
@@ -3589,9 +3494,7 @@
                 });
             }
 
-            // ============================================================
-            //  添加 HTML 页面
-            // ============================================================
+            // ===== 添加 HTML 页面 =====
             function addHtmlPage(subId, sectionId) {
                 var sec = getSection(sectionId);
                 if (!sec) { showToast('分区不存在', 'error'); return; }
@@ -3708,9 +3611,9 @@
                 });
             }
 
-            // ============================================================
-            //  添加书签
-            // ============================================================
+            function generateId() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9); }
+
+            // ===== 添加书签 =====
             function addBookmark(subId, sectionId) {
                 var fields = [
                     { id: 'bm_name', label: '名称', type: 'text', value: '' },
@@ -3767,9 +3670,7 @@
                 });
             }
 
-            // ============================================================
-            //  首页工具：添加公告/分割线
-            // ============================================================
+            // ===== 首页工具 =====
             async function addAnnouncement() {
                 var fields = [
                     { id: 'ann_content', label: '公告内容', type: 'textarea', value: '📢 新公告' },
@@ -3833,14 +3734,12 @@
                 });
             }
 
-            // ============================================================
-            //  数据导入（从 localStorage）
-            // ============================================================
+            // ===== 导入数据 =====
             async function importFromLocalStorage() {
                 try {
                     var oldData = localStorage.getItem('bikan_data_v10');
                     if (!oldData) {
-                        showToast('未找到旧数据，请确认之前使用过此浏览器', 'error');
+                        showToast('未找到旧数据', 'error');
                         return;
                     }
                     var data = JSON.parse(oldData);
@@ -3849,19 +3748,16 @@
                         return;
                     }
 
-                    var confirmMsg = '将导入 ' + data.sections.length + ' 个分区及其所有书签。\n注意：会追加到现有数据中，不会覆盖。';
-                    var ok = await showConfirm(confirmMsg, '导入确认');
+                    var ok = await showConfirm('将导入 ' + data.sections.length + ' 个分区及其所有书签。\n会追加到现有数据中。', '导入确认');
                     if (!ok) return;
 
                     var importedCount = 0;
 
                     for (var si = 0; si < data.sections.length; si++) {
                         var oldSec = data.sections[si];
-                        // 检查是否已存在同名分区
                         var existing = sections.find(function(s) { return s.name === oldSec.name && !s.parent_id; });
                         var parentId = null;
                         if (!existing) {
-                            // 创建新分区
                             var newSec = {
                                 id: generateId(),
                                 name: oldSec.name || '未命名',
@@ -3881,7 +3777,6 @@
                             });
                             if (secErr) { console.error('创建分区失败:', secErr); continue; }
                             sections.push(newSec);
-                            // 添加首页引用
                             await supabase.from('home_items').insert({
                                 id: generateId(),
                                 type: 'section_ref',
@@ -3895,7 +3790,6 @@
                             parentId = existing.id;
                         }
 
-                        // 导入子分区
                         if (oldSec.children && oldSec.children.length > 0) {
                             for (var ci = 0; ci < oldSec.children.length; ci++) {
                                 var oldChild = oldSec.children[ci];
@@ -3926,7 +3820,6 @@
                                 }
 
                                 if (oldChild.isHtml && oldChild.htmlPages) {
-                                    // HTML 模式
                                     for (var hi = 0; hi < oldChild.htmlPages.length; hi++) {
                                         var hp = oldChild.htmlPages[hi];
                                         await supabase.from('html_pages').insert({
@@ -3940,7 +3833,6 @@
                                         newChild.htmlPages.push(hp);
                                     }
                                 } else if (oldChild.bookmarks) {
-                                    // 书签模式
                                     for (var bi = 0; bi < oldChild.bookmarks.length; bi++) {
                                         var bm = oldChild.bookmarks[bi];
                                         await supabase.from('bookmarks').insert({
@@ -3973,9 +3865,7 @@
                 }
             }
 
-            // ============================================================
-            //  导出 JSON 备份
-            // ============================================================
+            // ===== 导出/恢复 =====
             async function exportJson() {
                 try {
                     var allData = {
@@ -3984,7 +3874,6 @@
                         settings: settings,
                         exportedAt: new Date().toISOString()
                     };
-                    // 获取所有书签和 HTML 页面
                     var { data: bookmarks } = await supabase.from('bookmarks').select('*');
                     var { data: htmlPages } = await supabase.from('html_pages').select('*');
                     allData.bookmarks = bookmarks || [];
@@ -4000,6 +3889,9 @@
                 }
             }
 
+            function formatDate() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,
+                    '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
             function downloadFile(content, filename, mime) {
                 var blob = new Blob(['\uFEFF' + content], { type: mime });
                 var a = document.createElement('a');
@@ -4011,9 +3903,6 @@
                 URL.revokeObjectURL(a.href);
             }
 
-            // ============================================================
-            //  恢复数据
-            // ============================================================
             function triggerRestore() { document.getElementById('restoreFileInput').click(); }
 
             function importFromJson(file) {
@@ -4026,7 +3915,6 @@
                         var ok = await showConfirm('将覆盖当前所有数据，确定继续？', '⚠️ 恢复确认');
                         if (!ok) return;
 
-                        // 清空现有数据
                         await supabase.from('home_items').delete().neq('id', '');
                         await supabase.from('bookmarks').delete().neq('id', '');
                         await supabase.from('html_pages').delete().neq('id', '');
@@ -4035,7 +3923,6 @@
                         sections = [];
                         homeItems = [];
 
-                        // 重新导入
                         for (var si = 0; si < imported.sections.length; si++) {
                             var sec = imported.sections[si];
                             var newSec = {
@@ -4119,19 +4006,11 @@
                 document.getElementById('restoreFileInput').value = '';
             }
 
-            // ============================================================
-            //  导出 HTML
-            // ============================================================
             function exportHtml() {
-                showToast('⏳ 正在生成导航页...', 'success');
-                // 简化版导出：直接导出当前数据为 HTML
-                // 由于篇幅，这里提示用户使用备份功能
                 showToast('🌐 导出功能：请使用「备份」导出 JSON 数据', 'error');
             }
 
-            // ============================================================
-            //  管理模式
-            // ============================================================
+            // ===== 管理模式 =====
             function toggleManageMode() {
                 isManageMode = !isManageMode;
                 document.getElementById('modeIndicator').textContent = isManageMode ? '⚙️ 管理' : '👁️ 浏览';
@@ -4153,9 +4032,7 @@
                 if (addBtn) addBtn.classList.toggle('visible', isManageMode);
             }
 
-            // ============================================================
-            //  侧边栏折叠
-            // ============================================================
+            // ===== 侧边栏 =====
             function toggleSidebar() {
                 isSidebarCollapsed = !isSidebarCollapsed;
                 var sidebar = document.getElementById('appSidebar');
@@ -4164,39 +4041,50 @@
                 btn.textContent = isSidebarCollapsed ? '▶' : '◀';
             }
 
-            // ============================================================
-            //  退出登录
-            // ============================================================
+            // ===== 退出登录 =====
             async function logout() {
                 var ok = await showConfirm('确定要退出登录吗？', '退出确认');
                 if (!ok) return;
                 try {
                     await supabase.auth.signOut();
+                    sessionStorage.removeItem('_bikan_redirecting');
+                    sessionStorage.removeItem('_bikan_redirect_time');
                     window.location.href = 'index.html';
                 } catch (err) {
                     showToast('退出失败: ' + err.message, 'error');
                 }
             }
 
-            // ============================================================
-            //  初始化
-            // ============================================================
+            // ===== 初始化 =====
             async function init() {
-                // 检查登录状态
-                try {
-                    var { data: { user } } = await supabase.auth.getUser();
-                    if (!user) {
-                        // 未登录，跳转到登录页
-                        window.location.href = 'index.html';
-                        return;
+                // 清除跳转标记
+                sessionStorage.removeItem('_bikan_redirecting');
+                sessionStorage.removeItem('_bikan_redirect_time');
+
+                // 检查登录状态（带重试）
+                var retries = 0;
+                var user = null;
+                while (retries < 3) {
+                    try {
+                        var { data } = await supabase.auth.getUser();
+                        if (data.user) {
+                            user = data.user;
+                            break;
+                        }
+                    } catch (err) {
+                        console.log('获取用户失败，重试中...', retries + 1);
                     }
-                    currentUser = user;
-                    console.log('当前用户:', user.email);
-                } catch (err) {
-                    console.error('获取用户失败:', err);
+                    retries++;
+                    await sleep(300);
+                }
+
+                if (!user) {
                     window.location.href = 'index.html';
                     return;
                 }
+
+                currentUser = user;
+                console.log('当前用户:', user.email);
 
                 // 加载数据
                 await loadData();
@@ -4301,7 +4189,6 @@
 
                 async function deleteSection(sectionId) {
                     try {
-                        // 删除所有子分区
                         var sec = getSection(sectionId);
                         if (sec && sec.children) {
                             for (var i = 0; i < sec.children.length; i++) {
@@ -4351,7 +4238,6 @@
                     }
                 });
 
-                // 键盘快捷键
                 document.addEventListener('keydown', function(e) {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'e') { e.preventDefault();
                         toggleManageMode(); }
@@ -4363,10 +4249,9 @@
                     }
                 });
 
-                console.log('✅ 必看网 v3.0 已加载');
+                console.log('✅ 必看网 v3.0 已加载（修复版）');
             }
 
-            // DOM 准备好后初始化
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
