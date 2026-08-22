@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>必看 · 登录</title>
 
-    <!-- 网站图标：黑色 SVG Logo -->
+    <!-- 网站图标 -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 1000 720' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(500, 360) scale(1.85) translate(-500, -360)'%3E%3Cpath d='M 300 340 C 460 165, 540 165, 700 340 C 540 515, 460 515, 300 340 Z M 320 340 C 470 235, 530 235, 680 340 C 530 445, 470 445, 320 340 Z' fill='%23000000' fill-rule='evenodd' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='484' y='273' width='32' height='100' rx='10' fill='%23000000'/%3E%3Crect x='488' y='383' width='24' height='24' rx='8' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E">
 
     <!-- Supabase JS SDK -->
@@ -679,6 +679,11 @@
             const SUPABASE_ANON_KEY =
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6aXFza2d2emFidXluZHV5dXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Njg4ODQsImV4cCI6MjEwMjQ0NDg4NH0.-LYORLfz-xpr1dMD_T-P8LzvgqTJngc0Hd52wSORhXs';
 
+            // ===== 工具函数 =====
+            function sleep(ms) {
+                return new Promise(function(r) { setTimeout(r, ms); });
+            }
+
             let supabase;
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -687,35 +692,36 @@
             }
 
             // DOM
-            const tabLogin = document.getElementById('tabLogin');
-            const tabRegister = document.getElementById('tabRegister');
-            const authForm = document.getElementById('authForm');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const confirmPasswordInput = document.getElementById('confirmPassword');
-            const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
-            const submitBtn = document.getElementById('submitBtn');
-            const submitBtnText = document.getElementById('submitBtnText');
-            const googleBtn = document.getElementById('googleBtn');
-            const guestBtn = document.getElementById('guestBtn');
-            const alertBox = document.getElementById('alertBox');
-            const alertIcon = document.getElementById('alertIcon');
-            const alertMessage = document.getElementById('alertMessage');
-            const logoTitle = document.getElementById('logoTitle');
-            const logoSubtitle = document.getElementById('logoSubtitle');
-            const forgotLinkContainer = document.getElementById('forgotLinkContainer');
-            const forgotPasswordPanel = document.getElementById('forgotPasswordPanel');
-            const resetPasswordPanel = document.getElementById('resetPasswordPanel');
-            const forgotEmailInput = document.getElementById('forgotEmail');
-            const sendResetBtn = document.getElementById('sendResetBtn');
-            const newPasswordInput = document.getElementById('newPassword');
-            const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
-            const updatePasswordBtn = document.getElementById('updatePasswordBtn');
-            const authFormsWrapper = document.getElementById('authFormsWrapper');
-            const dividerContainer = document.getElementById('dividerContainer');
+            var tabLogin = document.getElementById('tabLogin');
+            var tabRegister = document.getElementById('tabRegister');
+            var authForm = document.getElementById('authForm');
+            var emailInput = document.getElementById('email');
+            var passwordInput = document.getElementById('password');
+            var confirmPasswordInput = document.getElementById('confirmPassword');
+            var confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+            var submitBtn = document.getElementById('submitBtn');
+            var submitBtnText = document.getElementById('submitBtnText');
+            var googleBtn = document.getElementById('googleBtn');
+            var guestBtn = document.getElementById('guestBtn');
+            var alertBox = document.getElementById('alertBox');
+            var alertIcon = document.getElementById('alertIcon');
+            var alertMessage = document.getElementById('alertMessage');
+            var logoTitle = document.getElementById('logoTitle');
+            var logoSubtitle = document.getElementById('logoSubtitle');
+            var forgotLinkContainer = document.getElementById('forgotLinkContainer');
+            var forgotPasswordPanel = document.getElementById('forgotPasswordPanel');
+            var resetPasswordPanel = document.getElementById('resetPasswordPanel');
+            var forgotEmailInput = document.getElementById('forgotEmail');
+            var sendResetBtn = document.getElementById('sendResetBtn');
+            var newPasswordInput = document.getElementById('newPassword');
+            var confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+            var updatePasswordBtn = document.getElementById('updatePasswordBtn');
+            var authFormsWrapper = document.getElementById('authFormsWrapper');
+            var dividerContainer = document.getElementById('dividerContainer');
 
-            let currentMode = 'login';
-            let turnstileToken = null;
+            var currentMode = 'login';
+            var turnstileToken = null;
+            var isRedirecting = false; // 防止重复跳转
 
             window.onTurnstileSuccess = function(token) {
                 turnstileToken = token;
@@ -826,19 +832,32 @@
                 hideAlert();
             };
 
-            // 游客登录
+            // ===== 跳转主页（带防重跳） =====
+            function goToHome() {
+                if (isRedirecting) return;
+                isRedirecting = true;
+                sessionStorage.setItem('_bikan_redirecting', '1');
+                window.location.href = 'home.html';
+            }
+
+            // ===== 游客登录 =====
             guestBtn.addEventListener('click', async function() {
                 if (!turnstileToken) {
                     showAlert('error', '请先完成验证码');
                     return;
                 }
+                if (isRedirecting) return;
                 setLoading(guestBtn, true);
                 try {
-                    const { data, error } = await supabase.auth.signInAnonymously({
+                    var { data, error } = await supabase.auth.signInAnonymously({
                         options: { captchaToken: turnstileToken }
                     });
                     if (error) throw error;
-                    window.location.href = 'home.html';
+                    if (data.user) {
+                        showAlert('success', '游客登录成功');
+                        await sleep(400);
+                        goToHome();
+                    }
                 } catch (err) {
                     console.error('游客登录失败:', err);
                     showAlert('error', '游客登录失败：' + (err.message || '请稍后重试'));
@@ -847,14 +866,16 @@
                 }
             });
 
-            // 登录/注册提交
+            // ===== 登录/注册提交 =====
             authForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 hideAlert();
 
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
-                const confirmPassword = confirmPasswordInput.value;
+                if (isRedirecting) return;
+
+                var email = emailInput.value.trim();
+                var password = passwordInput.value;
+                var confirmPassword = confirmPasswordInput.value;
 
                 if (!email || !email.includes('@')) {
                     showAlert('error', '请输入有效的邮箱地址');
@@ -876,20 +897,22 @@
 
                 try {
                     if (currentMode === 'login') {
-                        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                        var { data, error } = await supabase.auth.signInWithPassword({ email, password });
                         if (error) throw error;
                         if (data.user) {
-                            showAlert('success', '登录成功！正在跳转...');
-                            setTimeout(function() { window.location.href = 'home.html'; }, 600);
+                            showAlert('success', '登录成功！');
+                            await sleep(500);
+                            goToHome();
                         }
                     } else {
-                        const { data, error } = await supabase.auth.signUp({ email, password });
+                        var { data, error } = await supabase.auth.signUp({ email, password });
                         if (error) throw error;
                         if (data.user && data.user.identities && data.user.identities.length === 0) {
                             showAlert('error', '该邮箱已注册，请直接登录');
                         } else if (data.session) {
-                            showAlert('success', '注册成功！正在跳转...');
-                            setTimeout(function() { window.location.href = 'home.html'; }, 600);
+                            showAlert('success', '注册成功！');
+                            await sleep(500);
+                            goToHome();
                         } else {
                             showAlert('success', '验证邮件已发送，请查收邮箱验证后登录');
                             setMode('login');
@@ -914,18 +937,20 @@
                 }
             });
 
-            // Google 登录
+            // ===== Google 登录 =====
             googleBtn.addEventListener('click', async function() {
+                if (isRedirecting) return;
                 hideAlert();
                 setLoading(googleBtn, true);
                 try {
-                    const { data, error } = await supabase.auth.signInWithOAuth({
+                    var { data, error } = await supabase.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
                             redirectTo: window.location.origin + window.location.pathname,
                         },
                     });
                     if (error) throw error;
+                    // OAuth 会跳转，不需要手动处理
                 } catch (err) {
                     console.error('Google 登录错误:', err);
                     showAlert('error', 'Google 登录失败：' + (err.message || '请稍后重试'));
@@ -933,9 +958,9 @@
                 }
             });
 
-            // 发送重置邮件
+            // ===== 发送重置邮件 =====
             sendResetBtn.addEventListener('click', async function() {
-                const email = forgotEmailInput.value.trim();
+                var email = forgotEmailInput.value.trim();
                 if (!email || !email.includes('@')) {
                     showAlert('error', '请输入有效的邮箱地址');
                     markError(forgotEmailInput);
@@ -943,7 +968,7 @@
                 }
                 setLoading(sendResetBtn, true);
                 try {
-                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    var { error } = await supabase.auth.resetPasswordForEmail(email, {
                         redirectTo: window.location.origin + window.location.pathname,
                     });
                     if (error) throw error;
@@ -957,10 +982,10 @@
                 }
             });
 
-            // 更新密码
+            // ===== 更新密码 =====
             updatePasswordBtn.addEventListener('click', async function() {
-                const newPassword = newPasswordInput.value;
-                const confirmNewPassword = confirmNewPasswordInput.value;
+                var newPassword = newPasswordInput.value;
+                var confirmNewPassword = confirmNewPasswordInput.value;
                 if (!newPassword || newPassword.length < 6) {
                     showAlert('error', '密码至少需要 6 个字符');
                     markError(newPasswordInput);
@@ -973,7 +998,7 @@
                 }
                 setLoading(updatePasswordBtn, true);
                 try {
-                    const { error } = await supabase.auth.updateUser({ password: newPassword });
+                    var { error } = await supabase.auth.updateUser({ password: newPassword });
                     if (error) throw error;
                     showAlert('success', '密码更新成功！请重新登录');
                     await supabase.auth.signOut();
@@ -986,7 +1011,7 @@
                 }
             });
 
-            // 输入时清除错误
+            // ===== 输入时清除错误 =====
             emailInput.addEventListener('input', function() { emailInput.classList.remove('error');
                 hideAlert(); });
             passwordInput.addEventListener('input', function() { passwordInput.classList.remove('error');
@@ -1000,7 +1025,7 @@
             confirmNewPasswordInput.addEventListener('input', function() { confirmNewPasswordInput.classList.remove('error');
                 hideAlert(); });
 
-            // 恢复模式
+            // ===== 恢复模式 =====
             async function handleRecoveryMode() {
                 if (window.location.hash.includes('type=recovery')) {
                     showResetPassword();
@@ -1008,33 +1033,78 @@
                 }
             }
 
-            // 已登录检测
+            // ===== 已登录检测（带延迟和防重跳） =====
             async function checkAuthState() {
+                if (isRedirecting) return;
+
+                // 如果 sessionStorage 有跳转标记，说明正在跳转中，跳过
+                if (sessionStorage.getItem('_bikan_redirecting') === '1') {
+                    // 但如果已经过了 3 秒还没跳转成功，清除标记重新检测
+                    var markTime = sessionStorage.getItem('_bikan_redirect_time');
+                    if (markTime && Date.now() - parseInt(markTime) > 3000) {
+                        sessionStorage.removeItem('_bikan_redirecting');
+                        sessionStorage.removeItem('_bikan_redirect_time');
+                    } else {
+                        return;
+                    }
+                }
+
+                // 如果 URL 是恢复模式，不跳转
+                if (window.location.hash.includes('type=recovery')) return;
+
                 try {
-                    const { data } = await supabase.auth.getUser();
-                    if (data.user && !window.location.hash.includes('type=recovery')) {
+                    // 等待 500ms 让 session 稳定
+                    await sleep(500);
+
+                    var { data, error } = await supabase.auth.getUser();
+                    if (error) {
+                        console.log('获取用户失败:', error.message);
+                        return;
+                    }
+
+                    if (data.user) {
+                        // 已登录，跳转到主页
+                        sessionStorage.setItem('_bikan_redirecting', '1');
+                        sessionStorage.setItem('_bikan_redirect_time', String(Date.now()));
                         window.location.href = 'home.html';
                     }
                 } catch (err) {
-                    // 未登录，正常显示
+                    console.log('检测登录状态失败:', err);
                 }
             }
 
+            // ===== Auth 状态监听 =====
             if (supabase) {
                 supabase.auth.onAuthStateChange(function(event, session) {
                     if (event === 'SIGNED_IN' && session) {
+                        // 如果是恢复模式，显示重置密码面板
                         if (window.location.hash.includes('type=recovery')) {
                             showResetPassword();
-                        } else {
-                            window.location.href = 'home.html';
+                            return;
+                        }
+                        // 否则跳转到主页（防重跳）
+                        if (!isRedirecting && !sessionStorage.getItem('_bikan_redirecting')) {
+                            goToHome();
                         }
                     }
+                    if (event === 'SIGNED_OUT') {
+                        sessionStorage.removeItem('_bikan_redirecting');
+                        sessionStorage.removeItem('_bikan_redirect_time');
+                    }
                 });
+
+                // 处理恢复模式
                 handleRecoveryMode();
+
+                // 检测已登录状态
                 checkAuthState();
             }
 
-            console.log('%c✦ 必看 认证页面已加载', 'font-size:16px; font-weight:bold; color:#6c5ce7;');
+            console.log('%c✦ 必看 认证页面已加载（修复版）', 'font-size:16px; font-weight:bold; color:#6c5ce7;');
+
+            // 暴露 goToHome 给调试
+            window.__goToHome = goToHome;
+
         })();
     </script>
 
