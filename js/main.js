@@ -37,3 +37,40 @@ async function initMainPage() {
   
   if (isLoggedIn) {
     const user = await getCurrentUser();
+    if (user && isAdmin(user.email)) {
+      // 显示管理员按钮
+      adminActions.innerHTML = `
+        <button class="btn-admin btn-admin-secondary" onclick="location.href='admin.html?action=category'">
+          ${renderIcon('plus')}
+          <span class="btn-text">添加分类</span>
+        </button>
+        <button class="btn-admin btn-admin-primary" onclick="location.href='admin.html?action=card'">
+          ${renderIcon('plus')}
+          <span class="btn-text">添加卡片</span>
+        </button>
+      `;
+    }
+  }
+
+  // 加载卡片数据
+  const result = await getCards();
+  if (!result.success) {
+    console.error('加载卡片失败:', result.error);
+    return;
+  }
+
+  const cards = result.data;
+
+  // 按分类分组
+  const categories = cards.filter(c => c.category === 'category');
+  const histories = cards.filter(c => c.category === 'history');
+  const recommends = cards.filter(c => c.category === 'recommend');
+
+  // 渲染
+  renderCards(categories, 'categoryGrid');
+  renderCards(histories, 'historyGrid');
+  renderCards(recommends, 'recommendGrid');
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', initMainPage);
