@@ -1,1 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理后台 - ACG 资源</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ===== 管理后台专属样式 ===== */
+    .admin-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
 
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e5e5ea;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .admin-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .admin-header .admin-user {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      color: #86868b;
+    }
+
+    .admin-header .admin-user .btn-logout {
+      padding: 8px 20px;
+      background: #fee2e2;
+      color: #dc2626;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .admin-header .admin-user .btn-logout:hover {
+      background: #fecaca;
+    }
+
+    .admin-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: #f0f0f5;
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .admin-tabs .tab {
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #86868b;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .admin-tabs .tab.active {
+      background: #ffffff;
+      color: #1d1d1f;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .admin-tabs .tab:hover:not(.active) {
+      color: #1d1d1f;
+    }
+
+    .admin-panel {
+      display: none;
+    }
+
+    .admin-panel.active {
+      display: block;
+    }
+
+    /* 表单 */
+    .form-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+      margin-bottom: 32px;
+    }
+
+    .form-card .form-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1d1d1f;
+      margin-bottom: 4px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: #1d1d1f;
+      background: #f5f5f7;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      transition: all 0.25s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: #007aff;
+      box-shadow: 0 0
