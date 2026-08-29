@@ -139,4 +139,336 @@
       outline: none;
       background: #ffffff;
       border-color: #007aff;
-      box-shadow: 0 0
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.08);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .btn-submit {
+      padding: 10px 32px;
+      background: #007aff;
+      color: #fff;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .btn-submit:hover {
+      background: #0066d9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    }
+
+    /* 表格 */
+    .table-wrap {
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .table-wrap table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table-wrap th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #86868b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #f8f8fa;
+      border-bottom: 1px solid #e5e5ea;
+    }
+
+    .table-wrap td {
+      padding: 12px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f2;
+    }
+
+    .table-wrap tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table-wrap td .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .table-wrap td .actions button {
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    .table-wrap td .actions .btn-edit {
+      background: #f0f0f5;
+      color: #1d1d1f;
+    }
+
+    .table-wrap td .actions .btn-edit:hover {
+      background: #e5e5ea;
+    }
+
+    .table-wrap td .actions .btn-delete {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .table-wrap td .actions .btn-delete:hover {
+      background: #fecaca;
+    }
+
+    .table-wrap .empty-row td {
+      text-align: center;
+      padding: 40px;
+      color: #86868b;
+    }
+
+    /* 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 20px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #f0f0f2;
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-header button {
+      padding: 6px;
+      border-radius: 8px;
+      color: #86868b;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    .modal-header button:hover {
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px 20px;
+      border-top: 1px solid #f0f0f2;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .admin-container {
+        padding: 0;
+      }
+
+      .admin-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      .admin-header .admin-user {
+        justify-content: space-between;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      .table-wrap table {
+        min-width: 600px;
+      }
+
+      .admin-tabs .tab {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+
+      .form-card {
+        padding: 18px 16px;
+      }
+
+      .modal {
+        max-width: 100%;
+        margin: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .admin-tabs {
+        flex-wrap: wrap;
+      }
+      .admin-tabs .tab {
+        flex: 1;
+        text-align: center;
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container admin-container">
+    <!-- ===== 管理后台头部 ===== -->
+    <header class="admin-header">
+      <div>
+        <h1>📊 管理后台</h1>
+        <span style="font-size:14px;color:#86868b;">管理分类和卡片</span>
+      </div>
+      <div class="admin-user">
+        <span id="adminEmail">管理员</span>
+        <button class="btn-logout" onclick="handleLogout()">退出登录</button>
+      </div>
+    </header>
+
+    <!-- ===== Tab 切换 ===== -->
+    <div class="admin-tabs">
+      <button class="tab active" data-tab="cards" onclick="switchTab('cards')">📋 所有卡片</button>
+      <button class="tab" data-tab="add" onclick="switchTab('add')">➕ 添加</button>
+    </div>
+
+    <!-- ===== Tab 内容 ===== -->
+
+    <!-- 卡片列表 -->
+    <div class="admin-panel active" id="tabCards">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>图片</th>
+              <th>标题</th>
+              <th>分类</th>
+              <th>创建时间</th>
+              <th style="text-align:right;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="cardTableBody">
+            <tr class="empty-row">
+              <td colspan="5">加载中...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 添加 -->
+    <div class="admin-panel" id="tabAdd">
+      <!-- 添加卡片 -->
+      <div class="form-card" id="addCardForm">
+        <div class="form-title">➕ 添加卡片</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>标题 *</label>
+            <input type="text" id="cardTitle" placeholder="输入卡片名称" />
+          </div>
+          <div class="form-group">
+            <label>分类 *</label>
+            <select id="cardCategory" class="category-select"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>图片链接 *</label>
+          <input type="url" id="cardImageUrl" placeholder="https://example.com/image.jpg" />
+        </div>
+        <div class="form-group">
+          <label>描述（可选）</label>
+          <textarea id="cardDescription" rows="2" placeholder="简单描述这个卡片的内容"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>跳转链接（可选）</label>
+            <input type="url" id="cardLinkUrl" placeholder="https://example.com" />
+          </div>
+          <div class="form-group">
+            <label>排序（数字越小越靠前）</label>
+            <input type="number" id="cardSortOrder" value="0" />
+          </div>
+        </div>
+        <button class="btn-submit" onclick="submitCard()">保存卡片</button>
+      </div>
+
+      <!-- 添加分类 -->
+      <div class="form-card" id="addCategoryForm">
+        <div class="form-title">📁 添加分类</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>分类名称 *</label>
+            <input type="text" id="categoryName" placeholder="如：Galgame" />
+          </div>
+          <div class="form-group">
+            <label>图标（可选）</label>
+            <input type="text" id="categoryIcon" placeholder="如：🎮 或输入 emoji" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>排序（数字越小越靠前）</label>
+          <input type="number" id="categorySortOrder" value="0" />
+        </div>
+        <button class="btn-submit" onclick="submitCategory()">保存分类</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 脚本加载 ===== -->
+  <script src="js/config.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/categories.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+</html>
