@@ -1,1 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACG 资源</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
 
+  <div class="container">
+    <!-- ===== 顶部栏 ===== -->
+    <header class="top-bar">
+      <div class="search-wrapper">
+        <span class="search-icon">${getIcon('search')}</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索资源、网站、软件..." />
+      </div>
+      <div class="admin-actions" id="adminActions">
+        <!-- 管理员按钮由 JS 动态渲染 -->
+      </div>
+    </header>
+
+    <!-- ===== 轮播公告 ===== -->
+    <section class="carousel-section" id="carousel">
+      <div class="carousel-track" id="carouselTrack">
+        <div class="carousel-slide">
+          <img src="https://picsum.photos/seed/acg1/1400/600" alt="公告 1" loading="lazy" />
+          <div class="carousel-overlay">
+            <span class="badge">📢 公告</span>
+            <h2>ACG 资源索引 · 正式上线</h2>
+            <p>一站式收录 Galgame 官网、影视搜索、软件工具等优质资源</p>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://picsum.photos/seed/acg2/1400/600" alt="公告 2" loading="lazy" />
+          <div class="carousel-overlay">
+            <span class="badge">🎯 推荐</span>
+            <h2>精选 20+ 优质资源站</h2>
+            <p>从 2DFan 到 Bangumi，每一站都经过严格筛选</p>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <img src="https://picsum.photos/seed/acg3/1400/600" alt="公告 3" loading="lazy" />
+          <div class="carousel-overlay">
+            <span class="badge">✨ 更新</span>
+            <h2>分类导航 · 一键直达</h2>
+            <p>Galgame · 影视 · 工具 · 漫画 · 索引，快速找到你需要的</p>
+          </div>
+        </div>
+      </div>
+
+      <button class="carousel-btn prev" id="prevBtn" aria-label="上一张">‹</button>
+      <button class="carousel-btn next" id="nextBtn" aria-label="下一张">›</button>
+
+      <div class="carousel-dots" id="dotsContainer">
+        <button class="carousel-dot active" data-index="0" aria-label="第1张"></button>
+        <button class="carousel-dot" data-index="1" aria-label="第2张"></button>
+        <button class="carousel-dot" data-index="2" aria-label="第3张"></button>
+      </div>
+    </section>
+
+    <!-- ===== 分类 ===== -->
+    <section class="section-block">
+      <div class="section-header">
+        <h2 class="section-title">分类</h2>
+        <a href="#" class="section-more">查看全部 →</a>
+      </div>
+      <div class="card-grid category-grid" id="categoryGrid">
+        <!-- 由 JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- ===== 历史 ===== -->
+    <section class="section-block">
+      <div class="section-header">
+        <h2 class="section-title">历史</h2>
+        <a href="#" class="section-more">查看全部 →</a>
+      </div>
+      <div class="card-grid history-grid" id="historyGrid">
+        <!-- 由 JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- ===== 推荐 ===== -->
+    <section class="section-block">
+      <div class="section-header">
+        <h2 class="section-title">推荐</h2>
+        <a href="#" class="section-more">查看全部 →</a>
+      </div>
+      <div class="card-grid recommend-grid" id="recommendGrid">
+        <!-- 由 JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- ===== 管理入口（右下角） ===== -->
+    <div class="admin-entry" id="adminEntry">
+      <!-- 由 JS 动态渲染 -->
+    </div>
+  </div>
+
+  <!-- ===== 脚本加载 ===== -->
+  <script src="js/config.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // 轮播逻辑
+    (function() {
+      const track = document.getElementById('carouselTrack');
+      const slides = track.querySelectorAll('.carousel-slide');
+      const dots = document.querySelectorAll('.carousel-dot');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      let currentIndex = 0;
+      const total = slides.length;
+      let autoPlayTimer = null;
+      const INTERVAL = 4500;
+
+      function goTo(index) {
+        if (index < 0) index = total - 1;
+        if (index >= total) index = 0;
+        currentIndex = index;
+        track.style.transform = 'translateX(-' + (index * 100) + '%)';
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('active', i === index);
+        });
+      }
+
+      function next() { goTo(currentIndex + 1); }
+      function prev() { goTo(currentIndex - 1); }
+
+      function resetAutoPlay() {
+        if (autoPlayTimer) {
+          clearInterval(autoPlayTimer);
+          autoPlayTimer = null;
+        }
+        autoPlayTimer = setInterval(next, INTERVAL);
+      }
+
+      nextBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        next();
+        resetAutoPlay();
+      });
+
+      prevBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        prev();
+        resetAutoPlay();
+      });
+
+      dots.forEach((dot) => {
+        dot.addEventListener('click', function() {
+          const index = parseInt(this.dataset.index);
+          goTo(index);
+          resetAutoPlay();
+        });
+      });
+
+      const carousel = document.getElementById('carousel');
+      carousel.addEventListener('mouseenter', function() {
+        if (autoPlayTimer) {
+          clearInterval(autoPlayTimer);
+          autoPlayTimer = null;
+        }
+      });
+      carousel.addEventListener('mouseleave', function() {
+        resetAutoPlay();
+      });
+
+      let startX = 0;
+      let isDragging = false;
+      carousel.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+      }, { passive: true });
+
+      carousel.addEventListener('touchend', function(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) { next(); } else { prev(); }
+          resetAutoPlay();
+        }
+      }, { passive: true });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') { prev(); resetAutoPlay(); }
+        else if (e.key === 'ArrowRight') { next(); resetAutoPlay(); }
+      });
+
+      goTo(0);
+      resetAutoPlay();
+    })();
+
+    // 管理入口（右下角）
+    (async function() {
+      const isLoggedIn = await checkAuth();
+      const entry = document.getElementById('adminEntry');
+      
+      if (isLoggedIn) {
+        const user = await getCurrentUser();
+        if (user && isAdmin(user.email)) {
+          entry.innerHTML = `
+            <a href="admin.html" class="btn-manage">
+              ${renderIcon('settings')}
+              管理后台
+            </a>
+          `;
+          return;
+        }
+      }
+      
+      // 未登录显示登录入口
+      entry.innerHTML = `
+        <a href="login.html" class="btn-manage">
+          ${renderIcon('settings')}
+          管理
+        </a>
+      `;
+    })();
+
+    // 搜索功能
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const keyword = e.target.value.trim().toLowerCase();
+      const cards = document.querySelectorAll('.card');
+      
+      cards.forEach(card => {
+        const title = card.querySelector('.card-title')?.textContent?.toLowerCase() || '';
+        if (title.includes(keyword)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
