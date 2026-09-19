@@ -4,13 +4,13 @@ let allLinks = [];
 let categories = [];
 let isAdmin = false;
 
-// 初始化
-document.addEventListener('DOMContentLoaded', async () => {
+// 初始化（立即执行，因为脚本在 body 末尾）
+(async () => {
   await loadCategories();
   await loadLinks();
   bindEvents();
   checkAdminStatus();
-});
+})();
 
 // 加载分类
 async function loadCategories() {
@@ -40,12 +40,10 @@ function renderLinks(filter = '') {
   const gridEl = document.getElementById('linksGrid');
   let links = allLinks;
   
-  // 分类过滤
   if (currentCategory !== 'all') {
     links = links.filter(l => l.category_id === currentCategory);
   }
   
-  // 搜索过滤
   if (filter) {
     const kw = filter.toLowerCase();
     links = links.filter(l => 
@@ -67,9 +65,7 @@ function renderLinks(filter = '') {
   `).join('');
 }
 
-// 绑定事件
 function bindEvents() {
-  // 分类切换
   document.getElementById('categoryTabs').addEventListener('click', (e) => {
     if (e.target.classList.contains('category-tab')) {
       document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
@@ -79,12 +75,10 @@ function bindEvents() {
     }
   });
   
-  // 搜索
   document.getElementById('searchInput').addEventListener('input', (e) => {
     renderLinks(e.target.value);
   });
   
-  // 管理员按钮
   document.getElementById('adminBtn').addEventListener('click', () => {
     if (isAdmin) {
       document.getElementById('adminPanel').style.display = 'block';
@@ -94,22 +88,15 @@ function bindEvents() {
     }
   });
   
-  // 关闭登录弹窗
   document.getElementById('closeModalBtn').addEventListener('click', () => {
     document.getElementById('loginModal').style.display = 'none';
   });
   
-  // 管理员登录
   document.getElementById('adminLoginBtn').addEventListener('click', adminLogin);
-  
-  // 退出登录
   document.getElementById('logoutBtn').addEventListener('click', adminLogout);
-  
-  // 添加链接
   document.getElementById('addLinkBtn').addEventListener('click', addLink);
 }
 
-// 检查管理员状态
 async function checkAdminStatus() {
   const { data: { session } } = await supabase.auth.getSession();
   if (session && session.user.email === 'mmdbb71912126@gmail.com') {
@@ -118,7 +105,6 @@ async function checkAdminStatus() {
   }
 }
 
-// 管理员登录
 async function adminLogin() {
   const email = document.getElementById('adminEmail').value;
   const password = document.getElementById('adminPassword').value;
@@ -143,7 +129,6 @@ async function adminLogin() {
   loadAdminLinks();
 }
 
-// 管理员退出
 async function adminLogout() {
   await supabase.auth.signOut();
   isAdmin = false;
@@ -151,13 +136,10 @@ async function adminLogout() {
   document.getElementById('adminBtn').textContent = '管理';
 }
 
-// 加载管理端链接列表
 async function loadAdminLinks() {
-  // 填充分类下拉
   const selectEl = document.getElementById('newCategory');
   selectEl.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   
-  // 加载所有链接
   const { data } = await supabase.from('links').select('*').order('created_at', { ascending: false });
   const listEl = document.getElementById('adminLinksList');
   
@@ -173,13 +155,11 @@ async function loadAdminLinks() {
     </div>
   `).join('');
   
-  // 删除按钮事件
   listEl.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => deleteLink(btn.dataset.id));
   });
 }
 
-// 添加链接
 async function addLink() {
   const title = document.getElementById('newTitle').value;
   const url = document.getElementById('newUrl').value;
@@ -193,21 +173,17 @@ async function addLink() {
   
   await supabase.from('links').insert({ title, url, description, category_id });
   
-  // 清空输入
   document.getElementById('newTitle').value = '';
   document.getElementById('newUrl').value = '';
   document.getElementById('newDesc').value = '';
   
-  // 刷新
   await loadLinks();
   await loadAdminLinks();
 }
 
-// 删除链接
 async function deleteLink(id) {
   if (!confirm('确定删除这个链接吗？')) return;
   await supabase.from('links').delete().eq('id', id);
   await loadLinks();
   await loadAdminLinks();
 }
-
