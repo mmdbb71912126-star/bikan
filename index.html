@@ -2,23 +2,60 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>纸飞机 · 登录</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bikan · 网址导航</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="auth-page">
-  <div class="auth-box">
-    <h1>纸飞机</h1>
-    <p class="sub">登录或注册</p>
-    <input type="email" id="email" placeholder="邮箱" autocomplete="email">
-    <input type="password" id="password" placeholder="密码" autocomplete="current-password">
-    <button id="loginBtn" class="btn primary">登录</button>
-    <button id="signupBtn" class="btn">注册</button>
-    <p class="msg" id="msg"></p>
+<body class="nav-page">
+<header class="nav-header">
+  <div class="header-inner">
+    <h1 class="logo">bikan</h1>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜索网站...">
+    </div>
+    <button id="adminBtn" class="btn ghost">管理</button>
   </div>
+</header>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/supabase.js"></script>
-  <script src="/js/auth.js"></script>
+<main class="nav-main">
+  <div class="category-tabs" id="categoryTabs"></div>
+  <div class="links-grid" id="linksGrid"></div>
+</main>
+
+<!-- 管理员登录弹窗 -->
+<div class="modal-mask" id="loginModal" style="display:none">
+  <div class="modal">
+    <h3>管理员登录</h3>
+    <input type="email" id="adminEmail" placeholder="邮箱">
+    <input type="password" id="adminPassword" placeholder="密码">
+    <button id="adminLoginBtn" class="btn primary">登录</button>
+    <button id="closeModalBtn" class="btn ghost">关闭</button>
+    <p class="msg" id="loginMsg"></p>
+  </div>
+</div>
+
+<!-- 管理面板 -->
+<div class="admin-panel" id="adminPanel" style="display:none">
+  <div class="admin-inner">
+    <h3>管理面板</h3>
+    <div class="admin-section">
+      <h4>添加网站</h4>
+      <input type="text" id="newTitle" placeholder="网站名称">
+      <input type="url" id="newUrl" placeholder="网站地址">
+      <input type="text" id="newDesc" placeholder="描述">
+      <select id="newCategory"></select>
+      <button id="addLinkBtn" class="btn primary">添加</button>
+    </div>
+    <div class="admin-section">
+      <h4>网站列表</h4>
+      <div id="adminLinksList"></div>
+    </div>
+    <button id="logoutBtn" class="btn ghost">退出登录</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase.js"></script>
+<script src="/js/nav.js"></script>
 </body>
 </html>
