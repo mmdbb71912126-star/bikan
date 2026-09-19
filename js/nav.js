@@ -5,25 +5,32 @@ let categories = [];
 let isAdmin = false;
 
 // 初始化（立即执行，因为脚本在 body 末尾）
-(async () => {
-  await loadCategories();
-  await loadLinks();
-  bindEvents();
-  checkAdminStatus();
-})();
+// 先绑定事件，再加载数据，避免数据加载失败导致按钮无响应
+bindEvents();
+checkAdminStatus();
+loadCategories();
+loadLinks();
 
 // 加载分类
 async function loadCategories() {
-  const { data } = await supabase.from('categories').select('*').order('sort_order');
-  categories = data || [];
-  renderCategoryTabs();
+  try {
+    const { data } = await supabase.from('categories').select('*').order('sort_order');
+    categories = data || [];
+    renderCategoryTabs();
+  } catch (e) {
+    console.error('加载分类失败:', e);
+  }
 }
 
 // 加载链接
 async function loadLinks() {
-  const { data } = await supabase.from('links').select('*').eq('is_active', true).order('sort_order');
-  allLinks = data || [];
-  renderLinks();
+  try {
+    const { data } = await supabase.from('links').select('*').eq('is_active', true).order('sort_order');
+    allLinks = data || [];
+    renderLinks();
+  } catch (e) {
+    console.error('加载链接失败:', e);
+  }
 }
 
 // 渲染分类标签
