@@ -1,67 +1,190 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>bikan · 网址导航</title>
-<link rel="stylesheet" href="/css/style.css?v=3">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading...</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: none;
+    }
+
+    /* ===== 假入口页面 ===== */
+    #gate {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+      z-index: 10;
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* 图标（用你自己的 icon.png） */
+    .warning-icon {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      margin-bottom: 30px;
+      filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.8));
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .warning-title {
+      color: #fff;
+      font-size: 22px;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    .warning-sub {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .enter-btn {
+      padding: 16px 60px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(90deg, #ff2d55, #ff0055);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      letter-spacing: 4px;
+      box-shadow: 0 0 25px rgba(255, 0, 85, 0.8);
+      animation: glow 1.2s infinite alternate;
+      transition: transform 0.15s;
+    }
+
+    .enter-btn:active {
+      transform: scale(0.95);
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 20px rgba(255, 0, 85, 0.6); }
+      to   { box-shadow: 0 0 45px rgba(255, 0, 85, 1); }
+    }
+
+    /* ===== 视频层 ===== */
+    #video {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      background: #000;
+    }
+  </style>
 </head>
-<body class="nav-page">
+<body>
 
-<!-- 首页视图 -->
-<div id="homeView">
-<header class="nav-header">
-  <div class="header-inner">
-    <h1 class="logo">bikan</h1>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="搜索网站...">
+  <!-- 假入口 -->
+  <div id="gate">
+    <img src="icon.png" class="warning-icon" alt="">
+    <div class="warning-title">警告：成人内容</div>
+    <div class="warning-sub">
+      本网站含有成人内容<br>
+      请确认您已年满 18 周岁<br>
+      点击下方按钮进入
     </div>
-  </div>
-</header>
-
-<main class="nav-main">
-  <div class="category-tabs" id="categoryTabs"></div>
-  <div class="links-grid" id="linksGrid"></div>
-</main>
-</div>
-
-<!-- 管理视图 -->
-<div id="adminView" style="display:none">
-<header class="nav-header">
-  <div class="header-inner">
-    <h1 class="logo">管理后台</h1>
-    <a href="/" class="btn ghost">返回首页</a>
-  </div>
-</header>
-<main class="nav-main">
-  <!-- 密码验证 -->
-  <div id="adminLoginBox" style="max-width:400px;margin:100px auto;text-align:center;">
-    <h3>请输入管理密码</h3>
-    <input type="password" id="adminPwd" placeholder="密码" style="width:100%;padding:12px;margin:16px 0;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;">
-    <button id="adminLoginBtn" class="btn primary" style="width:100%;">登录</button>
-    <p id="adminMsg" style="color:#ef4444;margin-top:12px;font-size:13px;"></p>
+    <button class="enter-btn" id="enterBtn">进 入</button>
   </div>
 
-  <!-- 管理面板 -->
-  <div id="adminPanel" style="display:none;">
-    <div class="admin-section">
-      <h3>添加网站</h3>
-      <input type="text" id="newTitle" placeholder="网站名称">
-      <input type="url" id="newUrl" placeholder="网站地址">
-      <input type="text" id="newDesc" placeholder="描述">
-      <select id="newCategory"></select>
-      <button id="addLinkBtn" class="btn primary">添加</button>
-    </div>
-    <div class="admin-section">
-      <h3>网站列表</h3>
-      <div id="adminLinksList"></div>
-    </div>
-  </div>
-</main>
-</div>
+  <!-- 视频 -->
+  <video id="video" src="video.mp4" playsinline></video>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/supabase.js?v=3"></script>
-<script src="/js/nav.js?v=3"></script>
+  <script>
+    const gate = document.getElementById('gate');
+    const video = document.getElementById('video');
+    const btn = document.getElementById('enterBtn');
+
+    btn.addEventListener('click', () => {
+      // 隐藏入口页，显示视频
+      gate.style.display = 'none';
+      video.style.display = 'block';
+
+      // 播放设置：循环、取消静音、音量拉满
+      video.loop = true;
+      video.muted = false;
+      video.volume = 1;
+      video.controls = false;
+      video.disablePictureInPicture = true;
+
+      // 尝试全屏（失败无所谓）
+      document.documentElement.requestFullscreen?.().catch(() => {});
+
+      // 用户点击过，可带声音播放
+      video.play().catch(() => {
+        video.muted = true;
+        video.play().catch(() => {});
+      });
+
+      startAntiPause();
+    });
+
+    function startAntiPause() {
+      // 1. 被暂停就立刻恢复
+      video.addEventListener('pause', () => {
+        video.play().catch(() => {});
+      });
+
+      // 2. 屏蔽右键
+      document.addEventListener('contextmenu', e => e.preventDefault());
+
+      // 3. 屏蔽暂停类快捷键
+      document.addEventListener('keydown', e => {
+        const blocked = [' ', 'Space', 'k', 'K', 'ArrowLeft', 'ArrowRight',
+                         'ArrowUp', 'ArrowDown', 'MediaPlayPause', 'MediaPause'];
+        if (blocked.includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          video.play().catch(() => {});
+        }
+      }, true);
+
+      // 4. 点视频不触发暂停
+      video.addEventListener('click', e => {
+        e.preventDefault();
+        video.play().catch(() => {});
+      });
+
+      // 5. 切后台/切标签继续播
+      document.addEventListener('visibilitychange', () => {
+        video.play().catch(() => {});
+      });
+
+      // 6. 定时兜底
+      setInterval(() => {
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+      }, 500);
+
+      // 7. 窗口失焦继续播
+      window.addEventListener('blur', () => {
+        video.play().catch(() => {});
+      });
+    }
+  </script>
+
 </body>
 </html>
