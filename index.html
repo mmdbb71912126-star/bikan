@@ -115,6 +115,16 @@
   const btn      = document.getElementById('enterBtn');
 
   btn.addEventListener('click', () => {
+    // ===== 关键：点击瞬间同步解锁音频 =====
+    // 用户手势直接触发的 play()，浏览器才认可
+    video.muted = false;
+    video.volume = 0;              // 先静音，避免没下载完就出声
+    video.play().catch(() => {
+      video.muted = true;          // 兜底：实在不行先静音播
+      video.play().catch(() => {});
+    });
+    // =====================================
+
     gate.style.display = 'none';
     loading.style.display = 'flex';
     document.documentElement.requestFullscreen?.().catch(() => {});
@@ -160,14 +170,14 @@
         video.src = url;
         video.style.display = 'block';
         video.loop = true;
+
+        // 音频已在点击时解锁，这里只恢复音量和取消静音
         video.muted = false;
         video.volume = 1;
+
         video.controls = false;
         video.disablePictureInPicture = true;
-        video.play().catch(() => {
-          video.muted = true;
-          video.play().catch(() => {});
-        });
+        video.play().catch(() => {});
         startAntiPause();
       }, 300);
 
@@ -177,6 +187,7 @@
       video.src = VIDEO_FILE;
       video.style.display = 'block';
       video.loop = true;
+      video.muted = false;
       video.volume = 1;
       video.play().catch(() => {});
       startAntiPause();
@@ -184,7 +195,18 @@
   }
 
   function startAntiPause() {
+    // 暂停就恢复
     video.addEventListener('pause', () => video.play().catch(() => {}));
+
+    // 一旦播放起来，检查是否被静音/音量为0，强制恢复
+    video.addEventListener('playing', () => {
+      if (video.muted || video.volume === 0) {
+        video.muted = false;
+        video.volume = 1;
+        video.play().catch(() => {});
+      }
+    });
+
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
       const blocked = [' ','Space','k','K','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','MediaPlayPause','MediaPause'];
@@ -198,7 +220,16 @@
       video.play().catch(() => {});
     });
     document.addEventListener('visibilitychange', () => video.play().catch(() => {}));
-    setInterval(() => { if (video.paused) video.play().catch(() => {}); }, 500);
+
+    // 定时兜底：暂停恢复 + 静音恢复
+    setInterval(() => {
+      if (video.paused) video.play().catch(() => {});
+      if (video.muted || video.volume === 0) {
+        video.muted = false;
+        video.volume = 1;
+      }
+    }, 500);
+
     window.addEventListener('blur', () => video.play().catch(() => {}));
   }
 </script>
