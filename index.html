@@ -4,17 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HTML Playground — 線上 HTML 編輯器</title>
-
 <!-- ===== 主畫面圖標 / PWA ===== -->
 <meta name="theme-color" content="#7c5cff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Playground">
-<!-- 瀏覽器分頁 favicon（內聯 SVG，零額外檔案） -->
 <link rel="icon" type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%234ea1ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M24 21 14 32 24 43' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M40 21 50 32 40 43' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M35 17 29 47' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
-
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -29,7 +26,6 @@
     overflow: hidden;
     -webkit-font-smoothing: antialiased;
   }
-
   /* ---------- 工具列 ---------- */
   .toolbar {
     display: flex;
@@ -50,7 +46,6 @@
   .brand em { color: #7c5cff; font-style: normal; }
   .toolbar .spacer { flex: 1 1 auto; }
   .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
   button {
     font: inherit;
     font-size: 13px;
@@ -74,7 +69,11 @@
     box-shadow: 0 2px 12px rgba(124, 92, 255, .3);
   }
   button.primary:hover { filter: brightness(1.12); }
-
+  button.danger {
+    background:#44282e;
+    border-color:#663842;
+    color:#ffb4bc;
+  }
   .switch {
     display: inline-flex;
     align-items: center;
@@ -90,13 +89,63 @@
   }
   .switch input { accent-color: #7c5cff; cursor: pointer; margin: 0; }
 
-  /* ---------- 主區域 ---------- */
+  /* ========== 主容器：側邊項目欄 + 編輯區域 ========== */
+  .app-root {
+    flex:1;
+    display:flex;
+    min-height:0;
+  }
+  /* 項目側邊欄 */
+  .project-sidebar{
+    width:260px;
+    min-width:180px;
+    background:#14171f;
+    border-right:1px solid #262a35;
+    display:flex;
+    flex-direction:column;
+  }
+  .sidebar-head{
+    padding:10px 12px;
+    border-bottom:1px solid #262a35;
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .project-list{
+    flex:1;
+    overflow-y:auto;
+    padding:8px;
+  }
+  .project-item{
+    padding:8px 10px;
+    border-radius:7px;
+    margin-bottom:4px;
+    background:#1a1e29;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .project-item.active{
+    background:#272c3c;
+    border:1px solid #424960;
+  }
+  .project-item:hover{
+    background:#202533;
+  }
+  .proj-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .proj-ctrl button{
+    padding:2px 6px;
+    font-size:11px;
+  }
+
+  /* ---------- 編輯主區域 ---------- */
   .workspace {
     flex: 1 1 auto;
     display: flex;
     min-height: 0;
   }
-
   .editor-pane {
     display: flex;
     flex-direction: column;
@@ -105,7 +154,6 @@
     background: #151821;
     min-height: 0;
   }
-
   .preview-pane {
     flex: 1 1 0;
     display: flex;
@@ -114,7 +162,6 @@
     min-height: 0;
     background: #0b0d12;
   }
-
   .resizer {
     flex: 0 0 5px;
     cursor: col-resize;
@@ -123,7 +170,6 @@
     touch-action: none;
   }
   .resizer:hover, .resizer.dragging { background: #7c5cff; }
-
   /* ---------- 分頁標籤 ---------- */
   .tabs {
     display: flex;
@@ -149,7 +195,6 @@
   .tab.active[data-lang="html"] { color: #ff8a65; }
   .tab.active[data-lang="css"]  { color: #4ea1ff; }
   .tab.active[data-lang="js"]   { color: #ffd166; }
-
   .status {
     margin-left: auto;
     font-size: 11px;
@@ -159,7 +204,6 @@
     text-overflow: ellipsis;
     max-width: 45%;
   }
-
   /* ---------- 編輯器 ---------- */
   .editor-wrap {
     flex: 1 1 auto;
@@ -203,7 +247,6 @@
     caret-color: #7c5cff;
   }
   #code::selection { background: #3b3f63; }
-
   /* ---------- 預覽 ---------- */
   .preview-bar {
     display: flex;
@@ -223,7 +266,6 @@
   }
   .preview-bar button { padding: 3px 9px; font-size: 12px; border-radius: 6px; }
   .preview-bar .spacer { flex: 1; }
-
   #preview {
     flex: 1 1 auto;
     width: 100%;
@@ -231,12 +273,10 @@
     background: #fff;
     min-height: 0;
   }
-
   .preview-pane:fullscreen { background: #0b0d12; }
   .preview-pane:fullscreen #preview { height: 100%; }
   .preview-pane:-webkit-full-screen { background: #0b0d12; }
   .preview-pane:-webkit-full-screen #preview { height: 100%; }
-
   /* ---------- 控制台 ---------- */
   .console {
     flex: 0 0 auto;
@@ -273,9 +313,10 @@
   .log-item.info  { border-left-color: #4ea1ff; color: #9fd0ff; }
   .log-item.warn  { border-left-color: #ffd166; color: #ffd166; }
   .log-item.error { border-left-color: #ff6b6b; color: #ff8a8a; }
-
   /* ---------- 手機版 ---------- */
   @media (max-width: 760px) {
+    .app-root{ flex-direction:column; }
+    .project-sidebar{ width:100%; height:auto; max-height:180px; border-right:none; border-bottom:1px solid #262a35; }
     .workspace { flex-direction: column; }
     .resizer { display: none; }
     .editor-pane {
@@ -289,7 +330,6 @@
 </style>
 </head>
 <body>
-
 <header class="toolbar">
   <div class="brand">⚡ HTML <em>Playground</em></div>
   <div class="actions">
@@ -297,13 +337,28 @@
     <label class="switch" title="停止輸入後自動執行">
       <input type="checkbox" id="autoRun" checked> 自動執行
     </label>
-    <button id="btnClear" title="清空所有程式碼">🗑 清空</button>
+    <button id="btnNewProj" title="新增專案">➕新專案</button>
+    <button id="btnCopyShare" title="複製當前專案分享連結">🔗複製連結</button>
+    <button id="btnInstall" title="加入主畫面(PWA安裝)">📱加到主畫面</button>
+    <button id="btnImportBackup">📥匯入備份</button>
+    <button id="btnExportAll">📤全部備份</button>
+    <button id="btnClear" title="清空目前分頁程式碼">🗑 清空頁碼</button>
     <button id="btnCopy" title="複製目前分頁的程式碼">📋 複製</button>
     <button id="btnExport" title="導出為 .html 檔案 (Ctrl/Cmd + S)">⬇ 導出 HTML</button>
     <button id="btnFull" title="全屏預覽">⛶ 全屏預覽</button>
   </div>
   <div class="spacer"></div>
 </header>
+
+<div class="app-root">
+  <!-- 項目側邊欄 -->
+  <aside class="project-sidebar">
+    <div class="sidebar-head">
+      <button id="btnRenameProj">✏重命名</button>
+      <button id="btnDelProj" class="danger">🗑刪除專案</button>
+    </div>
+    <div class="project-list" id="projectList"></div>
+  </aside>
 
 <main class="workspace">
   <section class="editor-pane">
@@ -319,9 +374,7 @@
                 autocorrect="off" wrap="off" placeholder="在這裡輸入程式碼…"></textarea>
     </div>
   </section>
-
   <div class="resizer" id="resizer" title="拖曳調整寬度"></div>
-
   <section class="preview-pane" id="previewPane">
     <div class="preview-bar">
       <span class="dot"></span>
@@ -343,6 +396,9 @@
     </div>
   </section>
 </main>
+</div>
+
+<input type="file" id="fileImportInput" accept=".json" style="display:none;">
 
 <script>
 /* ================= 主畫面圖標：Canvas 生成 PNG + 動態 manifest ================= */
@@ -357,21 +413,16 @@
     ctx.arcTo(x,     y,     x + w, y,     r);
     ctx.closePath();
   }
-
   function drawIcon(size, maskable) {
     var c = document.createElement('canvas');
     c.width = c.height = size;
     var x = c.getContext('2d');
-
-    // 漸層背景（maskable 需填滿全幅、不圓角）
     var g = x.createLinearGradient(0, 0, size, size);
     g.addColorStop(0, '#7c5cff');
     g.addColorStop(1, '#4ea1ff');
     x.fillStyle = g;
     roundRect(x, 0, 0, size, size, maskable ? 0 : size * 0.22);
     x.fill();
-
-    // 白色 </> 符號（maskable 內容縮到 78%，避免被系統裁切）
     var s = maskable ? 0.78 : 1;
     var cy = size / 2;
     x.save();
@@ -381,50 +432,39 @@
     x.strokeStyle = '#fff';
     x.lineWidth = size * 0.075;
     x.lineCap = x.lineJoin = 'round';
-
-    x.beginPath();                                     // <
+    x.beginPath();
     x.moveTo(size * 0.31, cy - size * 0.16);
     x.lineTo(size * 0.17, cy);
     x.lineTo(size * 0.31, cy + size * 0.16);
     x.stroke();
-
-    x.beginPath();                                     // >
+    x.beginPath();
     x.moveTo(size * 0.69, cy - size * 0.16);
     x.lineTo(size * 0.83, cy);
     x.lineTo(size * 0.69, cy + size * 0.16);
     x.stroke();
-
-    x.beginPath();                                     // /
+    x.beginPath();
     x.moveTo(size * 0.57, cy - size * 0.23);
     x.lineTo(size * 0.43, cy + size * 0.23);
     x.stroke();
-
     x.restore();
     return c.toDataURL('image/png');
   }
-
   try {
     var icon180 = drawIcon(180, false);
     var icon192 = drawIcon(192, false);
     var icon512 = drawIcon(512, false);
     var icon512m = drawIcon(512, true);
-
-    // iOS「加到主畫面」（只認 apple-touch-icon，不讀 manifest）
     var apple = document.createElement('link');
     apple.rel = 'apple-touch-icon';
     apple.sizes = '180x180';
     apple.href = icon180;
     document.head.appendChild(apple);
-
-    // 部分瀏覽器標籤頁 / Android 直接使用 PNG favicon
     var png = document.createElement('link');
     png.rel = 'icon';
     png.type = 'image/png';
     png.sizes = '192x192';
     png.href = icon192;
     document.head.appendChild(png);
-
-    // Android / Chrome「安裝」用 manifest（start_url / scope 用絕對路徑）
     var base = new URL('./', location.href).href;
     var manifest = {
       name: 'HTML Playground',
@@ -442,66 +482,35 @@
         { src: icon512m, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
       ]
     };
-
     var link = document.createElement('link');
     link.rel = 'manifest';
     link.href = URL.createObjectURL(
       new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' })
     );
     document.head.appendChild(link);
-  } catch (e) {
-    /* 忽略：例如環境不支援 canvas.toDataURL */
-  }
+  } catch (e) {}
 })();
 </script>
 
 <script>
 (function () {
   'use strict';
+  // ============ 多項目存儲常數 ============
+  const STORAGE_PROJECTS = "html-playground-projects-v2";
+  let deferredInstallPrompt = null; //PWA安裝事件緩存
 
-  /* ================= 常數與狀態 ================= */
-  var STORAGE_KEY = 'html-playground-v1';
+  // 項目結構: {id:string, name:string, html,css,js,created:number}
+  let projectList = [];
+  let currentProjectId = null;
 
-  var SAMPLE = {
-    html: '<h1>Hello, World! 👋</h1>\n' +
-          '<p>這是一個可以即時執行 <strong>HTML / CSS / JS</strong> 的線上編輯器。</p>\n' +
-          '<button id="btn">點我一下</button>',
-    css:  'body {\n' +
-          '  font-family: system-ui, -apple-system, "PingFang TC", sans-serif;\n' +
-          '  padding: 28px;\n' +
-          '  background: linear-gradient(135deg, #f7f8fb, #e8ecff);\n' +
-          '  color: #1b1e28;\n' +
-          '  min-height: 100vh;\n' +
-          '  margin: 0;\n' +
-          '}\n\n' +
-          'h1 { margin-top: 0; }\n\n' +
-          'button {\n' +
-          '  padding: 9px 20px;\n' +
-          '  border-radius: 9px;\n' +
-          '  border: 0;\n' +
-          '  background: #7c5cff;\n' +
-          '  color: #fff;\n' +
-          '  font-size: 14px;\n' +
-          '  cursor: pointer;\n' +
-          '  transition: transform .15s;\n' +
-          '}\n\n' +
-          'button:hover { transform: translateY(-2px); }',
-    js:   'document.getElementById("btn").addEventListener("click", function () {\n' +
-          '  console.log("按鈕被點擊了！");\n' +
-          '  alert("你好！🎉");\n' +
-          '});'
-  };
-
-  var state = { html: '', css: '', js: '' };
+  // 原編輯器狀態
   var currentLang = 'html';
   var dragging = false;
   var saveTimer = null;
   var runTimer = null;
   var statusTimer = null;
 
-  /* ================= DOM ================= */
   var $ = function (id) { return document.getElementById(id); };
-
   var ta          = $('code');
   var gutterInner = $('gutter');
   var preview     = $('preview');
@@ -514,6 +523,8 @@
   var editorPane  = document.querySelector('.editor-pane');
   var workspace   = document.querySelector('.workspace');
   var tabs        = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var projListDom = $('projectList');
+  var fileImportInput = $('fileImportInput');
 
   /* ================= 注入用腳本（擷取 console / 錯誤） ================= */
   var INJECT = [
@@ -550,18 +561,256 @@
     '<\/script>'
   ].join('\n');
 
+  const SAMPLE = {
+    html: '<h1>Hello, World! 👋</h1>\n' +
+          '<p>這是一個可以即時執行 <strong>HTML / CSS / JS</strong> 的線上編輯器。</p>\n' +
+          '<button id="btn">點我一下</button>',
+    css:  'body {\n' +
+          '  font-family: system-ui, -apple-system, "PingFang TC", sans-serif;\n' +
+          '  padding: 28px;\n' +
+          '  background: linear-gradient(135deg, #f7f8fb, #e8ecff);\n' +
+          '  color: #1b1e28;\n' +
+          '  min-height: 100vh;\n' +
+          '  margin: 0;\n' +
+          '}\n\n' +
+          'h1 { margin-top: 0; }\n\n' +
+          'button {\n' +
+          '  padding: 9px 20px;\n' +
+          '  border-radius: 9px;\n' +
+          '  border: 0;\n' +
+          '  background: #7c5cff;\n' +
+          '  color: #fff;\n' +
+          '  font-size: 14px;\n' +
+          '  cursor: pointer;\n' +
+          '  transition: transform .15s;\n' +
+          '}\n\n' +
+          'button:hover { transform: translateY(-2px); }',
+    js:   'document.getElementById("btn").addEventListener("click", function () {\n' +
+          '  console.log("按鈕被點擊了！");\n' +
+          '  alert("你好！🎉");\n' +
+          '});'
+  };
+
+  // ============ 項目工具函數 ============
+  function genId(){
+    return 'proj_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+  }
+  function saveProjectsToLocal(){
+    localStorage.setItem(STORAGE_PROJECTS, JSON.stringify(projectList));
+  }
+  function loadProjectsFromLocal(){
+    try{
+      const raw = localStorage.getItem(STORAGE_PROJECTS);
+      if(raw){
+        projectList = JSON.parse(raw);
+      }
+    }catch(e){ projectList=[]; }
+    if(!Array.isArray(projectList) || projectList.length===0){
+      //建立預設專案
+      const defaultProj = {
+        id: genId(),
+        name:"預設專案",
+        html:SAMPLE.html,
+        css:SAMPLE.css,
+        js:SAMPLE.js,
+        created:Date.now()
+      };
+      projectList.push(defaultProj);
+      saveProjectsToLocal();
+    }
+  }
+  function getProjectById(pid){
+    return projectList.find(p=>p.id===pid);
+  }
+
+  //解析網址hash #project=xxx
+  function parseHashProject(){
+    const hash = location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    return params.get('project') || null;
+  }
+  function updateUrlHash(pid){
+    const params = new URLSearchParams();
+    params.set('project', pid);
+    history.replaceState(null,"", "#"+params.toString());
+  }
+
+  //渲染左側項目列表
+  function renderProjectList(){
+    projListDom.innerHTML="";
+    projectList.forEach(proj=>{
+      const div = document.createElement('div');
+      div.className = "project-item"+(proj.id===currentProjectId?" active":"");
+      div.dataset.pid = proj.id;
+      div.innerHTML = `
+        <span class="proj-name" title="${proj.name}">${escapeHtml(proj.name)}</span>
+        <div class="proj-ctrl"></div>
+      `;
+      div.addEventListener('click',(e)=>{
+        if(e.target.closest('.proj-ctrl')) return;
+        switchProject(proj.id);
+      });
+      projListDom.appendChild(div);
+    });
+  }
+  function escapeHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  //切換項目：先儲存當前，再載入新項目，更新網址hash
+  function switchProject(pid){
+    //先存當前
+    saveCurrentEditorToProject();
+    const proj = getProjectById(pid);
+    if(!proj) return;
+    currentProjectId = pid;
+    updateUrlHash(pid);
+    //載入內容
+    loadProjectToEditor(proj);
+    renderProjectList();
+    run();
+    setStatus("切換專案："+proj.name);
+  }
+
+  //把當前編輯器內容寫回項目物件
+  function saveCurrentEditorToProject(){
+    if(!currentProjectId) return;
+    const proj = getProjectById(currentProjectId);
+    if(!proj) return;
+    proj[currentLang] = ta.value;
+    saveProjectsToLocal();
+  }
+  //把項目載入編輯器
+  function loadProjectToEditor(proj){
+    proj[currentLang] = ta.value;
+    ta.value = proj[currentLang];
+    updateGutter();
+    syncGutterScroll();
+  }
+
+  //新建項目
+  function createNewProject(){
+    saveCurrentEditorToProject();
+    const name = prompt("輸入新專案名稱","未命名專案");
+    if(!name || name.trim()==="") return;
+    const newProj = {
+      id: genId(),
+      name: name.trim(),
+      html:SAMPLE.html,
+      css:SAMPLE.css,
+      js:SAMPLE.js,
+      created:Date.now()
+    };
+    projectList.push(newProj);
+    saveProjectsToLocal();
+    switchProject(newProj.id);
+    renderProjectList();
+  }
+  //重命名
+  function renameCurrentProject(){
+    const proj = getProjectById(currentProjectId);
+    if(!proj) return;
+    const newName = prompt("重命名專案", proj.name);
+    if(!newName || newName.trim()==="") return;
+    proj.name = newName.trim();
+    saveProjectsToLocal();
+    renderProjectList();
+    setStatus("已重命名 ✓");
+  }
+  //刪除當前項目
+  function deleteCurrentProject(){
+    if(projectList.length<=1){
+      alert("至少保留一個專案，無法刪除全部！");
+      return;
+    }
+    const proj = getProjectById(currentProjectId);
+    if(!confirm(`確定要刪除專案「${proj.name}」? 無法復原！`)) return;
+    const idx = projectList.findIndex(p=>p.id===currentProjectId);
+    projectList.splice(idx,1);
+    saveProjectsToLocal();
+    //切換第一個
+    switchProject(projectList[0].id);
+    renderProjectList();
+  }
+
+  //複製分享連結（帶#project=xxx）
+  async function copyShareLink(){
+    const url = location.origin+location.pathname+"#project="+currentProjectId;
+    try{
+      await navigator.clipboard.writeText(url);
+      setStatus("已複製分享連結 ✓");
+    }catch(e){
+      alert("複製失敗，手動複製:\n"+url);
+    }
+  }
+
+  //匯出全部項目備份 json
+  function exportAllBackup(){
+    const blob = new Blob([JSON.stringify(projectList,null,2)], {type:"application/json"});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "playground-projects-backup.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setStatus("已匯出全部備份 ✓");
+  }
+  //匯入備份
+  function importBackup(){
+    fileImportInput.click();
+  }
+  fileImportInput.onchange = function(ev){
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        const imported = JSON.parse(reader.result);
+        if(!Array.isArray(imported)) throw new Error("格式錯誤");
+        projectList = imported;
+        saveProjectsToLocal();
+        //切換第一個
+        switchProject(projectList[0].id);
+        renderProjectList();
+        setStatus("匯入備份完成 ✓");
+      }catch(err){
+        alert("備份檔解析失敗："+err.message);
+      }
+      fileImportInput.value="";
+    };
+    reader.readAsText(file);
+  };
+
+  //======== PWA 加到主畫面事件攔截 ========
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+  async function triggerInstall(){
+    if(!deferredInstallPrompt){
+      alert("此瀏覽器環境不支援加到主畫面，請使用手機Chrome並確認是https或localhost打開");
+      return;
+    }
+    const res = await deferredInstallPrompt.prompt();
+    deferredInstallPrompt = null;
+    setStatus(res.outcome==="accepted"?"已安裝到主畫面":"使用者取消安裝");
+  }
+
   /* ================= 工具函式 ================= */
   function setStatus(text) {
     statusEl.textContent = text;
     clearTimeout(statusTimer);
     statusTimer = setTimeout(function () { statusEl.textContent = '就緒'; }, 2200);
   }
-
   function escapeClosingScript(code) {
     return String(code).replace(/<\/script/gi, '<\\/script');
   }
-
   function buildDoc(includeInject) {
+    //拿當前項目的內容
+    const proj = getProjectById(currentProjectId);
+    const html = proj ? proj.html : "";
+    const css = proj ? proj.css : "";
+    const js  = proj ? proj.js  : "";
     return [
       '<!DOCTYPE html>',
       '<html lang="zh-Hant">',
@@ -570,20 +819,19 @@
       '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
       '<title>預覽</title>',
       '<style>',
-      String(state.css || '').replace(/<\/style/gi, '<\\/style'),
+      String(css || '').replace(/<\/style/gi, '<\\/style'),
       '</style>',
       '</head>',
       '<body>',
-      String(state.html || ''),
+      String(html || ''),
       includeInject ? INJECT : '',
       '<script>',
-      escapeClosingScript(state.js || ''),
+      escapeClosingScript(js || ''),
       '<\/script>',
       '</body>',
       '</html>'
     ].join('\n');
   }
-
   /* ================= 行號 ================= */
   function updateGutter() {
     var count = ta.value.split('\n').length;
@@ -591,16 +839,13 @@
     for (var i = 1; i <= count; i++) { out += i + '\n'; }
     gutterInner.textContent = out;
   }
-
   function syncGutterScroll() {
     gutterInner.style.transform = 'translateY(' + (-ta.scrollTop) + 'px)';
   }
-
   /* ================= 執行 ================= */
   function clearConsole() {
     consoleBody.innerHTML = '';
   }
-
   function addConsole(type, text) {
     if (text === undefined || text === null || text === '') return;
     var el = document.createElement('div');
@@ -609,10 +854,9 @@
     consoleBody.appendChild(el);
     consoleBody.scrollTop = consoleBody.scrollHeight;
   }
-
   function run() {
     clearTimeout(runTimer);
-    state[currentLang] = ta.value;
+    saveCurrentEditorToProject();
     try {
       clearConsole();
       preview.srcdoc = buildDoc(true);
@@ -623,34 +867,26 @@
       consolePanel.hidden = false;
     }
   }
-
   function scheduleRun() {
     if (!autoRunEl.checked) return;
     clearTimeout(runTimer);
     runTimer = setTimeout(run, 600);
   }
-
   /* ================= 儲存 ================= */
   function scheduleSave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) { /* 忽略 */ }
+      saveCurrentEditorToProject();
     }, 500);
   }
-
   /* ================= 編輯器事件 ================= */
   function onInput() {
-    state[currentLang] = ta.value;
     updateGutter();
     scheduleSave();
     scheduleRun();
   }
-
   ta.addEventListener('input', onInput);
   ta.addEventListener('scroll', syncGutterScroll);
-
   ta.addEventListener('keydown', function (e) {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -659,13 +895,13 @@
       onInput();
     }
   });
-
   /* ================= 分頁切換 ================= */
   function switchTab(lang) {
     if (lang === currentLang) return;
-    state[currentLang] = ta.value;
+    saveCurrentEditorToProject();
     currentLang = lang;
-    ta.value = state[lang] || '';
+    const proj = getProjectById(currentProjectId);
+    ta.value = proj[lang]||"";
     tabs.forEach(function (t) {
       t.classList.toggle('active', t.dataset.lang === lang);
     });
@@ -674,25 +910,27 @@
     updateGutter();
     ta.focus();
   }
-
   tabs.forEach(function (t) {
     t.addEventListener('click', function () { switchTab(t.dataset.lang); });
   });
-
   /* ================= 功能按鈕 ================= */
   $('btnRun').addEventListener('click', run);
   $('btnRefresh').addEventListener('click', run);
+  $('btnNewProj').addEventListener('click', createNewProject);
+  $('btnRenameProj').addEventListener('click', renameCurrentProject);
+  $('btnDelProj').addEventListener('click', deleteCurrentProject);
+  $('btnCopyShare').addEventListener('click', copyShareLink);
+  $('btnInstall').addEventListener('click', triggerInstall);
+  $('btnImportBackup').addEventListener('click', importBackup);
+  $('btnExportAll').addEventListener('click', exportAllBackup);
 
   $('btnClear').addEventListener('click', function () {
-    if (!confirm('確定要清空所有程式碼嗎？此操作無法復原。')) return;
-    state = { html: '', css: '', js: '' };
+    if (!confirm('確定要清空目前分頁程式碼嗎？此操作無法復原。')) return;
     ta.value = '';
     updateGutter();
-    syncGutterScroll();
     run();
     scheduleSave();
   });
-
   $('btnCopy').addEventListener('click', function () {
     var text = ta.value;
     function done() { setStatus('已複製 ✓'); }
@@ -708,9 +946,8 @@
       done();
     }
   });
-
   $('btnExport').addEventListener('click', function () {
-    state[currentLang] = ta.value;
+    saveCurrentEditorToProject();
     var blob = new Blob([buildDoc(false)], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -722,7 +959,6 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
     setStatus('已導出 ✓');
   });
-
   $('btnFull').addEventListener('click', function () {
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       var req = previewPane.requestFullscreen || previewPane.webkitRequestFullscreen;
@@ -735,21 +971,17 @@
       if (exit) exit.call(document);
     }
   });
-
   $('btnNewWindow').addEventListener('click', function () {
-    state[currentLang] = ta.value;
+    saveCurrentEditorToProject();
     var blob = new Blob([buildDoc(false)], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     window.open(url, '_blank');
     setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
   });
-
   $('btnConsole').addEventListener('click', function () {
     consolePanel.hidden = !consolePanel.hidden;
   });
-
   $('btnClearConsole').addEventListener('click', clearConsole);
-
   /* ================= 訊息（console / error） ================= */
   window.addEventListener('message', function (e) {
     var d = e.data;
@@ -757,7 +989,6 @@
     addConsole(d.type, d.text);
     if (d.type === 'error') consolePanel.hidden = false;
   });
-
   /* ================= 拖曳調整寬度 ================= */
   resizer.addEventListener('pointerdown', function (e) {
     dragging = true;
@@ -766,7 +997,6 @@
     document.body.style.cursor = 'col-resize';
     e.preventDefault();
   });
-
   resizer.addEventListener('pointermove', function (e) {
     if (!dragging) return;
     var rect = workspace.getBoundingClientRect();
@@ -775,7 +1005,6 @@
     editorPane.style.flex = '0 0 auto';
     editorPane.style.width = w + 'px';
   });
-
   function endDrag(e) {
     if (!dragging) return;
     dragging = false;
@@ -785,7 +1014,6 @@
   }
   resizer.addEventListener('pointerup', endDrag);
   resizer.addEventListener('pointercancel', endDrag);
-
   /* ================= 快捷鍵 ================= */
   document.addEventListener('keydown', function (e) {
     var mod = e.ctrlKey || e.metaKey;
@@ -798,35 +1026,32 @@
     }
   });
 
+  //監聽hash變化（瀏覽器後退/前進按鈕）
+  window.addEventListener("hashchange",()=>{
+    const pid = parseHashProject();
+    if(pid && getProjectById(pid)){
+      switchProject(pid);
+    }
+  });
+
   /* ================= 初始化 ================= */
   function init() {
-    var loaded = null;
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var d = JSON.parse(raw);
-        if (d && typeof d === 'object') {
-          loaded = {
-            html: typeof d.html === 'string' ? d.html : '',
-            css:  typeof d.css  === 'string' ? d.css  : '',
-            js:   typeof d.js   === 'string' ? d.js   : ''
-          };
-        }
-      }
-    } catch (e) { /* ignore */ }
-
-    if (loaded && (loaded.html || loaded.css || loaded.js)) {
-      state = loaded;
-    } else {
-      state = { html: SAMPLE.html, css: SAMPLE.css, js: SAMPLE.js };
+    loadProjectsFromLocal();
+    //從網址hash讀取要打開的項目
+    const hashPid = parseHashProject();
+    if(hashPid && getProjectById(hashPid)){
+      currentProjectId = hashPid;
+    }else{
+      currentProjectId = projectList[0].id;
+      updateUrlHash(currentProjectId);
     }
-
-    ta.value = state[currentLang] || '';
+    const proj = getProjectById(currentProjectId);
+    ta.value = proj[currentLang]||"";
     updateGutter();
     syncGutterScroll();
+    renderProjectList();
     run();
   }
-
   init();
 })();
 </script>
