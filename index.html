@@ -1,237 +1,834 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loading...</title>
+<title>HTML Playground — 線上 HTML 編輯器</title>
+
+<!-- ===== 主畫面圖標 / PWA ===== -->
+<meta name="theme-color" content="#7c5cff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Playground">
+<!-- 瀏覽器分頁 favicon（內聯 SVG，零額外檔案） -->
+<link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%234ea1ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M24 21 14 32 24 43' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M40 21 50 32 40 43' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M35 17 29 47' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    height: 100%; overflow: hidden; background: #000;
-    font-family: Arial, "Microsoft YaHei", sans-serif;
-    user-select: none; -webkit-touch-callout: none; touch-action: none;
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+                 "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
+    background: #0f1116;
+    color: #e6e8ee;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* ===== 假入口页 ===== */
-  #gate {
-    position: fixed; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
-    z-index: 10; text-align: center; padding: 20px;
+  /* ---------- 工具列 ---------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 9px 14px;
+    background: #171a22;
+    border-bottom: 1px solid #262a35;
+    flex: 0 0 auto;
   }
-  .warning-icon {
-    width: 120px; height: 120px; object-fit: contain;
-    margin-bottom: 30px;
-    filter: drop-shadow(0 0 30px rgba(255,0,0,0.8));
-    animation: pulse 1.5s infinite;
+  .brand {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .3px;
+    white-space: nowrap;
   }
-  @keyframes pulse {
-    0%,100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+  .brand em { color: #7c5cff; font-style: normal; }
+  .toolbar .spacer { flex: 1 1 auto; }
+  .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  button {
+    font: inherit;
+    font-size: 13px;
+    color: #d7dbe6;
+    background: #232734;
+    border: 1px solid #313646;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .05s;
+    white-space: nowrap;
+    line-height: 1.4;
   }
-  .warning-title { color:#fff; font-size:22px; margin-bottom:10px; letter-spacing:2px; }
-  .warning-sub { color:#888; font-size:14px; margin-bottom:40px; line-height:1.6; }
-  .enter-btn {
-    padding: 16px 60px; font-size: 20px; font-weight: bold; color: #fff;
-    background: linear-gradient(90deg, #ff2d55, #ff0055);
-    border: none; border-radius: 50px; cursor: pointer;
-    letter-spacing: 4px;
-    box-shadow: 0 0 25px rgba(255,0,85,0.8);
-    animation: glow 1.2s infinite alternate;
-    transition: transform 0.15s;
+  button:hover { background: #2c3242; border-color: #3d4459; }
+  button:active { transform: translateY(1px); }
+  button.primary {
+    background: linear-gradient(135deg, #7c5cff, #4ea1ff);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 2px 12px rgba(124, 92, 255, .3);
   }
-  .enter-btn:active { transform: scale(0.95); }
-  @keyframes glow {
-    from { box-shadow: 0 0 20px rgba(255,0,85,0.6); }
-    to   { box-shadow: 0 0 45px rgba(255,0,85,1); }
+  button.primary:hover { filter: brightness(1.12); }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: #9aa2b6;
+    cursor: pointer;
+    user-select: none;
+    padding: 5px 10px;
+    border: 1px solid #313646;
+    border-radius: 8px;
+    background: #1b1f29;
+  }
+  .switch input { accent-color: #7c5cff; cursor: pointer; margin: 0; }
+
+  /* ---------- 主區域 ---------- */
+  .workspace {
+    flex: 1 1 auto;
+    display: flex;
+    min-height: 0;
   }
 
-  /* ===== 加载页 ===== */
-  #loading {
-    position: fixed; inset: 0;
-    display: none; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: #000; z-index: 20; padding: 0 40px;
-  }
-  #loading .loading-text {
-    color: #fff; font-size: 18px; margin-bottom: 20px; letter-spacing: 2px;
-  }
-  #loading .bar-wrap {
-    width: 100%; max-width: 400px; height: 8px;
-    background: #222; border-radius: 50px; overflow: hidden;
-  }
-  #loading .bar {
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, #ff2d55, #ff0055);
-    border-radius: 50px;
-    transition: width 0.15s linear;
-  }
-  #loading .percent {
-    color: #ff2d55; font-size: 14px; margin-top: 12px;
-    font-family: monospace;
+  .editor-pane {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    min-width: 220px;
+    background: #151821;
+    min-height: 0;
   }
 
-  /* ===== 视频层 ===== */
-  #video {
-    position: fixed; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover; display: none; background: #000;
+  .preview-pane {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    min-height: 0;
+    background: #0b0d12;
+  }
+
+  .resizer {
+    flex: 0 0 5px;
+    cursor: col-resize;
+    background: #22262f;
+    transition: background .15s;
+    touch-action: none;
+  }
+  .resizer:hover, .resizer.dragging { background: #7c5cff; }
+
+  /* ---------- 分頁標籤 ---------- */
+  .tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 10px;
+    background: #171a22;
+    border-bottom: 1px solid #262a35;
+    flex: 0 0 auto;
+  }
+  .tab {
+    border: none;
+    background: transparent;
+    padding: 5px 14px;
+    border-radius: 7px;
+    color: #8b93a7;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .4px;
+  }
+  .tab:hover { background: #20242f; color: #c9cfdd; }
+  .tab.active { background: #232734; color: #fff; }
+  .tab.active[data-lang="html"] { color: #ff8a65; }
+  .tab.active[data-lang="css"]  { color: #4ea1ff; }
+  .tab.active[data-lang="js"]   { color: #ffd166; }
+
+  .status {
+    margin-left: auto;
+    font-size: 11px;
+    color: #6b7387;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 45%;
+  }
+
+  /* ---------- 編輯器 ---------- */
+  .editor-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    min-height: 0;
+    background: #12141a;
+  }
+  .gutter {
+    flex: 0 0 50px;
+    width: 50px;
+    overflow: hidden;
+    background: #151821;
+    border-right: 1px solid #21252f;
+    user-select: none;
+  }
+  .gutter-inner {
+    padding: 12px 10px 12px 0;
+    text-align: right;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+    line-height: 20px;
+    color: #464d60;
+    white-space: pre;
+    will-change: transform;
+  }
+  #code {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    color: #d9e0f0;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+    line-height: 20px;
+    padding: 12px;
+    white-space: pre;
+    overflow: auto;
+    tab-size: 2;
+    caret-color: #7c5cff;
+  }
+  #code::selection { background: #3b3f63; }
+
+  /* ---------- 預覽 ---------- */
+  .preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: #171a22;
+    border-bottom: 1px solid #262a35;
+    font-size: 12px;
+    color: #8b93a7;
+    flex: 0 0 auto;
+  }
+  .preview-bar .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #3ddc84;
+    box-shadow: 0 0 8px #3ddc84;
+  }
+  .preview-bar button { padding: 3px 9px; font-size: 12px; border-radius: 6px; }
+  .preview-bar .spacer { flex: 1; }
+
+  #preview {
+    flex: 1 1 auto;
+    width: 100%;
+    border: none;
+    background: #fff;
+    min-height: 0;
+  }
+
+  .preview-pane:fullscreen { background: #0b0d12; }
+  .preview-pane:fullscreen #preview { height: 100%; }
+  .preview-pane:-webkit-full-screen { background: #0b0d12; }
+  .preview-pane:-webkit-full-screen #preview { height: 100%; }
+
+  /* ---------- 控制台 ---------- */
+  .console {
+    flex: 0 0 auto;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #262a35;
+    background: #12141a;
+  }
+  .console[hidden] { display: none; }
+  .console-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    color: #8b93a7;
+    background: #171a22;
+    border-bottom: 1px solid #22262f;
+  }
+  .console-head .spacer { flex: 1; }
+  .console-head button { padding: 2px 8px; font-size: 11px; border-radius: 5px; }
+  .console-body {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 6px 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.65;
+    color: #b9c0d2;
+  }
+  .log-item { padding: 2px 0 2px 8px; border-left: 2px solid transparent; word-break: break-word; }
+  .log-item.log   { border-left-color: #4ea1ff; }
+  .log-item.info  { border-left-color: #4ea1ff; color: #9fd0ff; }
+  .log-item.warn  { border-left-color: #ffd166; color: #ffd166; }
+  .log-item.error { border-left-color: #ff6b6b; color: #ff8a8a; }
+
+  /* ---------- 手機版 ---------- */
+  @media (max-width: 760px) {
+    .workspace { flex-direction: column; }
+    .resizer { display: none; }
+    .editor-pane {
+      width: 100% !important;
+      flex: 1 1 55% !important;
+      border-bottom: 1px solid #262a35;
+    }
+    .preview-pane { flex: 1 1 45%; }
+    .brand { display: none; }
   }
 </style>
 </head>
 <body>
 
-  <!-- 假入口 -->
-  <div id="gate">
-    <img src="IMG_6464.jpeg" class="warning-icon" alt="">
-    <div class="warning-title">警告：成人内容</div>
-    <div class="warning-sub">
-      本网站含有成人内容<br>
-      请确认您已年满 18 周岁<br>
-      点击下方按钮进入
+<header class="toolbar">
+  <div class="brand">⚡ HTML <em>Playground</em></div>
+  <div class="actions">
+    <button id="btnRun" class="primary" title="執行 (Ctrl/Cmd + Enter)">▶ 執行</button>
+    <label class="switch" title="停止輸入後自動執行">
+      <input type="checkbox" id="autoRun" checked> 自動執行
+    </label>
+    <button id="btnClear" title="清空所有程式碼">🗑 清空</button>
+    <button id="btnCopy" title="複製目前分頁的程式碼">📋 複製</button>
+    <button id="btnExport" title="導出為 .html 檔案 (Ctrl/Cmd + S)">⬇ 導出 HTML</button>
+    <button id="btnFull" title="全屏預覽">⛶ 全屏預覽</button>
+  </div>
+  <div class="spacer"></div>
+</header>
+
+<main class="workspace">
+  <section class="editor-pane">
+    <div class="tabs">
+      <button class="tab active" data-lang="html">HTML</button>
+      <button class="tab" data-lang="css">CSS</button>
+      <button class="tab" data-lang="js">JS</button>
+      <span class="status" id="status">就緒</span>
     </div>
-    <button class="enter-btn" id="enterBtn">进 入</button>
-  </div>
+    <div class="editor-wrap">
+      <div class="gutter"><div class="gutter-inner" id="gutter"></div></div>
+      <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off"
+                autocorrect="off" wrap="off" placeholder="在這裡輸入程式碼…"></textarea>
+    </div>
+  </section>
 
-  <!-- 假加载页 -->
-  <div id="loading">
-    <div class="loading-text">正在加载资源，请稍候...</div>
-    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
-    <div class="percent" id="percent">0%</div>
-  </div>
+  <div class="resizer" id="resizer" title="拖曳調整寬度"></div>
 
-  <!-- 视频 -->
-  <video id="video" playsinline></video>
+  <section class="preview-pane" id="previewPane">
+    <div class="preview-bar">
+      <span class="dot"></span>
+      <span>即時預覽</span>
+      <div class="spacer"></div>
+      <button id="btnConsole" title="顯示 / 隱藏控制台">🖥 主控台</button>
+      <button id="btnRefresh" title="重新整理預覽">⟳</button>
+      <button id="btnNewWindow" title="在新視窗開啟">↗ 新視窗</button>
+    </div>
+    <iframe id="preview" title="預覽"
+      sandbox="allow-scripts allow-modals allow-forms allow-popups allow-pointer-lock allow-downloads"></iframe>
+    <div class="console" id="consolePanel" hidden>
+      <div class="console-head">
+        <span>主控台</span>
+        <div class="spacer"></div>
+        <button id="btnClearConsole">清空</button>
+      </div>
+      <div class="console-body" id="consoleBody"></div>
+    </div>
+  </section>
+</main>
 
 <script>
-  const VIDEO_FILE = '03794C91-CDC0-4475-8D72-18F05A7C671A%202.mp4';
+/* ================= 主畫面圖標：Canvas 生成 PNG + 動態 manifest ================= */
+(function addHomeScreenIcon() {
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y,     x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x,     y + h, r);
+    ctx.arcTo(x,     y + h, x,     y,     r);
+    ctx.arcTo(x,     y,     x + w, y,     r);
+    ctx.closePath();
+  }
 
-  const gate     = document.getElementById('gate');
-  const loading  = document.getElementById('loading');
-  const bar      = document.getElementById('bar');
-  const percent  = document.getElementById('percent');
-  const video    = document.getElementById('video');
-  const btn      = document.getElementById('enterBtn');
+  function drawIcon(size, maskable) {
+    var c = document.createElement('canvas');
+    c.width = c.height = size;
+    var x = c.getContext('2d');
 
-  btn.addEventListener('click', () => {
-    // ===== 关键：点击瞬间同步解锁音频 =====
-    // 用户手势直接触发的 play()，浏览器才认可
-    video.muted = false;
-    video.volume = 0;              // 先静音，避免没下载完就出声
-    video.play().catch(() => {
-      video.muted = true;          // 兜底：实在不行先静音播
-      video.play().catch(() => {});
-    });
-    // =====================================
+    // 漸層背景（maskable 需填滿全幅、不圓角）
+    var g = x.createLinearGradient(0, 0, size, size);
+    g.addColorStop(0, '#7c5cff');
+    g.addColorStop(1, '#4ea1ff');
+    x.fillStyle = g;
+    roundRect(x, 0, 0, size, size, maskable ? 0 : size * 0.22);
+    x.fill();
 
-    gate.style.display = 'none';
-    loading.style.display = 'flex';
-    document.documentElement.requestFullscreen?.().catch(() => {});
-    loadVideo();
-  });
+    // 白色 </> 符號（maskable 內容縮到 78%，避免被系統裁切）
+    var s = maskable ? 0.78 : 1;
+    var cy = size / 2;
+    x.save();
+    x.translate(size / 2, cy);
+    x.scale(s, s);
+    x.translate(-size / 2, -cy);
+    x.strokeStyle = '#fff';
+    x.lineWidth = size * 0.075;
+    x.lineCap = x.lineJoin = 'round';
 
-  async function loadVideo() {
+    x.beginPath();                                     // <
+    x.moveTo(size * 0.31, cy - size * 0.16);
+    x.lineTo(size * 0.17, cy);
+    x.lineTo(size * 0.31, cy + size * 0.16);
+    x.stroke();
+
+    x.beginPath();                                     // >
+    x.moveTo(size * 0.69, cy - size * 0.16);
+    x.lineTo(size * 0.83, cy);
+    x.lineTo(size * 0.69, cy + size * 0.16);
+    x.stroke();
+
+    x.beginPath();                                     // /
+    x.moveTo(size * 0.57, cy - size * 0.23);
+    x.lineTo(size * 0.43, cy + size * 0.23);
+    x.stroke();
+
+    x.restore();
+    return c.toDataURL('image/png');
+  }
+
+  try {
+    var icon180 = drawIcon(180, false);
+    var icon192 = drawIcon(192, false);
+    var icon512 = drawIcon(512, false);
+    var icon512m = drawIcon(512, true);
+
+    // iOS「加到主畫面」（只認 apple-touch-icon，不讀 manifest）
+    var apple = document.createElement('link');
+    apple.rel = 'apple-touch-icon';
+    apple.sizes = '180x180';
+    apple.href = icon180;
+    document.head.appendChild(apple);
+
+    // 部分瀏覽器標籤頁 / Android 直接使用 PNG favicon
+    var png = document.createElement('link');
+    png.rel = 'icon';
+    png.type = 'image/png';
+    png.sizes = '192x192';
+    png.href = icon192;
+    document.head.appendChild(png);
+
+    // Android / Chrome「安裝」用 manifest（start_url / scope 用絕對路徑）
+    var base = new URL('./', location.href).href;
+    var manifest = {
+      name: 'HTML Playground',
+      short_name: 'Playground',
+      description: '線上 HTML / CSS / JS 即時編輯器',
+      start_url: base,
+      scope: base,
+      display: 'standalone',
+      orientation: 'any',
+      background_color: '#0f1116',
+      theme_color: '#7c5cff',
+      icons: [
+        { src: icon192,  sizes: '192x192', type: 'image/png' },
+        { src: icon512,  sizes: '512x512', type: 'image/png' },
+        { src: icon512m, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+      ]
+    };
+
+    var link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(
+      new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' })
+    );
+    document.head.appendChild(link);
+  } catch (e) {
+    /* 忽略：例如環境不支援 canvas.toDataURL */
+  }
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= 常數與狀態 ================= */
+  var STORAGE_KEY = 'html-playground-v1';
+
+  var SAMPLE = {
+    html: '<h1>Hello, World! 👋</h1>\n' +
+          '<p>這是一個可以即時執行 <strong>HTML / CSS / JS</strong> 的線上編輯器。</p>\n' +
+          '<button id="btn">點我一下</button>',
+    css:  'body {\n' +
+          '  font-family: system-ui, -apple-system, "PingFang TC", sans-serif;\n' +
+          '  padding: 28px;\n' +
+          '  background: linear-gradient(135deg, #f7f8fb, #e8ecff);\n' +
+          '  color: #1b1e28;\n' +
+          '  min-height: 100vh;\n' +
+          '  margin: 0;\n' +
+          '}\n\n' +
+          'h1 { margin-top: 0; }\n\n' +
+          'button {\n' +
+          '  padding: 9px 20px;\n' +
+          '  border-radius: 9px;\n' +
+          '  border: 0;\n' +
+          '  background: #7c5cff;\n' +
+          '  color: #fff;\n' +
+          '  font-size: 14px;\n' +
+          '  cursor: pointer;\n' +
+          '  transition: transform .15s;\n' +
+          '}\n\n' +
+          'button:hover { transform: translateY(-2px); }',
+    js:   'document.getElementById("btn").addEventListener("click", function () {\n' +
+          '  console.log("按鈕被點擊了！");\n' +
+          '  alert("你好！🎉");\n' +
+          '});'
+  };
+
+  var state = { html: '', css: '', js: '' };
+  var currentLang = 'html';
+  var dragging = false;
+  var saveTimer = null;
+  var runTimer = null;
+  var statusTimer = null;
+
+  /* ================= DOM ================= */
+  var $ = function (id) { return document.getElementById(id); };
+
+  var ta          = $('code');
+  var gutterInner = $('gutter');
+  var preview     = $('preview');
+  var previewPane = $('previewPane');
+  var autoRunEl   = $('autoRun');
+  var statusEl    = $('status');
+  var consolePanel= $('consolePanel');
+  var consoleBody = $('consoleBody');
+  var resizer     = $('resizer');
+  var editorPane  = document.querySelector('.editor-pane');
+  var workspace   = document.querySelector('.workspace');
+  var tabs        = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+
+  /* ================= 注入用腳本（擷取 console / 錯誤） ================= */
+  var INJECT = [
+    '<script>',
+    '(function () {',
+    '  function fmt(v) {',
+    '    if (typeof v === "string") return v;',
+    '    if (v instanceof Error) return v.stack || v.message;',
+    '    try { return JSON.stringify(v); } catch (e) { return String(v); }',
+    '  }',
+    '  function send(type, args) {',
+    '    try {',
+    '      parent.postMessage({',
+    '        __pg: true,',
+    '        type: type,',
+    '        text: Array.prototype.map.call(args, fmt).join(" ")',
+    '      }, "*");',
+    '    } catch (e) {}',
+    '  }',
+    '  ["log", "info", "warn", "error", "debug"].forEach(function (k) {',
+    '    var orig = console[k] ? console[k].bind(console) : function () {};',
+    '    console[k] = function () {',
+    '      send(k === "debug" ? "log" : k, arguments);',
+    '      orig.apply(null, arguments);',
+    '    };',
+    '  });',
+    '  window.addEventListener("error", function (e) {',
+    '    send("error", [(e.message || "Error") + (e.lineno ? "  (第 " + e.lineno + " 行)" : "")]);',
+    '  });',
+    '  window.addEventListener("unhandledrejection", function (e) {',
+    '    send("error", ["未處理的 Promise 錯誤: " + fmt(e.reason)]);',
+    '  });',
+    '})();',
+    '<\/script>'
+  ].join('\n');
+
+  /* ================= 工具函式 ================= */
+  function setStatus(text) {
+    statusEl.textContent = text;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () { statusEl.textContent = '就緒'; }, 2200);
+  }
+
+  function escapeClosingScript(code) {
+    return String(code).replace(/<\/script/gi, '<\\/script');
+  }
+
+  function buildDoc(includeInject) {
+    return [
+      '<!DOCTYPE html>',
+      '<html lang="zh-Hant">',
+      '<head>',
+      '<meta charset="UTF-8">',
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      '<title>預覽</title>',
+      '<style>',
+      String(state.css || '').replace(/<\/style/gi, '<\\/style'),
+      '</style>',
+      '</head>',
+      '<body>',
+      String(state.html || ''),
+      includeInject ? INJECT : '',
+      '<script>',
+      escapeClosingScript(state.js || ''),
+      '<\/script>',
+      '</body>',
+      '</html>'
+    ].join('\n');
+  }
+
+  /* ================= 行號 ================= */
+  function updateGutter() {
+    var count = ta.value.split('\n').length;
+    var out = '';
+    for (var i = 1; i <= count; i++) { out += i + '\n'; }
+    gutterInner.textContent = out;
+  }
+
+  function syncGutterScroll() {
+    gutterInner.style.transform = 'translateY(' + (-ta.scrollTop) + 'px)';
+  }
+
+  /* ================= 執行 ================= */
+  function clearConsole() {
+    consoleBody.innerHTML = '';
+  }
+
+  function addConsole(type, text) {
+    if (text === undefined || text === null || text === '') return;
+    var el = document.createElement('div');
+    el.className = 'log-item ' + (type || 'log');
+    el.textContent = String(text);
+    consoleBody.appendChild(el);
+    consoleBody.scrollTop = consoleBody.scrollHeight;
+  }
+
+  function run() {
+    clearTimeout(runTimer);
+    state[currentLang] = ta.value;
     try {
-      const resp = await fetch(VIDEO_FILE);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-      const total = +resp.headers.get('Content-Length') || 0;
-      const reader = resp.body.getReader();
-      const chunks = [];
-      let received = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        received += value.length;
-
-        if (total) {
-          const p = Math.min(100, Math.round(received / total * 100));
-          bar.style.width = p + '%';
-          percent.textContent = p + '%';
-        } else {
-          let p = parseFloat(bar.style.width) || 0;
-          p = Math.min(95, p + 0.5);
-          bar.style.width = p + '%';
-          percent.textContent = Math.round(p) + '%';
-        }
-      }
-
-      const blob = new Blob(chunks, { type: 'video/mp4' });
-      const url = URL.createObjectURL(blob);
-
-      bar.style.width = '100%';
-      percent.textContent = '100%';
-
-      setTimeout(() => {
-        loading.style.display = 'none';
-        video.src = url;
-        video.style.display = 'block';
-        video.loop = true;
-
-        // 音频已在点击时解锁，这里只恢复音量和取消静音
-        video.muted = false;
-        video.volume = 1;
-
-        video.controls = false;
-        video.disablePictureInPicture = true;
-        video.play().catch(() => {});
-        startAntiPause();
-      }, 300);
-
+      clearConsole();
+      preview.srcdoc = buildDoc(true);
+      setStatus('已執行 ✓');
     } catch (err) {
-      console.log('加载失败:', err);
-      loading.style.display = 'none';
-      video.src = VIDEO_FILE;
-      video.style.display = 'block';
-      video.loop = true;
-      video.muted = false;
-      video.volume = 1;
-      video.play().catch(() => {});
-      startAntiPause();
+      setStatus('執行失敗');
+      addConsole('error', err && err.message ? err.message : String(err));
+      consolePanel.hidden = false;
     }
   }
 
-  function startAntiPause() {
-    // 暂停就恢复
-    video.addEventListener('pause', () => video.play().catch(() => {}));
-
-    // 一旦播放起来，检查是否被静音/音量为0，强制恢复
-    video.addEventListener('playing', () => {
-      if (video.muted || video.volume === 0) {
-        video.muted = false;
-        video.volume = 1;
-        video.play().catch(() => {});
-      }
-    });
-
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      const blocked = [' ','Space','k','K','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','MediaPlayPause','MediaPause'];
-      if (blocked.includes(e.key)) {
-        e.preventDefault(); e.stopPropagation();
-        video.play().catch(() => {});
-      }
-    }, true);
-    video.addEventListener('click', e => {
-      e.preventDefault();
-      video.play().catch(() => {});
-    });
-    document.addEventListener('visibilitychange', () => video.play().catch(() => {}));
-
-    // 定时兜底：暂停恢复 + 静音恢复
-    setInterval(() => {
-      if (video.paused) video.play().catch(() => {});
-      if (video.muted || video.volume === 0) {
-        video.muted = false;
-        video.volume = 1;
-      }
-    }, 500);
-
-    window.addEventListener('blur', () => video.play().catch(() => {}));
+  function scheduleRun() {
+    if (!autoRunEl.checked) return;
+    clearTimeout(runTimer);
+    runTimer = setTimeout(run, 600);
   }
+
+  /* ================= 儲存 ================= */
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { /* 忽略 */ }
+    }, 500);
+  }
+
+  /* ================= 編輯器事件 ================= */
+  function onInput() {
+    state[currentLang] = ta.value;
+    updateGutter();
+    scheduleSave();
+    scheduleRun();
+  }
+
+  ta.addEventListener('input', onInput);
+  ta.addEventListener('scroll', syncGutterScroll);
+
+  ta.addEventListener('keydown', function (e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      var s = ta.selectionStart, en = ta.selectionEnd;
+      ta.setRangeText('  ', s, en, 'end');
+      onInput();
+    }
+  });
+
+  /* ================= 分頁切換 ================= */
+  function switchTab(lang) {
+    if (lang === currentLang) return;
+    state[currentLang] = ta.value;
+    currentLang = lang;
+    ta.value = state[lang] || '';
+    tabs.forEach(function (t) {
+      t.classList.toggle('active', t.dataset.lang === lang);
+    });
+    ta.scrollTop = 0;
+    syncGutterScroll();
+    updateGutter();
+    ta.focus();
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () { switchTab(t.dataset.lang); });
+  });
+
+  /* ================= 功能按鈕 ================= */
+  $('btnRun').addEventListener('click', run);
+  $('btnRefresh').addEventListener('click', run);
+
+  $('btnClear').addEventListener('click', function () {
+    if (!confirm('確定要清空所有程式碼嗎？此操作無法復原。')) return;
+    state = { html: '', css: '', js: '' };
+    ta.value = '';
+    updateGutter();
+    syncGutterScroll();
+    run();
+    scheduleSave();
+  });
+
+  $('btnCopy').addEventListener('click', function () {
+    var text = ta.value;
+    function done() { setStatus('已複製 ✓'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () {
+        ta.select();
+        document.execCommand('copy');
+        done();
+      });
+    } else {
+      ta.select();
+      document.execCommand('copy');
+      done();
+    }
+  });
+
+  $('btnExport').addEventListener('click', function () {
+    state[currentLang] = ta.value;
+    var blob = new Blob([buildDoc(false)], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    setStatus('已導出 ✓');
+  });
+
+  $('btnFull').addEventListener('click', function () {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      var req = previewPane.requestFullscreen || previewPane.webkitRequestFullscreen;
+      if (req) {
+        var p = req.call(previewPane);
+        if (p && p.catch) p.catch(function () {});
+      }
+    } else {
+      var exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
+  });
+
+  $('btnNewWindow').addEventListener('click', function () {
+    state[currentLang] = ta.value;
+    var blob = new Blob([buildDoc(false)], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  });
+
+  $('btnConsole').addEventListener('click', function () {
+    consolePanel.hidden = !consolePanel.hidden;
+  });
+
+  $('btnClearConsole').addEventListener('click', clearConsole);
+
+  /* ================= 訊息（console / error） ================= */
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.__pg !== true) return;
+    addConsole(d.type, d.text);
+    if (d.type === 'error') consolePanel.hidden = false;
+  });
+
+  /* ================= 拖曳調整寬度 ================= */
+  resizer.addEventListener('pointerdown', function (e) {
+    dragging = true;
+    resizer.classList.add('dragging');
+    resizer.setPointerCapture(e.pointerId);
+    document.body.style.cursor = 'col-resize';
+    e.preventDefault();
+  });
+
+  resizer.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var rect = workspace.getBoundingClientRect();
+    var w = e.clientX - rect.left;
+    w = Math.max(220, Math.min(w, rect.width - 220));
+    editorPane.style.flex = '0 0 auto';
+    editorPane.style.width = w + 'px';
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    resizer.classList.remove('dragging');
+    document.body.style.cursor = '';
+    try { resizer.releasePointerCapture(e.pointerId); } catch (err) {}
+  }
+  resizer.addEventListener('pointerup', endDrag);
+  resizer.addEventListener('pointercancel', endDrag);
+
+  /* ================= 快捷鍵 ================= */
+  document.addEventListener('keydown', function (e) {
+    var mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key === 'Enter') {
+      e.preventDefault();
+      run();
+    } else if (mod && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      $('btnExport').click();
+    }
+  });
+
+  /* ================= 初始化 ================= */
+  function init() {
+    var loaded = null;
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var d = JSON.parse(raw);
+        if (d && typeof d === 'object') {
+          loaded = {
+            html: typeof d.html === 'string' ? d.html : '',
+            css:  typeof d.css  === 'string' ? d.css  : '',
+            js:   typeof d.js   === 'string' ? d.js   : ''
+          };
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    if (loaded && (loaded.html || loaded.css || loaded.js)) {
+      state = loaded;
+    } else {
+      state = { html: SAMPLE.html, css: SAMPLE.css, js: SAMPLE.js };
+    }
+
+    ta.value = state[currentLang] || '';
+    updateGutter();
+    syncGutterScroll();
+    run();
+  }
+
+  init();
+})();
 </script>
 </body>
 </html>
